@@ -133,6 +133,14 @@ vp dlx shadcn@latest add <component>
 
 组件自动安装到 `src/components/ui/`，二次封装放 `src/components/`。
 
+### Skills 安装
+
+项目依赖的 Skills 记录在 `skills-lock.json`，新成员克隆项目后执行：
+
+```bash
+npx skills install
+```
+
 ### 样式
 
 只用 Tailwind CSS utility class + `cn()` 合并，不写 CSS 文件，不用内联 style。
