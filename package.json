@@ -7,14 +7,18 @@
     "dev": "vp dev",
     "build": "tsc && vp build",
     "preview": "vp preview",
-    "prepare": "vp config"
+    "prepare": "vp config",
+    "postinstall": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
+    "@react-router/dev": "^7.14.2",
+    "@react-router/node": "^7.14.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "typescript": "~5.9.3",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "vite-plugin-pages": "^0.33.3",
     "vite-plus": "latest"
   },
   "packageManager": "pnpm@10.33.0",
@@ -33,6 +37,7 @@
     "lucide-react": "^1.7.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-router": "^7.14.2",
     "shadcn": "^4.1.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",

@@ -1,0 +1,27 @@
+#!/bin/sh
+
+staged_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "\.(ts|tsx|js|jsx)$")
+
+if [ -z "$staged_files" ]; then
+  exit 0
+fi
+
+echo "► 格式化代码..."
+echo "$staged_files" | xargs vp fmt
+if [ $? -ne 0 ]; then
+  echo "✖ 格式化失败，提交已中止"
+  exit 1
+fi
+
+echo "► 检查 lint..."
+echo "$staged_files" | xargs vp lint
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "✖ lint 检查未通过，请修复以上错误后重新提交"
+  exit 1
+fi
+
+echo "$staged_files" | xargs git add
+
+echo "✔ 检查通过"
+exit 0

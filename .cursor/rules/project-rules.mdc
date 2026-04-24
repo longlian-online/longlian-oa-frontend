@@ -6,155 +6,120 @@ alwaysApply: true
 
 # 项目开发规范
 
-## 项目概述
-你是一位资深的前端技术专家，精通所有的前端技术和代码架构设计模式等。团队主要使用 TypeScript、React、shadcn/ui 和 Tailwind CSS 作为主要的技术栈。
+> 你是一位资深的前端技术专家，精通所有的前端技术和代码架构设计模式等。团队主要使用 TypeScript、React、shadcn/ui 和 Tailwind CSS 作为主要的技术栈。
 
 ---
 
 ## 文件和目录命名规范
 
-### 目录命名
-- **组件目录**: 使用 PascalCase（大驼峰），如：`Loading`
-- **页面目录**: 使用 PascalCase（大驼峰），如：`Main`
-- **工具目录**: 使用 camelCase（小驼峰），如：`utils`
+- **组件目录**: PascalCase，如 `Loading`、`UserInfoPopover`
+- **页面文件**: camelCase，如 `index.tsx`、`dashboard.tsx`、`[id].tsx`
+- **工具/Hook 文件**: camelCase，如 `formatDate.ts`、`useUserInfo.ts`
+- **类型文件**: camelCase，如 `api.ts`、`user.ts`
 
-### 组件文件命名
 ```
 components/
 ├── Loading/
-│   ├── index.tsx              # 主组件文件（固定命名）
-├── MarkdownEditor/
-│   ├── index.tsx
-│   ├── Toolbar.tsx            # 子组件（PascalCase）
-│   └── Preview.tsx
-└── UserInfoPopover/
-    └── index.tsx
-```
-
-### 页面文件命名
-```
-pages/
-├── Main/
 │   └── index.tsx
-├── ApiDetail/
-│   ├── index.tsx
-│   ├── InfoPanel.tsx          # 页面子组件（PascalCase）
-│   └── ConfigPanel.tsx
-└── NotFound/
-    └── index.tsx
+└── MarkdownEditor/
+    ├── index.tsx
+    ├── Toolbar.tsx       # 子组件 PascalCase
+    └── Preview.tsx
+
+pages/
+├── index.tsx             # → /
+├── login.tsx             # → /login
+└── dashboard/
+    ├── index.tsx         # → /dashboard
+    └── [id].tsx          # → /dashboard/:id
 ```
 
-### 其他文件命名
-- **入口文件**: `index.tsx`, `App.tsx`（PascalCase）
-- **工具函数**: `utils/formatDate.ts`, `utils/request.ts`（camelCase）
-- **类型定义**: `types/api.ts`, `types/user.ts`（camelCase）
-- **全局样式**: `global.css`（使用 Tailwind CSS，camelCase）
-
 ---
 
-## 组件命名规范
-- **React 组件**: 使用 PascalCase，文件名与组件名保持一致
-- **组件 Props 类型**: `[ComponentName]Props`，如：`LoadingProps`
+## 命名规范
 
----
-
-## 函数和变量命名
-- **函数命名**: 使用 camelCase，如：`handleClick`, `formatUserInfo`
-- **变量命名**: 使用 camelCase，如：`isLoading`, `userList`
-- **常量命名**: 使用 SNAKE_CASE，如：`MAX_COUNT`, `API_BASE_URL`
-- **枚举命名**: 使用 PascalCase + Enum 后缀，如：`ButtonEnum`，且每一项必须有 JSDoc 中文注释
+- **组件**: PascalCase，如 `UserCard`
+- **组件 Props 类型**: `[Name]Props`，如 `UserCardProps`
+- **函数/变量**: camelCase，如 `handleClick`、`isLoading`
+- **常量**: SNAKE_CASE，如 `MAX_COUNT`、`API_BASE_URL`
+- **枚举**: PascalCase + Enum 后缀，如 `ButtonEnum`，每项加 JSDoc 中文注释
+- **事件处理**: `handle` 前缀，如 `handleSubmit`
+- **回调 Props**: `on` 前缀，如 `onSubmit`、`onChange`
+- **自定义 Hook**: `use` 前缀，放 `hooks/` 目录
 
 ---
 
 ## TypeScript 规范
-- 优先使用 TypeScript，避免使用 any 类型
-- 为所有函数参数、返回值和组件 Props 定义明确的类型
-- 使用 `interface` 定义对象类型，`type` 定义联合类型或工具类型
-- 组件 Props 使用 `interface` 定义，命名为 `[ComponentName]Props`
+
+- 禁止使用 `any`，所有参数、返回值、Props 必须有明确类型
+- 对象类型用 `interface`，联合类型/工具类型用 `type`
 
 ```typescript
-interface ButtonProps {
-  title: string;
-  onClick?: () => void;
+interface UserCardProps {
+  name: string;
+  avatar?: string;
+  onSelect?: (id: string) => void;
 }
-
-const Button = ({ title, onClick }: ButtonProps) => {
-  // 实现
-};
 ```
 
 ---
 
 ## React 规范
-- 使用函数组件和 Hooks，避免类组件
-- 组件名使用 PascalCase，文件名与组件名保持一致
-- 合理使用 `React.memo`、`useMemo` 和 `useCallback` 进行性能优化
-- 事件处理函数使用 `handle` 前缀：`handleClick`, `handleSubmit`
-- 自定义 Hook 使用 `use` 前缀，放在 `hooks/` 目录下
+
+- 只用函数组件 + Hooks，禁止类组件
+- 合理使用 `React.memo`、`useMemo`、`useCallback` 做性能优化
 
 ---
 
-## 样式规范（Tailwind CSS）
-- 使用 Tailwind CSS utility class 编写样式，不使用独立 CSS 模块文件
-- 复杂/复用的样式组合使用 `cn()` 工具函数（来自 `lib/utils`）合并 class
-- 动态 class 通过 `cn()` 处理，不使用字符串拼接
+## 样式规范
+
+- 只用 Tailwind CSS utility class，不写独立 CSS 文件，不用内联 style
+- 动态/复合 class 用 `cn()` 处理，不做字符串拼接
 
 ```typescript
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
-const Button = ({ disabled, className }: ButtonProps) => (
-  <button
-    className={cn(
-      'px-4 py-2 rounded-md font-medium',
-      disabled && 'opacity-50 cursor-not-allowed',
-      className
-    )}
-  >
-    ...
-  </button>
-);
+<button
+  className={cn(
+    "px-4 py-2 rounded-md font-medium",
+    disabled && "opacity-50 cursor-not-allowed",
+    className
+  )}
+/>
 ```
 
 ---
 
-## shadcn/ui 使用规范
-- 优先使用 shadcn/ui 提供的组件，保持 UI 风格一致
-- 通过 `npx shadcn@latest add [component]` 安装组件，组件文件放在 `components/ui/` 目录
-- 可对 `components/ui/` 中的组件进行二次封装，封装后放在 `components/` 目录
-- 不直接修改 `components/ui/` 中的原始 shadcn/ui 文件，保持其可更新性
+## shadcn/ui 规范
 
-```typescript
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-```
+- 优先使用 shadcn/ui 组件，保持 UI 风格一致
+- 通过 `vp dlx shadcn@latest add <component>` 安装，组件落地 `src/components/ui/`
+- 不直接修改 `src/components/ui/` 原始文件，二次封装放 `src/components/`
+
+---
+
+## UI 设计规范
+
+- 涉及界面设计、视觉优化、交互体验时，使用 **Impeccable skill** 辅助
+- 避免平庸的默认审美，追求有设计感的 UI
 
 ---
 
 ## 导入规范
-- 使用绝对路径导入，配置 `@` 路径别名指向 `src/`
-- 导入顺序：第三方库 → 内部模块 → 类型定义
-- 按字母顺序排列同组导入
+
+- 使用 `@/` 绝对路径，禁止相对路径跨层级引用
+- 导入顺序：第三方库 → 内部模块 → 类型
 
 ```typescript
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-
-import { formatDate } from '@/utils/formatDate';
-import type { UserInfo } from '@/types/user';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { formatDate } from "@/utils/formatDate";
+import type { UserInfo } from "@/types/user";
 ```
 
 ---
 
-## 组件开发规范
+## 组件设计原则
 
-### 组件结构设计
-- 单一职责原则：每个组件只负责一个功能
-- 组件大小控制：单个组件文件通常不超过 500 行，最多不超过 1000 行
-- 合理拆分：复杂组件拆分为多个子组件
-- 可复用性：优先设计可复用的通用组件
-
-### Props 设计原则
-- 必需属性在前，可选属性在后
-- 使用明确的类型定义，避免 any
-- 提供合理的默认值
-- 事件回调使用统一的命名规范（`on` 前缀，如 `onSubmit`、`onChange`）
+- 单一职责，单文件不超过 500 行（最多 1000 行）
+- 复杂组件拆分子组件，Props 必需项在前、可选项在后
