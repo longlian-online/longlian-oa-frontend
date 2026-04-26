@@ -10,18 +10,19 @@
 ```
 
 **关键字段说明：**
+
 - `sort`: 步骤顺序，**相同值表示并行节点**（如翻译A和翻译B同时sort=1）
 - `parallelSort`: 并行组内排序，控制展示顺序
 - `taskStatus`: PENDING(待接取) / CLAIMED(已接取) / COMPLETED(已完成) / null(未解锁)
 
 ### 1.2 与之前讨论的"图结构"差异
 
-| 概念 | 之前的设想 | 后端实际 |
-|------|-----------|---------|
-| 流程结构 | 有向图，任意节点可连接 | 线性列表，sort控制顺序 |
-| 并行 | 通过分支节点实现 | 相同sort值即为并行 |
-| 打回 | 反向边，可回退到任意节点 | 独立reject接口，回退逻辑后端控制 |
-| 模板变更 | 实时影响 | 创建时快照，不影响已有任务流 |
+| 概念     | 之前的设想               | 后端实际                         |
+| -------- | ------------------------ | -------------------------------- |
+| 流程结构 | 有向图，任意节点可连接   | 线性列表，sort控制顺序           |
+| 并行     | 通过分支节点实现         | 相同sort值即为并行               |
+| 打回     | 反向边，可回退到任意节点 | 独立reject接口，回退逻辑后端控制 |
+| 模板变更 | 实时影响                 | 创建时快照，不影响已有任务流     |
 
 **结论**：放弃 React Flow 的复杂图编辑，改用**垂直时间轴 + 并行组横向排列**的可视化方案。
 
@@ -45,15 +46,16 @@
 ```tsx
 // 垂直时间轴 + 并行组横向排列
 <TaskFlowViewer
-  nodes={itemTaskFlow.nodes}  // ItemTaskNodeVO[]
+  nodes={itemTaskFlow.nodes} // ItemTaskNodeVO[]
   currentUserId={userId}
-  onClaim={handleClaim}       // 接取任务
-  onSubmit={handleSubmit}     // 提交任务
-  onReject={handleReject}     // 打回任务
+  onClaim={handleClaim} // 接取任务
+  onSubmit={handleSubmit} // 提交任务
+  onReject={handleReject} // 打回任务
 />
 ```
 
 **视觉设计：**
+
 ```
 ●─────── 创建 ───────●     ← sort=0, 单节点
                      │
@@ -70,6 +72,7 @@
 ```
 
 **节点状态样式：**
+
 - `null`（未解锁）：灰色虚线边框，不可交互
 - `PENDING`（待接取）：蓝色边框，显示"接取"按钮
 - `CLAIMED`（已接取）：橙色边框，显示执行人头像 + "提交"按钮
@@ -78,18 +81,17 @@
 ### 3.2 模板编辑器
 
 ```tsx
-<TemplateEditor
-  initialData={taskTemplate}
-  onSave={handleSave}
-/>
+<TemplateEditor initialData={taskTemplate} onSave={handleSave} />
 ```
 
 **功能：**
+
 1. 左侧：原子任务库（可拖拽）
 2. 中间：垂直时间轴编辑区
 3. 右侧：节点属性面板（配置metaSchema）
 
 **编辑操作：**
+
 - 拖拽原子任务到时间轴 → 添加节点
 - 拖拽节点上下移动 → 调整sort顺序
 - 将节点拖入同一水平线 → 设为并行（相同sort）
@@ -100,17 +102,18 @@
 ```tsx
 <TaskSubmitPanel
   taskInstance={taskInstance}
-  metaSchema={metaSchema}     // JSON字段定义
+  metaSchema={metaSchema} // JSON字段定义
   onSubmit={handleSubmit}
 />
 ```
 
 **根据metaSchema动态渲染表单：**
+
 ```json
 [
-  {"name": "附件", "fieldType": "file", "required": true},
-  {"name": "作者", "fieldType": "text", "required": true},
-  {"name": "源链接", "fieldType": "text", "required": false}
+  { "name": "附件", "fieldType": "file", "required": true },
+  { "name": "作者", "fieldType": "text", "required": true },
+  { "name": "源链接", "fieldType": "text", "required": false }
 ]
 ```
 
@@ -123,12 +126,12 @@
 ```ts
 // 查询键设计
 const queryKeys = {
-  projectDetail: (id: string) => ['project', 'detail', id],
-  taskFlow: (itemId: string) => ['taskFlow', itemId],
-  taskInstances: (projectId: string) => ['taskInstances', projectId],
-  taskSubmissions: (instanceId: string) => ['submissions', instanceId],
-  templates: (params: object) => ['templates', params],
-  baseTasks: (params: object) => ['baseTasks', params],
+  projectDetail: (id: string) => ["project", "detail", id],
+  taskFlow: (itemId: string) => ["taskFlow", itemId],
+  taskInstances: (projectId: string) => ["taskInstances", projectId],
+  taskSubmissions: (instanceId: string) => ["submissions", instanceId],
+  templates: (params: object) => ["templates", params],
+  baseTasks: (params: object) => ["baseTasks", params],
 };
 ```
 
@@ -139,12 +142,12 @@ interface WorkflowStore {
   // 模板编辑状态
   editingTemplate: TaskTemplateCreateDTO | null;
   selectedNodeId: number | null;
-  
+
   // 操作
   addNode: (baseTaskId: number) => void;
   removeNode: (nodeId: number) => void;
-  moveNode: (nodeId: number, direction: 'up' | 'down') => void;
-  setParallel: (nodeIds: number[]) => void;  // 设为相同sort
+  moveNode: (nodeId: number, direction: "up" | "down") => void;
+  setParallel: (nodeIds: number[]) => void; // 设为相同sort
   updateNodeMeta: (nodeId: number, meta: object) => void;
 }
 ```
@@ -202,54 +205,54 @@ GET /app/task/instance/{instanceId}/submissions
 
 ### 6.1 任务模板管理
 
-| 接口 | 方法 | 用途 |
-|-----|------|-----|
-| `/app/task/template` | POST | 创建模板 |
-| `/app/task/template/{templateId}` | PUT | 更新模板 |
-| `/app/task/template/{templateId}` | GET | 获取模板详情 |
-| `/app/task/template/list` | POST | 分页查询模板列表 |
-| `/app/task/template/task-template/status` | PUT | 启用/禁用模板 |
-| `/app/project/item/template-options` | GET | 获取可选模板列表（创建项目时用）|
+| 接口                                      | 方法 | 用途                             |
+| ----------------------------------------- | ---- | -------------------------------- |
+| `/app/task/template`                      | POST | 创建模板                         |
+| `/app/task/template/{templateId}`         | PUT  | 更新模板                         |
+| `/app/task/template/{templateId}`         | GET  | 获取模板详情                     |
+| `/app/task/template/list`                 | POST | 分页查询模板列表                 |
+| `/app/task/template/task-template/status` | PUT  | 启用/禁用模板                    |
+| `/app/project/item/template-options`      | GET  | 获取可选模板列表（创建项目时用） |
 
 ### 6.2 原子任务管理
 
-| 接口 | 方法 | 用途 |
-|-----|------|-----|
-| `/app/task/base` | POST | 创建原子任务 |
-| `/app/task/base/list` | POST | 分页查询原子任务 |
-| `/app/task/base/base-task/status` | PUT | 启用/禁用原子任务 |
+| 接口                              | 方法 | 用途              |
+| --------------------------------- | ---- | ----------------- |
+| `/app/task/base`                  | POST | 创建原子任务      |
+| `/app/task/base/list`             | POST | 分页查询原子任务  |
+| `/app/task/base/base-task/status` | PUT  | 启用/禁用原子任务 |
 
 ### 6.3 项目任务流
 
-| 接口 | 方法 | 用途 |
-|-----|------|-----|
-| `/app/project/item/{itemId}/task-flow` | POST | 创建任务流 |
-| `/app/project/item/{itemId}/task-flow` | GET | 获取任务流详情（含节点状态）|
+| 接口                                   | 方法 | 用途                         |
+| -------------------------------------- | ---- | ---------------------------- |
+| `/app/project/item/{itemId}/task-flow` | POST | 创建任务流                   |
+| `/app/project/item/{itemId}/task-flow` | GET  | 获取任务流详情（含节点状态） |
 
 ### 6.4 任务实例操作
 
-| 接口 | 方法 | 用途 |
-|-----|------|-----|
-| `/app/task/instance/project/{projectId}` | GET | 查询可接取任务列表 |
-| `/app/task/instance/{instanceId}/claim` | POST | 接取任务 |
-| `/app/task/instance/{instanceId}/submit` | POST | 提交任务 |
-| `/app/task/instance/{instanceId}/reset` | POST | 重置提交（撤回）|
-| `/app/task/instance/{instanceId}/reject` | POST | 打回任务 |
-| `/app/task/instance/{instanceId}/abandon` | POST | 放弃任务 |
-| `/app/task/instance/{instanceId}/submissions` | GET | 查询提交记录 |
-| `/app/task/instance/submission/{submissionId}/download` | GET | 下载任务文件 |
-| `/app/file/upload` | POST | **TODO：上传文件接口，后端未提供** |
+| 接口                                                    | 方法 | 用途                               |
+| ------------------------------------------------------- | ---- | ---------------------------------- |
+| `/app/task/instance/project/{projectId}`                | GET  | 查询可接取任务列表                 |
+| `/app/task/instance/{instanceId}/claim`                 | POST | 接取任务                           |
+| `/app/task/instance/{instanceId}/submit`                | POST | 提交任务                           |
+| `/app/task/instance/{instanceId}/reset`                 | POST | 重置提交（撤回）                   |
+| `/app/task/instance/{instanceId}/reject`                | POST | 打回任务                           |
+| `/app/task/instance/{instanceId}/abandon`               | POST | 放弃任务                           |
+| `/app/task/instance/{instanceId}/submissions`           | GET  | 查询提交记录                       |
+| `/app/task/instance/submission/{submissionId}/download` | GET  | 下载任务文件                       |
+| `/app/file/upload`                                      | POST | **TODO：上传文件接口，后端未提供** |
 
 ### 6.5 企划与项目
 
-| 接口 | 方法 | 用途 |
-|-----|------|-----|
-| `/app/project` | POST | 创建企划 |
-| `/app/project/{projectId}` | GET | 获取企划详情 |
-| `/app/project/{projectId}` | PUT | 编辑企划 |
-| `/app/project/list` | POST | 分页查询企划列表 |
-| `/app/project/{projectId}/item` | POST | 创建项目 |
-| `/app/project/item/list` | POST | 分页查询项目列表 |
+| 接口                            | 方法 | 用途             |
+| ------------------------------- | ---- | ---------------- |
+| `/app/project`                  | POST | 创建企划         |
+| `/app/project/{projectId}`      | GET  | 获取企划详情     |
+| `/app/project/{projectId}`      | PUT  | 编辑企划         |
+| `/app/project/list`             | POST | 分页查询企划列表 |
+| `/app/project/{projectId}/item` | POST | 创建项目         |
+| `/app/project/item/list`        | POST | 分页查询项目列表 |
 
 ---
 
@@ -259,15 +262,15 @@ GET /app/task/instance/{instanceId}/submissions
 
 ```ts
 interface TaskTemplateCreateDTO {
-  name: string;           // 模板名称
-  description?: string;   // 模板说明
+  name: string; // 模板名称
+  description?: string; // 模板说明
   nodes: TaskTemplateNodeDTO[];
 }
 
 interface TaskTemplateNodeDTO {
-  baseTaskId: number;     // 关联原子任务ID
-  sort: number;           // 步骤顺序（相同值=并行）
-  parallelSort?: number;  // 并行组内排序
+  baseTaskId: number; // 关联原子任务ID
+  sort: number; // 步骤顺序（相同值=并行）
+  parallelSort?: number; // 并行组内排序
 }
 ```
 
@@ -278,10 +281,10 @@ interface ItemTaskNodeVO {
   id: number;
   baseTaskId: number;
   name: string;
-  metaSchema: string;     // JSON字段定义快照
+  metaSchema: string; // JSON字段定义快照
   sort: number;
   parallelSort: number;
-  taskStatus: 'PENDING' | 'CLAIMED' | 'COMPLETED' | null;
+  taskStatus: "PENDING" | "CLAIMED" | "COMPLETED" | null;
   assigneeId?: number;
   assigneeNickname?: string;
   assigneeAvatarUrl?: string;
@@ -298,7 +301,7 @@ interface TaskInstanceVO {
   itemTaskNodeId: number;
   baseTaskName: string;
   baseTaskDescription?: string;
-  status: 'PENDING' | 'CLAIMED' | 'COMPLETED';
+  status: "PENDING" | "CLAIMED" | "COMPLETED";
   assigneeId?: number;
   assigneeNickname?: string;
   assigneeAvatarUrl?: string;
@@ -315,11 +318,11 @@ interface TaskSubmissionVO {
   taskInstanceId: number;
   itemTaskNodeId: number;
   baseTaskName: string;
-  status: 'SUBMITTED' | 'REJECTED' | 'RESET';
+  status: "SUBMITTED" | "REJECTED" | "RESET";
   submitterId: number;
   submitterNickname: string;
   submitterAvatarUrl?: string;
-  metadata: string;       // 提交的JSON数据
+  metadata: string; // 提交的JSON数据
   reviewerId?: number;
   reviewerNickname?: string;
   reviewComment?: string;
@@ -332,28 +335,31 @@ interface TaskSubmissionVO {
 
 ## 8. 技术选型
 
-| 需求 | 方案 |
-|-----|------|
-| 任务流可视化 | 自研垂直时间轴组件（无需React Flow）|
-| 模板编辑器 | 拖拽排序用 @dnd-kit，并行组用 CSS Grid |
-| 动态表单 | 基于 metaSchema 动态渲染 |
-| 文件上传 | 分片上传 + 进度条 |
-| 状态管理 | TanStack Query（服务器状态）+ Zustand（本地状态）|
+| 需求         | 方案                                              |
+| ------------ | ------------------------------------------------- |
+| 任务流可视化 | 自研垂直时间轴组件（无需React Flow）              |
+| 模板编辑器   | 拖拽排序用 @dnd-kit，并行组用 CSS Grid            |
+| 动态表单     | 基于 metaSchema 动态渲染                          |
+| 文件上传     | 分片上传 + 进度条                                 |
+| 状态管理     | TanStack Query（服务器状态）+ Zustand（本地状态） |
 
 ---
 
 ## 9. 开发优先级
 
 ### Phase 1：基础展示（MVP）
+
 1. 企划列表页
 2. 企划详情页 + 任务流可视化（只读）
 3. 任务接取/提交/打回基础功能
 
 ### Phase 2：模板管理
+
 4. 原子任务管理
 5. 任务模板管理（列表 + 基础编辑）
 
 ### Phase 3：高级功能
+
 6. 模板可视化编辑器（拖拽排序、并行组设置）
 7. 提交记录历史查看
 8. 文件上传优化（大文件分片）
@@ -362,12 +368,12 @@ interface TaskSubmissionVO {
 
 ## 10. 已确认问题
 
-| 问题 | 确认结果 |
-|-----|---------|
-| **打回逻辑** | 后端控制回退目标节点，前端展示：①"被打回"状态标签 ②打回理由 ③红色反向流转线 |
+| 问题             | 确认结果                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------- |
+| **打回逻辑**     | 后端控制回退目标节点，前端展示：①"被打回"状态标签 ②打回理由 ③红色反向流转线           |
 | **并行任务分配** | **自选机制**。并行节点（如翻译A/B/C）生成多个独立任务实例，用户主动接取自己想做的任务 |
-| **文件版本** | 通过 `metadata.attachment.fileId` 引用文件。（TODO：文件上传接口后端未提供） |
-| **通知机制** | （TODO：通知接口后端未提供） |
+| **文件版本**     | 通过 `metadata.attachment.fileId` 引用文件。（TODO：文件上传接口后端未提供）          |
+| **通知机制**     | （TODO：通知接口后端未提供）                                                          |
 
 ---
 
@@ -384,6 +390,7 @@ interface TaskSubmissionVO {
 ```
 
 **打回节点样式：**
+
 - 节点边框：红色（`border-red-500`）
 - 状态标签：「被打回」红色 badge
 - 连接线：红色虚线（`stroke-red-500 stroke-dashed`）
@@ -428,6 +435,7 @@ interface TaskSubmissionVO {
 ```
 
 **规则：**
+
 - 一个用户**只能接取一个并行任务**（防止垄断）
 - 接取后显示「进行中」，他人不能再接取
 - 可以「放弃」任务，释放给其他人
@@ -437,15 +445,13 @@ interface TaskSubmissionVO {
 ```ts
 function canClaim(taskInstance: TaskInstanceVO, currentUserId: number): boolean {
   // 1. 任务状态必须是 PENDING
-  if (taskInstance.status !== 'PENDING') return false;
-  
+  if (taskInstance.status !== "PENDING") return false;
+
   // 2. 同一并行组是否已接取其他任务
   const parallelGroup = getParallelGroup(taskInstance);
-  const hasClaimedOther = parallelGroup.some(
-    t => t.assigneeId === currentUserId
-  );
+  const hasClaimedOther = parallelGroup.some((t) => t.assigneeId === currentUserId);
   if (hasClaimedOther) return false;
-  
+
   return true;
 }
 ```
