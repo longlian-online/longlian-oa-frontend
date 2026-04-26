@@ -106,10 +106,10 @@ src/
 
 ### 两个独立维度
 
-| 维度 | 切换方式 | 存储 |
-|------|----------|------|
-| 亮/暗模式 | `<html>` 加/移除 `.dark` 类 | `localStorage("theme")` |
-| 颜色主题 | `<html>` 设置 `data-color-theme="pink"` 等 | `localStorage("color-theme")` |
+| 维度      | 切换方式                                   | 存储                          |
+| --------- | ------------------------------------------ | ----------------------------- |
+| 亮/暗模式 | `<html>` 加/移除 `.dark` 类                | `localStorage("theme")`       |
+| 颜色主题  | `<html>` 设置 `data-color-theme="pink"` 等 | `localStorage("color-theme")` |
 
 两者完全独立，可以任意组合（如：暗色 + 粉色主题）。
 
@@ -133,7 +133,11 @@ src/
 [data-color-theme="blue"] {
   --theme-accent-start: #3b82f6;
   --theme-accent-end: #1d4ed8;
-  --theme-accent-gradient: linear-gradient(279deg, var(--theme-accent-start) 0%, var(--theme-accent-end) 100%);
+  --theme-accent-gradient: linear-gradient(
+    279deg,
+    var(--theme-accent-start) 0%,
+    var(--theme-accent-end) 100%
+  );
   --theme-accent-solid: #2563eb;
   --theme-accent-solid-a3: rgba(37, 99, 235, 0.3);
 }

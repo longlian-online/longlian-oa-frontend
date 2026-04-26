@@ -1,6 +1,6 @@
 import { Moon, Sun } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { cn } from "../../lib/utils";
+import { Button } from "@/components/ui/button";
 
 function useTheme() {
   const [isDark, setIsDark] = useState(() => {
@@ -39,7 +39,7 @@ function useTheme() {
       return;
     }
 
-    document
+    void document
       .startViewTransition(() => {
         applyTheme(next);
         setIsDark(next);
@@ -58,16 +58,14 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
   const { isDark, toggle } = useTheme();
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="icon-sm"
       onClick={toggle}
       aria-label={isDark ? "切换为浅色模式" : "切换为深色模式"}
-      className={cn(
-        "text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg p-2 transition-colors",
-        className,
-      )}
+      className={className}
     >
       {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-    </button>
+    </Button>
   );
 }

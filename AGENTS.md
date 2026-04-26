@@ -12,16 +12,16 @@
 
 ## 技术栈
 
-| 类别 | 技术 | 说明 |
-|------|------|------|
-| 构建工具 | Vite Plus (`vp`) | 统一工具链，禁止直接使用 pnpm/npm |
-| 前端框架 | React 19 + TypeScript 5.9 | 函数组件 + Hooks |
-| 样式 | Tailwind CSS v4 | 纯 utility class，不写独立 CSS 文件 |
-| UI 组件库 | shadcn/ui | 组件安装到 `src/components/ui/` |
-| 路由 | react-router + vite-plugin-pages | 文件系统自动路由，无需手动注册 |
-| Lint | oxlint（内置于 vp） | 替代 ESLint，禁止单独安装 ESLint |
-| Format | oxfmt（内置于 vp） | 替代 Prettier，禁止单独安装 Prettier |
-| UI 设计 | Impeccable skill | 界面设计、视觉优化时使用 |
+| 类别      | 技术                             | 说明                                 |
+| --------- | -------------------------------- | ------------------------------------ |
+| 构建工具  | Vite Plus (`vp`)                 | 统一工具链，禁止直接使用 pnpm/npm    |
+| 前端框架  | React 19 + TypeScript 5.9        | 函数组件 + Hooks                     |
+| 样式      | Tailwind CSS v4                  | 纯 utility class，不写独立 CSS 文件  |
+| UI 组件库 | shadcn/ui                        | 组件安装到 `src/components/ui/`      |
+| 路由      | react-router + vite-plugin-pages | 文件系统自动路由，无需手动注册       |
+| Lint      | oxlint（内置于 vp）              | 替代 ESLint，禁止单独安装 ESLint     |
+| Format    | oxfmt（内置于 vp）               | 替代 Prettier，禁止单独安装 Prettier |
+| UI 设计   | Impeccable skill                 | 界面设计、视觉优化时使用             |
 
 ---
 
@@ -52,12 +52,12 @@ src/
 
 `vite-plugin-pages` 自动扫描 `src/pages/`，**新增页面只需创建文件**：
 
-| 文件 | 路由 |
-|------|------|
-| `src/pages/index.tsx` | `/` |
-| `src/pages/login.tsx` | `/login` |
+| 文件                            | 路由         |
+| ------------------------------- | ------------ |
+| `src/pages/index.tsx`           | `/`          |
+| `src/pages/login.tsx`           | `/login`     |
 | `src/pages/dashboard/index.tsx` | `/dashboard` |
-| `src/pages/user/[id].tsx` | `/user/:id` |
+| `src/pages/user/[id].tsx`       | `/user/:id`  |
 
 禁止在 `main.tsx` 手动注册 `<Route>`。
 
@@ -65,14 +65,14 @@ src/
 
 ## 开发命令
 
-| 命令 | 说明 |
-|------|------|
-| `vp dev` | 启动开发服务器 |
-| `vp build` | 构建生产产物 |
-| `vp check` | 格式 + lint + 类型检查（三合一） |
-| `vp lint src` | 仅 lint |
-| `vp fmt src --write` | 仅格式化并写入 |
-| `vp add <pkg>` | 安装依赖（替代 pnpm add） |
+| 命令                 | 说明                             |
+| -------------------- | -------------------------------- |
+| `vp dev`             | 启动开发服务器                   |
+| `vp build`           | 构建生产产物                     |
+| `vp check`           | 格式 + lint + 类型检查（三合一） |
+| `vp lint src`        | 仅 lint                          |
+| `vp fmt src --write` | 仅格式化并写入                   |
+| `vp add <pkg>`       | 安装依赖（替代 pnpm add）        |
 
 **重要：** 禁止直接使用 `pnpm`/`npm`/`npx`，统一用 `vp`。  
 禁止单独安装 `vitest`、`oxlint`、`oxfmt`，它们已内置于 vp。
@@ -87,16 +87,16 @@ src/
 <type>(<scope>): <subject>
 ```
 
-| type | 说明 |
-|------|------|
-| `feat` | 新功能 |
-| `fix` | Bug 修复 |
-| `upd` | 更新/优化已有功能 |
-| `docs` | 文档变更 |
-| `style` | 代码格式（不影响逻辑） |
-| `refactor` | 重构 |
-| `chore` | 构建/工具/依赖变更 |
-| `revert` | 回滚 |
+| type       | 说明                   |
+| ---------- | ---------------------- |
+| `feat`     | 新功能                 |
+| `fix`      | Bug 修复               |
+| `upd`      | 更新/优化已有功能      |
+| `docs`     | 文档变更               |
+| `style`    | 代码格式（不影响逻辑） |
+| `refactor` | 重构                   |
+| `chore`    | 构建/工具/依赖变更     |
+| `revert`   | 回滚                   |
 
 示例：`feat(login): add oauth support`、`fix: handle events on blur`
 

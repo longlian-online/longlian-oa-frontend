@@ -1,5 +1,6 @@
 import { Bell } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
+import { Button } from "@/components/ui/button";
 import ThemeToggle from "../theme/ThemeToggle";
 import { cn } from "../../lib/utils";
 
@@ -48,14 +49,10 @@ export default function AppHeader() {
 
       <div className="flex items-center justify-end gap-1">
         <ThemeToggle />
-        <button
-          type="button"
-          className="text-muted-foreground hover:bg-secondary hover:text-foreground relative rounded-lg p-2 transition-colors"
-          aria-label="通知"
-        >
+        <Button variant="ghost" size="icon-sm" aria-label="通知" className="relative">
           <Bell className="h-4 w-4" />
           <span className="bg-destructive absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full" />
-        </button>
+        </Button>
       </div>
     </header>
   );
