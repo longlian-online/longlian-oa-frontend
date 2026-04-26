@@ -33,6 +33,14 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
+  server: {
+    proxy: {
+      "/app": {
+        target: "https://sit.neo.oa.api.longlian.online",
+        changeOrigin: true,
+      },
+    },
+  },
   staged: {
     "*": "vp check --fix",
   },

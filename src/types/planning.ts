@@ -241,3 +241,12 @@ export interface MetaFieldSchema {
   required: boolean;
   options?: string[]; // select 类型使用
 }
+
+// ==================== 认证相关 ====================
+
+export interface LoginVO {
+  userId: number;
+  defaultOrgId: number;
+  token: string;
+  roles: string[];
+}
