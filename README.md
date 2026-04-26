@@ -104,31 +104,62 @@ src/
 
 ## 主题系统
 
-### 配色结构
+### 两个独立维度
 
-项目采用两层主题变量：
+| 维度 | 切换方式 | 存储 |
+|------|----------|------|
+| 亮/暗模式 | `<html>` 加/移除 `.dark` 类 | `localStorage("theme")` |
+| 颜色主题 | `<html>` 设置 `data-color-theme="pink"` 等 | `localStorage("color-theme")` |
 
-- `src/styles/theme/shadcn.css` — shadcn/ui 语义变量（`--background`、`--primary`、`--foreground` 等），亮/暗双套
-- `src/styles/theme/index.css` — 品牌自定义变量（渐变、具名色、状态色等）
+两者完全独立，可以任意组合（如：暗色 + 粉色主题）。
 
-**品牌主色：** 粉红 `#e91e63`，渐变 `#f96676 → #e91e63`（`var(--gradient-pink)`）
+### 默认主题：Monochrome（黑白）
 
-### 亮/暗模式切换
+不设置 `data-color-theme` 时，使用纯黑白无彩色主题。颜色主题作为可选叠加层。
 
-1. 给 `<html>` 加/移除 `.dark` 类
-2. CSS 里 `.dark` 选择器自动覆盖变量值
-3. 主题状态存入 `localStorage`，刷新后不闪烁
-4. 使用 View Transitions API 实现从左到右渐变扫过动画
+### 配色文件结构
 
-使用 `ThemeToggle` 组件切换，使用 `useIsDarkTheme()` Hook 读取当前状态。
+- `src/styles/theme/shadcn.css` — shadcn 语义变量（`--background`、`--foreground`、`--primary` 等），亮/暗双套，与颜色主题无关
+- `src/styles/theme/index.css` — 多主题颜色系统：
+  - `--theme-accent-*` — 当前颜色主题的品牌色（渐变、实色、透明版），通过 `[data-color-theme="xxx"]` 选择器覆盖
+  - 背景渐变、状态色（info/success/warning/danger）、具名语义色
+- `src/styles/theme/theme-transition.css` — View Transitions 切换动画
 
-访问 `/theme-preview` 可查看所有配色的可视化预览。
+### 新增颜色主题
+
+在 `src/styles/theme/index.css` 中添加对应选择器：
+
+```css
+[data-color-theme="blue"] {
+  --theme-accent-start: #3b82f6;
+  --theme-accent-end: #1d4ed8;
+  --theme-accent-gradient: linear-gradient(279deg, var(--theme-accent-start) 0%, var(--theme-accent-end) 100%);
+  --theme-accent-solid: #2563eb;
+  --theme-accent-solid-a3: rgba(37, 99, 235, 0.3);
+}
+```
+
+### 在代码中使用主题色
+
+```tsx
+// 品牌渐变（跟随颜色主题）
+<div style={{ background: "var(--theme-accent-gradient)" }} />
+
+// 品牌实色
+<div style={{ color: "var(--theme-accent-solid)" }} />
+
+// shadcn 语义色（推荐用 Tailwind class）
+<div className="bg-background text-foreground" />
+<div className="bg-primary text-primary-foreground" />
+```
+
+访问 `/theme-preview` 可查看所有配色的可视化预览，并支持实时切换颜色主题。
 
 ### 样式规范
 
 - 只用 Tailwind CSS utility class + `cn()` 合并类名
-- 不写独立 CSS 文件，不用内联 `style`（主题变量引用除外）
-- 颜色统一使用 CSS 变量，禁止硬编码 hex/rgb
+- 不写独立 CSS 文件，不用内联 `style`（CSS 变量引用除外）
+- 颜色统一使用 CSS 变量或 Tailwind 语义 class，禁止硬编码 hex/rgb
 
 ---
 

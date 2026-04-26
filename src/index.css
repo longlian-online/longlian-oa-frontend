@@ -6,7 +6,7 @@
 @import "./styles/theme/index.css";
 @import "./styles/theme/theme-transition.css";
 
-@custom-variant dark (&:is(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --font-heading: var(--font-sans);

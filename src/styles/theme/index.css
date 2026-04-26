@@ -1,35 +1,102 @@
+/* ============================================================
+   多主题颜色系统
+   切换方式：给 <html> 设置 data-color-theme="pink" 等属性
+   默认（不设置或 monochrome）：黑白无彩色主题
+   ============================================================ */
+
+/* ── 主题色 token（由各主题覆盖） ── */
 :root {
-  --gradient-bg-start: #fdfbfb;
-  --gradient-bg-end: #ebedee;
-  --gradient-bg: linear-gradient(180deg, var(--gradient-bg-start) 10%, var(--gradient-bg-end) 100%);
-  --gradient-pink: linear-gradient(279deg, #f96676 0%, #e91e63 100%);
-  --gradient-header: linear-gradient(-225deg, #e3fdf5 0, #ffe6fa 100%);
-
-  /* shoka migrate */
-  --box-bg-shadow: rgba(0, 0, 0, 0.1);
-  --grey-1-a5: rgba(253, 253, 253, 0.5);
-  --gradient-shoka-button-start: #ed6ea0;
-  --gradient-shoka-button-end: #ec8c69;
-  --gradient-shoka-button: linear-gradient(
-    to right,
-    var(--gradient-shoka-button-start) 0,
-    var(--gradient-shoka-button-end) 100%
+  /* 当前主题的品牌主色，用于渐变、徽标等强调元素 */
+  --theme-accent-start: #666;
+  --theme-accent-end: #222;
+  --theme-accent-gradient: linear-gradient(
+    279deg,
+    var(--theme-accent-start) 0%,
+    var(--theme-accent-end) 100%
   );
-  --shoka-blue: 201 69% 54%;
-  --grey-4: 0 0% 80%;
-  --color-pink: #ed6ea0;
-  --color-pink-a3: rgba(237, 110, 160, 0.3);
+  --theme-accent-solid: #333;
+  --theme-accent-solid-a3: rgba(51, 51, 51, 0.3);
+}
 
-  /* Shoka container/effect colors (primary uses --primary from shadcn theme) */
+.dark {
+  --theme-accent-start: #bbb;
+  --theme-accent-end: #888;
+  --theme-accent-gradient: linear-gradient(
+    279deg,
+    var(--theme-accent-start) 0%,
+    var(--theme-accent-end) 100%
+  );
+  --theme-accent-solid: #aaa;
+  --theme-accent-solid-a3: rgba(170, 170, 170, 0.3);
+}
+
+/* ── 粉色主题 ── */
+[data-color-theme="pink"] {
+  --theme-accent-start: #f96676;
+  --theme-accent-end: #e91e63;
+  --theme-accent-gradient: linear-gradient(
+    279deg,
+    var(--theme-accent-start) 0%,
+    var(--theme-accent-end) 100%
+  );
+  --theme-accent-solid: #e91e63;
+  --theme-accent-solid-a3: rgba(233, 30, 99, 0.3);
+}
+
+[data-color-theme="pink"].dark {
+  --theme-accent-start: #f96676;
+  --theme-accent-end: #e91e63;
+  --theme-accent-solid: #f472b6;
+  --theme-accent-solid-a3: rgba(244, 114, 182, 0.3);
+}
+
+/* ============================================================
+   全局背景渐变 / 布局辅助变量（跟随亮暗模式，不跟随品牌色）
+   ============================================================ */
+:root {
+  --gradient-bg-start: #fafafa;
+  --gradient-bg-end: #f0f0f0;
+  --gradient-bg: linear-gradient(180deg, var(--gradient-bg-start) 10%, var(--gradient-bg-end) 100%);
+  --gradient-header: linear-gradient(-225deg, #f5f5f5 0, #ebebeb 100%);
+  --box-bg-shadow: rgba(0, 0, 0, 0.08);
+  --grey-1-a5: rgba(250, 250, 250, 0.5);
+  --grey-4: 0 0% 80%;
+}
+
+.dark {
+  --gradient-bg-start: #111;
+  --gradient-bg-end: #000;
+  --gradient-bg: linear-gradient(180deg, var(--gradient-bg-start) 10%, var(--gradient-bg-end) 100%);
+  --gradient-header: linear-gradient(-225deg, #1a1a1a 0, #111 100%);
+  --box-bg-shadow: rgba(0, 0, 0, 0.4);
+  --grey-1-a5: rgba(20, 20, 20, 0.5);
+  --grey-4: 0 0% 40%;
+}
+
+/* ============================================================
+   状态色（info / success / warning / danger）
+   ============================================================ */
+:root {
   --shoka-default: 0 0% 40%;
   --shoka-info: 210 100% 50%;
   --shoka-success: 142 76% 36%;
   --shoka-warning: 45 100% 40%;
   --shoka-danger: 0 84% 60%;
+}
 
-  /* Named text colors — adapted for light/dark mode readability */
+.dark {
+  --shoka-default: 0 0% 60%;
+  --shoka-info: 210 100% 65%;
+  --shoka-success: 142 76% 50%;
+  --shoka-warning: 45 100% 55%;
+  --shoka-danger: 0 84% 70%;
+}
+
+/* ============================================================
+   具名语义色（亮/暗自动切换）
+   ============================================================ */
+:root {
   --color-red: #e74c3c;
-  --color-pink-text: #e91e63;
   --color-orange: #f39c12;
   --color-yellow: #d4a017;
   --color-green: #27ae60;
@@ -40,38 +107,7 @@
 }
 
 .dark {
-  --gradient-bg-start: #21252b;
-  --gradient-bg-end: #000;
-  --gradient-bg: linear-gradient(180deg, var(--gradient-bg-start) 10%, var(--gradient-bg-end) 100%);
-  --gradient-pink: linear-gradient(279deg, #f96676 0%, #e91e63 100%);
-  --gradient-header: linear-gradient(-225deg, #2d3230 0, #322d31 100%);
-
-  /* shoka migrate */
-  --box-bg-shadow: rgba(0, 0, 0, 0.5);
-  --grey-1-a5: rgba(34, 34, 34, 0.5);
-
-  --gradient-shoka-button-start: #f18bb3cc;
-  --gradient-shoka-button-end: #f0a387cc;
-  --gradient-shoka-button: linear-gradient(
-    to right,
-    var(--gradient-shoka-button-start) 0,
-    var(--gradient-shoka-button-end) 100%
-  );
-  --shoka-blue: 201 69% 77%;
-  --grey-4: 0 0% 40%;
-  --color-pink: #f18bb3;
-  --color-pink-a3: rgba(237, 110, 160, 0.3);
-
-  /* Shoka container/effect colors (dark mode) */
-  --shoka-default: 0 0% 60%;
-  --shoka-info: 210 100% 65%;
-  --shoka-success: 142 76% 50%;
-  --shoka-warning: 45 100% 55%;
-  --shoka-danger: 0 84% 70%;
-
-  /* Named text colors — brighter for dark backgrounds */
   --color-red: #f87171;
-  --color-pink-text: #f472b6;
   --color-orange: #fbbf24;
   --color-yellow: #facc15;
   --color-green: #4ade80;
