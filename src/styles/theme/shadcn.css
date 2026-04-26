@@ -1,69 +1,66 @@
-/* shadCN theme - https://ui.shadcn.com/themes */
+/* shadcn/ui 语义色 — 默认 monochrome 主题 */
+/* 多主题通过 [data-color-theme="xxx"] 覆盖 --primary 等变量即可 */
 @layer base {
   :root {
-    --background: 0 12% 99%;
-    --foreground: 0 0% 20%;
+    --background: oklch(99% 0 0);
+    --foreground: oklch(14% 0 0);
 
-    --card: 0 12% 99%;
-    --card-foreground: 240 10% 3.9%;
+    --card: oklch(100% 0 0);
+    --card-foreground: oklch(14% 0 0);
 
-    --popover: 0 12% 99%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover: oklch(100% 0 0);
+    --popover-foreground: oklch(14% 0 0);
 
-    --primary: 351 77% 62%;
-    --primary-foreground: 355.7 100% 97.3%;
+    --primary: oklch(14% 0 0);
+    --primary-foreground: oklch(98% 0 0);
 
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: oklch(96% 0 0);
+    --secondary-foreground: oklch(14% 0 0);
 
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 0 0% 35%;
+    --muted: oklch(96% 0 0);
+    --muted-foreground: oklch(55% 0 0);
 
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --accent: oklch(96% 0 0);
+    --accent-foreground: oklch(14% 0 0);
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: oklch(62% 0.22 25);
+    --destructive-foreground: oklch(98% 0 0);
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 346.8 77.2% 49.8%;
-
-    --badge-primary: 351 49% 50%;
+    --border: oklch(91% 0 0);
+    --input: oklch(91% 0 0);
+    --ring: oklch(14% 0 0);
 
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 216 13% 15%;
-    --foreground: 0 0% 95%;
+    --background: oklch(14% 0 0);
+    --foreground: oklch(95% 0 0);
 
-    --card: 216 13% 15%;
-    --card-foreground: 0 0% 95%;
+    --card: oklch(18% 0 0);
+    --card-foreground: oklch(95% 0 0);
 
-    --popover: 216 13% 15%;
-    --popover-foreground: 0 0% 95%;
+    --popover: oklch(18% 0 0);
+    --popover-foreground: oklch(95% 0 0);
 
-    --primary: 350 77% 70%;
-    --primary-foreground: 355.7 100% 97.3%;
+    --primary: oklch(95% 0 0);
+    --primary-foreground: oklch(14% 0 0);
 
-    --secondary: 216 13% 22%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: oklch(22% 0 0);
+    --secondary-foreground: oklch(95% 0 0);
 
-    --muted: 216 13% 22%;
-    --muted-foreground: 0 0% 63%;
+    --muted: oklch(22% 0 0);
+    --muted-foreground: oklch(62% 0 0);
 
-    --accent: 216 13% 22%;
-    --accent-foreground: 0 0% 98%;
+    --accent: oklch(22% 0 0);
+    --accent-foreground: oklch(95% 0 0);
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 85.7% 97.3%;
+    --destructive: oklch(45% 0.18 25);
+    --destructive-foreground: oklch(98% 0 0);
 
-    --border: 216 13% 25%;
-    --input: 216 13% 25%;
-    --ring: 346.8 77.2% 49.8%;
-
-    --badge-primary: 350 77% 70%;
+    --border: oklch(25% 0 0);
+    --input: oklch(25% 0 0);
+    --ring: oklch(62% 0 0);
 
     --radius: 0.75rem;
   }
