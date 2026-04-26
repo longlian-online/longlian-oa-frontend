@@ -9,6 +9,7 @@ import type { ItemTaskNodeVO, TaskInstanceStatus } from "@/types/planning";
 interface TaskFlowViewerProps {
   nodes: ItemTaskNodeVO[];
   currentUserId?: number;
+  rejectedNodes?: { nodeId: number; reason: string }[];
   onClaim?: (nodeId: number) => void;
   onSubmit?: (nodeId: number) => void;
   onReject?: (nodeId: number) => void;
@@ -84,32 +85,39 @@ function getStatusStyle(status: TaskInstanceStatus | null | undefined) {
 function TaskNodeCard({
   node,
   currentUserId,
+  rejectedInfo,
   onClaim,
   onSubmit,
 }: {
   node: ItemTaskNodeVO;
   currentUserId?: number;
+  rejectedInfo?: { reason: string };
   onClaim?: (nodeId: number) => void;
   onSubmit?: (nodeId: number) => void;
 }) {
   const style = getStatusStyle(node.taskStatus);
   const StatusIcon = style.icon;
   const isAssignedToMe = node.assigneeId === currentUserId;
+  const isRejected = !!rejectedInfo;
 
   return (
     <TooltipProvider>
       <div
         className={cn(
           "relative flex w-48 flex-col gap-2 rounded-lg border-2 p-4 transition-all",
-          style.border,
-          style.bg,
-          node.taskStatus === null && "opacity-60",
+          isRejected ? "border-red-500 bg-red-50 dark:bg-red-950" : style.border,
+          isRejected ? "" : style.bg,
+          node.taskStatus === null && !isRejected && "opacity-60",
         )}
       >
         {/* 状态图标 */}
         <div className="flex items-center justify-between">
-          <StatusIcon className={cn("h-5 w-5", style.iconColor)} />
-          <Badge variant={style.badgeVariant}>{style.badge}</Badge>
+          <StatusIcon className={cn("h-5 w-5", isRejected ? "text-red-500" : style.iconColor)} />
+          {isRejected ? (
+            <Badge variant="destructive">被打回</Badge>
+          ) : (
+            <Badge variant={style.badgeVariant}>{style.badge}</Badge>
+          )}
         </div>
 
         {/* 节点名称 */}
@@ -148,8 +156,21 @@ function TaskNodeCard({
           </Button>
         )}
 
+        {/* 打回理由提示 */}
+        {isRejected && rejectedInfo && (
+          <Tooltip>
+            <TooltipTrigger>
+              <div className="absolute right-2 top-2 h-2 w-2 cursor-help rounded-full bg-red-500" />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="text-xs font-medium">打回理由:</p>
+              <p className="text-xs">{rejectedInfo.reason}</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+
         {/* 悬停提示：元数据字段 */}
-        {node.metaSchema && (
+        {node.metaSchema && !isRejected && (
           <Tooltip>
             <TooltipTrigger>
               <div className="absolute right-2 top-2 h-2 w-2 cursor-help rounded-full bg-current opacity-0 hover:opacity-100" />
@@ -165,15 +186,30 @@ function TaskNodeCard({
 }
 
 // 连接节点之间的线
-function ConnectorLine({ isActive }: { isActive?: boolean }) {
+function ConnectorLine({ isActive, isRejected }: { isActive?: boolean; isRejected?: boolean }) {
   return (
     <div className="flex h-8 items-center justify-center">
-      <div className={cn("w-0.5 flex-1", isActive ? "bg-primary" : "bg-border")} />
+      <div
+        className={cn(
+          "w-0.5 flex-1",
+          isRejected
+            ? "border-l-2 border-red-500 border-dashed bg-transparent w-0"
+            : isActive
+              ? "bg-primary"
+              : "bg-border",
+        )}
+      />
     </div>
   );
 }
 
-export function TaskFlowViewer({ nodes, currentUserId, onClaim, onSubmit }: TaskFlowViewerProps) {
+export function TaskFlowViewer({
+  nodes,
+  currentUserId,
+  rejectedNodes = [],
+  onClaim,
+  onSubmit,
+}: TaskFlowViewerProps) {
   const groupedNodes = groupNodesBySort(nodes);
 
   if (nodes.length === 0) {
@@ -186,7 +222,12 @@ export function TaskFlowViewer({ nodes, currentUserId, onClaim, onSubmit }: Task
         <div key={group.sort} className="w-full">
           {/* 连接线（第一组不显示） */}
           {groupIndex > 0 && (
-            <ConnectorLine isActive={group.nodes.some((n) => n.taskStatus !== null)} />
+            <ConnectorLine
+              isActive={group.nodes.some(
+                (n) => n.taskStatus !== null || rejectedNodes.some((r) => r.nodeId === n.id),
+              )}
+              isRejected={group.nodes.some((n) => rejectedNodes.some((r) => r.nodeId === n.id))}
+            />
           )}
 
           {/* 节点组 */}
@@ -201,6 +242,7 @@ export function TaskFlowViewer({ nodes, currentUserId, onClaim, onSubmit }: Task
                 key={node.id}
                 node={node}
                 currentUserId={currentUserId}
+                rejectedInfo={rejectedNodes.find((r) => r.nodeId === node.id)}
                 onClaim={onClaim}
                 onSubmit={onSubmit}
               />

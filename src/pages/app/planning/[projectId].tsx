@@ -1,13 +1,38 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { ProjectDetailInfoVO, ProjectItemListVO } from "@/types/planning";
-import { getProjectDetail, getProjectItemList } from "@/api/planning";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type {
+  ProjectDetailInfoVO,
+  ProjectItemListVO,
+  TaskTemplateOptionVO,
+} from "@/types/planning";
+import {
+  getProjectDetail,
+  getProjectItemList,
+  getTaskTemplateOptions,
+  createProjectItem,
+} from "@/api/planning";
 
 const statusMap: Record<string, { label: string; color: string }> = {
   进行中: { label: "进行中", color: "bg-blue-500" },
@@ -21,6 +46,11 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<ProjectDetailInfoVO | null>(null);
   const [items, setItems] = useState<ProjectItemListVO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [templates, setTemplates] = useState<TaskTemplateOptionVO[]>([]);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [newItemTitle, setNewItemTitle] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState("");
 
   useEffect(() => {
     if (projectId) {
@@ -47,6 +77,42 @@ export default function ProjectDetail() {
       console.error("Failed to load items:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadTemplates() {
+    try {
+      const data = await getTaskTemplateOptions();
+      setTemplates(data);
+    } catch (error) {
+      console.error("Failed to load templates:", error);
+    }
+  }
+
+  function openCreateDialog() {
+    void loadTemplates();
+    setDialogOpen(true);
+  }
+
+  async function handleCreateItem(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newItemTitle || !selectedTemplate) return;
+
+    try {
+      setCreateLoading(true);
+      await createProjectItem(projectId!, {
+        title: newItemTitle,
+        taskTemplateId: Number(selectedTemplate),
+      });
+      setDialogOpen(false);
+      setNewItemTitle("");
+      setSelectedTemplate("");
+      await loadProjectItems();
+    } catch (error) {
+      console.error("Failed to create item:", error);
+      alert("创建失败，请重试");
+    } finally {
+      setCreateLoading(false);
     }
   }
 
@@ -79,10 +145,79 @@ export default function ProjectDetail() {
             </div>
             <div className="flex gap-2">
               {project.isCreator && <Button variant="outline">编辑企划</Button>}
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                创建项目
-              </Button>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger>
+                  <Button onClick={openCreateDialog}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    创建项目
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>创建项目</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateItem} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="itemTitle">
+                        项目名称 <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="itemTitle"
+                        placeholder="请输入项目名称"
+                        value={newItemTitle}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setNewItemTitle(e.target.value)
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>
+                        任务模板 <span className="text-red-500">*</span>
+                      </Label>
+                      <Select
+                        value={selectedTemplate}
+                        onValueChange={(value) => setSelectedTemplate(value ?? "")}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="选择任务模板" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {templates.map((t) => (
+                            <SelectItem key={t.id} value={String(t.id)}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-4 pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setDialogOpen(false)}
+                      >
+                        取消
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        disabled={createLoading || !newItemTitle || !selectedTemplate}
+                      >
+                        {createLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            创建中...
+                          </>
+                        ) : (
+                          "创建"
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
@@ -133,7 +268,7 @@ export default function ProjectDetail() {
             <Card>
               <CardContent className="py-8 text-center">
                 <p className="text-muted-foreground">暂无项目</p>
-                <Button className="mt-4">
+                <Button className="mt-4" onClick={openCreateDialog}>
                   <Plus className="mr-2 h-4 w-4" />
                   创建第一个项目
                 </Button>
