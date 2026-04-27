@@ -47,7 +47,7 @@ export default function LoginPage() {
       const result = await loginByPassword(data);
       localStorage.setItem("token", result.token);
       localStorage.setItem("userId", String(result.userId));
-      void navigate("/app/planning");
+      void navigate("/dashboard/planning");
     } catch (error) {
       alert(error instanceof Error ? error.message : "登录失败");
     } finally {
@@ -61,7 +61,7 @@ export default function LoginPage() {
       const result = await loginByCode(data);
       localStorage.setItem("token", result.token);
       localStorage.setItem("userId", String(result.userId));
-      void navigate("/app/planning");
+      void navigate("/dashboard/planning");
     } catch (error) {
       alert(error instanceof Error ? error.message : "登录失败");
     } finally {

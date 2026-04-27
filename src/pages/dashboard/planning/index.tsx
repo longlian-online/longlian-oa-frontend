@@ -61,7 +61,7 @@ export default function Planning() {
           <h1 className="text-foreground text-2xl font-semibold">企划</h1>
           <p className="text-muted-foreground mt-1">管理和跟踪您的汉化项目</p>
         </div>
-        <Button onClick={() => navigate("/app/planning/create")}>
+        <Button onClick={() => navigate("/dashboard/planning/create")}>
           <Plus className="mr-2 h-4 w-4" />
           创建企划
         </Button>
@@ -114,7 +114,7 @@ export default function Planning() {
                   <TableRow
                     key={project.id}
                     className="cursor-pointer"
-                    onClick={() => navigate(`/app/planning/${project.id}`)}
+                    onClick={() => navigate(`/dashboard/planning/${project.id}`)}
                   >
                     <TableCell>
                       <Avatar className="h-12 w-12 rounded-md">

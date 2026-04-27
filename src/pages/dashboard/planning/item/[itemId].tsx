@@ -154,7 +154,7 @@ export default function ItemDetail() {
 
   return (
     <div className="space-y-6">
-      <Button variant="ghost" onClick={() => navigate(`/app/planning/${projectId}`)}>
+      <Button variant="ghost" onClick={() => navigate(`/dashboard/planning/${projectId}`)}>
         <ArrowLeft className="mr-2 h-4 w-4" />
         返回企划
       </Button>

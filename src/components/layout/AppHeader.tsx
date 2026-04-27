@@ -5,17 +5,17 @@ import ThemeToggle from "../theme/ThemeToggle";
 import { cn } from "../../lib/utils";
 
 const subMenus: Record<string, { to: string; label: string }[]> = {
-  "/app/planning": [
-    { to: "/app/planning", label: "项目列表" },
-    { to: "/app/planning/mine", label: "我的项目" },
+  "/dashboard/planning": [
+    { to: "/dashboard/planning", label: "项目列表" },
+    { to: "/dashboard/planning/mine", label: "我的项目" },
   ],
-  "/app/todos": [{ to: "/app/todos", label: "全部待办" }],
-  "/app/square": [{ to: "/app/square", label: "可接取任务" }],
-  "/app/recommend": [
-    { to: "/app/recommend", label: "安利列表" },
-    { to: "/app/recommend/create", label: "发布安利" },
+  "/dashboard/todos": [{ to: "/dashboard/todos", label: "全部待办" }],
+  "/dashboard/square": [{ to: "/dashboard/square", label: "可接取任务" }],
+  "/dashboard/recommend": [
+    { to: "/dashboard/recommend", label: "安利列表" },
+    { to: "/dashboard/recommend/create", label: "发布安利" },
   ],
-  "/app/archive": [{ to: "/app/archive", label: "已归档项目" }],
+  "/dashboard/archive": [{ to: "/dashboard/archive", label: "已归档项目" }],
 };
 
 export default function AppHeader() {

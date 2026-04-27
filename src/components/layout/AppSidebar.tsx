@@ -3,11 +3,11 @@ import { NavLink } from "react-router";
 import { cn } from "../../lib/utils";
 
 const navItems = [
-  { to: "/app/planning", label: "企划", icon: BookOpen },
-  { to: "/app/todos", label: "待办", icon: CheckSquare },
-  { to: "/app/square", label: "任务广场", icon: ShoppingBag },
-  { to: "/app/recommend", label: "安利", icon: Megaphone },
-  { to: "/app/archive", label: "归档", icon: Archive },
+  { to: "/dashboard/planning", label: "企划", icon: BookOpen },
+  { to: "/dashboard/todos", label: "待办", icon: CheckSquare },
+  { to: "/dashboard/square", label: "任务广场", icon: ShoppingBag },
+  { to: "/dashboard/recommend", label: "安利", icon: Megaphone },
+  { to: "/dashboard/archive", label: "归档", icon: Archive },
 ] as const;
 
 export default function AppSidebar() {

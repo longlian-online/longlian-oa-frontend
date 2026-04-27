@@ -55,7 +55,7 @@ export default function CreateProject() {
         coverFileId: formData.coverFileId,
         metadata: "{}",
       });
-      void navigate("/app/planning");
+      void navigate("/dashboard/planning");
     } catch (error) {
       console.error("Failed to create project:", error);
       alert("创建失败，请重试");
@@ -67,7 +67,7 @@ export default function CreateProject() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* 返回按钮 */}
-      <Button variant="ghost" onClick={() => navigate("/app/planning")}>
+      <Button variant="ghost" onClick={() => navigate("/dashboard/planning")}>
         <ArrowLeft className="mr-2 h-4 w-4" />
         返回列表
       </Button>
@@ -157,7 +157,7 @@ export default function CreateProject() {
                 type="button"
                 variant="outline"
                 className="flex-1"
-                onClick={() => navigate("/app/planning")}
+                onClick={() => navigate("/dashboard/planning")}
               >
                 取消
               </Button>

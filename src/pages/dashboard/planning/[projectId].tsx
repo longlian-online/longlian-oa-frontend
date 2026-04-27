@@ -123,7 +123,7 @@ export default function ProjectDetail() {
   return (
     <div className="space-y-6">
       {/* 返回按钮 */}
-      <Button variant="ghost" onClick={() => navigate("/app/planning")}>
+      <Button variant="ghost" onClick={() => navigate("/dashboard/planning")}>
         <ArrowLeft className="mr-2 h-4 w-4" />
         返回列表
       </Button>
@@ -280,7 +280,7 @@ export default function ProjectDetail() {
                 <Card
                   key={item.id}
                   className="cursor-pointer"
-                  onClick={() => navigate(`/app/planning/${projectId}/item/${item.id}`)}
+                  onClick={() => navigate(`/dashboard/planning/${projectId}/item/${item.id}`)}
                 >
                   <CardHeader>
                     <div className="flex items-center justify-between">

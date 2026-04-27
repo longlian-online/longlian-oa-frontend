@@ -1,7 +1,7 @@
 import AppLayout from "../components/layout/AppLayout";
 import AuthGuard from "../components/AuthGuard";
 
-export default function AppRoot() {
+export default function DashboardRoot() {
   return (
     <AuthGuard>
       <AppLayout />

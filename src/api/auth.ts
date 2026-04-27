@@ -1,6 +1,13 @@
 // 认证相关 API
 
 import type { ApiResult, LoginVO } from "@/types/planning";
+import {
+  USE_MOCK,
+  mockLoginByPassword,
+  mockLoginByCode,
+  mockSendVerificationCode,
+  mockRegisterByInvite,
+} from "@/mock";
 
 const API_BASE = "/app";
 
@@ -43,6 +50,9 @@ export interface LoginByCodeDTO {
  * POST /app/user/login/pwd
  */
 export async function loginByPassword(dto: LoginByPwdDTO): Promise<LoginVO> {
+  if (USE_MOCK) {
+    return mockLoginByPassword(dto);
+  }
   return request("/user/login/pwd", {
     method: "POST",
     body: JSON.stringify(dto),
@@ -54,6 +64,9 @@ export async function loginByPassword(dto: LoginByPwdDTO): Promise<LoginVO> {
  * POST /app/user/login/code
  */
 export async function loginByCode(dto: LoginByCodeDTO): Promise<LoginVO> {
+  if (USE_MOCK) {
+    return mockLoginByCode(dto);
+  }
   return request("/user/login/code", {
     method: "POST",
     body: JSON.stringify(dto),
@@ -65,6 +78,9 @@ export async function loginByCode(dto: LoginByCodeDTO): Promise<LoginVO> {
  * GET /app/user/send-code?email=xxx
  */
 export async function sendVerificationCode(email: string): Promise<void> {
+  if (USE_MOCK) {
+    return mockSendVerificationCode(email);
+  }
   return request(`/user/send-code?email=${encodeURIComponent(email)}`, {
     method: "GET",
   });
@@ -86,6 +102,9 @@ export interface RegisterByInviteDTO {
  * POST /app/user/register/invite
  */
 export async function registerByInvite(dto: RegisterByInviteDTO): Promise<void> {
+  if (USE_MOCK) {
+    return mockRegisterByInvite(dto);
+  }
   return request("/user/register/invite", {
     method: "POST",
     body: JSON.stringify(dto),
