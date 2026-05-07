@@ -1,337 +1,174 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
-import { ArrowLeft, Plus, Loader2 } from "lucide-react";
+import { ArrowLeft, BarChart3, CirclePlus, Share2, Link2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import type {
-  ProjectDetailInfoVO,
-  ProjectItemListVO,
-  TaskTemplateOptionVO,
-} from "@/types/planning";
-import {
-  getProjectDetail,
-  getProjectItemList,
-  getTaskTemplateOptions,
-  createProjectItem,
-} from "@/api/planning";
-
-const statusMap: Record<string, { label: string; color: string }> = {
-  进行中: { label: "进行中", color: "bg-blue-500" },
-  已完成: { label: "已完成", color: "bg-green-500" },
-  已归档: { label: "已归档", color: "bg-gray-500" },
-};
+import { Progress } from "@/components/ui/progress";
+import type { ProjectDetailInfoVO } from "@/types/planning";
+import { getProjectDetail } from "@/api/planning";
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<ProjectDetailInfoVO | null>(null);
-  const [items, setItems] = useState<ProjectItemListVO[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [templates, setTemplates] = useState<TaskTemplateOptionVO[]>([]);
-  const [createLoading, setCreateLoading] = useState(false);
-  const [newItemTitle, setNewItemTitle] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState("");
 
   useEffect(() => {
     if (projectId) {
       void loadProjectDetail();
-      void loadProjectItems();
     }
   }, [projectId]);
 
   async function loadProjectDetail() {
     try {
+      setLoading(true);
       const data = await getProjectDetail(projectId!);
       setProject(data);
     } catch (error) {
       console.error("Failed to load project:", error);
-    }
-  }
-
-  async function loadProjectItems() {
-    try {
-      setLoading(true);
-      const result = await getProjectItemList(projectId!);
-      setItems(result.list);
-    } catch (error) {
-      console.error("Failed to load items:", error);
     } finally {
       setLoading(false);
     }
   }
 
-  async function loadTemplates() {
-    try {
-      const data = await getTaskTemplateOptions();
-      setTemplates(data);
-    } catch (error) {
-      console.error("Failed to load templates:", error);
-    }
-  }
-
-  function openCreateDialog() {
-    void loadTemplates();
-    setDialogOpen(true);
-  }
-
-  async function handleCreateItem(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newItemTitle || !selectedTemplate) return;
-
-    try {
-      setCreateLoading(true);
-      await createProjectItem(projectId!, {
-        title: newItemTitle,
-        taskTemplateId: Number(selectedTemplate),
-      });
-      setDialogOpen(false);
-      setNewItemTitle("");
-      setSelectedTemplate("");
-      await loadProjectItems();
-    } catch (error) {
-      console.error("Failed to create item:", error);
-      alert("创建失败，请重试");
-    } finally {
-      setCreateLoading(false);
-    }
-  }
-
-  if (!project) {
+  if (loading) {
     return <div className="text-muted-foreground py-8 text-center">加载中...</div>;
   }
 
+  if (!project) {
+    return <div className="text-muted-foreground py-8 text-center">企划不存在</div>;
+  }
+
   return (
-    <div className="space-y-6">
-      {/* 返回按钮 */}
-      <Button variant="ghost" onClick={() => navigate("/dashboard/planning")}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        返回列表
-      </Button>
+    <div className="h-full flex flex-col">
+      {/* 顶部返回栏 */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => navigate("/dashboard/planning")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <span className="text-sm text-muted-foreground">企划</span>
+      </div>
 
-      {/* 企划基本信息 */}
-      <div className="flex gap-6">
-        <Avatar className="h-32 w-32 rounded-lg">
-          <AvatarImage src={project.coverUrl} alt={project.title} className="object-cover" />
-          <AvatarFallback className="rounded-lg text-2xl">
-            {project.title.slice(0, 2)}
-          </AvatarFallback>
-        </Avatar>
+      {/* 内容区域 */}
+      <div className="flex-1 overflow-auto p-4">
+        <div className="flex gap-6">
+          {/* 左侧封面 */}
+          <div className="w-100 shrink-0 space-y-4">
+            <div className="aspect-2/3 rounded-lg overflow-hidden bg-muted">
+              {project.coverUrl ? (
+                <img
+                  src={project.coverUrl}
+                  alt={project.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                  暂无封面
+                </div>
+              )}
+            </div>
 
-        <div className="flex-1 space-y-4">
-          <div className="flex items-start justify-between">
+            {/* 底部按钮 */}
+            <div className="flex items-center justify-center gap-4">
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-full">
+                <CirclePlus className="h-3.5 w-3.5" />
+                添加到工坊
+              </Button>
+              <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground">
+                <Share2 className="h-3.5 w-3.5" />
+                分享
+              </Button>
+            </div>
+          </div>
+
+          {/* 右侧信息 */}
+          <div className="flex-1 mx-4 max-w-200 space-y-5">
+            {/* 标题 */}
             <div>
-              <h1 className="text-foreground text-2xl font-semibold">{project.title}</h1>
-              <p className="text-muted-foreground">{project.alias}</p>
+              <h1 className="text-xl font-semibold">{project.title}</h1>
+              {project.alias && (
+                <p className="text-sm text-muted-foreground mt-1">{project.alias}</p>
+              )}
             </div>
-            <div className="flex gap-2">
-              {project.isCreator && <Button variant="outline">编辑企划</Button>}
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger>
-                  <Button onClick={openCreateDialog}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    创建项目
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>创建项目</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleCreateItem} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="itemTitle">
-                        项目名称 <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="itemTitle"
-                        placeholder="请输入项目名称"
-                        value={newItemTitle}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setNewItemTitle(e.target.value)
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>
-                        任务模板 <span className="text-red-500">*</span>
-                      </Label>
-                      <Select
-                        value={selectedTemplate}
-                        onValueChange={(value) => setSelectedTemplate(value ?? "")}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="选择任务模板" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {templates.map((t) => (
-                            <SelectItem key={t.id} value={String(t.id)}>
-                              {t.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex gap-4 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => setDialogOpen(false)}
-                      >
-                        取消
-                      </Button>
-                      <Button
-                        type="submit"
-                        className="flex-1"
-                        disabled={createLoading || !newItemTitle || !selectedTemplate}
-                      >
-                        {createLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            创建中...
-                          </>
-                        ) : (
-                          "创建"
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+
+            {/* 统计 */}
+            <div className="flex justify-between px-12 py-3 border-y">
+              {/* 进度 */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  进度
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl font-semibold">{project.progressPercent}%</span>
+                  <Progress value={project.progressPercent} className="w-24 h-1.5 self-center" />
+                </div>
+              </div>
+
+              {/* 待提交 */}
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  待提交
+                </div>
+                <span className="text-xl font-semibold leading-tight">
+                  {project.claimedTaskCount}
+                </span>
+              </div>
+
+              {/* 待接取 */}
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  待接取
+                </div>
+                <span className="text-xl font-semibold leading-tight">
+                  {project.pendingTaskCount}
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <Badge className={statusMap[project.status]?.color || "bg-blue-500"}>
-              {statusMap[project.status]?.label || project.status}
-            </Badge>
-            <span className="text-muted-foreground text-sm">类型: {project.typeName}</span>
-          </div>
+            {/* 信息 - 使用 Badge */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Info className="h-3.5 w-3.5" />
+                信息
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="font-normal text-muted-foreground">
+                  原作者 <span className="text-foreground ml-1">未知</span>
+                </Badge>
+                <Badge variant="outline" className="font-normal text-muted-foreground">
+                  状态{" "}
+                  <span className="text-foreground ml-1">
+                    {project.status === "COMPLETED"
+                      ? "已完结"
+                      : project.status === "IN_PROGRESS"
+                        ? "进行中"
+                        : "已归档"}
+                  </span>
+                </Badge>
+              </div>
+            </div>
 
-          <p className="text-muted-foreground">{project.description}</p>
-
-          {/* 进度统计 */}
-          <div className="grid grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{project.progressPercent}%</div>
-                <div className="text-muted-foreground text-sm">总进度</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{project.pendingTaskCount}</div>
-                <div className="text-muted-foreground text-sm">待接取任务</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{project.claimedTaskCount}</div>
-                <div className="text-muted-foreground text-sm">进行中任务</div>
-              </CardContent>
-            </Card>
+            {/* 简介 */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Link2 className="h-3.5 w-3.5" />
+                简介
+              </div>
+              <p className="text-sm text-foreground leading-relaxed">
+                {project.description || "暂无简介"}
+              </p>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* 项目列表 */}
-      <Tabs defaultValue="items">
-        <TabsList>
-          <TabsTrigger value="items">项目列表</TabsTrigger>
-          <TabsTrigger value="tasks">可接取任务</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="items" className="space-y-4">
-          {loading ? (
-            <div className="text-muted-foreground py-8 text-center">加载中...</div>
-          ) : items.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground">暂无项目</p>
-                <Button className="mt-4" onClick={openCreateDialog}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  创建第一个项目
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {items.map((item) => (
-                <Card
-                  key={item.id}
-                  className="cursor-pointer"
-                  onClick={() => navigate(`/dashboard/planning/${projectId}/item/${item.id}`)}
-                >
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{item.title}</CardTitle>
-                      <Badge
-                        variant={
-                          item.status === "COMPLETED"
-                            ? "secondary"
-                            : item.status === "PUBLISHED"
-                              ? "outline"
-                              : "default"
-                        }
-                      >
-                        {item.status === "IN_PROGRESS"
-                          ? "进行中"
-                          : item.status === "COMPLETED"
-                            ? "已完成"
-                            : "已公布"}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <div className="text-muted-foreground mb-2 text-sm">
-                          当前节点: {item.currentNodeName || "未开始"}
-                        </div>
-                        <div className="bg-secondary h-2 overflow-hidden rounded-full">
-                          <div
-                            className="bg-primary h-full transition-all"
-                            style={{ width: `${item.progressPercent}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div className="text-sm font-medium">{item.progressPercent}%</div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="tasks">
-          <Card>
-            <CardContent className="py-8 text-center">
-              <p className="text-muted-foreground">可接取任务列表（TODO：实现任务接取功能）</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

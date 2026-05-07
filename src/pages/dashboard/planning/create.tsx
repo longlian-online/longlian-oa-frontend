@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, ImagePlus, X, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,9 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ProjectTypeInfoVO } from "@/types/planning";
 import { getProjectTypes, createProject } from "@/api/planning";
+
+interface TagItem {
+  key: string;
+  value: string;
+}
 
 export default function CreateProject() {
   const navigate = useNavigate();
@@ -25,8 +28,11 @@ export default function CreateProject() {
     alias: "",
     typeId: "",
     description: "",
-    coverFileId: 1, // TODO: 文件上传功能
   });
+  const [tags, setTags] = useState<TagItem[]>([{ key: "原作者", value: "ぶらぽ" }]);
+  const [newTagKey, setNewTagKey] = useState("");
+  const [newTagValue, setNewTagValue] = useState("");
+  const [showTagInput, setShowTagInput] = useState(false);
 
   useEffect(() => {
     void loadProjectTypes();
@@ -41,8 +47,20 @@ export default function CreateProject() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function handleAddTag() {
+    if (newTagKey.trim() && newTagValue.trim()) {
+      setTags([...tags, { key: newTagKey.trim(), value: newTagValue.trim() }]);
+      setNewTagKey("");
+      setNewTagValue("");
+      setShowTagInput(false);
+    }
+  }
+
+  function handleRemoveTag(index: number) {
+    setTags(tags.filter((_, i) => i !== index));
+  }
+
+  async function handleSubmit() {
     if (!formData.title || !formData.typeId) return;
 
     try {
@@ -52,8 +70,8 @@ export default function CreateProject() {
         alias: formData.alias || formData.title,
         typeId: Number(formData.typeId),
         description: formData.description,
-        coverFileId: formData.coverFileId,
-        metadata: "{}",
+        coverFileId: 1,
+        metadata: JSON.stringify({ tags }),
       });
       void navigate("/dashboard/planning");
     } catch (error) {
@@ -65,59 +83,92 @@ export default function CreateProject() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      {/* 返回按钮 */}
-      <Button variant="ghost" onClick={() => navigate("/dashboard/planning")}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        返回列表
-      </Button>
+    <div className="h-full flex flex-col">
+      {/* 顶部标题栏 */}
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => navigate("/dashboard/planning")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-base font-medium">发布新企划</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" className="text-muted-foreground">
+            暂存
+          </Button>
+          <Button size="sm" onClick={handleSubmit} disabled={loading || !formData.title}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "创建"}
+          </Button>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>创建企划</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 标题 */}
+      {/* 内容区域 */}
+      <div className="flex-1 overflow-auto p-6">
+        <div className="max-w-5xl mx-auto flex gap-6">
+          {/* 左侧封面区域 */}
+          <div className="w-80 shrink-0 space-y-4">
+            {/* 主封面上传 */}
+            <div className="border-2 border-dashed border-input rounded-lg p-6 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary/50 hover:bg-primary/[0.02] transition-colors aspect-[2/3]">
+              <ImagePlus className="h-8 w-8 text-muted-foreground/60" />
+              <span className="text-xs text-muted-foreground">封面(2:3)</span>
+            </div>
+
+            {/* 缩略图 */}
+            <div className="flex items-center gap-3">
+              <div className="w-16 h-16 border-2 border-dashed border-input rounded-md flex items-center justify-center cursor-pointer hover:border-primary/50">
+                <Plus className="h-4 w-4 text-muted-foreground/60" />
+              </div>
+              <div className="text-xs">
+                <p className="text-foreground">缩略图(1:1)</p>
+                <p className="text-muted-foreground">从封面中裁剪</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 右侧表单区域 */}
+          <div className="flex-1 bg-card border rounded-lg p-6 space-y-6">
+            {/* 企划名 */}
             <div className="space-y-2">
-              <Label htmlFor="title">
-                企划名称 <span className="text-red-500">*</span>
-              </Label>
+              <label className="text-sm text-foreground">企划名</label>
               <Input
-                id="title"
-                placeholder="请输入企划名称"
+                placeholder="请输入企划名"
                 value={formData.title}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
-                required
+                className="h-10 bg-secondary/50 border-0 focus:bg-background focus:ring-1 focus:ring-ring"
               />
             </div>
 
             {/* 别名 */}
             <div className="space-y-2">
-              <Label htmlFor="alias">别名</Label>
+              <label className="text-sm text-foreground">别名</label>
               <Input
-                id="alias"
-                placeholder="请输入别名（可选）"
+                placeholder="请输入别名"
                 value={formData.alias}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, alias: e.target.value })
                 }
+                className="h-10 bg-secondary/50 border-0 focus:bg-background focus:ring-1 focus:ring-ring"
               />
             </div>
 
-            {/* 类型 */}
+            {/* 企划类型 */}
             <div className="space-y-2">
-              <Label htmlFor="type">
-                企划类型 <span className="text-red-500">*</span>
-              </Label>
+              <label className="text-sm text-foreground">企划类型</label>
               <Select
                 value={formData.typeId}
-                onValueChange={(value) => setFormData({ ...formData, typeId: value ?? "" })}
+                onValueChange={(value: string | null) =>
+                  setFormData({ ...formData, typeId: value || "" })
+                }
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择企划类型" />
+                <SelectTrigger className="h-10 w-40 bg-secondary/50 border-0 focus:bg-background focus:ring-1 focus:ring-ring">
+                  <SelectValue placeholder="选择类型" />
                 </SelectTrigger>
                 <SelectContent>
                   {projectTypes.map((type) => (
@@ -129,52 +180,72 @@ export default function CreateProject() {
               </Select>
             </div>
 
+            {/* 信息标签 */}
+            <div className="space-y-3">
+              <label className="text-sm text-foreground">信息</label>
+              <div className="flex flex-wrap items-center gap-2">
+                {tags.map((tag, index) => (
+                  <div
+                    key={index}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-secondary/70 rounded-md text-xs"
+                  >
+                    <span className="text-muted-foreground">{tag.key}</span>
+                    <span className="text-foreground">{tag.value}</span>
+                    <button
+                      onClick={() => handleRemoveTag(index)}
+                      className="ml-1 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+
+                {showTagInput ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="标签名"
+                      value={newTagKey}
+                      onChange={(e) => setNewTagKey(e.target.value)}
+                      className="h-7 w-24 text-xs bg-secondary/50 border-0"
+                    />
+                    <Input
+                      placeholder="值"
+                      value={newTagValue}
+                      onChange={(e) => setNewTagValue(e.target.value)}
+                      className="h-7 w-24 text-xs bg-secondary/50 border-0"
+                    />
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleAddTag}>
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 rounded-md border border-dashed border-input"
+                    onClick={() => setShowTagInput(true)}
+                  >
+                    <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
             {/* 简介 */}
             <div className="space-y-2">
-              <Label htmlFor="description">企划简介</Label>
+              <label className="text-sm text-foreground">简介</label>
               <Textarea
-                id="description"
-                placeholder="请输入企划简介（可选）"
-                rows={4}
+                placeholder="请输入企划简介"
                 value={formData.description}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
+                className="min-h-[120px] bg-secondary/50 border-0 resize-none focus:bg-background focus:ring-1 focus:ring-ring"
               />
             </div>
-
-            {/* 封面 - TODO */}
-            <div className="space-y-2">
-              <Label>封面图片</Label>
-              <div className="border-input bg-background flex h-32 items-center justify-center rounded-md border border-dashed">
-                <span className="text-muted-foreground text-sm">文件上传功能待实现（TODO）</span>
-              </div>
-            </div>
-
-            {/* 提交按钮 */}
-            <div className="flex gap-4 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => navigate("/dashboard/planning")}
-              >
-                取消
-              </Button>
-              <Button type="submit" className="flex-1" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    创建中...
-                  </>
-                ) : (
-                  "创建企划"
-                )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

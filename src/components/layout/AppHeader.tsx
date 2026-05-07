@@ -6,6 +6,7 @@ import { cn } from "../../lib/utils";
 
 const subMenus: Record<string, { to: string; label: string }[]> = {
   "/dashboard/planning": [
+    { to: "/dashboard/workshop", label: "工坊" },
     { to: "/dashboard/planning", label: "项目列表" },
     { to: "/dashboard/planning/mine", label: "我的项目" },
   ],
