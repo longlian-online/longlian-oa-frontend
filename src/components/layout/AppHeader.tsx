@@ -6,9 +6,8 @@ import { cn } from "../../lib/utils";
 
 const subMenus: Record<string, { to: string; label: string }[]> = {
   "/dashboard/planning": [
+    { to: "/dashboard/planning", label: "浏览" },
     { to: "/dashboard/workshop", label: "工坊" },
-    { to: "/dashboard/planning", label: "项目列表" },
-    { to: "/dashboard/planning/mine", label: "我的项目" },
   ],
   "/dashboard/todos": [{ to: "/dashboard/todos", label: "全部待办" }],
   "/dashboard/square": [{ to: "/dashboard/square", label: "可接取任务" }],
@@ -21,7 +20,9 @@ const subMenus: Record<string, { to: string; label: string }[]> = {
 
 export default function AppHeader() {
   const { pathname } = useLocation();
-  const section = "/" + pathname.split("/").slice(1, 3).join("/");
+  const section = pathname.startsWith("/dashboard/workshop")
+    ? "/dashboard/planning"
+    : "/" + pathname.split("/").slice(1, 3).join("/");
   const items = subMenus[section] ?? [];
 
   return (
