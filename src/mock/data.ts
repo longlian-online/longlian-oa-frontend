@@ -102,9 +102,27 @@ function createNodes(status: string): ProjectItemNodeVO[] {
   };
   const nodeStates = states[status] || ["LOCKED", "LOCKED", "LOCKED"];
   return [
-    { name: "翻译", sort: 1, parallelSort: 1, state: nodeStates[0], parallelCount: 1 },
-    { name: "校对", sort: 2, parallelSort: 1, state: nodeStates[1], parallelCount: 1 },
-    { name: "嵌字", sort: 3, parallelSort: 1, state: nodeStates[2], parallelCount: 1 },
+    {
+      name: "翻译",
+      sort: 1,
+      parallelSort: 1,
+      state: nodeStates[0],
+      parallelCount: 1,
+    },
+    {
+      name: "校对",
+      sort: 2,
+      parallelSort: 1,
+      state: nodeStates[1],
+      parallelCount: 1,
+    },
+    {
+      name: "嵌字",
+      sort: 3,
+      parallelSort: 1,
+      state: nodeStates[2],
+      parallelCount: 1,
+    },
   ];
 }
 
