@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { loginByPassword, loginByCode, sendVerificationCode } from "@/api/auth";
+import { $tip } from "@/components/tip";
 
 const passwordSchema = z.object({
   username: z.string().min(1, "请输入用户名"),
@@ -47,9 +48,10 @@ export default function LoginPage() {
       const result = await loginByPassword(data);
       localStorage.setItem("token", result.token);
       localStorage.setItem("userId", String(result.userId));
+      $tip("登录成功", "success");
       void navigate("/dashboard/planning");
     } catch (error) {
-      alert(error instanceof Error ? error.message : "登录失败");
+      $tip(error instanceof Error ? error.message : "登录失败", "error");
     } finally {
       setIsLoading(false);
     }
@@ -61,9 +63,10 @@ export default function LoginPage() {
       const result = await loginByCode(data);
       localStorage.setItem("token", result.token);
       localStorage.setItem("userId", String(result.userId));
+      $tip("登录成功", "success");
       void navigate("/dashboard/planning");
     } catch (error) {
-      alert(error instanceof Error ? error.message : "登录失败");
+      $tip(error instanceof Error ? error.message : "登录失败", "error");
     } finally {
       setIsLoading(false);
     }
@@ -76,6 +79,7 @@ export default function LoginPage() {
 
     try {
       await sendVerificationCode(email);
+      $tip("验证码已发送", "success");
       setCountdown(60);
       const timer = setInterval(() => {
         setCountdown((prev) => {
@@ -87,7 +91,7 @@ export default function LoginPage() {
         });
       }, 1000);
     } catch (error) {
-      alert(error instanceof Error ? error.message : "发送验证码失败");
+      $tip(error instanceof Error ? error.message : "发送验证码失败", "error");
     }
   };
 

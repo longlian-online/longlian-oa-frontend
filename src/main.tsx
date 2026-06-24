@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, useRoutes } from "react-router";
 import routes from "~react-pages";
+import TipProvider from "@/components/tip";
 import "./index.css";
 
 const theme = localStorage.getItem("theme");
@@ -18,6 +19,7 @@ function App() {
 
 createRoot(document.getElementById("app")!).render(
   <StrictMode>
+    <TipProvider />
     <BrowserRouter>
       <App />
     </BrowserRouter>
