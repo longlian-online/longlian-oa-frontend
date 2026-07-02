@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { ArrowLeft, Check, ImagePlus, Info, Loader2, Plus, Tags, X } from "lucide-react";
 
 import { createProject, getProjectTypes } from "@/api/planning";
+import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import type { UploadedFileInfo } from "@/types/file";
 import type { ProjectTypeInfoVO } from "@/types/planning";
 
 interface TagItem {
@@ -34,13 +36,14 @@ export default function CreateProject() {
   const [newTagKey, setNewTagKey] = useState("");
   const [newTagValue, setNewTagValue] = useState("");
   const [showTagInput, setShowTagInput] = useState(false);
+  const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(null);
 
   useEffect(() => {
     void loadProjectTypes();
   }, []);
 
   const selectedProjectType = projectTypes.find((type) => String(type.id) === formData.typeId);
-  const canSubmit = Boolean(formData.title && formData.typeId);
+  const canSubmit = Boolean(formData.title && formData.typeId && coverFile?.fileId);
 
   async function loadProjectTypes(): Promise<void> {
     try {
@@ -65,7 +68,7 @@ export default function CreateProject() {
   }
 
   async function handleSubmit(): Promise<void> {
-    if (!canSubmit) return;
+    if (!canSubmit || !coverFile) return;
 
     try {
       setLoading(true);
@@ -74,7 +77,7 @@ export default function CreateProject() {
         alias: formData.alias || formData.title,
         typeId: Number(formData.typeId),
         description: formData.description,
-        coverFileId: 1,
+        coverFileId: coverFile.fileId,
         metadata: JSON.stringify({ tags }),
       });
       void navigate("/dashboard/planning");
@@ -136,18 +139,18 @@ export default function CreateProject() {
               <ImagePlus className="h-4 w-4 text-muted-foreground" />
             </div>
 
-            <button
-              type="button"
-              className="group flex h-[390px] w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-input bg-muted/30 p-5 text-center transition-colors hover:border-primary/50 hover:bg-primary/[0.03]"
-            >
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border transition-transform group-hover:scale-105">
-                <ImagePlus className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-foreground">上传企划封面</p>
-                <p className="text-xs text-muted-foreground">推荐 2:3 竖版图片</p>
-              </div>
-            </button>
+            <FileUpload
+              bizType="cover"
+              bizId="new-project"
+              value={coverFile}
+              title="上传企划封面"
+              description="推荐 2:3 竖版图片，最大 10MB"
+              imagePreview
+              accept={["jpg", "jpeg", "png", "gif"]}
+              maxSize={10 * 1024 * 1024}
+              className="[&>button]:h-[390px]"
+              onChange={setCoverFile}
+            />
 
             <div className="mt-3 flex items-center gap-3 rounded-lg border bg-background/60 p-2.5">
               <button

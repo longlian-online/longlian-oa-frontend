@@ -199,7 +199,7 @@ export interface ProjectCreateDTO {
   typeId: number;
   metadata: string;
   description: string;
-  coverFileId: number;
+  coverFileId: string;
 }
 
 export interface ProjectItemCreateDTO {

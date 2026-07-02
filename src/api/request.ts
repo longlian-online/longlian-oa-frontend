@@ -15,6 +15,10 @@ export async function adminRequest<T>(url: string, options?: RequestInit): Promi
   return requestWithBase("", url, options, getAdminToken(), clearAdminSession, false);
 }
 
+export async function commonRequest<T>(url: string, options?: RequestInit): Promise<T> {
+  return requestWithBase("/common", url, options);
+}
+
 async function requestWithBase<T>(
   basePath: string,
   url: string,

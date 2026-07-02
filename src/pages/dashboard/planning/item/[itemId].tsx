@@ -151,6 +151,9 @@ export default function ItemDetail() {
   }
 
   const selectedNode = getSelectedNode();
+  const selectedInstance = selectedNode
+    ? taskInstances.find((instance) => instance.itemTaskNodeId === selectedNode.id)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -319,6 +322,7 @@ export default function ItemDetail() {
           <TaskSubmitDialog
             open={submitDialogOpen}
             onOpenChange={setSubmitDialogOpen}
+            taskInstanceId={selectedInstance?.id}
             taskName={selectedNode.name}
             metaSchema={selectedNode.metaSchema}
             onSubmit={handleSubmit}

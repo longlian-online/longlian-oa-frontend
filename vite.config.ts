@@ -39,6 +39,10 @@ export default defineConfig({
         target: "https://sit.neo.oa.api.longlian.online",
         changeOrigin: true,
       },
+      "/common": {
+        target: "https://sit.neo.oa.api.longlian.online",
+        changeOrigin: true,
+      },
       "/admin": {
         target: "https://sit.neo.oa.api.longlian.online",
         changeOrigin: true,

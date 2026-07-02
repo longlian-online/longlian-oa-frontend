@@ -27,6 +27,7 @@ import type {
   LoginVO,
   RegisterByInviteDTO,
 } from "@/types/auth";
+import type { CreateFileReqDTO, ResourceCreateVO } from "@/types/file";
 import type { UserInfoVO } from "@/types/user";
 import {
   mockAdminUser,
@@ -112,6 +113,16 @@ export async function mockGetInviteInfo(inviteCode: string) {
 export async function mockJoinOrganizationByInvite(dto: JoinByInviteCodeDTO): Promise<void> {
   await mockDelay(400);
   console.log("[Mock] 已加入组织:", dto.inviteCode);
+}
+
+export async function mockCreateFileUpload(dto: CreateFileReqDTO): Promise<ResourceCreateVO> {
+  await mockDelay(300);
+  return {
+    fileId: String(Date.now()),
+    uploadUrl: "",
+    key: `mock/${dto.bizType}/${dto.fileName}`,
+    storageType: "NONE",
+  };
 }
 
 // ==================== 企划类型 ====================

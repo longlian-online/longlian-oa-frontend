@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+
+import FileUpload from "@/components/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { UploadedFileInfo } from "@/types/file";
 import type { MetaFieldSchema } from "@/types/planning";
 
 interface TaskSubmitDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  taskInstanceId?: number;
   taskName: string;
   metaSchema?: string;
   onSubmit: (metadata: Record<string, unknown>) => Promise<void>;
@@ -18,6 +22,7 @@ interface TaskSubmitDialogProps {
 export function TaskSubmitDialog({
   open,
   onOpenChange,
+  taskInstanceId,
   taskName,
   metaSchema,
   onSubmit,
@@ -69,9 +74,14 @@ export function TaskSubmitDialog({
         );
       case "file":
         return (
-          <div className="border-input bg-background flex h-24 items-center justify-center rounded-md border border-dashed">
-            <span className="text-muted-foreground text-sm">文件上传功能待实现（TODO）</span>
-          </div>
+          <FileUpload
+            bizType="task_submit"
+            bizId={String(taskInstanceId ?? taskName)}
+            value={(formData[field.name] as UploadedFileInfo | undefined) ?? null}
+            title={`上传${field.name}`}
+            description="支持文档、图片或压缩包，最大 50MB"
+            onChange={(file) => setFormData({ ...formData, [field.name]: file })}
+          />
         );
       default:
         return (
