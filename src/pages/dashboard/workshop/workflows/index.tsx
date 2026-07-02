@@ -115,12 +115,12 @@ const workflowTemplates: WorkflowTemplate[] = [
 
 function WorkflowParallelBadge({ count }: { count: number }) {
   if (count <= 1) {
-    return <div className="mt-2 h-6" />;
+    return <div className="mt-1 h-5" />;
   }
 
   return (
-    <div className="mt-2 flex h-6 items-center justify-center">
-      <span className="flex size-7 items-center justify-center rounded-full bg-foreground text-[13px] font-bold leading-6 text-background">
+    <div className="mt-1 flex h-4 items-center justify-center">
+      <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-[11px] font-bold leading-4 text-background">
         +{count}
       </span>
     </div>
@@ -129,23 +129,23 @@ function WorkflowParallelBadge({ count }: { count: number }) {
 
 function WorkflowDiagram({ steps }: { steps: WorkflowStep[] }) {
   return (
-    <div className="flex items-start justify-center">
+    <div className="flex w-full min-w-0 items-start justify-center px-1">
       {steps.map((step, index) => {
         const Icon = step.icon;
 
         return (
-          <div key={step.label} className="flex items-start">
-            <div className="flex w-[68px] flex-col items-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-foreground text-background">
-                <Icon className="size-5" />
+          <div key={`${step.label}-${index}`} className="flex min-w-0 flex-1 items-start">
+            <div className="flex min-w-0 flex-1 flex-col items-center">
+              <div className="flex size-8 items-center justify-center rounded-full bg-foreground text-background">
+                <Icon className="size-3.5" />
               </div>
               <WorkflowParallelBadge count={step.parallelCount} />
-              <div className="mt-2 text-xs font-bold leading-[18px] text-muted-foreground">
+              <div className="mt-1 max-w-10 truncate text-[11px] font-bold leading-4 text-muted-foreground">
                 {step.label}
               </div>
             </div>
             {index < steps.length - 1 && (
-              <div className="mt-6 h-0.5 w-9 bg-foreground" aria-hidden="true" />
+              <div className="mt-4 h-0.5 w-5 shrink-0 bg-foreground" aria-hidden="true" />
             )}
           </div>
         );
@@ -156,16 +156,16 @@ function WorkflowDiagram({ steps }: { steps: WorkflowStep[] }) {
 
 function WorkflowCard({ workflow }: { workflow: WorkflowTemplate }) {
   return (
-    <article className="flex h-[317px] flex-col rounded-[32px] bg-card px-8 py-8 shadow-sm">
-      <h2 className="text-2xl font-bold leading-8 text-foreground">{workflow.name}</h2>
+    <article className="flex h-[220px] min-w-0 flex-col rounded-2xl bg-card px-5 py-5 shadow-sm">
+      <h2 className="truncate text-lg font-bold leading-6 text-foreground">{workflow.name}</h2>
 
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex min-w-0 flex-1 items-center justify-center">
         <WorkflowDiagram steps={workflow.steps} />
       </div>
 
       <div className="flex items-center justify-between text-xs leading-[18px]">
         <div className="text-foreground">• 任务数：{workflow.taskCount}</div>
-        <Button variant="ghost" size="sm" className="h-[34px] gap-1 px-2 text-xs">
+        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs">
           查看详情
           <ChevronRight data-icon="inline-end" />
         </Button>
@@ -181,12 +181,12 @@ function CreateWorkflowCard() {
     <button
       type="button"
       onClick={() => navigate("/dashboard/workshop/create")}
-      className="flex h-[317px] flex-col items-center justify-center rounded-[32px] bg-card text-center shadow-sm transition-colors hover:bg-secondary/40"
+      className="flex h-[220px] min-w-0 flex-col items-center justify-center rounded-2xl bg-card text-center shadow-sm transition-colors hover:bg-secondary/40"
     >
-      <div className="flex size-[52px] items-center justify-center rounded-full border-4 border-muted-foreground text-muted-foreground">
-        <Plus className="size-8" />
+      <div className="flex size-11 items-center justify-center rounded-full border-[3px] border-muted-foreground text-muted-foreground">
+        <Plus className="size-6" />
       </div>
-      <div className="mt-4 text-base leading-6 text-foreground">创建新流程</div>
+      <div className="mt-3 text-sm font-medium leading-5 text-foreground">创建新流程</div>
       <div className="mt-1 text-xs leading-[18px] text-muted-foreground">点击开始一个新的流程</div>
     </button>
   );
@@ -213,16 +213,16 @@ export default function WorkshopPage() {
   }, [activeType, createdByMeOnly, keyword]);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex h-[60px] items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5 p-2.5">
+    <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
+      <div className="flex min-w-0 flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           {typeTabs.map((type) => (
             <Button
               key={type}
               type="button"
               variant="ghost"
               className={cn(
-                "h-10 rounded-xl px-4 text-base font-normal",
+                "h-8 rounded-lg px-3 text-sm font-normal",
                 activeType === type && "bg-secondary font-bold",
               )}
               onClick={() => setActiveType(type)}
@@ -232,17 +232,17 @@ export default function WorkshopPage() {
           ))}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
           <Button
             type="button"
             variant="secondary"
-            className="h-10 rounded-xl px-4 text-base font-bold"
+            className="h-8 rounded-lg px-3 text-sm font-bold"
             onClick={() => navigate("/dashboard/workshop/workflows")}
           >
             工作流
           </Button>
 
-          <label className="flex h-6 items-center gap-1 text-base text-foreground">
+          <label className="flex h-6 items-center gap-1 text-sm text-foreground">
             <input
               type="checkbox"
               checked={createdByMeOnly}
@@ -252,19 +252,19 @@ export default function WorkshopPage() {
             我创建的
           </label>
 
-          <div className="relative w-64">
-            <Search className="absolute left-2 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative w-56 max-w-full">
+            <Search className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={keyword}
               onChange={(event) => setKeyword(event.target.value)}
               placeholder="搜索"
-              className="h-8 rounded-xl border-0 bg-secondary pl-10 text-base"
+              className="h-8 rounded-lg border-0 bg-secondary pl-9 text-sm"
             />
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-x-12 gap-y-8 xl:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
         <CreateWorkflowCard />
         {filteredWorkflows.map((workflow) => (
           <WorkflowCard key={workflow.id} workflow={workflow} />

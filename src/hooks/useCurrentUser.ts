@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { getCurrentUser } from "@/api/user";
-import { clearSession, getSessionRoles, getToken } from "@/lib/session";
+import { getSessionRoles, getToken } from "@/lib/session";
 import type { UserInfoVO } from "@/types/user";
 
 interface UseCurrentUserResult {
@@ -34,9 +34,8 @@ export function useCurrentUser(): UseCurrentUserResult {
       setUser(currentUser);
       setRoles(currentUser.roles ?? getSessionRoles());
     } catch (refreshError) {
-      clearSession();
       setUser(null);
-      setRoles([]);
+      setRoles(getSessionRoles());
       setError(refreshError instanceof Error ? refreshError.message : "获取用户信息失败");
     } finally {
       setIsLoading(false);
@@ -51,7 +50,7 @@ export function useCurrentUser(): UseCurrentUserResult {
     user,
     roles,
     isLoading,
-    isAuthenticated: !!getToken() && !error,
+    isAuthenticated: !!getToken(),
     error,
     refresh,
   };
