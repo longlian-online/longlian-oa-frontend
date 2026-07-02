@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, useLocation, useRoutes } from "react-router";
 import routes from "~react-pages";
+import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import PageTransition from "@/components/layout/PageTransition";
 import TipProvider from "@/components/tip";
 import "./index.css";
@@ -28,8 +29,10 @@ function App() {
 createRoot(document.getElementById("app")!).render(
   <StrictMode>
     <TipProvider />
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <ConfirmDialogProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </ConfirmDialogProvider>
   </StrictMode>,
 );
