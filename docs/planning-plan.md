@@ -161,11 +161,12 @@ interface WorkflowStore {
 ```
 1. 用户点击"创建企划"
 2. 填写企划基本信息（标题/类型/封面等）
-3. 选择任务模板（下拉列表 /app/project/item/template-options）
-4. 创建企划 → POST /app/project
-5. 创建项目 → POST /app/project/{projectId}/item
-6. 创建任务流 → POST /app/project/item/{itemId}/task-flow
-7. 跳转企划详情页，展示任务流
+3. 获取企划类型 → GET /app/projects/types
+4. 选择任务模板（下拉列表 GET /app/task-template/options）
+5. 创建企划 → POST /app/projects
+6. 创建项目并绑定模板 → POST /app/projects/{projectId}/items
+7. 获取项目任务流 → GET /app/item/{itemId}/flow
+8. 跳转企划详情页，展示任务流
 ```
 
 ### 5.2 任务流转
@@ -178,7 +179,7 @@ POST /app/task/instance/{instanceId}/claim
 
 提交任务：
 POST /app/task/instance/{instanceId}/submit
-→ 上传文件（如需要）→ /app/file/upload （TODO：后端未提供）
+→ 上传文件（如需要）→ POST /common/file/upload 获取预签名上传地址
 → 提交metadata → POST submit
 → 状态变为 COMPLETED
 → 解锁下一节点（如有）
@@ -193,82 +194,81 @@ POST /app/task/instance/{instanceId}/reject
 ### 5.3 提交记录查看
 
 ```
-GET /app/task/instance/{instanceId}/submissions
-→ 展示历史提交列表
-→ 被拒绝的可查看reviewComment
-→ 支持下载提交的文件
+GET /app/task/instance/{instanceId}/detail
+→ 查看最近一次提交的 metadata
+→ 当前 Swagger 未暴露独立提交记录列表和下载接口
 ```
 
 ---
 
 ## 6. 后端接口清单
 
-### 6.1 任务模板管理
+### 6.1 工坊任务流模板管理
 
-| 接口                                      | 方法 | 用途                             |
-| ----------------------------------------- | ---- | -------------------------------- |
-| `/app/task/template`                      | POST | 创建模板                         |
-| `/app/task/template/{templateId}`         | PUT  | 更新模板                         |
-| `/app/task/template/{templateId}`         | GET  | 获取模板详情                     |
-| `/app/task/template/list`                 | POST | 分页查询模板列表                 |
-| `/app/task/template/task-template/status` | PUT  | 启用/禁用模板                    |
-| `/app/project/item/template-options`      | GET  | 获取可选模板列表（创建项目时用） |
+| 接口                                       | 方法 | 用途                       |
+| ------------------------------------------ | ---- | -------------------------- |
+| `/app/workshop/task-template`              | POST | 创建工坊个人任务流模板     |
+| `/app/workshop/task-template/list`         | POST | 分页查询工坊任务流模板列表 |
+| `/app/workshop/task-template/{templateId}` | PUT  | 更新工坊个人任务流模板     |
+| `/app/task-template/options`               | GET  | 获取用户可选流程模板       |
 
 ### 6.2 原子任务管理
 
-| 接口                              | 方法 | 用途              |
-| --------------------------------- | ---- | ----------------- |
-| `/app/task/base`                  | POST | 创建原子任务      |
-| `/app/task/base/list`             | POST | 分页查询原子任务  |
-| `/app/task/base/base-task/status` | PUT  | 启用/禁用原子任务 |
+当前 Swagger 未暴露可选原子任务列表接口。工作流模板节点需要 `baseTaskId`，前端接入拖拽模板编辑前需要后端补充原子任务来源，或先使用固定 mock 原子任务。
 
 ### 6.3 项目任务流
 
-| 接口                                   | 方法 | 用途                         |
-| -------------------------------------- | ---- | ---------------------------- |
-| `/app/project/item/{itemId}/task-flow` | POST | 创建任务流                   |
-| `/app/project/item/{itemId}/task-flow` | GET  | 获取任务流详情（含节点状态） |
+| 接口                      | 方法 | 用途                             |
+| ------------------------- | ---- | -------------------------------- |
+| `/app/item/{itemId}/flow` | GET  | 获取项目任务流（含节点执行状态） |
 
 ### 6.4 任务实例操作
 
-| 接口                                                    | 方法 | 用途                               |
-| ------------------------------------------------------- | ---- | ---------------------------------- |
-| `/app/task/instance/project/{projectId}`                | GET  | 查询可接取任务列表                 |
-| `/app/task/instance/{instanceId}/claim`                 | POST | 接取任务                           |
-| `/app/task/instance/{instanceId}/submit`                | POST | 提交任务                           |
-| `/app/task/instance/{instanceId}/reset`                 | POST | 重置提交（撤回）                   |
-| `/app/task/instance/{instanceId}/reject`                | POST | 打回任务                           |
-| `/app/task/instance/{instanceId}/abandon`               | POST | 放弃任务                           |
-| `/app/task/instance/{instanceId}/submissions`           | GET  | 查询提交记录                       |
-| `/app/task/instance/submission/{submissionId}/download` | GET  | 下载任务文件                       |
-| `/app/file/upload`                                      | POST | **TODO：上传文件接口，后端未提供** |
+| 接口                                      | 方法 | 用途                             |
+| ----------------------------------------- | ---- | -------------------------------- |
+| `/app/task/instance/item/{itemId}`        | GET  | 查询项目下的任务实例列表         |
+| `/app/task/instance/{instanceId}/detail`  | GET  | 查看任务实例详情                 |
+| `/app/task/instance/{instanceId}/claim`   | POST | 接取任务                         |
+| `/app/task/instance/{instanceId}/submit`  | POST | 提交任务                         |
+| `/app/task/instance/{instanceId}/reset`   | POST | 重置任务提交                     |
+| `/app/task/instance/{instanceId}/reject`  | POST | 打回任务                         |
+| `/app/task/instance/{instanceId}/abandon` | POST | 放弃任务                         |
+| `/common/file/upload`                     | POST | 创建文件上传，获取预签名上传地址 |
 
 ### 6.5 企划与项目
 
-| 接口                            | 方法 | 用途             |
-| ------------------------------- | ---- | ---------------- |
-| `/app/project`                  | POST | 创建企划         |
-| `/app/project/{projectId}`      | GET  | 获取企划详情     |
-| `/app/project/{projectId}`      | PUT  | 编辑企划         |
-| `/app/project/list`             | POST | 分页查询企划列表 |
-| `/app/project/{projectId}/item` | POST | 创建项目         |
-| `/app/project/item/list`        | POST | 分页查询项目列表 |
+| 接口                                               | 方法   | 用途             |
+| -------------------------------------------------- | ------ | ---------------- |
+| `/app/projects`                                    | GET    | 分页查询企划列表 |
+| `/app/projects`                                    | POST   | 创建企划         |
+| `/app/projects/types`                              | GET    | 获取企划类型列表 |
+| `/app/projects/{projectId}`                        | GET    | 获取企划详情     |
+| `/app/projects/{projectId}`                        | PUT    | 编辑企划         |
+| `/app/projects/{projectId}/items`                  | GET    | 分页查询项目列表 |
+| `/app/projects/{projectId}/items`                  | POST   | 创建项目         |
+| `/app/projects/{projectId}/items/{itemId}`         | DELETE | 删除项目         |
+| `/app/projects/{projectId}/items/{itemId}/publish` | PATCH  | 公布项目         |
+| `/app/projects/{projectId}/workshop`               | POST   | 添加企划到工坊   |
+| `/app/projects/{projectId}/workshop`               | DELETE | 从工坊移除企划   |
+
+当前 Swagger 未暴露企划删除接口。
 
 ---
 
 ## 7. 核心数据结构
 
-### 7.1 任务模板创建
+### 7.1 工坊任务流模板创建
 
 ```ts
-interface TaskTemplateCreateDTO {
+interface WorkshopTaskTemplateCreateDTO {
   name: string; // 模板名称
   description?: string; // 模板说明
-  nodes: TaskTemplateNodeDTO[];
+  nodes: WorkshopTaskTemplateNodeCreateDTO[];
 }
 
-interface TaskTemplateNodeDTO {
-  baseTaskId: number; // 关联原子任务ID
+interface WorkshopTaskTemplateNodeCreateDTO {
+  baseTaskId: string; // 关联原子任务ID
+  customName?: string; // 自定义任务实例名
   sort: number; // 步骤顺序（相同值=并行）
   parallelSort?: number; // 并行组内排序
 }
@@ -278,58 +278,52 @@ interface TaskTemplateNodeDTO {
 
 ```ts
 interface ItemTaskNodeVO {
-  id: number;
-  baseTaskId: number;
+  id: string;
+  baseTaskId: string;
   name: string;
+  baseTaskIconUrl?: string;
   metaSchema: string; // JSON字段定义快照
   sort: number;
   parallelSort: number;
+  taskInstanceId?: string;
   taskStatus: "PENDING" | "CLAIMED" | "COMPLETED" | null;
-  assigneeId?: number;
-  assigneeNickname?: string;
-  assigneeAvatarUrl?: string;
 }
 ```
 
 ### 7.3 任务实例
 
 ```ts
-interface TaskInstanceVO {
-  id: number;
-  itemId: number;
-  projectId: number;
-  itemTaskNodeId: number;
-  baseTaskName: string;
-  baseTaskDescription?: string;
+interface ItemTaskInstanceVO {
+  id: string;
+  name: string;
   status: "PENDING" | "CLAIMED" | "COMPLETED";
-  assigneeId?: number;
+  assigneeId?: string;
   assigneeNickname?: string;
   assigneeAvatarUrl?: string;
+  sort: number;
+  parallelSort: number;
   createdAt: string;
-  submittedAt?: string;
+  completedAt?: string;
 }
 ```
 
-### 7.4 提交记录
+### 7.4 任务详情与提交
 
 ```ts
-interface TaskSubmissionVO {
-  id: number;
-  taskInstanceId: number;
-  itemTaskNodeId: number;
-  baseTaskName: string;
-  status: "SUBMITTED" | "REJECTED" | "RESET";
-  submitterId: number;
-  submitterNickname: string;
-  submitterAvatarUrl?: string;
-  metadata: string; // 提交的JSON数据
-  reviewerId?: number;
-  reviewerNickname?: string;
-  reviewComment?: string;
-  createdAt: string;
-  reviewedAt?: string;
+interface TaskInstanceDetailVO {
+  metadata?: string; // 最近一次提交的元数据JSON字符串
+}
+
+interface TaskSubmitDTO {
+  metadata?: string; // 示例：{"values":{"attachment":{"fileId":123},"author":"张三"}}
+}
+
+interface TaskRejectDTO {
+  reviewComment: string; // 打回意见
 }
 ```
+
+当前 Swagger 未暴露独立提交记录列表，页面如需历史记录需要后端补接口。
 
 ---
 
