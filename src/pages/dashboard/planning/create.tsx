@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft, Check, ImagePlus, Info, Loader2, Plus, Tags, X } from "lucide-react";
 
-import { createProject, getProjectTypes } from "@/api/planning";
+import { createProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
+import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,8 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useProjectTypes } from "@/hooks/useProjectTypes";
 import type { UploadedFileInfo } from "@/types/file";
-import type { ProjectTypeInfoVO } from "@/types/planning";
 
 interface TagItem {
   key: string;
@@ -24,8 +25,8 @@ interface TagItem {
 
 export default function CreateProject() {
   const navigate = useNavigate();
+  const { projectTypes } = useProjectTypes();
   const [loading, setLoading] = useState(false);
-  const [projectTypes, setProjectTypes] = useState<ProjectTypeInfoVO[]>([]);
   const [formData, setFormData] = useState({
     title: "",
     alias: "",
@@ -38,21 +39,8 @@ export default function CreateProject() {
   const [showTagInput, setShowTagInput] = useState(false);
   const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(null);
 
-  useEffect(() => {
-    void loadProjectTypes();
-  }, []);
-
   const selectedProjectType = projectTypes.find((type) => String(type.id) === formData.typeId);
   const canSubmit = Boolean(formData.title && formData.typeId && coverFile?.fileId);
-
-  async function loadProjectTypes(): Promise<void> {
-    try {
-      const data = await getProjectTypes();
-      setProjectTypes(data);
-    } catch (error) {
-      console.error("Failed to load project types:", error);
-    }
-  }
 
   function handleAddTag(): void {
     if (newTagKey.trim() && newTagValue.trim()) {
@@ -80,10 +68,10 @@ export default function CreateProject() {
         coverFileId: coverFile.fileId,
         metadata: JSON.stringify({ tags }),
       });
+      $tip("企划创建成功", "success");
       void navigate("/dashboard/planning");
     } catch (error) {
-      console.error("Failed to create project:", error);
-      alert("创建失败，请重试");
+      $tip(error instanceof Error ? error.message : "创建失败，请重试", "error");
     } finally {
       setLoading(false);
     }

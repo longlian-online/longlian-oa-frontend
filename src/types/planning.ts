@@ -3,7 +3,13 @@
 
 // ==================== 基础枚举 ====================
 
-export type ProjectStatus = "IN_PROGRESS" | "COMPLETED" | "ARCHIVED";
+export type ProjectStatus =
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "ARCHIVED"
+  | "进行中"
+  | "已完成"
+  | "已归档";
 
 export type TaskInstanceStatus = "PENDING" | "CLAIMED" | "COMPLETED";
 
@@ -39,7 +45,7 @@ export interface ProjectDetailInfoVO {
   typeName: string; // 企划类型名称
   metadata?: string; // 扩展信息(JSON字符串)
   description?: string; // 企划简介
-  status: string; // 企划状态
+  status: ProjectStatus; // 企划状态
   progressPercent: number; // 整体进度百分比（0-100）
   claimedTaskCount: number; // 待提交任务数
   pendingTaskCount: number; // 待接取任务数
@@ -200,6 +206,14 @@ export interface ProjectCreateDTO {
   metadata: string;
   description: string;
   coverFileId: string;
+}
+
+export interface ProjectUpdateDTO {
+  title: string;
+  alias: string;
+  metadata: string;
+  description: string;
+  coverFileId?: string;
 }
 
 export interface ProjectItemCreateDTO {

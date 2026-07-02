@@ -7,6 +7,7 @@ import type {
   ProjectItemListVO,
   ProjectListDTO,
   ProjectCreateDTO,
+  ProjectUpdateDTO,
   ProjectItemCreateDTO,
   ProjectTypeInfoVO,
   TaskTemplateOptionVO,
@@ -181,15 +182,55 @@ export async function mockGetProjectDetail(
 
 export async function mockCreateProject(dto: ProjectCreateDTO): Promise<void> {
   await mockDelay(500);
+  const typeName = mockProjectTypes.find((type) => type.id === dto.typeId)?.name ?? "未知类型";
   const newProject: ProjectInfoVO = {
     id: Date.now(),
     title: dto.title,
     description: dto.description,
-    projectType: "漫画",
+    projectType: typeName,
     projectStatus: "IN_PROGRESS",
   };
   mockProjects.unshift(newProject);
   console.log("[Mock] 创建企划:", dto.title);
+}
+
+export async function mockUpdateProject(
+  projectId: number | string,
+  dto: ProjectUpdateDTO,
+): Promise<void> {
+  await mockDelay(500);
+  const id = Number(projectId);
+  const project = mockProjects.find((item) => item.id === id);
+  if (project) {
+    project.title = dto.title;
+    project.description = dto.description;
+    project.metadata = dto.metadata;
+  }
+
+  const detail = mockProjectDetails[id];
+  if (detail) {
+    detail.title = dto.title;
+    detail.alias = dto.alias;
+    detail.description = dto.description;
+    detail.metadata = dto.metadata;
+  }
+  console.log("[Mock] 编辑企划:", dto.title);
+}
+
+export async function mockAddProjectToWorkshop(projectId: number | string): Promise<void> {
+  await mockDelay(300);
+  const detail = mockProjectDetails[Number(projectId)];
+  if (detail) {
+    detail.inWorkshop = true;
+  }
+}
+
+export async function mockRemoveProjectFromWorkshop(projectId: number | string): Promise<void> {
+  await mockDelay(300);
+  const detail = mockProjectDetails[Number(projectId)];
+  if (detail) {
+    detail.inWorkshop = false;
+  }
 }
 
 // ==================== 项目 ====================

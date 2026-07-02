@@ -7,6 +7,7 @@ import type {
   ProjectDetailInfoVO,
   ProjectListDTO,
   ProjectCreateDTO,
+  ProjectUpdateDTO,
   ProjectTypeInfoVO,
   ProjectItemListVO,
   ProjectItemCreateDTO,
@@ -26,6 +27,9 @@ import {
   mockGetProjectList,
   mockGetProjectDetail,
   mockCreateProject,
+  mockUpdateProject,
+  mockAddProjectToWorkshop,
+  mockRemoveProjectFromWorkshop,
   mockGetProjectItemList,
   mockCreateProjectItem,
   mockGetTaskTemplateOptions,
@@ -47,13 +51,20 @@ const API_BASE = "/app";
 
 /**
  * 获取企划类型列表
- * GET /app/project/type/list
+ * POST /app/project/type/list
  */
 export async function getProjectTypes(): Promise<ProjectTypeInfoVO[]> {
   if (USE_MOCK) {
     return mockGetProjectTypes();
   }
-  return request("/project/type/list");
+  const result = await request<PageResult<ProjectTypeInfoVO> | ProjectTypeInfoVO[]>(
+    "/project/type/list",
+    {
+      method: "POST",
+      body: JSON.stringify({ pageNum: 1, pageSize: 100 }),
+    },
+  );
+  return Array.isArray(result) ? result : result.list;
 }
 
 // ==================== 企划 ====================
@@ -94,6 +105,49 @@ export async function createProject(dto: ProjectCreateDTO): Promise<void> {
   return request("/project", {
     method: "POST",
     body: JSON.stringify(dto),
+  });
+}
+
+/**
+ * 编辑企划
+ * PUT /app/project/{projectId}
+ */
+export async function updateProject(
+  projectId: number | string,
+  dto: ProjectUpdateDTO,
+): Promise<void> {
+  if (USE_MOCK) {
+    return mockUpdateProject(projectId, dto);
+  }
+  return request(`/project/${projectId}`, {
+    method: "PUT",
+    body: JSON.stringify(dto),
+  });
+}
+
+/**
+ * 添加企划到工坊
+ * POST /app/project/{projectId}/workshop
+ */
+export async function addProjectToWorkshop(projectId: number | string): Promise<void> {
+  if (USE_MOCK) {
+    return mockAddProjectToWorkshop(projectId);
+  }
+  return request(`/project/${projectId}/workshop`, {
+    method: "POST",
+  });
+}
+
+/**
+ * 从工坊移除企划
+ * DELETE /app/project/{projectId}/workshop
+ */
+export async function removeProjectFromWorkshop(projectId: number | string): Promise<void> {
+  if (USE_MOCK) {
+    return mockRemoveProjectFromWorkshop(projectId);
+  }
+  return request(`/project/${projectId}/workshop`, {
+    method: "DELETE",
   });
 }
 

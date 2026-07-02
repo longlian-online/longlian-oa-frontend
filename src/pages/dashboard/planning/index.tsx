@@ -7,6 +7,7 @@ import EmptyState from "@/components/EmptyState";
 import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
+import { $tip } from "@/components/tip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,20 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useProjectTypes } from "@/hooks/useProjectTypes";
 import type { ProjectInfoVO } from "@/types/planning";
 
 const PAGE_SIZE = 8;
 
-const typeOptions = [
-  { value: "all", label: "所有类型" },
-  { value: "漫画", label: "漫画" },
-  { value: "小说", label: "小说" },
-  { value: "视频", label: "视频" },
-  { value: "美术", label: "美术" },
-];
-
 export default function Planning() {
   const navigate = useNavigate();
+  const { projectTypes } = useProjectTypes();
   const [projects, setProjects] = useState<ProjectInfoVO[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
@@ -53,7 +48,7 @@ export default function Planning() {
       setProjects(result.list);
       setTotal(result.total);
     } catch (error) {
-      console.error("Failed to load projects:", error);
+      $tip(error instanceof Error ? error.message : "企划加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -95,9 +90,10 @@ export default function Planning() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {typeOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                <SelectItem value="all">所有类型</SelectItem>
+                {projectTypes.map((type) => (
+                  <SelectItem key={type.id} value={type.name}>
+                    {type.name}
                   </SelectItem>
                 ))}
               </SelectContent>
