@@ -1,7 +1,6 @@
 // Mock API 实现
 
 import type {
-  LoginVO,
   PageResult,
   ProjectInfoVO,
   ProjectDetailInfoVO,
@@ -18,9 +17,18 @@ import type {
   TaskSubmitDTO,
   TaskRejectDTO,
 } from "@/types/planning";
-import type { LoginByPwdDTO, LoginByCodeDTO, RegisterByInviteDTO } from "@/api/auth";
+import type {
+  EmailCodeDTO,
+  JoinByInviteCodeDTO,
+  LoginByCodeDTO,
+  LoginByPwdDTO,
+  LoginVO,
+  RegisterByInviteDTO,
+} from "@/types/auth";
+import type { UserInfoVO } from "@/types/user";
 import {
   mockCurrentUser,
+  mockCurrentUserInfo,
   mockProjects,
   mockProjectDetails,
   mockProjectItems,
@@ -38,8 +46,6 @@ import {
 export async function mockLoginByPassword(dto: LoginByPwdDTO): Promise<LoginVO> {
   await mockDelay(500);
   if (dto.username === "admin" && dto.password === "123456") {
-    localStorage.setItem("token", mockCurrentUser.token);
-    localStorage.setItem("userId", String(mockCurrentUser.userId));
     return mockCurrentUser;
   }
   throw new Error("用户名或密码错误");
@@ -48,21 +54,49 @@ export async function mockLoginByPassword(dto: LoginByPwdDTO): Promise<LoginVO> 
 export async function mockLoginByCode(dto: LoginByCodeDTO): Promise<LoginVO> {
   await mockDelay(500);
   if (dto.code === "123456") {
-    localStorage.setItem("token", mockCurrentUser.token);
-    localStorage.setItem("userId", String(mockCurrentUser.userId));
     return mockCurrentUser;
   }
   throw new Error("验证码错误");
 }
 
-export async function mockSendVerificationCode(email: string): Promise<void> {
+export async function mockSendVerificationCode(dto: EmailCodeDTO): Promise<void> {
   await mockDelay(300);
-  console.log(`[Mock] 验证码已发送到 ${email}: 123456`);
+  console.log(`[Mock] ${dto.businessType} 验证码已发送到 ${dto.email}: 123456`);
 }
 
-export async function mockRegisterByInvite(dto: RegisterByInviteDTO): Promise<void> {
+export async function mockRegisterJoinOrganization(dto: RegisterByInviteDTO): Promise<void> {
   await mockDelay(500);
-  console.log("[Mock] 注册成功:", dto.username);
+  console.log("[Mock] 注册并加入组织成功:", dto.username);
+}
+
+export async function mockRegisterCreateOrganization(dto: RegisterByInviteDTO): Promise<void> {
+  await mockDelay(500);
+  console.log("[Mock] 注册并创建组织成功:", dto.username, dto.orgName);
+}
+
+export async function mockLogout(): Promise<void> {
+  await mockDelay(200);
+}
+
+export async function mockGetCurrentUser(): Promise<UserInfoVO> {
+  await mockDelay(200);
+  return mockCurrentUserInfo;
+}
+
+export async function mockGetInviteInfo(inviteCode: string) {
+  await mockDelay(300);
+  if (!inviteCode.trim()) {
+    throw new Error("邀请码不能为空");
+  }
+  return {
+    orgId: "1",
+    orgName: "Longlian 汉化组",
+  };
+}
+
+export async function mockJoinOrganizationByInvite(dto: JoinByInviteCodeDTO): Promise<void> {
+  await mockDelay(400);
+  console.log("[Mock] 已加入组织:", dto.inviteCode);
 }
 
 // ==================== 企划类型 ====================

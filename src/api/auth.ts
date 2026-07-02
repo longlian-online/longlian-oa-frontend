@@ -1,59 +1,30 @@
-// 认证相关 API
-
-import type { ApiResult, LoginVO } from "@/types/planning";
 import {
   USE_MOCK,
   mockLoginByPassword,
   mockLoginByCode,
   mockSendVerificationCode,
-  mockRegisterByInvite,
+  mockRegisterCreateOrganization,
+  mockRegisterJoinOrganization,
+  mockLogout,
 } from "@/mock";
-
-const API_BASE = "/app";
-
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options?.headers as Record<string, string>),
-  };
-
-  const response = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const result: ApiResult<T> = await response.json();
-
-  if (result.code !== 2000) {
-    throw new Error(result.msg || `API error: ${result.code}`);
-  }
-
-  return result.data as T;
-}
-
-export interface LoginByPwdDTO {
-  username: string;
-  password: string;
-}
-
-export interface LoginByCodeDTO {
-  email: string;
-  code: string;
-}
+import { request } from "@/api/request";
+import type {
+  EmailCodeDTO,
+  LoginByCodeDTO,
+  LoginByPwdDTO,
+  LoginVO,
+  RegisterByInviteDTO,
+} from "@/types/auth";
 
 /**
  * 密码登录
- * POST /app/user/login/pwd
+ * POST /app/session/pwd
  */
 export async function loginByPassword(dto: LoginByPwdDTO): Promise<LoginVO> {
   if (USE_MOCK) {
     return mockLoginByPassword(dto);
   }
-  return request("/user/login/pwd", {
+  return request("/session/pwd", {
     method: "POST",
     body: JSON.stringify(dto),
   });
@@ -61,13 +32,13 @@ export async function loginByPassword(dto: LoginByPwdDTO): Promise<LoginVO> {
 
 /**
  * 验证码登录
- * POST /app/user/login/code
+ * POST /app/session/email
  */
 export async function loginByCode(dto: LoginByCodeDTO): Promise<LoginVO> {
   if (USE_MOCK) {
     return mockLoginByCode(dto);
   }
-  return request("/user/login/code", {
+  return request("/session/email", {
     method: "POST",
     body: JSON.stringify(dto),
   });
@@ -75,38 +46,43 @@ export async function loginByCode(dto: LoginByCodeDTO): Promise<LoginVO> {
 
 /**
  * 发送邮箱验证码
- * GET /app/user/send-code?email=xxx
+ * POST /app/session/email/code
  */
-export async function sendVerificationCode(email: string): Promise<void> {
+export async function sendVerificationCode(dto: EmailCodeDTO): Promise<void> {
   if (USE_MOCK) {
-    return mockSendVerificationCode(email);
+    return mockSendVerificationCode(dto);
   }
-  return request(`/user/send-code?email=${encodeURIComponent(email)}`, {
-    method: "GET",
+  return request("/session/email/code", {
+    method: "POST",
+    body: JSON.stringify(dto),
   });
 }
 
-export interface RegisterByInviteDTO {
-  inviteToken: string;
-  username: string;
-  password: string;
-  confirmPassword: string;
-  nickname: string;
-  email: string;
-  code: string;
-  orgName?: string;
-}
-
-/**
- * 通过邀请链接注册
- * POST /app/user/register/invite
- */
-export async function registerByInvite(dto: RegisterByInviteDTO): Promise<void> {
+export async function registerJoinOrganization(dto: RegisterByInviteDTO): Promise<void> {
   if (USE_MOCK) {
-    return mockRegisterByInvite(dto);
+    return mockRegisterJoinOrganization(dto);
   }
-  return request("/user/register/invite", {
+  return request("/user/register/join-organization", {
     method: "POST",
     body: JSON.stringify(dto),
+  });
+}
+
+export async function registerCreateOrganization(dto: RegisterByInviteDTO): Promise<void> {
+  if (USE_MOCK) {
+    return mockRegisterCreateOrganization(dto);
+  }
+  return request("/user/register/create-organization", {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function logout(): Promise<void> {
+  if (USE_MOCK) {
+    return mockLogout();
+  }
+  return request("/session/", {
+    method: "DELETE",
   });
 }

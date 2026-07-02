@@ -2,7 +2,6 @@
 // 对应后端接口: /app/project/*, /app/task/*, /app/project/item/*
 
 import type {
-  ApiResult,
   PageResult,
   ProjectInfoVO,
   ProjectDetailInfoVO,
@@ -20,6 +19,7 @@ import type {
   TaskSubmitDTO,
   TaskRejectDTO,
 } from "@/types/planning";
+import { request } from "@/api/request";
 import {
   USE_MOCK,
   mockGetProjectTypes,
@@ -42,37 +42,6 @@ import {
 } from "@/mock";
 
 const API_BASE = "/app";
-
-// ==================== 辅助函数 ====================
-
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const token = localStorage.getItem("token");
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options?.headers as Record<string, string>),
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  const result: ApiResult<T> = await response.json();
-
-  if (result.code !== 2000) {
-    throw new Error(result.msg || `API error: ${result.code}`);
-  }
-
-  return result.data as T;
-}
 
 // ==================== 企划类型 ====================
 

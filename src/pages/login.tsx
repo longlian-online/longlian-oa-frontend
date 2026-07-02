@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { loginByPassword, loginByCode, sendVerificationCode } from "@/api/auth";
 import { $tip } from "@/components/tip";
+import { saveSession } from "@/lib/session";
 
 const passwordSchema = z.object({
   username: z.string().min(1, "请输入用户名"),
@@ -46,8 +47,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const result = await loginByPassword(data);
-      localStorage.setItem("token", result.token);
-      localStorage.setItem("userId", String(result.userId));
+      saveSession(result);
       $tip("登录成功", "success");
       void navigate("/dashboard/planning");
     } catch (error) {
@@ -61,8 +61,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const result = await loginByCode(data);
-      localStorage.setItem("token", result.token);
-      localStorage.setItem("userId", String(result.userId));
+      saveSession(result);
       $tip("登录成功", "success");
       void navigate("/dashboard/planning");
     } catch (error) {
@@ -78,7 +77,7 @@ export default function LoginPage() {
     if (!isValid) return;
 
     try {
-      await sendVerificationCode(email);
+      await sendVerificationCode({ email, businessType: "LOGIN" });
       $tip("验证码已发送", "success");
       setCountdown(60);
       const timer = setInterval(() => {
@@ -169,6 +168,13 @@ export default function LoginPage() {
                 <Button type="submit" className="w-full h-11 mt-2" disabled={isLoading}>
                   {isLoading ? "登录中..." : "登录"}
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => void navigate("/forgot-password")}
+                  className="text-muted-foreground hover:text-primary block w-full text-center text-xs"
+                >
+                  忘记密码？
+                </button>
               </form>
             </TabsContent>
 

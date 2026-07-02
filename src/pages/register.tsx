@@ -8,11 +8,19 @@ import { Layers, Mail, User, Lock, Eye, EyeOff, Building2, Sparkles } from "luci
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { registerByInvite, sendVerificationCode } from "@/api/auth";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  registerCreateOrganization,
+  registerJoinOrganization,
+  sendVerificationCode,
+} from "@/api/auth";
+import { getInviteInfo } from "@/api/user";
+import { $tip } from "@/components/tip";
+import type { InviteInfoVO } from "@/types/auth";
 
 const registerSchema = z
   .object({
-    inviteToken: z.string().min(1, "邀请码不能为空"),
+    inviteCode: z.string().min(1, "邀请码不能为空"),
     orgName: z.string().optional(),
     nickname: z.string().max(20, "昵称最多20个字符"),
     username: z.string().min(4, "用户名至少4个字符").max(20, "用户名最多20个字符"),
@@ -27,6 +35,7 @@ const registerSchema = z
   });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
+type RegisterMode = "join" | "create";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -35,13 +44,16 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [mode, setMode] = useState<RegisterMode>("join");
+  const [inviteInfo, setInviteInfo] = useState<InviteInfoVO | null>(null);
+  const [isInviteLoading, setIsInviteLoading] = useState(false);
 
-  const defaultInviteToken = searchParams.get("invite") || "";
+  const defaultInviteCode = searchParams.get("invite") || searchParams.get("inviteCode") || "";
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      inviteToken: defaultInviteToken,
+      inviteCode: defaultInviteCode,
       orgName: "",
       nickname: "",
       username: "",
@@ -55,13 +67,34 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      await registerByInvite(data);
-      alert("注册成功！请登录");
+      if (mode === "create") {
+        await registerCreateOrganization(data);
+      } else {
+        await registerJoinOrganization(data);
+      }
+      $tip("注册成功，请登录", "success");
       void navigate("/login");
     } catch (error) {
-      alert(error instanceof Error ? error.message : "注册失败");
+      $tip(error instanceof Error ? error.message : "注册失败", "error");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleQueryInviteInfo = async (): Promise<void> => {
+    const isValid = await form.trigger("inviteCode");
+    if (!isValid) return;
+
+    setIsInviteLoading(true);
+    try {
+      const result = await getInviteInfo(form.getValues("inviteCode"));
+      setInviteInfo(result);
+      $tip(`邀请码来自 ${result.orgName}`, "success");
+    } catch (error) {
+      setInviteInfo(null);
+      $tip(error instanceof Error ? error.message : "邀请码查询失败", "error");
+    } finally {
+      setIsInviteLoading(false);
     }
   };
 
@@ -71,7 +104,8 @@ export default function RegisterPage() {
     if (!isValid) return;
 
     try {
-      await sendVerificationCode(email);
+      await sendVerificationCode({ email, businessType: "REGISTER" });
+      $tip("验证码已发送", "success");
       setCountdown(60);
       const timer = setInterval(() => {
         setCountdown((prev) => {
@@ -83,7 +117,7 @@ export default function RegisterPage() {
         });
       }, 1000);
     } catch (error) {
-      alert(error instanceof Error ? error.message : "发送验证码失败");
+      $tip(error instanceof Error ? error.message : "发送验证码失败", "error");
     }
   };
 
@@ -100,43 +134,67 @@ export default function RegisterPage() {
 
         {/* Register Card */}
         <div className="bg-card rounded-2xl border p-6 shadow-sm">
+          <Tabs value={mode} onValueChange={(value) => setMode(value as RegisterMode)}>
+            <TabsList className="mb-6 grid w-full grid-cols-2">
+              <TabsTrigger value="join">加入组织</TabsTrigger>
+              <TabsTrigger value="create">创建组织</TabsTrigger>
+            </TabsList>
+          </Tabs>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* 邀请码 */}
             <div className="space-y-2">
-              <Label htmlFor="inviteToken" className="text-xs text-muted-foreground">
+              <Label htmlFor="inviteCode" className="text-xs text-muted-foreground">
                 邀请码
               </Label>
-              <div className="relative">
-                <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="inviteToken"
-                  placeholder="请输入邀请码"
-                  className="pl-10 h-11"
-                  {...form.register("inviteToken")}
-                />
+              <div className="flex gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="inviteCode"
+                    placeholder="请输入邀请码"
+                    className="h-11 pl-10"
+                    {...form.register("inviteCode", {
+                      onChange: () => setInviteInfo(null),
+                    })}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 shrink-0 px-3"
+                  onClick={handleQueryInviteInfo}
+                  disabled={isInviteLoading}
+                >
+                  {isInviteLoading ? "查询中" : "查询"}
+                </Button>
               </div>
-              {form.formState.errors.inviteToken && (
+              {form.formState.errors.inviteCode && (
                 <p className="text-xs text-destructive">
-                  {form.formState.errors.inviteToken.message}
+                  {form.formState.errors.inviteCode.message}
                 </p>
+              )}
+              {inviteInfo && (
+                <p className="text-xs text-muted-foreground">将加入：{inviteInfo.orgName}</p>
               )}
             </div>
 
             {/* 组织名称 */}
-            <div className="space-y-2">
-              <Label htmlFor="orgName" className="text-xs text-muted-foreground">
-                组织
-              </Label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="orgName"
-                  placeholder="请输入组织名称（选填）"
-                  className="pl-10 h-11"
-                  {...form.register("orgName")}
-                />
+            {mode === "create" && (
+              <div className="space-y-2">
+                <Label htmlFor="orgName" className="text-xs text-muted-foreground">
+                  组织
+                </Label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="orgName"
+                    placeholder="请输入组织名称"
+                    className="h-11 pl-10"
+                    {...form.register("orgName")}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* 昵称 */}
             <div className="space-y-2">

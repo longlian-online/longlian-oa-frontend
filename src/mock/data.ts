@@ -1,7 +1,6 @@
 // Mock 数据
 
 import type {
-  LoginVO,
   ProjectInfoVO,
   ProjectDetailInfoVO,
   ProjectItemListVO,
@@ -13,12 +12,24 @@ import type {
   ProjectTypeInfoVO,
   ProjectItemNodeVO,
 } from "@/types/planning";
+import type { LoginVO } from "@/types/auth";
+import type { UserInfoVO } from "@/types/user";
 
 // 当前登录用户
 export const mockCurrentUser: LoginVO = {
-  userId: 1,
-  defaultOrgId: 1,
+  userId: "1",
+  currentOrgId: "1",
   token: "mock_token_12345",
+  roles: ["USER", "ADMIN"],
+};
+
+export const mockCurrentUserInfo: UserInfoVO = {
+  id: "1",
+  username: "admin",
+  email: "admin@example.com",
+  nickname: "管理员",
+  avatarUrl: "https://picsum.photos/seed/admin/100/100",
+  defaultOrgId: "1",
   roles: ["USER", "ADMIN"],
 };
 
