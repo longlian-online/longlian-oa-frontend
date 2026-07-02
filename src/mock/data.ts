@@ -12,7 +12,7 @@ import type {
   ProjectTypeInfoVO,
   ProjectItemNodeVO,
 } from "@/types/planning";
-import type { LoginVO } from "@/types/auth";
+import type { AdminLoginVO, LoginVO } from "@/types/auth";
 import type { UserInfoVO } from "@/types/user";
 
 // 当前登录用户
@@ -31,6 +31,13 @@ export const mockCurrentUserInfo: UserInfoVO = {
   avatarUrl: "https://picsum.photos/seed/admin/100/100",
   defaultOrgId: "1",
   roles: ["USER", "ADMIN"],
+};
+
+export const mockAdminUser: AdminLoginVO = {
+  adminId: "1001",
+  username: "superadmin",
+  role: "SUPER_ADMIN",
+  token: "mock_admin_token_12345",
 };
 
 // 企划类型

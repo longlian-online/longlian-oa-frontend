@@ -16,6 +16,7 @@ import {
 } from "@/api/auth";
 import { getInviteInfo } from "@/api/user";
 import { $tip } from "@/components/tip";
+import { cn } from "@/lib/utils";
 import type { InviteInfoVO } from "@/types/auth";
 
 const registerSchema = z
@@ -45,6 +46,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [mode, setMode] = useState<RegisterMode>("join");
+  const [modeDirection, setModeDirection] = useState<"left" | "right">("right");
   const [inviteInfo, setInviteInfo] = useState<InviteInfoVO | null>(null);
   const [isInviteLoading, setIsInviteLoading] = useState(false);
 
@@ -63,6 +65,19 @@ export default function RegisterPage() {
       confirmPassword: "",
     },
   });
+
+  const handleModeChange = (value: string): void => {
+    const nextMode = value as RegisterMode;
+    setModeDirection(nextMode === "create" ? "right" : "left");
+    setMode(nextMode);
+  };
+
+  const modePanelClassName = cn(
+    "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 motion-safe:ease-out motion-reduce:animate-none",
+    modeDirection === "right"
+      ? "motion-safe:slide-in-from-right-4"
+      : "motion-safe:slide-in-from-left-4",
+  );
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
@@ -134,13 +149,17 @@ export default function RegisterPage() {
 
         {/* Register Card */}
         <div className="bg-card rounded-2xl border p-6 shadow-sm">
-          <Tabs value={mode} onValueChange={(value) => setMode(value as RegisterMode)}>
+          <Tabs value={mode} onValueChange={handleModeChange}>
             <TabsList className="mb-6 grid w-full grid-cols-2">
               <TabsTrigger value="join">加入组织</TabsTrigger>
               <TabsTrigger value="create">创建组织</TabsTrigger>
             </TabsList>
           </Tabs>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            key={mode}
+            onSubmit={form.handleSubmit(onSubmit)}
+            className={cn("space-y-4", modePanelClassName)}
+          >
             {/* 邀请码 */}
             <div className="space-y-2">
               <Label htmlFor="inviteCode" className="text-xs text-muted-foreground">
@@ -296,7 +315,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -323,7 +342,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -348,7 +367,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => void navigate("/login")}
-                className="text-primary hover:underline"
+                className="cursor-pointer text-primary hover:underline"
               >
                 去登录
               </button>

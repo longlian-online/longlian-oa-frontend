@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { loginByPassword, loginByCode, sendVerificationCode } from "@/api/auth";
 import { $tip } from "@/components/tip";
 import { saveSession } from "@/lib/session";
+import { cn } from "@/lib/utils";
 
 const passwordSchema = z.object({
   username: z.string().min(1, "请输入用户名"),
@@ -32,6 +33,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [activeTab, setActiveTab] = useState<"password" | "code">("password");
+  const [tabDirection, setTabDirection] = useState<"left" | "right">("right");
 
   const passwordForm = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
@@ -42,6 +44,19 @@ export default function LoginPage() {
     resolver: zodResolver(codeSchema),
     defaultValues: { email: "", code: "" },
   });
+
+  const handleTabChange = (value: string): void => {
+    const nextTab = value as "password" | "code";
+    setTabDirection(nextTab === "code" ? "right" : "left");
+    setActiveTab(nextTab);
+  };
+
+  const tabPanelClassName = cn(
+    "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 motion-safe:ease-out motion-reduce:animate-none",
+    tabDirection === "right"
+      ? "motion-safe:slide-in-from-right-4"
+      : "motion-safe:slide-in-from-left-4",
+  );
 
   const onPasswordSubmit = async (data: PasswordFormData) => {
     setIsLoading(true);
@@ -108,14 +123,14 @@ export default function LoginPage() {
 
         {/* Login Card */}
         <div className="bg-card rounded-2xl border p-6 shadow-sm">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "password" | "code")}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="password">密码</TabsTrigger>
               <TabsTrigger value="code">邮箱</TabsTrigger>
             </TabsList>
 
             {/* Password Login */}
-            <TabsContent value="password">
+            <TabsContent value="password" className={tabPanelClassName}>
               <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-xs text-muted-foreground">
@@ -153,7 +168,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -171,7 +186,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => void navigate("/forgot-password")}
-                  className="text-muted-foreground hover:text-primary block w-full text-center text-xs"
+                  className="block w-full cursor-pointer text-center text-xs text-muted-foreground hover:text-primary"
                 >
                   忘记密码？
                 </button>
@@ -179,7 +194,7 @@ export default function LoginPage() {
             </TabsContent>
 
             {/* Code Login */}
-            <TabsContent value="code">
+            <TabsContent value="code" className={tabPanelClassName}>
               <form onSubmit={codeForm.handleSubmit(onCodeSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-xs text-muted-foreground">
@@ -243,9 +258,17 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => void navigate("/register")}
-              className="text-primary hover:underline"
+              className="cursor-pointer text-primary hover:underline"
             >
               去注册
+            </button>
+            <span className="mx-2 text-muted-foreground/60">·</span>
+            <button
+              type="button"
+              onClick={() => void navigate("/admin/login")}
+              className="cursor-pointer text-primary hover:underline"
+            >
+              管理员登录
             </button>
           </div>
         </div>

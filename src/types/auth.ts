@@ -40,3 +40,15 @@ export interface InviteInfoVO {
 export interface JoinByInviteCodeDTO {
   inviteCode: string;
 }
+
+export interface AdminLoginDTO {
+  username: string;
+  password: string;
+}
+
+export interface AdminLoginVO {
+  adminId: string;
+  username: string;
+  role: string;
+  token: string;
+}

@@ -6,9 +6,13 @@ import {
   mockRegisterCreateOrganization,
   mockRegisterJoinOrganization,
   mockLogout,
+  mockAdminLogin,
+  mockAdminLogout,
 } from "@/mock";
-import { request } from "@/api/request";
+import { adminRequest, request } from "@/api/request";
 import type {
+  AdminLoginDTO,
+  AdminLoginVO,
   EmailCodeDTO,
   LoginByCodeDTO,
   LoginByPwdDTO,
@@ -83,6 +87,25 @@ export async function logout(): Promise<void> {
     return mockLogout();
   }
   return request("/session/", {
+    method: "DELETE",
+  });
+}
+
+export async function adminLogin(dto: AdminLoginDTO): Promise<AdminLoginVO> {
+  if (USE_MOCK) {
+    return mockAdminLogin(dto);
+  }
+  return adminRequest("/admin/session", {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function adminLogout(): Promise<void> {
+  if (USE_MOCK) {
+    return mockAdminLogout();
+  }
+  return adminRequest("/admin/session", {
     method: "DELETE",
   });
 }

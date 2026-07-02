@@ -18,6 +18,8 @@ import type {
   TaskRejectDTO,
 } from "@/types/planning";
 import type {
+  AdminLoginDTO,
+  AdminLoginVO,
   EmailCodeDTO,
   JoinByInviteCodeDTO,
   LoginByCodeDTO,
@@ -27,6 +29,7 @@ import type {
 } from "@/types/auth";
 import type { UserInfoVO } from "@/types/user";
 import {
+  mockAdminUser,
   mockCurrentUser,
   mockCurrentUserInfo,
   mockProjects,
@@ -75,6 +78,18 @@ export async function mockRegisterCreateOrganization(dto: RegisterByInviteDTO): 
 }
 
 export async function mockLogout(): Promise<void> {
+  await mockDelay(200);
+}
+
+export async function mockAdminLogin(dto: AdminLoginDTO): Promise<AdminLoginVO> {
+  await mockDelay(500);
+  if (dto.username === "superadmin" && dto.password === "123456") {
+    return mockAdminUser;
+  }
+  throw new Error("管理员账号或密码错误");
+}
+
+export async function mockAdminLogout(): Promise<void> {
   await mockDelay(200);
 }
 
