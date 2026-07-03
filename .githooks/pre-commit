@@ -1,27 +1,74 @@
 #!/bin/sh
 
-staged_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "\.(ts|tsx|js|jsx)$")
+repo_root=$(git rev-parse --show-toplevel)
+local_bin="$repo_root/node_modules/.bin"
+PATH="$local_bin:$PATH"
+export PATH
 
-if [ -z "$staged_files" ]; then
+if ! command -v node >/dev/null 2>&1; then
+  echo "✖ 找不到 node 命令"
+  echo ""
+  echo "  Git Hook 需要 Node.js 来运行 Vite Plus。"
+  echo "  请确认 Node.js 已安装，并且当前 Git 环境的 PATH 能找到 node。"
+  exit 1
+fi
+
+if [ -x "$local_bin/vp" ]; then
+  VP="$local_bin/vp"
+elif [ -x "$local_bin/vp.cmd" ]; then
+  VP="$local_bin/vp.cmd"
+elif command -v vp >/dev/null 2>&1; then
+  VP="vp"
+else
+  echo "✖ 找不到 vp 命令"
+  echo ""
+  echo "  请先安装依赖，或确认项目本地存在 node_modules/.bin/vp"
+  echo "  支持的路径:"
+  echo "    $repo_root/node_modules/.bin/vp"
+  echo "    $repo_root/node_modules/.bin/vp.cmd"
+  exit 1
+fi
+
+staged_files=$(mktemp)
+git diff --cached --name-only -z --diff-filter=ACMR -- \
+  "*.ts" "*.tsx" "*.js" "*.jsx" > "$staged_files"
+
+if [ ! -s "$staged_files" ]; then
+  rm -f "$staged_files"
   exit 0
 fi
 
 echo "► 格式化代码..."
-echo "$staged_files" | xargs vp fmt
-if [ $? -ne 0 ]; then
+if ! xargs -0 "$VP" fmt < "$staged_files"; then
+  rm -f "$staged_files"
   echo "✖ 格式化失败，提交已中止"
   exit 1
 fi
 
+if ! xargs -0 git add -- < "$staged_files"; then
+  rm -f "$staged_files"
+  echo "✖ 暂存格式化结果失败，提交已中止"
+  exit 1
+fi
+
+git diff --cached --name-only -z --diff-filter=ACMR -- \
+  "*.ts" "*.tsx" "*.js" "*.jsx" > "$staged_files"
+
+if [ ! -s "$staged_files" ]; then
+  rm -f "$staged_files"
+  echo "✔ 检查通过"
+  exit 0
+fi
+
 echo "► 检查 lint..."
-echo "$staged_files" | xargs vp lint
-if [ $? -ne 0 ]; then
+if ! xargs -0 "$VP" lint < "$staged_files"; then
+  rm -f "$staged_files"
   echo ""
   echo "✖ lint 检查未通过，请修复以上错误后重新提交"
   exit 1
 fi
 
-echo "$staged_files" | xargs git add
+rm -f "$staged_files"
 
 echo "✔ 检查通过"
 exit 0

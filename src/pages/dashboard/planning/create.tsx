@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { getCurrentOrgId } from "@/lib/session";
 import type { UploadedFileInfo } from "@/types/file";
 
 interface TagItem {
@@ -29,6 +30,7 @@ const fieldClassName =
 export default function CreateProject() {
   const navigate = useNavigate();
   const { projectTypes } = useProjectTypes();
+  const coverBizId = getCurrentOrgId() ?? "cover";
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -42,7 +44,6 @@ export default function CreateProject() {
   const [showTagInput, setShowTagInput] = useState(false);
   const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(null);
 
-  const selectedProjectType = projectTypes.find((type) => String(type.id) === formData.typeId);
   const canSubmit = Boolean(formData.title && formData.typeId && coverFile?.fileId);
 
   function handleAddTag(): void {
@@ -81,7 +82,7 @@ export default function CreateProject() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
       <div className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="flex items-start gap-3">
           <Button
@@ -119,7 +120,7 @@ export default function CreateProject() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="grid items-start justify-center gap-4 lg:grid-cols-[280px_minmax(0,720px)]">
         <aside>
           <section className="rounded-xl border bg-card p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
@@ -132,14 +133,14 @@ export default function CreateProject() {
 
             <FileUpload
               bizType="cover"
-              bizId="new-project"
+              bizId={coverBizId}
               value={coverFile}
               title="上传企划封面"
               description="推荐 2:3 竖版图片，最大 10MB"
               imagePreview
               accept={["jpg", "jpeg", "png", "gif"]}
               maxSize={10 * 1024 * 1024}
-              className="[&>button]:h-[390px]"
+              className="[&>button]:h-[340px]"
               onChange={setCoverFile}
             />
 
@@ -155,24 +156,10 @@ export default function CreateProject() {
                 <p className="text-xs text-muted-foreground">用于小尺寸场景，可后续裁剪</p>
               </div>
             </div>
-            <div className="mt-3 rounded-lg bg-muted/40 p-3">
-              <p className="line-clamp-2 text-base font-medium text-foreground">
-                {formData.title || "未命名企划"}
-              </p>
-              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="rounded-full bg-background px-2 py-1">
-                  {selectedProjectType?.name || "未选择类型"}
-                </span>
-                <span>{formData.alias || "暂无别名"}</span>
-              </div>
-              <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                {formData.description || "简介会在企划详情与列表中辅助成员判断内容方向。"}
-              </p>
-            </div>
           </section>
         </aside>
 
-        <main className="rounded-xl border bg-card p-5 shadow-sm">
+        <main className="h-fit rounded-xl border bg-card p-5 shadow-sm">
           <section className="border-b pb-4">
             <div className="mb-4 flex items-center gap-2">
               <Info className="h-4 w-4 text-muted-foreground" />

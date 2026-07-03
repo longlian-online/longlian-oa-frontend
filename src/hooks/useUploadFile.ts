@@ -8,7 +8,7 @@ const DEFAULT_MAX_SIZE = 50 * 1024 * 1024;
 const DEFAULT_ACCEPT = ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx", "zip"];
 
 const MIME_BY_EXT: Record<string, string[]> = {
-  jpg: ["image/jpeg"],
+  jpg: ["image/jpeg", "image/jpg"],
   jpeg: ["image/jpeg"],
   png: ["image/png"],
   gif: ["image/gif"],
@@ -31,9 +31,15 @@ interface UseUploadFileResult {
 }
 
 export function getFileExt(fileName: string): string {
-  const [, ...parts] = fileName.split(".").reverse();
-  if (parts.length === 0) return "";
-  return fileName.split(".").pop()?.toLowerCase() ?? "";
+  const lastDotIndex = fileName.lastIndexOf(".");
+  if (lastDotIndex < 0 || lastDotIndex === fileName.length - 1) return "";
+  return fileName.slice(lastDotIndex + 1).toLowerCase();
+}
+
+function normalizeMimeType(file: File, fileExt: string): string {
+  if (file.type === "image/jpg") return "image/jpeg";
+  if (file.type) return file.type;
+  return MIME_BY_EXT[fileExt]?.[0] ?? "application/octet-stream";
 }
 
 function formatFileSize(size: number): string {
@@ -47,13 +53,14 @@ function validateFile(file: File, options: FileValidationOptions): string | null
   const accept = options.accept ?? DEFAULT_ACCEPT;
   const maxSize = options.maxSize ?? DEFAULT_MAX_SIZE;
   const fileExt = getFileExt(file.name);
+  const fileMime = normalizeMimeType(file, fileExt);
 
   if (!fileExt || !accept.map((item) => item.toLowerCase()).includes(fileExt)) {
     return `仅支持 ${accept.join("、")} 格式`;
   }
 
   const expectedMimeTypes = MIME_BY_EXT[fileExt] ?? [];
-  if (file.type && expectedMimeTypes.length > 0 && !expectedMimeTypes.includes(file.type)) {
+  if (expectedMimeTypes.length > 0 && !expectedMimeTypes.includes(fileMime)) {
     return "文件类型与扩展名不匹配";
   }
 
@@ -67,10 +74,12 @@ function validateFile(file: File, options: FileValidationOptions): string | null
 async function uploadToPresignedUrl(uploadUrl: string, file: File): Promise<void> {
   if (!uploadUrl) return;
 
+  const fileExt = getFileExt(file.name);
+  const fileMime = normalizeMimeType(file, fileExt);
   const response = await fetch(uploadUrl, {
     method: "PUT",
     headers: {
-      "Content-Type": file.type || "application/octet-stream",
+      "Content-Type": fileMime,
     },
     body: file,
   });
@@ -93,11 +102,12 @@ export function useUploadFile(): UseUploadFileResult {
     setUploading(true);
     try {
       const fileExt = getFileExt(file.name);
+      const fileMime = normalizeMimeType(file, fileExt);
       const resource = await createFileUpload({
         fileName: file.name,
         fileExt,
         fileSize: file.size,
-        fileMime: file.type || "application/octet-stream",
+        fileMime,
         bizType: options.bizType,
         bizId: options.bizId,
       });
@@ -108,8 +118,8 @@ export function useUploadFile(): UseUploadFileResult {
         fileId: resource.fileId,
         fileName: file.name,
         fileSize: file.size,
-        fileMime: file.type || "application/octet-stream",
-        previewUrl: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+        fileMime,
+        previewUrl: fileMime.startsWith("image/") ? URL.createObjectURL(file) : undefined,
       };
 
       $tip("文件上传成功", "success");
