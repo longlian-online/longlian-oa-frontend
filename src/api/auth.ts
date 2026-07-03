@@ -1,14 +1,3 @@
-import {
-  USE_MOCK,
-  mockLoginByPassword,
-  mockLoginByCode,
-  mockSendVerificationCode,
-  mockRegisterCreateOrganization,
-  mockRegisterJoinOrganization,
-  mockLogout,
-  mockAdminLogin,
-  mockAdminLogout,
-} from "@/mock";
 import { adminRequest, request } from "@/api/request";
 import type {
   AdminLoginDTO,
@@ -25,9 +14,6 @@ import type {
  * POST /app/session/pwd
  */
 export async function loginByPassword(dto: LoginByPwdDTO): Promise<LoginVO> {
-  if (USE_MOCK) {
-    return mockLoginByPassword(dto);
-  }
   return request("/session/pwd", {
     method: "POST",
     body: JSON.stringify(dto),
@@ -39,9 +25,6 @@ export async function loginByPassword(dto: LoginByPwdDTO): Promise<LoginVO> {
  * POST /app/session/email
  */
 export async function loginByCode(dto: LoginByCodeDTO): Promise<LoginVO> {
-  if (USE_MOCK) {
-    return mockLoginByCode(dto);
-  }
   return request("/session/email", {
     method: "POST",
     body: JSON.stringify(dto),
@@ -53,9 +36,6 @@ export async function loginByCode(dto: LoginByCodeDTO): Promise<LoginVO> {
  * POST /app/session/email/code
  */
 export async function sendVerificationCode(dto: EmailCodeDTO): Promise<void> {
-  if (USE_MOCK) {
-    return mockSendVerificationCode(dto);
-  }
   return request("/session/email/code", {
     method: "POST",
     body: JSON.stringify(dto),
@@ -63,9 +43,6 @@ export async function sendVerificationCode(dto: EmailCodeDTO): Promise<void> {
 }
 
 export async function registerJoinOrganization(dto: RegisterByInviteDTO): Promise<void> {
-  if (USE_MOCK) {
-    return mockRegisterJoinOrganization(dto);
-  }
   return request("/user/register/join-organization", {
     method: "POST",
     body: JSON.stringify(dto),
@@ -73,9 +50,6 @@ export async function registerJoinOrganization(dto: RegisterByInviteDTO): Promis
 }
 
 export async function registerCreateOrganization(dto: RegisterByInviteDTO): Promise<void> {
-  if (USE_MOCK) {
-    return mockRegisterCreateOrganization(dto);
-  }
   return request("/user/register/create-organization", {
     method: "POST",
     body: JSON.stringify(dto),
@@ -83,18 +57,12 @@ export async function registerCreateOrganization(dto: RegisterByInviteDTO): Prom
 }
 
 export async function logout(): Promise<void> {
-  if (USE_MOCK) {
-    return mockLogout();
-  }
   return request("/session/", {
     method: "DELETE",
   });
 }
 
 export async function adminLogin(dto: AdminLoginDTO): Promise<AdminLoginVO> {
-  if (USE_MOCK) {
-    return mockAdminLogin(dto);
-  }
   return adminRequest("/admin/session", {
     method: "POST",
     body: JSON.stringify(dto),
@@ -102,9 +70,6 @@ export async function adminLogin(dto: AdminLoginDTO): Promise<AdminLoginVO> {
 }
 
 export async function adminLogout(): Promise<void> {
-  if (USE_MOCK) {
-    return mockAdminLogout();
-  }
   return adminRequest("/admin/session", {
     method: "DELETE",
   });

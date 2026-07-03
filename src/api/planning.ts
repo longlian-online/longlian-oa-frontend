@@ -21,29 +21,6 @@ import type {
   TaskRejectDTO,
 } from "@/types/planning";
 import { request } from "@/api/request";
-import {
-  USE_MOCK,
-  mockGetProjectTypes,
-  mockGetProjectList,
-  mockGetProjectDetail,
-  mockCreateProject,
-  mockUpdateProject,
-  mockAddProjectToWorkshop,
-  mockRemoveProjectFromWorkshop,
-  mockGetProjectItemList,
-  mockCreateProjectItem,
-  mockGetTaskTemplateOptions,
-  mockGetTaskTemplateDetail,
-  mockGetTaskFlow,
-  mockCreateTaskFlow,
-  mockGetTaskInstances,
-  mockClaimTask,
-  mockAbandonTask,
-  mockSubmitTask,
-  mockRejectTask,
-  mockResetTask,
-  mockGetTaskSubmissions,
-} from "@/mock";
 
 const API_BASE = "/app";
 const projectListRequests = new Map<string, Promise<PageResult<ProjectInfoVO>>>();
@@ -67,9 +44,6 @@ function toQueryString(params: Record<string, string | number | undefined>): str
  * GET /app/projects/types
  */
 export async function getProjectTypes(): Promise<ProjectTypeInfoVO[]> {
-  if (USE_MOCK) {
-    return mockGetProjectTypes();
-  }
   projectTypesRequest ??= request<PageResult<ProjectTypeInfoVO> | ProjectTypeInfoVO[]>(
     "/projects/types",
   )
@@ -87,9 +61,6 @@ export async function getProjectTypes(): Promise<ProjectTypeInfoVO[]> {
  * GET /app/projects
  */
 export async function getProjectList(dto: ProjectListDTO): Promise<PageResult<ProjectInfoVO>> {
-  if (USE_MOCK) {
-    return mockGetProjectList(dto);
-  }
   const requestKey = JSON.stringify(dto);
   const existingRequest = projectListRequests.get(requestKey);
   if (existingRequest) {
@@ -117,9 +88,6 @@ export async function getProjectList(dto: ProjectListDTO): Promise<PageResult<Pr
  * GET /app/projects/{projectId}
  */
 export async function getProjectDetail(projectId: number | string): Promise<ProjectDetailInfoVO> {
-  if (USE_MOCK) {
-    return mockGetProjectDetail(projectId);
-  }
   return request(`/projects/${projectId}`);
 }
 
@@ -128,9 +96,6 @@ export async function getProjectDetail(projectId: number | string): Promise<Proj
  * POST /app/projects
  */
 export async function createProject(dto: ProjectCreateDTO): Promise<void> {
-  if (USE_MOCK) {
-    return mockCreateProject(dto);
-  }
   return request("/projects", {
     method: "POST",
     body: JSON.stringify(dto),
@@ -145,9 +110,6 @@ export async function updateProject(
   projectId: number | string,
   dto: ProjectUpdateDTO,
 ): Promise<void> {
-  if (USE_MOCK) {
-    return mockUpdateProject(projectId, dto);
-  }
   return request(`/projects/${projectId}`, {
     method: "PUT",
     body: JSON.stringify(dto),
@@ -159,9 +121,6 @@ export async function updateProject(
  * POST /app/projects/{projectId}/workshop
  */
 export async function addProjectToWorkshop(projectId: number | string): Promise<void> {
-  if (USE_MOCK) {
-    return mockAddProjectToWorkshop(projectId);
-  }
   return request(`/projects/${projectId}/workshop`, {
     method: "POST",
   });
@@ -172,9 +131,6 @@ export async function addProjectToWorkshop(projectId: number | string): Promise<
  * DELETE /app/projects/{projectId}/workshop
  */
 export async function removeProjectFromWorkshop(projectId: number | string): Promise<void> {
-  if (USE_MOCK) {
-    return mockRemoveProjectFromWorkshop(projectId);
-  }
   return request(`/projects/${projectId}/workshop`, {
     method: "DELETE",
   });
@@ -190,9 +146,6 @@ export async function createProjectItem(
   projectId: number | string,
   dto: ProjectItemCreateDTO,
 ): Promise<void> {
-  if (USE_MOCK) {
-    return mockCreateProjectItem(projectId, dto);
-  }
   return request(`/project/${projectId}/item`, {
     method: "POST",
     body: JSON.stringify(dto),
@@ -207,9 +160,6 @@ export async function getProjectItemList(
   projectId: number | string,
   params?: { pageNum?: number; pageSize?: number; keyword?: string },
 ): Promise<PageResult<ProjectItemListVO>> {
-  if (USE_MOCK) {
-    return mockGetProjectItemList(projectId, params);
-  }
   return request(`/project/${projectId}/item/list`, {
     method: "POST",
     body: JSON.stringify(params || {}),
@@ -223,9 +173,6 @@ export async function getProjectItemList(
  * GET /app/project/item/{itemId}/task-flow
  */
 export async function getTaskFlow(itemId: number): Promise<ItemTaskFlowVO> {
-  if (USE_MOCK) {
-    return mockGetTaskFlow(itemId);
-  }
   return request(`/project/item/${itemId}/task-flow`);
 }
 
@@ -234,9 +181,6 @@ export async function getTaskFlow(itemId: number): Promise<ItemTaskFlowVO> {
  * POST /app/project/item/{itemId}/task-flow
  */
 export async function createTaskFlow(itemId: number, taskTemplateId: number): Promise<void> {
-  if (USE_MOCK) {
-    return mockCreateTaskFlow(itemId, taskTemplateId);
-  }
   return request(`/project/item/${itemId}/task-flow`, {
     method: "POST",
     body: JSON.stringify({ taskTemplateId }),
@@ -250,9 +194,6 @@ export async function createTaskFlow(itemId: number, taskTemplateId: number): Pr
  * GET /app/project/item/template-options
  */
 export async function getTaskTemplateOptions(): Promise<TaskTemplateOptionVO[]> {
-  if (USE_MOCK) {
-    return mockGetTaskTemplateOptions();
-  }
   return request("/project/item/template-options");
 }
 
@@ -276,9 +217,6 @@ export async function getTaskTemplateList(params?: {
  * GET /app/task/template/{templateId}
  */
 export async function getTaskTemplateDetail(templateId: number): Promise<TaskTemplateDetailVO> {
-  if (USE_MOCK) {
-    return mockGetTaskTemplateDetail(templateId);
-  }
   return request(`/task/template/${templateId}`);
 }
 
@@ -289,9 +227,6 @@ export async function getTaskTemplateDetail(templateId: number): Promise<TaskTem
  * GET /app/task/instance/project/{projectId}
  */
 export async function getTaskInstances(projectId: number | string): Promise<TaskInstanceVO[]> {
-  if (USE_MOCK) {
-    return mockGetTaskInstances(projectId);
-  }
   return request(`/task/instance/project/${projectId}`);
 }
 
@@ -300,9 +235,6 @@ export async function getTaskInstances(projectId: number | string): Promise<Task
  * POST /app/task/instance/{instanceId}/claim
  */
 export async function claimTask(instanceId: number): Promise<void> {
-  if (USE_MOCK) {
-    return mockClaimTask(instanceId);
-  }
   return request(`/task/instance/${instanceId}/claim`, {
     method: "POST",
   });
@@ -313,9 +245,6 @@ export async function claimTask(instanceId: number): Promise<void> {
  * POST /app/task/instance/{instanceId}/abandon
  */
 export async function abandonTask(instanceId: number): Promise<void> {
-  if (USE_MOCK) {
-    return mockAbandonTask(instanceId);
-  }
   return request(`/task/instance/${instanceId}/abandon`, {
     method: "POST",
   });
@@ -326,9 +255,6 @@ export async function abandonTask(instanceId: number): Promise<void> {
  * POST /app/task/instance/{instanceId}/submit
  */
 export async function submitTask(instanceId: number, dto: TaskSubmitDTO): Promise<void> {
-  if (USE_MOCK) {
-    return mockSubmitTask(instanceId, dto);
-  }
   return request(`/task/instance/${instanceId}/submit`, {
     method: "POST",
     body: JSON.stringify(dto),
@@ -340,9 +266,6 @@ export async function submitTask(instanceId: number, dto: TaskSubmitDTO): Promis
  * POST /app/task/instance/{instanceId}/reject
  */
 export async function rejectTask(instanceId: number, dto: TaskRejectDTO): Promise<void> {
-  if (USE_MOCK) {
-    return mockRejectTask(instanceId, dto);
-  }
   return request(`/task/instance/${instanceId}/reject`, {
     method: "POST",
     body: JSON.stringify(dto),
@@ -354,9 +277,6 @@ export async function rejectTask(instanceId: number, dto: TaskRejectDTO): Promis
  * POST /app/task/instance/{instanceId}/reset
  */
 export async function resetTask(instanceId: number): Promise<void> {
-  if (USE_MOCK) {
-    return mockResetTask(instanceId);
-  }
   return request(`/task/instance/${instanceId}/reset`, {
     method: "POST",
   });
@@ -371,9 +291,6 @@ export async function resetTask(instanceId: number): Promise<void> {
 export async function getTaskSubmissions(
   instanceId: number,
 ): Promise<PageResult<TaskSubmissionVO>> {
-  if (USE_MOCK) {
-    return mockGetTaskSubmissions(instanceId);
-  }
   return request(`/task/instance/${instanceId}/submissions`);
 }
 
