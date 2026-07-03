@@ -23,6 +23,9 @@ interface TagItem {
   value: string;
 }
 
+const fieldClassName =
+  "border-border/70 bg-muted/20 shadow-none focus-visible:border-foreground/30 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-foreground/10";
+
 export default function CreateProject() {
   const navigate = useNavigate();
   const { projectTypes } = useProjectTypes();
@@ -185,7 +188,7 @@ export default function CreateProject() {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="h-10 bg-background"
+                  className={fieldClassName}
                 />
               </div>
 
@@ -197,7 +200,7 @@ export default function CreateProject() {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, alias: e.target.value })
                   }
-                  className="h-10 bg-background"
+                  className={fieldClassName}
                 />
               </div>
 
@@ -209,7 +212,7 @@ export default function CreateProject() {
                     setFormData({ ...formData, typeId: value || "" })
                   }
                 >
-                  <SelectTrigger className="h-10 w-full bg-background">
+                  <SelectTrigger className={fieldClassName}>
                     <SelectValue placeholder="选择类型" />
                   </SelectTrigger>
                   <SelectContent>
@@ -263,13 +266,13 @@ export default function CreateProject() {
                       placeholder="标签名"
                       value={newTagKey}
                       onChange={(e) => setNewTagKey(e.target.value)}
-                      className="h-8 w-28 bg-background text-xs"
+                      className="h-8 w-28 border-border/70 bg-background text-xs focus-visible:border-foreground/30 focus-visible:ring-1 focus-visible:ring-foreground/10"
                     />
                     <Input
                       placeholder="值"
                       value={newTagValue}
                       onChange={(e) => setNewTagValue(e.target.value)}
-                      className="h-8 w-36 bg-background text-xs"
+                      className="h-8 w-36 border-border/70 bg-background text-xs focus-visible:border-foreground/30 focus-visible:ring-1 focus-visible:ring-foreground/10"
                     />
                     <Button size="sm" variant="secondary" className="h-8" onClick={handleAddTag}>
                       添加
@@ -300,7 +303,7 @@ export default function CreateProject() {
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
-                className="min-h-[118px] resize-none bg-background"
+                className="min-h-[118px] resize-none rounded-xl border-border/70 bg-muted/20 px-4 py-3 shadow-none focus-visible:border-foreground/30 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-foreground/10"
               />
             </div>
           </section>

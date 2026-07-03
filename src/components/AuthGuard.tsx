@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router";
 
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { getToken } from "@/lib/session";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -8,15 +8,7 @@ interface AuthGuardProps {
 
 export default function AuthGuard({ children }: AuthGuardProps) {
   const location = useLocation();
-  const { isAuthenticated, isLoading } = useCurrentUser();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
+  const isAuthenticated = Boolean(getToken());
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;

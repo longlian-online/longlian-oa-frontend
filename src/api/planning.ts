@@ -46,63 +46,92 @@ import {
 } from "@/mock";
 
 const API_BASE = "/app";
+const projectListRequests = new Map<string, Promise<PageResult<ProjectInfoVO>>>();
+let projectTypesRequest: Promise<ProjectTypeInfoVO[]> | null = null;
+
+function toQueryString(params: Record<string, string | number | undefined>): string {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  });
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : "";
+}
 
 // ==================== 企划类型 ====================
 
 /**
  * 获取企划类型列表
- * POST /app/project/type/list
+ * GET /app/projects/types
  */
 export async function getProjectTypes(): Promise<ProjectTypeInfoVO[]> {
   if (USE_MOCK) {
     return mockGetProjectTypes();
   }
-  const result = await request<PageResult<ProjectTypeInfoVO> | ProjectTypeInfoVO[]>(
-    "/project/type/list",
-    {
-      method: "POST",
-      body: JSON.stringify({ pageNum: 1, pageSize: 100 }),
-    },
-  );
-  return Array.isArray(result) ? result : result.list;
+  projectTypesRequest ??= request<PageResult<ProjectTypeInfoVO> | ProjectTypeInfoVO[]>(
+    "/projects/types",
+  )
+    .then((result) => (Array.isArray(result) ? result : result.list))
+    .finally(() => {
+      projectTypesRequest = null;
+    });
+  return projectTypesRequest;
 }
 
 // ==================== 企划 ====================
 
 /**
  * 分页查询企划列表
- * POST /app/project/list
+ * GET /app/projects
  */
 export async function getProjectList(dto: ProjectListDTO): Promise<PageResult<ProjectInfoVO>> {
   if (USE_MOCK) {
     return mockGetProjectList(dto);
   }
-  return request("/project/list", {
-    method: "POST",
-    body: JSON.stringify(dto),
+  const requestKey = JSON.stringify(dto);
+  const existingRequest = projectListRequests.get(requestKey);
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const listRequest = request<PageResult<ProjectInfoVO>>(
+    `/projects${toQueryString({
+      keyword: dto.keyword,
+      projectType: dto.projectType,
+      pageNum: dto.pageNum,
+      pageSize: dto.pageSize,
+      sortByTime: dto.sortByTime,
+      orderDir: dto.orderDir,
+    })}`,
+  ).finally(() => {
+    projectListRequests.delete(requestKey);
   });
+  projectListRequests.set(requestKey, listRequest);
+  return listRequest;
 }
 
 /**
  * 获取企划详情
- * GET /app/project/{projectId}
+ * GET /app/projects/{projectId}
  */
 export async function getProjectDetail(projectId: number | string): Promise<ProjectDetailInfoVO> {
   if (USE_MOCK) {
     return mockGetProjectDetail(projectId);
   }
-  return request(`/project/${projectId}`);
+  return request(`/projects/${projectId}`);
 }
 
 /**
  * 创建企划
- * POST /app/project
+ * POST /app/projects
  */
 export async function createProject(dto: ProjectCreateDTO): Promise<void> {
   if (USE_MOCK) {
     return mockCreateProject(dto);
   }
-  return request("/project", {
+  return request("/projects", {
     method: "POST",
     body: JSON.stringify(dto),
   });
@@ -110,7 +139,7 @@ export async function createProject(dto: ProjectCreateDTO): Promise<void> {
 
 /**
  * 编辑企划
- * PUT /app/project/{projectId}
+ * PUT /app/projects/{projectId}
  */
 export async function updateProject(
   projectId: number | string,
@@ -119,7 +148,7 @@ export async function updateProject(
   if (USE_MOCK) {
     return mockUpdateProject(projectId, dto);
   }
-  return request(`/project/${projectId}`, {
+  return request(`/projects/${projectId}`, {
     method: "PUT",
     body: JSON.stringify(dto),
   });
@@ -127,26 +156,26 @@ export async function updateProject(
 
 /**
  * 添加企划到工坊
- * POST /app/project/{projectId}/workshop
+ * POST /app/projects/{projectId}/workshop
  */
 export async function addProjectToWorkshop(projectId: number | string): Promise<void> {
   if (USE_MOCK) {
     return mockAddProjectToWorkshop(projectId);
   }
-  return request(`/project/${projectId}/workshop`, {
+  return request(`/projects/${projectId}/workshop`, {
     method: "POST",
   });
 }
 
 /**
  * 从工坊移除企划
- * DELETE /app/project/{projectId}/workshop
+ * DELETE /app/projects/{projectId}/workshop
  */
 export async function removeProjectFromWorkshop(projectId: number | string): Promise<void> {
   if (USE_MOCK) {
     return mockRemoveProjectFromWorkshop(projectId);
   }
-  return request(`/project/${projectId}/workshop`, {
+  return request(`/projects/${projectId}/workshop`, {
     method: "DELETE",
   });
 }
