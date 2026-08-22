@@ -1,170 +1,170 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { ChevronRight, Search } from "lucide-react";
+import { Filter, Search, Workflow } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getWorkshopList } from "@/api/workshop";
+import EmptyState from "@/components/EmptyState";
+import PageLoading from "@/components/PageLoading";
+import PaginationBar from "@/components/PaginationBar";
+import { WorkshopProjectCard } from "@/components/Workshop";
+import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useProjectTypes } from "@/hooks/useProjectTypes";
+import type { WorkshopProjectInfoVO } from "@/types/workshop";
 
-type WorkshopType = "小说" | "漫画" | "视频" | "美术";
-
-interface WorkshopProject {
-  id: number;
-  title: string;
-  type: WorkshopType;
-  creatorName: string;
-  submittedAt: string;
-  avatarUrl: string;
-  createdByMe: boolean;
-}
-
-const typeTabs = ["全部", "小说", "漫画", "视频", "美术"] as const;
-
-const workshopProjects: WorkshopProject[] = [
-  {
-    id: 1,
-    title: "学生会长的百合事情",
-    type: "小说",
-    creatorName: "暮居池",
-    submittedAt: "2025-01-25",
-    avatarUrl: "https://picsum.photos/seed/workshop-user-1/80/80",
-    createdByMe: true,
-  },
-  {
-    id: 2,
-    title: "学生会长的百合事情",
-    type: "漫画",
-    creatorName: "暮居池",
-    submittedAt: "2025-01-25",
-    avatarUrl: "https://picsum.photos/seed/workshop-user-2/80/80",
-    createdByMe: true,
-  },
-  {
-    id: 3,
-    title: "学生会长的百合事情",
-    type: "小说",
-    creatorName: "暮居池",
-    submittedAt: "2025-01-25",
-    avatarUrl: "https://picsum.photos/seed/workshop-user-3/80/80",
-    createdByMe: true,
-  },
-  {
-    id: 4,
-    title: "学生会长的百合事情",
-    type: "视频",
-    creatorName: "暮居池",
-    submittedAt: "2025-01-25",
-    avatarUrl: "https://picsum.photos/seed/workshop-user-4/80/80",
-    createdByMe: true,
-  },
-];
-
-function WorkshopProjectCard({ project }: { project: WorkshopProject }) {
-  return (
-    <article className="flex h-[220px] flex-col rounded-2xl border bg-card px-[23px] py-[19px]">
-      <div className="flex h-20 items-start gap-2.5">
-        <Avatar className="size-20">
-          <AvatarImage src={project.avatarUrl} />
-          <AvatarFallback>{project.title.slice(0, 1)}</AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 pt-3.5">
-          <h2 className="truncate text-base leading-6 text-foreground">{project.title}</h2>
-          <p className="mt-2.5 truncate text-xs leading-[18px] text-muted-foreground">
-            {project.creatorName} | 提交于 {project.submittedAt}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-2.5 flex flex-1 items-end justify-end">
-        <Button variant="ghost" size="sm" className="h-[34px] gap-1 px-2 text-xs">
-          查看企划
-          <ChevronRight data-icon="inline-end" />
-        </Button>
-      </div>
-    </article>
-  );
-}
+const PAGE_SIZE = 8;
 
 export default function WorkshopPage() {
   const navigate = useNavigate();
-  const [activeType, setActiveType] = useState<(typeof typeTabs)[number]>("全部");
-  const [createdByMeOnly, setCreatedByMeOnly] = useState(true);
-  const [keyword, setKeyword] = useState("佐久间");
+  const { projectTypes } = useProjectTypes();
+  const [projects, setProjects] = useState<WorkshopProjectInfoVO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [keyword, setKeyword] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const [selectedType, setSelectedType] = useState("all");
+  const [isMyCreated, setIsMyCreated] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const filteredProjects = useMemo(() => {
-    return workshopProjects.filter((project) => {
-      const matchesType = activeType === "全部" || project.type === activeType;
-      const matchesOwner = !createdByMeOnly || project.createdByMe;
-      const matchesKeyword =
-        !keyword ||
-        project.title.includes(keyword) ||
-        project.creatorName.includes(keyword) ||
-        project.type.includes(keyword);
+  useEffect(() => {
+    void loadWorkshopProjects();
+  }, [page, keyword, selectedType, isMyCreated]);
 
-      return matchesType && matchesOwner && matchesKeyword;
-    });
-  }, [activeType, createdByMeOnly, keyword]);
+  async function loadWorkshopProjects(): Promise<void> {
+    try {
+      setLoading(true);
+      const data = await getWorkshopList({
+        pageNum: page,
+        pageSize: PAGE_SIZE,
+        keyword: keyword || undefined,
+        projectType: selectedType === "all" ? undefined : selectedType,
+        isMyCreated,
+      });
+      setProjects(data.list);
+      setTotal(data.total);
+    } catch (error) {
+      $tip(error instanceof Error ? error.message : "工坊企划加载失败", "error");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const visibleProjects = filteredProjects.length > 0 ? filteredProjects : workshopProjects;
+  function handleSearch(): void {
+    setKeyword(searchText.trim());
+    setPage(1);
+  }
+
+  function handleOpenProject(project: WorkshopProjectInfoVO): void {
+    void navigate(`/dashboard/planning/${project.id}`);
+  }
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex h-[60px] items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5 p-2.5">
-          {typeTabs.map((type) => (
-            <Button
-              key={type}
-              type="button"
-              variant="ghost"
-              className={cn(
-                "h-10 rounded-xl px-4 text-base font-normal",
-                activeType === type && "bg-secondary font-bold",
-              )}
-              onClick={() => setActiveType(type)}
-            >
-              {type}
-            </Button>
-          ))}
+    <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
+      <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">工坊</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            浏览已加入工坊的企划，并进入工作流模板管理。
+          </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Button
             type="button"
-            variant="ghost"
-            className="h-10 rounded-xl px-4 text-base font-normal"
-            onClick={() => navigate("/dashboard/workshop/workflows")}
+            variant="outline"
+            size="sm"
+            onClick={() => void navigate("/dashboard/workshop/workflows")}
           >
+            <Workflow className="h-4 w-4" />
             工作流
           </Button>
 
-          <label className="flex h-6 items-center gap-1 text-base text-foreground">
-            <input
-              type="checkbox"
-              checked={createdByMeOnly}
-              onChange={(event) => setCreatedByMeOnly(event.target.checked)}
-              className="size-4 accent-foreground"
-            />
+          <Button
+            type="button"
+            variant={isMyCreated ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => {
+              setIsMyCreated(!isMyCreated);
+              setPage(1);
+            }}
+          >
             我创建的
-          </label>
+          </Button>
 
-          <div className="relative w-64">
-            <Search className="absolute left-2 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+          <Select
+            value={selectedType}
+            onValueChange={(value: string | null) => {
+              if (!value) return;
+              setSelectedType(value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="h-8 w-32">
+              <Filter className="mr-1.5 h-3.5 w-3.5" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">所有类型</SelectItem>
+              {projectTypes.map((type) => (
+                <SelectItem key={type.id} value={type.name}>
+                  {type.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="relative w-64 max-w-full">
+            <Search className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              value={keyword}
-              onChange={(event) => setKeyword(event.target.value)}
-              placeholder="搜索"
-              className="h-8 rounded-xl border-0 bg-secondary pl-10 text-base"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") handleSearch();
+              }}
+              placeholder="搜索企划"
+              className="h-8 rounded-lg bg-secondary pl-9 text-sm"
             />
           </div>
+          <Button type="button" variant="outline" size="sm" onClick={handleSearch}>
+            搜索
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 px-[15px] xl:grid-cols-4">
-        {visibleProjects.map((project) => (
-          <WorkshopProjectCard key={project.id} project={project} />
-        ))}
-      </div>
+      {loading ? (
+        <PageLoading message="正在加载工坊企划..." />
+      ) : projects.length === 0 ? (
+        <EmptyState
+          icon={<Workflow className="h-5 w-5 text-muted-foreground" />}
+          title="暂无工坊企划"
+          description="在企划详情中添加到工坊后，这里会展示可浏览的企划。"
+          action={<Button onClick={() => void navigate("/dashboard/planning")}>去企划列表</Button>}
+        />
+      ) : (
+        <>
+          <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {projects.map((project) => (
+              <WorkshopProjectCard key={project.id} project={project} onClick={handleOpenProject} />
+            ))}
+          </div>
+
+          <PaginationBar
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={total}
+            disabled={loading}
+            onPageChange={setPage}
+          />
+        </>
+      )}
     </div>
   );
 }
