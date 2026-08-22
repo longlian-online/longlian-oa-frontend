@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { CheckCircle2, Circle, Loader2, Lock, Plus, Send, Trash2, Workflow } from "lucide-react";
 
 import {
@@ -121,6 +122,7 @@ export default function ProjectItemSection({
   onChanged,
 }: ProjectItemSectionProps) {
   const confirm = useConfirm();
+  const navigate = useNavigate();
   const [items, setItems] = useState<ProjectItemListVO[]>([]);
   const [templates, setTemplates] = useState<TaskTemplateOptionVO[]>([]);
   const [page, setPage] = useState(1);
@@ -349,6 +351,14 @@ export default function ProjectItemSection({
                   </span>
                 </div>
                 <ProjectItemNodeList nodes={item.nodes} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => void navigate(`/dashboard/planning/${projectId}/items/${item.id}`)}
+                >
+                  查看任务流
+                </Button>
               </div>
             </article>
           ))}

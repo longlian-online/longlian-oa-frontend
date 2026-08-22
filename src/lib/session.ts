@@ -57,6 +57,10 @@ export function getCurrentOrgId(): string | null {
   return localStorage.getItem(CURRENT_ORG_ID_KEY);
 }
 
+export function getUserId(): string | null {
+  return localStorage.getItem(USER_ID_KEY);
+}
+
 export function getSessionRoles(): string[] {
   const rawRoles = localStorage.getItem(ROLES_KEY);
   if (!rawRoles) return [];
