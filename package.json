@@ -7,7 +7,6 @@
     "api:check": "node tools/api-cache.mjs check",
     "api:update": "node tools/api-cache.mjs update",
     "dev": "vp dev",
-    "dev:mock": "vp dev --mode mock",
     "build": "tsc && vp build",
     "preview": "vp preview",
     "prepare": "vp config",
