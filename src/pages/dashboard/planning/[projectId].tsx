@@ -20,6 +20,7 @@ import {
   updateProject,
 } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
+import ProjectItemSection from "@/components/ProjectItem";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -320,6 +321,12 @@ export default function ProjectDetail() {
               <p className="text-sm text-muted-foreground">暂无元信息</p>
             )}
           </section>
+
+          <ProjectItemSection
+            projectId={projectId!}
+            isCreator={project.isCreator}
+            onChanged={loadProjectDetail}
+          />
         </main>
       </div>
 
