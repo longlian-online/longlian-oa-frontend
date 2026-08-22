@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "api:check": "node tools/api-cache.mjs check",
+    "api:update": "node tools/api-cache.mjs update",
     "dev": "vp dev",
     "build": "tsc && vp build",
     "preview": "vp preview",

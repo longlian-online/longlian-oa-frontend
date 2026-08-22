@@ -1,0 +1,34 @@
+{
+  "document": "用户端",
+  "method": "GET",
+  "operation": {
+    "description": "注册页使用。组织管理员生成的邀请码可通过该接口查询组织名称",
+    "operationId": "getJoinOrganizationInviteInfo",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "inviteCode",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/InviteInfoVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "获取加入组织邀请码对应的组织信息",
+    "tags": ["用户接口"]
+  },
+  "path": "/app/user/register/join-organization/invite-info",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

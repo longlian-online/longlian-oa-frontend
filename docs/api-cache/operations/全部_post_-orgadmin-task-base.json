@@ -1,0 +1,37 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "description": "任务创建后不可编辑，请确认标题、图标、简介和元数据字段定义后提交",
+    "operationId": "createBaseTask",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/BaseTaskCreateDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "创建原子任务",
+    "tags": ["原子任务管理"]
+  },
+  "path": "/orgadmin/task/base",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

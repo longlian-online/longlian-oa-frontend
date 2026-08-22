@@ -1,0 +1,2387 @@
+{
+  "components": {
+    "schemas": {
+      "EmailCodeDTO": {
+        "description": "发送邮箱验证码请求参数",
+        "properties": {
+          "businessType": {
+            "description": "业务类型 LOGIN-登录 REGISTER-注册 FORGOT_PASSWORD-忘记密码",
+            "enum": ["LOGIN", "REGISTER", "FORGOT_PASSWORD"],
+            "type": "string"
+          },
+          "email": {
+            "description": "邮箱",
+            "example": "test@longlian.com",
+            "pattern": "^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z0-9]{2,6}$",
+            "type": "string"
+          }
+        },
+        "required": ["businessType", "email"],
+        "type": "object"
+      },
+      "InviteInfoVO": {
+        "description": "组织公开信息（通过组织邀请码查询，供注册页面展示）",
+        "properties": {
+          "orgId": {
+            "description": "组织ID",
+            "type": "string"
+          },
+          "orgName": {
+            "description": "组织名称",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ItemTaskFlowVO": {
+        "description": "项目任务流信息（含节点执行状态，用于流程图可视化）",
+        "properties": {
+          "description": {
+            "description": "任务流说明",
+            "type": "string"
+          },
+          "name": {
+            "description": "任务流名称",
+            "type": "string"
+          },
+          "nodes": {
+            "description": "节点列表（按 sort 升序；sort 相同的节点为并行节点，前端根据此结构渲染流程图分支）",
+            "items": {
+              "$ref": "#/components/schemas/ItemTaskNodeVO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ItemTaskInstanceVO": {
+        "description": "项目任务实例（用于任务列表视图）",
+        "properties": {
+          "assigneeAvatarUrl": {
+            "description": "接取人头像URL",
+            "type": "string"
+          },
+          "assigneeId": {
+            "description": "接取人ID",
+            "type": "string"
+          },
+          "assigneeNickname": {
+            "description": "接取人昵称",
+            "type": "string"
+          },
+          "completedAt": {
+            "description": "完成时间，null 表示未完成",
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdAt": {
+            "description": "实例创建时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "任务实例ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "任务节点名称",
+            "type": "string"
+          },
+          "parallelSort": {
+            "description": "并行组内排序号",
+            "format": "int32",
+            "type": "integer"
+          },
+          "sort": {
+            "description": "步骤顺序号（sort，用于列表排序）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "description": "任务实例状态：PENDING-待接取，CLAIMED-待提交，COMPLETED-已完成",
+            "enum": ["PENDING", "CLAIMED", "COMPLETED"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ItemTaskNodeVO": {
+        "description": "任务流节点信息（含执行状态，用于流程图可视化）",
+        "properties": {
+          "baseTaskIconUrl": {
+            "description": "原子任务图标URL",
+            "type": "string"
+          },
+          "baseTaskId": {
+            "description": "关联原子任务ID",
+            "type": "string"
+          },
+          "id": {
+            "description": "任务节点ID",
+            "type": "string"
+          },
+          "metaSchema": {
+            "description": "节点元数据字段定义快照(JSON数组)",
+            "type": "string"
+          },
+          "name": {
+            "description": "任务名称",
+            "type": "string"
+          },
+          "parallelSort": {
+            "description": "并行组内排序",
+            "format": "int32",
+            "type": "integer"
+          },
+          "sort": {
+            "description": "步骤顺序（相同 sort 值为并行节点）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "taskInstanceId": {
+            "description": "任务实例ID，null 表示该节点尚未生成实例（前序未完成）",
+            "type": "string"
+          },
+          "taskStatus": {
+            "description": "任务实例状态：PENDING(待接取)/CLAIMED(待提交)/COMPLETED(已完成)，null 表示节点未解锁",
+            "enum": ["PENDING", "CLAIMED", "COMPLETED"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "JoinByInviteCodeDTO": {
+        "description": "通过邀请码加入组织请求参数",
+        "properties": {
+          "inviteCode": {
+            "description": "管理员生成的邀请码",
+            "type": "string"
+          }
+        },
+        "required": ["inviteCode"],
+        "type": "object"
+      },
+      "LoginByCodeDTO": {
+        "description": "验证码登录请求参数",
+        "properties": {
+          "code": {
+            "description": "验证码",
+            "example": "123456",
+            "maxLength": 6,
+            "minLength": 6,
+            "type": "string"
+          },
+          "email": {
+            "description": "邮箱",
+            "example": "test@longlian.com",
+            "pattern": "^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z0-9]{2,6}$",
+            "type": "string"
+          }
+        },
+        "required": ["code", "email"],
+        "type": "object"
+      },
+      "LoginByPwdDTO": {
+        "description": "密码登录请求参数",
+        "properties": {
+          "password": {
+            "description": "密码",
+            "example": "123456",
+            "maxLength": 20,
+            "minLength": 6,
+            "type": "string"
+          },
+          "username": {
+            "description": "用户名",
+            "example": "username",
+            "type": "string"
+          }
+        },
+        "required": ["password", "username"],
+        "type": "object"
+      },
+      "LoginVO": {
+        "description": "登录返回信息",
+        "properties": {
+          "currentOrgId": {
+            "description": "当前组织ID",
+            "type": "string"
+          },
+          "roles": {
+            "description": "当前组织内用户角色列表",
+            "items": {
+              "description": "当前组织内用户角色列表",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "token": {
+            "description": "用户认证token",
+            "type": "string"
+          },
+          "userId": {
+            "description": "用户id",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrgIdDTO": {
+        "description": "切换组织，id参数",
+        "properties": {
+          "orgId": {
+            "description": "组织id",
+            "type": "string"
+          }
+        },
+        "required": ["orgId"],
+        "type": "object"
+      },
+      "OrgSimpleInfoVO": {
+        "description": "组织简要信息",
+        "properties": {
+          "avatarUrl": {
+            "description": "组织头像文件url",
+            "type": "string"
+          },
+          "id": {
+            "description": "组织ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "组织名称",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOProjectInfoVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/ProjectInfoVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOProjectItemListVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/ProjectItemListVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOWorkshopProjectInfoVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/WorkshopProjectInfoVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOWorkshopTaskTemplateVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/WorkshopTaskTemplateVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectCreateDTO": {
+        "description": "创建企划请求参数",
+        "properties": {
+          "alias": {
+            "description": "别名",
+            "type": "string"
+          },
+          "coverFileId": {
+            "description": "封面文件ID",
+            "type": "string"
+          },
+          "description": {
+            "description": "企划简介",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "扩展信息(JSON字符串)",
+            "type": "string"
+          },
+          "title": {
+            "description": "企划名",
+            "type": "string"
+          },
+          "typeId": {
+            "description": "企划类型ID",
+            "type": "string"
+          }
+        },
+        "required": ["alias", "coverFileId", "description", "metadata", "title", "typeId"],
+        "type": "object"
+      },
+      "ProjectDetailInfoVO": {
+        "description": "企划详情",
+        "properties": {
+          "alias": {
+            "description": "企划别名",
+            "type": "string"
+          },
+          "claimedTaskCount": {
+            "description": "待提交任务数（CLAIMED 状态：已接取但未提交）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "coverUrl": {
+            "description": "封面图片URL",
+            "type": "string"
+          },
+          "description": {
+            "description": "企划简介",
+            "type": "string"
+          },
+          "id": {
+            "description": "企划ID",
+            "type": "string"
+          },
+          "inWorkshop": {
+            "description": "当前用户是否已将该企划添加到工坊",
+            "type": "boolean"
+          },
+          "isCreator": {
+            "description": "当前用户是否是该企划的创建者",
+            "type": "boolean"
+          },
+          "metadata": {
+            "description": "扩展信息(JSON字符串)",
+            "type": "string"
+          },
+          "pendingTaskCount": {
+            "description": "待接取任务数（PENDING 状态：可领取）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "progressPercent": {
+            "description": "整体进度百分比（0-100，基于已完成任务实例数/总任务实例数）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "description": "企划状态",
+            "enum": ["进行中", "已完成", "已归档"],
+            "type": "string"
+          },
+          "title": {
+            "description": "企划主标题",
+            "type": "string"
+          },
+          "typeName": {
+            "description": "企划类型名称",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectInfoVO": {
+        "description": "企划信息",
+        "properties": {
+          "coverUrl": {
+            "description": "封面图片URL",
+            "type": "string"
+          },
+          "creatorAvatarUrl": {
+            "description": "创建人头像URL",
+            "type": "string"
+          },
+          "description": {
+            "description": "企划简介",
+            "type": "string"
+          },
+          "id": {
+            "description": "企划ID",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "扩展信息(JSON字符串)",
+            "type": "string"
+          },
+          "projectStatus": {
+            "description": "企划状态，1-进行中 2-已完成 3-已归档",
+            "enum": ["进行中", "已完成", "已归档"],
+            "type": "string"
+          },
+          "projectType": {
+            "description": "企划类型",
+            "type": "string"
+          },
+          "title": {
+            "description": "企划标题",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectItemCreateDTO": {
+        "description": "创建项目请求参数",
+        "properties": {
+          "taskTemplateId": {
+            "description": "流程模板ID（任务模板ID）",
+            "type": "string"
+          },
+          "title": {
+            "description": "项目标题",
+            "type": "string"
+          }
+        },
+        "required": ["taskTemplateId", "title"],
+        "type": "object"
+      },
+      "ProjectItemListDTO": {
+        "description": "项目列表查询参数",
+        "properties": {
+          "keyword": {
+            "description": "项目标题关键词（模糊匹配）",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orderDir": {
+            "description": "排序方式：DESC-倒序，ASC-正序",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "sortByTime": {
+            "description": "排序字段：CREATE-创建时间，UPDATE-更新时间",
+            "enum": ["CREATE", "UPDATE"],
+            "type": "string"
+          },
+          "status": {
+            "description": "项目状态筛选：IN_PROGRESS-进行中，COMPLETED-已完成；默认进行中",
+            "enum": ["IN_PROGRESS", "COMPLETED", "PUBLISHED"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectItemListVO": {
+        "description": "项目列表信息",
+        "properties": {
+          "createdAt": {
+            "description": "创建时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "currentNodeName": {
+            "description": "当前节点名称",
+            "type": "string"
+          },
+          "id": {
+            "description": "项目ID",
+            "type": "string"
+          },
+          "nodes": {
+            "description": "节点列表",
+            "items": {
+              "$ref": "#/components/schemas/ProjectItemNodeVO"
+            },
+            "type": "array"
+          },
+          "progressPercent": {
+            "description": "进度百分比（0-100）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "description": "项目状态",
+            "enum": ["IN_PROGRESS", "COMPLETED", "PUBLISHED"],
+            "type": "string"
+          },
+          "title": {
+            "description": "项目标题",
+            "type": "string"
+          },
+          "updatedAt": {
+            "description": "更新时间",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectItemNodeVO": {
+        "description": "项目流程节点",
+        "properties": {
+          "name": {
+            "description": "节点名称",
+            "type": "string"
+          },
+          "parallelCount": {
+            "description": "并行子任务数量",
+            "format": "int32",
+            "type": "integer"
+          },
+          "parallelSort": {
+            "description": "并行组内排序",
+            "format": "int32",
+            "type": "integer"
+          },
+          "sort": {
+            "description": "节点顺序（相同值表示并行组）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "state": {
+            "description": "节点状态",
+            "enum": ["COMPLETED", "IN_PROGRESS", "LOCKED"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectListDTO": {
+        "description": "企划查询请求参数",
+        "properties": {
+          "keyword": {
+            "description": "搜索关键词（标题）",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orderDir": {
+            "description": "排序方式",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "projectType": {
+            "description": "企划类型",
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          },
+          "sortByTime": {
+            "description": "排序字段",
+            "enum": ["CREATE", "UPDATE"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectTypeInfoVO": {
+        "description": "企划类型信息",
+        "properties": {
+          "id": {
+            "description": "企划类型ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "类型名称（如：漫画/小说/美术/视频）",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectUpdateDTO": {
+        "description": "修改企划请求参数",
+        "properties": {
+          "alias": {
+            "description": "别名",
+            "type": "string"
+          },
+          "coverFileId": {
+            "description": "封面文件ID",
+            "type": "string"
+          },
+          "description": {
+            "description": "企划简介",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "扩展信息(JSON字符串)",
+            "type": "string"
+          },
+          "title": {
+            "description": "企划名",
+            "type": "string"
+          }
+        },
+        "required": ["alias", "coverFileId", "description", "metadata", "title"],
+        "type": "object"
+      },
+      "RegisterByInviteDTO": {
+        "description": "通过邀请码注册",
+        "properties": {
+          "code": {
+            "description": "邮箱验证码",
+            "type": "string"
+          },
+          "email": {
+            "description": "邮箱",
+            "pattern": "^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z0-9]{2,6}$",
+            "type": "string"
+          },
+          "inviteCode": {
+            "description": "邀请码",
+            "type": "string"
+          },
+          "nickname": {
+            "description": "昵称",
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orgName": {
+            "description": "组织名称。仅当邀请码类型为 SUPER_ADMIN_CREATE_ORG 时必填",
+            "type": "string"
+          },
+          "password": {
+            "description": "密码",
+            "maxLength": 20,
+            "minLength": 6,
+            "type": "string"
+          },
+          "username": {
+            "description": "用户名",
+            "maxLength": 20,
+            "minLength": 4,
+            "type": "string"
+          }
+        },
+        "required": ["code", "email", "inviteCode", "nickname", "password", "username"],
+        "type": "object"
+      },
+      "SessionContext": {
+        "properties": {
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "TaskInstanceDetailVO": {
+        "description": "任务实例详情",
+        "properties": {
+          "metadata": {
+            "description": "最近一次提交的元数据(JSON字符串)，无提交记录时为 null",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TaskRejectDTO": {
+        "description": "打回任务请求参数",
+        "properties": {
+          "reviewComment": {
+            "description": "打回意见",
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["reviewComment"],
+        "type": "object"
+      },
+      "TaskSubmitDTO": {
+        "description": "提交任务请求参数",
+        "properties": {
+          "metadata": {
+            "description": "提交元数据(JSON对象)。示例：{\"values\":{\"attachment\":{\"fileId\":123},\"author\":\"张三\"}}",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TaskTemplateOptionVO": {
+        "description": "流程模板选项",
+        "properties": {
+          "id": {
+            "description": "流程模板ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "流程模板名称",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateMyInfoDTO": {
+        "description": "更新当前用户信息请求参数",
+        "properties": {
+          "avatarFileId": {
+            "description": "用户头像文件ID",
+            "type": "string"
+          },
+          "nickname": {
+            "description": "用户昵称",
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["nickname"],
+        "type": "object"
+      },
+      "UserInfoVO": {
+        "description": "用户信息",
+        "properties": {
+          "avatarUrl": {
+            "description": "头像URL",
+            "type": "string"
+          },
+          "defaultOrgId": {
+            "description": "默认组织ID",
+            "type": "string"
+          },
+          "email": {
+            "description": "邮箱",
+            "type": "string"
+          },
+          "id": {
+            "description": "用户ID",
+            "type": "string"
+          },
+          "nickname": {
+            "description": "用户昵称",
+            "type": "string"
+          },
+          "username": {
+            "description": "用户名",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UserOrgSwitchVO": {
+        "description": "用户切换的组织信息",
+        "properties": {
+          "avatarUrl": {
+            "description": "组织头像文件url",
+            "type": "string"
+          },
+          "id": {
+            "description": "组织ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "组织名称",
+            "type": "string"
+          },
+          "roles": {
+            "description": "在组织内的角色列表",
+            "items": {
+              "description": "在组织内的角色列表",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "WorkshopListDTO": {
+        "description": "工坊中企划查询请求参数",
+        "properties": {
+          "isMyCreated": {
+            "description": "选择是否为我创建的企划，false=查询全部",
+            "type": "boolean"
+          },
+          "keyword": {
+            "description": "搜索关键词（标题）",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "projectType": {
+            "description": "企划类型",
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "WorkshopProjectInfoVO": {
+        "description": "工坊中的企划信息",
+        "properties": {
+          "coverUrl": {
+            "description": "封面图片URL",
+            "type": "string"
+          },
+          "creatorAvatarUrl": {
+            "description": "创建人头像URL",
+            "type": "string"
+          },
+          "id": {
+            "description": "企划ID",
+            "format": "int64",
+            "type": "integer"
+          },
+          "lastSubmitterAt": {
+            "description": "最近一次提交的时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastSubmitterUsername": {
+            "description": "最近一次提交的用户名",
+            "type": "string"
+          },
+          "title": {
+            "description": "企划名称",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "WorkshopTaskTemplateCreateDTO": {
+        "description": "创建工坊个人任务流模板请求参数",
+        "properties": {
+          "description": {
+            "description": "流程模板说明",
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "description": "流程模板名称",
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "nodes": {
+            "description": "流程模板节点列表（至少包含一个节点）",
+            "items": {
+              "$ref": "#/components/schemas/WorkshopTaskTemplateNodeCreateDTO"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["name", "nodes"],
+        "type": "object"
+      },
+      "WorkshopTaskTemplateDTO": {
+        "description": "工坊任务流模板查询请求参数",
+        "properties": {
+          "isMyCreated": {
+            "description": "仅查看我创建的模板",
+            "type": "boolean"
+          },
+          "keyword": {
+            "description": "搜索关键词（模板名称）",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "WorkshopTaskTemplateNodeCreateDTO": {
+        "description": "工坊任务流模板节点（创建模板时使用）",
+        "properties": {
+          "baseTaskId": {
+            "description": "关联的原子任务ID",
+            "type": "string"
+          },
+          "customName": {
+            "description": "自定义任务实例名，用于区分同一原子任务的多个并行实例",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "parallelSort": {
+            "description": "并行组内排序（sort 相同时，用于控制并行节点的展示顺序）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "sort": {
+            "description": "步骤顺序（同一 sort 值的节点为并行节点）",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": ["baseTaskId", "sort"],
+        "type": "object"
+      },
+      "WorkshopTaskTemplateNodeVO": {
+        "description": "工坊任务流模板节点信息（卡片简化版，不含 metaSchema）",
+        "properties": {
+          "baseTaskIconUrl": {
+            "description": "原子任务图标URL",
+            "type": "string"
+          },
+          "baseTaskId": {
+            "description": "原子任务ID",
+            "type": "string"
+          },
+          "baseTaskName": {
+            "description": "原子任务名称（如：创建/翻译/校对/审核/发布）",
+            "type": "string"
+          },
+          "customName": {
+            "description": "自定义任务实例名（如\"文字校对1\"），未设置时为空，前端优先展示此名称",
+            "type": "string"
+          },
+          "parallelSort": {
+            "description": "并行组内排序（sort 相同时，用于控制并行节点的展示顺序）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "sort": {
+            "description": "步骤顺序（相同 sort 值表示并行节点，前端按 sort 分组渲染阶段）",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "WorkshopTaskTemplateVO": {
+        "description": "工坊中的任务流模板信息（卡片展示用）",
+        "properties": {
+          "description": {
+            "description": "模板说明",
+            "type": "string"
+          },
+          "id": {
+            "description": "模板ID",
+            "type": "string"
+          },
+          "isMine": {
+            "description": "是否为我创建的模板",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "流程模板名称",
+            "type": "string"
+          },
+          "nodes": {
+            "description": "节点列表（按 sort 升序排列；sort 相同的节点为并行节点，前端据此渲染分组和并行标识如 +N）",
+            "items": {
+              "$ref": "#/components/schemas/WorkshopTaskTemplateNodeVO"
+            },
+            "type": "array"
+          },
+          "scope": {
+            "description": "模板所属范围：PERSONAL-个人模板，ORGANIZATION-组织通用模板",
+            "enum": ["PERSONAL", "ORGANIZATION"],
+            "type": "string"
+          },
+          "taskCount": {
+            "description": "任务总数（所有 task_template_node 记录数）",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "Authorization": {
+        "bearerFormat": "JWT",
+        "in": "header",
+        "name": "Authorization",
+        "scheme": "Bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "longlian"
+    },
+    "description": "longlian的接口文档示例",
+    "title": "longlian接口文档",
+    "version": "v1.0.0"
+  },
+  "openapi": "3.0.1",
+  "paths": {
+    "/app/item/{itemId}/flow": {
+      "get": {
+        "description": "返回任务流基本信息及各节点当前执行状态，节点 taskStatus 为 null 表示前序节点未完成、当前节点尚未解锁",
+        "operationId": "getItemTaskFlow",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemTaskFlowVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "获取项目任务流（含节点执行状态）",
+        "tags": ["项目任务流接口"]
+      }
+    },
+    "/app/projects": {
+      "get": {
+        "description": "支持关键词搜索、类型筛选、排序，仅返回启用状态企划",
+        "operationId": "getProjectList",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "query",
+            "name": "projectListDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ProjectListDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOProjectInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询企划列表",
+        "tags": ["企划接口"]
+      },
+      "post": {
+        "operationId": "createProject",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "创建企划",
+        "tags": ["企划接口"]
+      }
+    },
+    "/app/projects/types": {
+      "get": {
+        "description": "仅返回启用状态的类型",
+        "operationId": "getProjectTypes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectTypeInfoVO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "获取企划类型列表",
+        "tags": ["企划接口"]
+      }
+    },
+    "/app/projects/{projectId}": {
+      "get": {
+        "description": "返回企划详细信息、进度统计及当前用户权限标记。\nisCreator=true 时前端展示「编辑+分享」按钮；false 时展示「添加到工坊+分享」按钮\n",
+        "operationId": "getProjectDetail",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDetailInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "获取企划详情",
+        "tags": ["企划接口"]
+      },
+      "put": {
+        "operationId": "updateProject",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectUpdateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "编辑企划",
+        "tags": ["企划接口"]
+      }
+    },
+    "/app/projects/{projectId}/items": {
+      "get": {
+        "description": "支持标题模糊搜索、状态筛选（进行中/已完成/已公布）与时间排序；默认展示进行中并按更新时间倒序",
+        "operationId": "listProjectItems",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "projectItemListDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ProjectItemListDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOProjectItemListVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询项目列表",
+        "tags": ["项目相关接口"]
+      },
+      "post": {
+        "description": "创建项目并关联流程模板，自动生成任务流和所有任务实例",
+        "operationId": "createProjectItem",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectItemCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "创建项目",
+        "tags": ["项目相关接口"]
+      }
+    },
+    "/app/projects/{projectId}/items/{itemId}": {
+      "delete": {
+        "operationId": "deleteProjectItem",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "项目ID",
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "删除项目",
+        "tags": ["项目相关接口"]
+      }
+    },
+    "/app/projects/{projectId}/items/{itemId}/publish": {
+      "patch": {
+        "operationId": "publishProjectItem",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "项目ID",
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "公布项目",
+        "tags": ["项目相关接口"]
+      }
+    },
+    "/app/projects/{projectId}/workshop": {
+      "delete": {
+        "description": "将指定企划从当前用户的个人工坊中移除",
+        "operationId": "removeFromWorkshop",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "从工坊移除企划",
+        "tags": ["企划接口"]
+      },
+      "post": {
+        "description": "将指定企划加入当前用户的个人工坊，已添加则幂等返回成功",
+        "operationId": "addToWorkshop",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "添加企划到工坊",
+        "tags": ["企划接口"]
+      }
+    },
+    "/app/session/": {
+      "delete": {
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "退出登录",
+        "tags": ["用户会话接口"]
+      }
+    },
+    "/app/session/email": {
+      "post": {
+        "description": "使用邮箱+验证码登录",
+        "operationId": "loginByCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginByCodeDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "验证码登录",
+        "tags": ["用户会话接口"]
+      }
+    },
+    "/app/session/email/code": {
+      "post": {
+        "operationId": "sendCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailCodeDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "发送邮箱验证码",
+        "tags": ["用户会话接口"]
+      }
+    },
+    "/app/session/pwd": {
+      "post": {
+        "description": "使用用户名+密码登录",
+        "operationId": "loginByPwd",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginByPwdDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "密码登录",
+        "tags": ["用户会话接口"]
+      }
+    },
+    "/app/task-template/options": {
+      "get": {
+        "description": "创建项目弹窗使用的流程模板下拉选项，查询组织通用模板+我的个人模板",
+        "operationId": "listTaskTemplateOptions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TaskTemplateOptionVO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "获取用户可选流程模板",
+        "tags": ["流程模板接口"]
+      }
+    },
+    "/app/task/instance/item/{itemId}": {
+      "get": {
+        "description": "返回当前项目所有已生成的任务实例",
+        "operationId": "listItemTaskInstances",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "项目ID",
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ItemTaskInstanceVO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "查询项目下的任务实例列表",
+        "tags": ["任务实例接口"]
+      }
+    },
+    "/app/task/instance/{instanceId}/abandon": {
+      "post": {
+        "description": "放弃已接取（CLAIMED）的任务，任务状态恢复为 PENDING，可由他人重新接取",
+        "operationId": "abandonTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务实例ID",
+            "in": "path",
+            "name": "instanceId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "放弃任务",
+        "tags": ["任务实例接口"]
+      }
+    },
+    "/app/task/instance/{instanceId}/claim": {
+      "post": {
+        "description": "接取 PENDING 状态的任务，接取后任务状态变为 CLAIMED，归属当前登录用户",
+        "operationId": "claimTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务实例ID",
+            "in": "path",
+            "name": "instanceId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "接取任务",
+        "tags": ["任务实例接口"]
+      }
+    },
+    "/app/task/instance/{instanceId}/detail": {
+      "get": {
+        "description": "返回任务实例信息及最近一次提交的元数据详情",
+        "operationId": "getTaskInstanceDetail",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务实例ID",
+            "in": "path",
+            "name": "instanceId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskInstanceDetailVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "查看任务实例详情",
+        "tags": ["任务实例接口"]
+      }
+    },
+    "/app/task/instance/{instanceId}/reject": {
+      "post": {
+        "description": "下一阶段执行人可将已完成（COMPLETED）的任务打回，任务恢复为 CLAIMED 状态，提交记录标记为 REJECTED，需填写打回意见",
+        "operationId": "rejectTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务实例ID",
+            "in": "path",
+            "name": "instanceId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskRejectDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "打回任务",
+        "tags": ["任务实例接口"]
+      }
+    },
+    "/app/task/instance/{instanceId}/reset": {
+      "post": {
+        "description": "将已完成（COMPLETED）的任务重置为 CLAIMED 状态，允许重新提交。",
+        "operationId": "resetTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务实例ID",
+            "in": "path",
+            "name": "instanceId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "重置任务提交",
+        "tags": ["任务实例接口"]
+      }
+    },
+    "/app/task/instance/{instanceId}/submit": {
+      "post": {
+        "description": "提交待提交（CLAIMED）的任务，提交后任务状态变为 COMPLETED。提交内容通过 metadata(JSON对象) 传递",
+        "operationId": "submitTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务实例ID",
+            "in": "path",
+            "name": "instanceId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskSubmitDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "提交任务",
+        "tags": ["任务实例接口"]
+      }
+    },
+    "/app/user/": {
+      "get": {
+        "description": "返回当前 Token 对应的用户信息",
+        "operationId": "getMyInfo",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "获取当前登录用户信息",
+        "tags": ["用户接口"]
+      },
+      "put": {
+        "operationId": "updateMyInfo",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMyInfoDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "更新当前用户信息",
+        "tags": ["用户接口"]
+      }
+    },
+    "/app/user/organizations": {
+      "get": {
+        "description": "查询用户加入的组织列表",
+        "operationId": "getOrgSimpleInfo",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OrgSimpleInfoVO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "获取用户加入的组织列表",
+        "tags": ["用户接口"]
+      }
+    },
+    "/app/user/organizations/join-by-invite": {
+      "post": {
+        "description": "已登录用户使用组织管理员生成的邀请码，直接加入目标组织",
+        "operationId": "joinOrganizationByInvite",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinByInviteCodeDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "已注册用户通过邀请码加入组织",
+        "tags": ["用户接口"]
+      }
+    },
+    "/app/user/register/create-organization": {
+      "post": {
+        "description": "使用超管生成的邀请码完成注册，并创建组织成为组织管理员",
+        "operationId": "registerAndCreateOrganizationByInvite",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterByInviteDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "通过邀请码注册并创建组织",
+        "tags": ["用户接口"]
+      }
+    },
+    "/app/user/register/join-organization": {
+      "post": {
+        "description": "使用组织管理员生成的邀请码完成注册，并加入指定组织",
+        "operationId": "registerAndJoinOrganizationByInvite",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterByInviteDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "通过邀请码注册并加入组织",
+        "tags": ["用户接口"]
+      }
+    },
+    "/app/user/register/join-organization/invite-info": {
+      "get": {
+        "description": "注册页使用。组织管理员生成的邀请码可通过该接口查询组织名称",
+        "operationId": "getJoinOrganizationInviteInfo",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "inviteCode",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "获取加入组织邀请码对应的组织信息",
+        "tags": ["用户接口"]
+      }
+    },
+    "/app/user/switch": {
+      "post": {
+        "description": "切换用户当前所在组织",
+        "operationId": "switchOrg",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgIdDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOrgSwitchVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "切换组织",
+        "tags": ["用户接口"]
+      }
+    },
+    "/app/workshop/list": {
+      "post": {
+        "description": "查询当前用户工坊中的企划列表，支持标题模糊搜索、类型筛选、仅看我创建，默认按添加时间倒序。",
+        "operationId": "getMyWorkshopList",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkshopListDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOWorkshopProjectInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询工坊企划列表",
+        "tags": ["工坊接口"]
+      }
+    },
+    "/app/workshop/task-template": {
+      "post": {
+        "description": "用户在可视化编辑器中搭建节点结构后保存为个人任务流模板，scope 固定为 PERSONAL。",
+        "operationId": "createWorkshopTaskTemplate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkshopTaskTemplateCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "创建工坊个人任务流模板",
+        "tags": ["工坊接口"]
+      }
+    },
+    "/app/workshop/task-template/list": {
+      "post": {
+        "description": "查询当前用户工坊中的任务流模板（组织通用模板+我的个人模板），支持模板名称模糊搜索、仅看我创建，默认按创建时间倒序。",
+        "operationId": "getWorkshopTaskTemplateList",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkshopTaskTemplateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOWorkshopTaskTemplateVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询工坊任务流模板列表",
+        "tags": ["工坊接口"]
+      }
+    },
+    "/app/workshop/task-template/{templateId}": {
+      "put": {
+        "description": "仅模板创建者可更新自己的个人模板（isMine=true 时前端展示更新按钮）。组织通用模板不可在此更新。",
+        "operationId": "updateWorkshopTaskTemplate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务流模板ID",
+            "in": "path",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkshopTaskTemplateCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "更新工坊个人任务流模板",
+        "tags": ["工坊接口"]
+      }
+    }
+  },
+  "security": [
+    {
+      "Authorization": []
+    }
+  ],
+  "servers": [
+    {
+      "description": "Generated server url",
+      "url": "http://sit.neo.oa.api.longlian.online"
+    }
+  ],
+  "tags": [
+    {
+      "description": "项目列表、创建编辑、发布",
+      "name": "项目相关接口"
+    },
+    {
+      "description": "项目任务流查询",
+      "name": "项目任务流接口"
+    },
+    {
+      "description": "用户个人工坊：企划列表、任务流模板列表与创建",
+      "name": "工坊接口"
+    },
+    {
+      "description": "用户会话相关接口",
+      "name": "用户会话接口"
+    },
+    {
+      "description": "任务接取、放弃、提交、重置、打回、查看详情、按项目查询实例列表",
+      "name": "任务实例接口"
+    },
+    {
+      "description": "用户端流程模板查询，提供创建项目时的模板下拉选项",
+      "name": "流程模板接口"
+    },
+    {
+      "description": "企划相关接口",
+      "name": "企划接口"
+    },
+    {
+      "description": "用户相关的基础操作接口",
+      "name": "用户接口"
+    }
+  ]
+}

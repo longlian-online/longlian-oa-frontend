@@ -1,0 +1,33 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "operationId": "create",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/AdminCreateDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "创建管理员",
+    "tags": ["管理员接口"]
+  },
+  "path": "/admin/admins/",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

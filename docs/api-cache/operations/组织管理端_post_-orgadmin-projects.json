@@ -1,0 +1,44 @@
+{
+  "document": "组织管理端",
+  "method": "POST",
+  "operation": {
+    "description": "支持标题模糊搜索、类型精确筛选、创建时间区间，默认创建时间倒序",
+    "operationId": "getAdminProjectList",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ProjectAdminListDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOProjectAdminInfoVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "管理端分页查询企划列表",
+    "tags": ["企划接口"]
+  },
+  "path": "/orgadmin/projects",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
+}

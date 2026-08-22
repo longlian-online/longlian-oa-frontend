@@ -1,0 +1,157 @@
+{
+  "components": {
+    "schemas": {
+      "CreateFileReqDTO": {
+        "description": "创建文件上传请求参数",
+        "properties": {
+          "bizId": {
+            "description": "业务ID(用户ID/组织ID/任务ID)",
+            "type": "string"
+          },
+          "bizType": {
+            "description": "业务类型(avatar/cover/task_submit)",
+            "pattern": "avatar|cover|task_submit",
+            "type": "string"
+          },
+          "fileExt": {
+            "description": "文件扩展名",
+            "pattern": "(?i)jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx|zip",
+            "type": "string"
+          },
+          "fileMime": {
+            "description": "文件MIME类型",
+            "pattern": "(?i)image/(jpeg|png|gif)|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/zip|application/x-zip-compressed",
+            "type": "string"
+          },
+          "fileName": {
+            "description": "原始文件名",
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string"
+          },
+          "fileSize": {
+            "description": "文件大小(字节)",
+            "format": "int64",
+            "maximum": 52428800,
+            "type": "integer"
+          }
+        },
+        "required": ["bizId", "bizType", "fileExt", "fileMime", "fileName", "fileSize"],
+        "type": "object"
+      },
+      "ResourceCreateVO": {
+        "description": "创建文件上传响应",
+        "properties": {
+          "fileId": {
+            "description": "文件ID",
+            "type": "string"
+          },
+          "key": {
+            "description": "文件存储唯一标识（storageKey）",
+            "type": "string"
+          },
+          "storageType": {
+            "description": "存储类型：1-本地存储，2-阿里云OSS，3-腾讯云COS",
+            "enum": ["NONE", "LOCAL", "OSS"],
+            "type": "string"
+          },
+          "uploadUrl": {
+            "description": "预签名上传地址",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SessionContext": {
+        "properties": {
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "Authorization": {
+        "bearerFormat": "JWT",
+        "in": "header",
+        "name": "Authorization",
+        "scheme": "Bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "longlian"
+    },
+    "description": "longlian的接口文档示例",
+    "title": "longlian接口文档",
+    "version": "v1.0.0"
+  },
+  "openapi": "3.0.1",
+  "paths": {
+    "/common/file/upload": {
+      "post": {
+        "description": "获取预签名上传地址，前端拿到 uploadUrl 后直接向存储服务上传文件，上传完成后将 fileId 传给业务接口",
+        "operationId": "createFileUpload",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFileReqDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceCreateVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "创建文件上传",
+        "tags": ["文件上传接口"]
+      }
+    }
+  },
+  "security": [
+    {
+      "Authorization": []
+    }
+  ],
+  "servers": [
+    {
+      "description": "Generated server url",
+      "url": "http://sit.neo.oa.api.longlian.online"
+    }
+  ],
+  "tags": [
+    {
+      "description": "文件预签名上传(用户端/管理端共用)，支持本地存储/OSS/COS",
+      "name": "文件上传接口"
+    }
+  ]
+}

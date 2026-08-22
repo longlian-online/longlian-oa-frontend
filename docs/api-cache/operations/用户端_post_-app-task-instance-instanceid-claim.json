@@ -1,0 +1,37 @@
+{
+  "document": "用户端",
+  "method": "POST",
+  "operation": {
+    "description": "接取 PENDING 状态的任务，接取后任务状态变为 CLAIMED，归属当前登录用户",
+    "operationId": "claimTask",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "任务实例ID",
+        "in": "path",
+        "name": "instanceId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "接取任务",
+    "tags": ["任务实例接口"]
+  },
+  "path": "/app/task/instance/{instanceId}/claim",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

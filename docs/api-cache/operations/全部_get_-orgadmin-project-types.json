@@ -1,0 +1,42 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "支持名称模糊搜索，默认按创建时间倒序",
+    "operationId": "listProjectTypes",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "query",
+        "name": "projectTypeListDTO",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ProjectTypeListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOProjectTypeAdminVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询企划类型列表",
+    "tags": ["企划类型管理"]
+  },
+  "path": "/orgadmin/project-types",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

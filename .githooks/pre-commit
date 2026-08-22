@@ -29,6 +29,15 @@ else
   exit 1
 fi
 
+echo "► 检查 API 缓存..."
+if ! "$VP" run api:check; then
+  echo ""
+  echo "✖ API 缓存检查未通过"
+  echo "  请先运行：vp run api:update"
+  echo "  如确认需要临时跳过，可使用：SKIP_API_CACHE_CHECK=1 git commit ..."
+  exit 1
+fi
+
 staged_files=$(mktemp)
 git diff --cached --name-only -z --diff-filter=ACMR -- \
   "*.ts" "*.tsx" "*.js" "*.jsx" > "$staged_files"

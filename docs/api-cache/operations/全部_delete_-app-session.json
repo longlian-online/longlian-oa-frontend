@@ -1,0 +1,16 @@
+{
+  "document": "全部",
+  "method": "DELETE",
+  "operation": {
+    "operationId": "logout",
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "退出登录",
+    "tags": ["用户会话接口"]
+  },
+  "path": "/app/session/",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

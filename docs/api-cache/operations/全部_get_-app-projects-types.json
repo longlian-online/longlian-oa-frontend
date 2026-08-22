@@ -1,0 +1,37 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "仅返回启用状态的类型",
+    "operationId": "getProjectTypes",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/ProjectTypeInfoVO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "获取企划类型列表",
+    "tags": ["企划接口"]
+  },
+  "path": "/app/projects/types",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

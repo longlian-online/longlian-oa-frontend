@@ -1,0 +1,53 @@
+{
+  "document": "组织管理端",
+  "method": "PATCH",
+  "operation": {
+    "description": "禁用后无法基于该模板创建新任务流，已有任务流不受影响。status: ENABLED-启用，DISABLED-禁用",
+    "operationId": "changeTaskTemplateStatus",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "templateId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ChangeStatusDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/ResultVoid"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "启用/禁用任务模板",
+    "tags": ["任务模板管理"]
+  },
+  "path": "/orgadmin/task/template/{templateId}/status",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
+}

@@ -1,0 +1,46 @@
+{
+  "document": "全部",
+  "method": "PATCH",
+  "operation": {
+    "operationId": "publishProjectItem",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "企划ID",
+        "in": "path",
+        "name": "projectId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      {
+        "description": "项目ID",
+        "in": "path",
+        "name": "itemId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "公布项目",
+    "tags": ["项目相关接口"]
+  },
+  "path": "/app/projects/{projectId}/items/{itemId}/publish",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

@@ -1,0 +1,43 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "返回任务流基本信息及各节点当前执行状态，节点 taskStatus 为 null 表示前序节点未完成、当前节点尚未解锁",
+    "operationId": "getItemTaskFlow",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "itemId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/ItemTaskFlowVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "获取项目任务流（含节点执行状态）",
+    "tags": ["项目任务流接口"]
+  },
+  "path": "/app/item/{itemId}/flow",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

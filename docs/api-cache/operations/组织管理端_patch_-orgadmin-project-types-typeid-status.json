@@ -1,0 +1,53 @@
+{
+  "document": "组织管理端",
+  "method": "PATCH",
+  "operation": {
+    "description": "禁用后用户端不展示该类型，但已有数据保留。status: ENABLED-启用，DISABLED-禁用",
+    "operationId": "changeProjectTypeStatus",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "typeId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ChangeStatusDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/ResultVoid"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "启用/禁用企划类型",
+    "tags": ["企划类型管理"]
+  },
+  "path": "/orgadmin/project-types/{typeId}/status",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
+}

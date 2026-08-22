@@ -1,0 +1,52 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "支持标题模糊搜索、状态筛选（进行中/已完成/已公布）与时间排序；默认展示进行中并按更新时间倒序",
+    "operationId": "listProjectItems",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "企划ID",
+        "in": "path",
+        "name": "projectId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "query",
+        "name": "projectItemListDTO",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ProjectItemListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOProjectItemListVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询项目列表",
+    "tags": ["项目相关接口"]
+  },
+  "path": "/app/projects/{projectId}/items",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

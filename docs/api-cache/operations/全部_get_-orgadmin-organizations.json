@@ -1,0 +1,34 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "获取组织管理员所在组织的头像、组名和简介",
+    "operationId": "getOrganizationInfo",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/OrgAdmintOrganizationInfoVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "获取组织信息",
+    "tags": ["组织信息管理接口"]
+  },
+  "path": "/orgadmin/organizations",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

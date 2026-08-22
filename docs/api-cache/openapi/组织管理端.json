@@ -1,0 +1,1831 @@
+{
+  "components": {
+    "schemas": {
+      "ApplicationInfoVO": {
+        "description": "入组申请信息",
+        "properties": {
+          "appliedAt": {
+            "description": "申请时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "avatarUrl": {
+            "description": "申请人头像URL",
+            "type": "string"
+          },
+          "id": {
+            "description": "申请记录ID",
+            "type": "string"
+          },
+          "nickname": {
+            "description": "申请人昵称",
+            "type": "string"
+          },
+          "userId": {
+            "description": "申请人用户ID",
+            "type": "string"
+          },
+          "username": {
+            "description": "申请人用户名",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ApplicationListDTO": {
+        "description": "入组申请列表查询请求参数",
+        "properties": {
+          "endApplyTime": {
+            "description": "申请时间-结束",
+            "format": "date-time",
+            "type": "string"
+          },
+          "keyword": {
+            "description": "昵称模糊搜索关键词",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orderDir": {
+            "description": "排序方式，默认申请时间倒序",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "startApplyTime": {
+            "description": "申请时间-起始",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ApplicationReviewDTO": {
+        "description": "审核入组申请请求参数",
+        "properties": {
+          "applicationStatus": {
+            "description": "审核结果：APPROVED-通过，REJECTED-拒绝",
+            "enum": ["PENDING", "APPROVED", "REJECTED"],
+            "type": "string"
+          },
+          "reviewRemark": {
+            "description": "审核备注（拒绝时建议填写原因）",
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["applicationStatus"],
+        "type": "object"
+      },
+      "BaseTaskCreateDTO": {
+        "description": "创建/更新原子任务请求参数",
+        "properties": {
+          "description": {
+            "description": "任务说明",
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "iconFileId": {
+            "description": "图标文件ID",
+            "type": "string"
+          },
+          "metaSchema": {
+            "description": "元数据字段定义(JSON数组)，示例：[{\"name\":\"附件\",\"fieldType\":\"file\",\"required\":true},{\"name\":\"作者\",\"fieldType\":\"text\",\"required\":true},{\"name\":\"源链接\",\"fieldType\":\"text\",\"required\":true}]",
+            "type": "string"
+          },
+          "name": {
+            "description": "任务名称（如：创建/翻译/校对）",
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "type": "object"
+      },
+      "BaseTaskListDTO": {
+        "description": "原子任务列表查询请求参数",
+        "properties": {
+          "endCreatedTime": {
+            "description": "创建时间-结束",
+            "format": "date-time",
+            "type": "string"
+          },
+          "keyword": {
+            "description": "任务名称模糊搜索关键词",
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orderDir": {
+            "description": "排序方式，默认倒序",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "sortBy": {
+            "description": "排序字段：CREATED_AT-创建时间，REF_COUNT-引用次数，默认 REF_COUNT",
+            "enum": ["CREATED_AT", "REF_COUNT"],
+            "type": "string"
+          },
+          "startCreatedTime": {
+            "description": "创建时间-起始",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "description": "状态精确筛选：ENABLED-启用，DISABLED-禁用，默认查启用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "BaseTaskVO": {
+        "description": "原子任务信息",
+        "properties": {
+          "createdAt": {
+            "description": "创建时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "description": "任务说明",
+            "type": "string"
+          },
+          "iconUrl": {
+            "description": "图标URL",
+            "type": "string"
+          },
+          "id": {
+            "description": "原子任务ID",
+            "type": "string"
+          },
+          "metaSchema": {
+            "description": "元数据字段定义(JSON数组)",
+            "type": "string"
+          },
+          "name": {
+            "description": "任务名称",
+            "type": "string"
+          },
+          "refCount": {
+            "description": "引用次数（该任务被引用到任务流模板节点中的次数）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "description": "状态：ENABLED-启用，DISABLED-禁用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ChangeStatusDTO": {
+        "description": "修改状态请求参数",
+        "properties": {
+          "status": {
+            "description": "目标状态：ENABLED-启用，DISABLED-禁用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          }
+        },
+        "required": ["status"],
+        "type": "object"
+      },
+      "InviteCodeVO": {
+        "description": "邀请码（可用于创建组织、注册入组或已注册用户申请入组）",
+        "properties": {
+          "expireAt": {
+            "description": "邀请码过期时间",
+            "type": "string"
+          },
+          "inviteCode": {
+            "description": "邀请码（6位字母数字，一次性使用，有效期30分钟）",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrgAdminUpdateOrganizationInfoDTO": {
+        "description": "组织管理员端更新当前组织信息请求参数",
+        "properties": {
+          "avatarFileId": {
+            "description": "组织头像文件ID",
+            "type": "string"
+          },
+          "description": {
+            "description": "组织简介",
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "description": "组织名称",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["avatarFileId", "description", "name"],
+        "type": "object"
+      },
+      "OrgAdmintOrganizationInfoVO": {
+        "description": "组织管理员端当前组织信息",
+        "properties": {
+          "avatarUrl": {
+            "description": "组织头像访问地址",
+            "type": "string"
+          },
+          "description": {
+            "description": "组织简介",
+            "type": "string"
+          },
+          "id": {
+            "description": "组织ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "组织名称",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrgMemberBaseTaskSubmitCountItemVO": {
+        "description": "组员原子任务提交数明细",
+        "properties": {
+          "baseTaskId": {
+            "description": "原子任务ID",
+            "type": "string"
+          },
+          "baseTaskName": {
+            "description": "原子任务名称",
+            "type": "string"
+          },
+          "submitCount": {
+            "description": "提交数",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "OrgMemberBaseTaskSubmitCountVO": {
+        "description": "组员各原子任务提交数",
+        "properties": {
+          "list": {
+            "description": "各原子任务提交数列表；返回组织下所有原子任务，无提交记录的原子任务提交数为 0",
+            "items": {
+              "$ref": "#/components/schemas/OrgMemberBaseTaskSubmitCountItemVO"
+            },
+            "type": "array"
+          },
+          "memberId": {
+            "description": "成员ID",
+            "type": "string"
+          },
+          "totalSubmitCount": {
+            "description": "任务提交总数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "userId": {
+            "description": "用户ID",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrgMemberInfoVO": {
+        "description": "组员信息",
+        "properties": {
+          "avatarUrl": {
+            "description": "头像URL",
+            "type": "string"
+          },
+          "id": {
+            "description": "成员ID",
+            "type": "string"
+          },
+          "joinedAt": {
+            "description": "入组时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastSubmittedAt": {
+            "description": "上次提交任务时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "nickname": {
+            "description": "昵称",
+            "type": "string"
+          },
+          "orgRole": {
+            "description": "组织内角色：ORG_ADMIN-管理员，ORG_USER-普通组员",
+            "type": "string"
+          },
+          "status": {
+            "description": "成员状态：ENABLED-启用，DISABLED-禁用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          },
+          "submitCount": {
+            "description": "任务提交总数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "userId": {
+            "description": "用户ID",
+            "type": "string"
+          },
+          "username": {
+            "description": "用户名",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrgMemberListDTO": {
+        "description": "组员列表查询请求参数",
+        "properties": {
+          "endJoinedTime": {
+            "description": "入组时间-结束",
+            "format": "date-time",
+            "type": "string"
+          },
+          "keyword": {
+            "description": "昵称模糊搜索关键词",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orderDir": {
+            "description": "排序方式，默认入组时间倒序",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "startJoinedTime": {
+            "description": "入组时间-起始",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOApplicationInfoVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationInfoVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOBaseTaskVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/BaseTaskVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOOrgMemberInfoVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/OrgMemberInfoVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOProjectAdminInfoVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/ProjectAdminInfoVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOProjectTypeAdminVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/ProjectTypeAdminVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOTaskTemplateListVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/TaskTemplateListVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectAdminInfoVO": {
+        "description": "企划管理列表信息",
+        "properties": {
+          "createdAt": {
+            "description": "创建时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "creatorId": {
+            "description": "创建人ID",
+            "type": "string"
+          },
+          "creatorNickname": {
+            "description": "创建人昵称",
+            "type": "string"
+          },
+          "id": {
+            "description": "企划ID",
+            "type": "string"
+          },
+          "status": {
+            "description": "企划状态：IN_PROGRESS-进行中，COMPLETED-已完成，ARCHIVED-已归档",
+            "enum": ["进行中", "已完成", "已归档"],
+            "type": "string"
+          },
+          "title": {
+            "description": "企划标题",
+            "type": "string"
+          },
+          "typeId": {
+            "description": "企划类型ID",
+            "type": "string"
+          },
+          "typeName": {
+            "description": "企划类型名称",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectAdminListDTO": {
+        "description": "企划管理列表查询请求参数",
+        "properties": {
+          "endCreatedTime": {
+            "description": "创建时间-结束",
+            "format": "date-time",
+            "type": "string"
+          },
+          "keyword": {
+            "description": "企划标题模糊搜索关键词",
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orderDir": {
+            "description": "排序方式，默认创建时间倒序",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "startCreatedTime": {
+            "description": "创建时间-起始",
+            "format": "date-time",
+            "type": "string"
+          },
+          "typeId": {
+            "description": "企划类型ID（精确筛选）",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectTypeAdminVO": {
+        "description": "企划类型管理列表信息",
+        "properties": {
+          "createdAt": {
+            "description": "创建时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "creatorId": {
+            "description": "创建人ID",
+            "type": "string"
+          },
+          "creatorNickname": {
+            "description": "创建人昵称",
+            "type": "string"
+          },
+          "id": {
+            "description": "企划类型ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "类型名称",
+            "type": "string"
+          },
+          "status": {
+            "description": "状态：ENABLED-启用，DISABLED-禁用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectTypeCreateDTO": {
+        "description": "创建企划类型请求参数",
+        "properties": {
+          "name": {
+            "description": "类型名称",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "type": "object"
+      },
+      "ProjectTypeListDTO": {
+        "description": "企划类型列表查询请求参数",
+        "properties": {
+          "keyword": {
+            "description": "类型名称模糊搜索关键词",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orderDir": {
+            "description": "排序方式，默认创建时间倒序",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ResultVoid": {
+        "description": "通用返回结果",
+        "properties": {
+          "code": {
+            "description": "状态码：0 为成功，非0即异常",
+            "format": "int32",
+            "type": "integer"
+          },
+          "data": {
+            "description": "业务数据（成功时返回，失败时为null）",
+            "type": "object"
+          },
+          "msg": {
+            "description": "操作提示信息",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SessionContext": {
+        "properties": {
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "TaskTemplateCreateDTO": {
+        "description": "创建/更新任务模板请求参数",
+        "properties": {
+          "description": {
+            "description": "模板说明",
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "description": "模板名称",
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "nodes": {
+            "description": "模板节点列表（至少包含一个节点）",
+            "items": {
+              "$ref": "#/components/schemas/TaskTemplateNodeDTO"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["name", "nodes"],
+        "type": "object"
+      },
+      "TaskTemplateDetailVO": {
+        "description": "任务模板详情（含节点列表，用于模板编辑页和流程图预览）",
+        "properties": {
+          "createdAt": {
+            "description": "创建时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "creatorId": {
+            "description": "创建人ID",
+            "type": "string"
+          },
+          "creatorNickname": {
+            "description": "创建人昵称",
+            "type": "string"
+          },
+          "description": {
+            "description": "模板说明",
+            "type": "string"
+          },
+          "id": {
+            "description": "模板ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "模板名称",
+            "type": "string"
+          },
+          "nodes": {
+            "description": "节点列表（按 sort 升序排列；sort 相同的节点为并行节点，前端据此渲染分支结构）",
+            "items": {
+              "$ref": "#/components/schemas/TaskTemplateNodeVO"
+            },
+            "type": "array"
+          },
+          "refCount": {
+            "description": "引用次数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "description": "状态：ENABLED-启用，DISABLED-禁用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TaskTemplateListDTO": {
+        "description": "任务模板列表查询请求参数",
+        "properties": {
+          "endCreatedTime": {
+            "description": "创建时间-结束",
+            "format": "date-time",
+            "type": "string"
+          },
+          "keyword": {
+            "description": "模板名称模糊搜索关键词",
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orderDir": {
+            "description": "排序方式，默认倒序",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "sortBy": {
+            "description": "排序字段：CREATED_AT-创建时间，REF_COUNT-引用次数，默认 REF_COUNT",
+            "enum": ["CREATED_AT", "REF_COUNT"],
+            "type": "string"
+          },
+          "startCreatedTime": {
+            "description": "创建时间-起始",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "description": "状态精确筛选：ENABLED-启用，DISABLED-禁用，默认查启用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TaskTemplateListVO": {
+        "description": "任务模板列表行信息",
+        "properties": {
+          "createdAt": {
+            "description": "创建时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "creatorId": {
+            "description": "创建人ID",
+            "type": "string"
+          },
+          "creatorNickname": {
+            "description": "创建人昵称",
+            "type": "string"
+          },
+          "description": {
+            "description": "模板说明",
+            "type": "string"
+          },
+          "id": {
+            "description": "模板ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "模板名称",
+            "type": "string"
+          },
+          "refCount": {
+            "description": "引用次数（已基于该模板创建的任务流数量）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "description": "状态：ENABLED-启用，DISABLED-禁用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TaskTemplateNodeDTO": {
+        "description": "任务模板节点（创建/更新模板时使用）",
+        "properties": {
+          "baseTaskId": {
+            "description": "关联的原子任务ID",
+            "type": "string"
+          },
+          "parallelSort": {
+            "description": "并行组内排序（sort 相同时，用于控制并行节点的展示顺序）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "sort": {
+            "description": "步骤顺序（同一 sort 值的节点为并行节点）",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": ["baseTaskId", "sort"],
+        "type": "object"
+      },
+      "TaskTemplateNodeVO": {
+        "description": "任务模板节点信息",
+        "properties": {
+          "baseTaskIconUrl": {
+            "description": "原子任务图标URL",
+            "type": "string"
+          },
+          "baseTaskId": {
+            "description": "关联原子任务ID",
+            "type": "string"
+          },
+          "baseTaskName": {
+            "description": "原子任务名称",
+            "type": "string"
+          },
+          "id": {
+            "description": "模板节点ID",
+            "type": "string"
+          },
+          "metaSchema": {
+            "description": "元数据字段定义(JSON数组)",
+            "type": "string"
+          },
+          "parallelSort": {
+            "description": "并行组内排序",
+            "format": "int32",
+            "type": "integer"
+          },
+          "sort": {
+            "description": "步骤顺序（相同 sort 值表示并行节点）",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "Authorization": {
+        "bearerFormat": "JWT",
+        "in": "header",
+        "name": "Authorization",
+        "scheme": "Bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "longlian"
+    },
+    "description": "longlian的接口文档示例",
+    "title": "longlian接口文档",
+    "version": "v1.0.0"
+  },
+  "openapi": "3.0.1",
+  "paths": {
+    "/orgadmin/members": {
+      "post": {
+        "description": "仅返回已通过审核的成员，默认按入组时间倒序",
+        "operationId": "listMembers",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgMemberListDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOOrgMemberInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询组员列表",
+        "tags": ["组织成员管理"]
+      }
+    },
+    "/orgadmin/members/applications": {
+      "post": {
+        "description": "仅返回 status=PENDING(待审核) 的申请，默认按申请时间倒序",
+        "operationId": "listApplications",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationListDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOApplicationInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询待审核入组申请列表",
+        "tags": ["组织成员管理"]
+      }
+    },
+    "/orgadmin/members/applications/{applicationId}/review": {
+      "put": {
+        "description": "管理员对单条申请执行通过(APPROVED)或拒绝(REJECTED)操作",
+        "operationId": "reviewApplication",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "入组申请ID",
+            "in": "path",
+            "name": "applicationId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationReviewDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "审核入组申请",
+        "tags": ["组织成员管理"]
+      }
+    },
+    "/orgadmin/members/invite-codes/join-org": {
+      "post": {
+        "description": "生成一次性邀请码（6位字母数字），有效期30分钟；供组织管理员邀请用户加入当前组织使用",
+        "operationId": "generateJoinOrgInviteCode",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCodeVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "生成加入组织邀请码（管理员）",
+        "tags": ["组织成员管理"]
+      }
+    },
+    "/orgadmin/members/{memberId}/base-tasks/submit-counts": {
+      "get": {
+        "operationId": "getMemberBaseTaskSubmitCounts",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "成员ID",
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgMemberBaseTaskSubmitCountVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "查询组员各原子任务提交数",
+        "tags": ["组织成员管理"]
+      }
+    },
+    "/orgadmin/members/{memberId}/status": {
+      "patch": {
+        "description": "禁用后用户无法登录；超管身份不可被禁用。status: ENABLED-启用，DISABLED-禁用",
+        "operationId": "changeMemberStatus",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeStatusDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultVoid"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "启用/禁用组员",
+        "tags": ["组织成员管理"]
+      }
+    },
+    "/orgadmin/organizations": {
+      "get": {
+        "description": "获取组织管理员所在组织的头像、组名和简介",
+        "operationId": "getOrganizationInfo",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgAdmintOrganizationInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "获取组织信息",
+        "tags": ["组织信息管理接口"]
+      },
+      "put": {
+        "description": "更新组织的头像、组名和简介",
+        "operationId": "updateOrganizationInfo",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgAdminUpdateOrganizationInfoDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "更新组织信息",
+        "tags": ["组织信息管理接口"]
+      }
+    },
+    "/orgadmin/project-types": {
+      "get": {
+        "description": "支持名称模糊搜索，默认按创建时间倒序",
+        "operationId": "listProjectTypes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "query",
+            "name": "projectTypeListDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ProjectTypeListDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOProjectTypeAdminVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询企划类型列表",
+        "tags": ["企划类型管理"]
+      },
+      "post": {
+        "operationId": "createProjectType",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectTypeCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "创建企划类型",
+        "tags": ["企划类型管理"]
+      }
+    },
+    "/orgadmin/project-types/{typeId}/status": {
+      "patch": {
+        "description": "禁用后用户端不展示该类型，但已有数据保留。status: ENABLED-启用，DISABLED-禁用",
+        "operationId": "changeProjectTypeStatus",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "typeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeStatusDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultVoid"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "启用/禁用企划类型",
+        "tags": ["企划类型管理"]
+      }
+    },
+    "/orgadmin/projects": {
+      "post": {
+        "description": "支持标题模糊搜索、类型精确筛选、创建时间区间，默认创建时间倒序",
+        "operationId": "getAdminProjectList",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectAdminListDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOProjectAdminInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "管理端分页查询企划列表",
+        "tags": ["企划接口"]
+      }
+    },
+    "/orgadmin/projects/{projectId}/status": {
+      "patch": {
+        "description": "禁用后用户端不展示该企划。status: ENABLED-启用，DISABLED-禁用",
+        "operationId": "changeProjectStatus",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeStatusDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultVoid"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "启用/禁用企划",
+        "tags": ["企划接口"]
+      }
+    },
+    "/orgadmin/task/base": {
+      "post": {
+        "description": "任务创建后不可编辑，请确认标题、图标、简介和元数据字段定义后提交",
+        "operationId": "createBaseTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseTaskCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "创建原子任务",
+        "tags": ["原子任务管理"]
+      }
+    },
+    "/orgadmin/task/base/list": {
+      "post": {
+        "description": "支持名称模糊搜索、状态筛选、创建时间区间；支持按创建时间或引用次数排序，默认按引用次数倒序",
+        "operationId": "listBaseTasks",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseTaskListDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOBaseTaskVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询原子任务列表",
+        "tags": ["原子任务管理"]
+      }
+    },
+    "/orgadmin/task/base/{taskId}/status": {
+      "patch": {
+        "description": "禁用后该任务无法被添加到新模板节点中，已引用的节点不受影响。status: ENABLED-启用，DISABLED-禁用",
+        "operationId": "changeBaseTaskStatus",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeStatusDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultVoid"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "启用/禁用原子任务",
+        "tags": ["原子任务管理"]
+      }
+    },
+    "/orgadmin/task/template": {
+      "post": {
+        "description": "同时创建模板基本信息与节点列表",
+        "operationId": "createTaskTemplate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskTemplateCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "创建任务模板",
+        "tags": ["任务模板管理"]
+      }
+    },
+    "/orgadmin/task/template/list": {
+      "post": {
+        "description": "支持名称模糊搜索、状态筛选、创建时间区间；支持按创建时间或引用次数排序，默认按引用次数倒序",
+        "operationId": "listTaskTemplates",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskTemplateListDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOTaskTemplateListVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询任务模板列表",
+        "tags": ["任务模板管理"]
+      }
+    },
+    "/orgadmin/task/template/{templateId}": {
+      "get": {
+        "description": "返回模板基本信息及完整节点列表",
+        "operationId": "getTaskTemplateDetail",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务模板ID",
+            "in": "path",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskTemplateDetailVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "获取任务模板详情",
+        "tags": ["任务模板管理"]
+      },
+      "put": {
+        "description": "覆盖更新模板信息及节点列表",
+        "operationId": "updateTaskTemplate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务模板ID",
+            "in": "path",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskTemplateCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "更新任务模板",
+        "tags": ["任务模板管理"]
+      }
+    },
+    "/orgadmin/task/template/{templateId}/status": {
+      "patch": {
+        "description": "禁用后无法基于该模板创建新任务流，已有任务流不受影响。status: ENABLED-启用，DISABLED-禁用",
+        "operationId": "changeTaskTemplateStatus",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeStatusDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultVoid"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "启用/禁用任务模板",
+        "tags": ["任务模板管理"]
+      }
+    }
+  },
+  "security": [
+    {
+      "Authorization": []
+    }
+  ],
+  "servers": [
+    {
+      "description": "Generated server url",
+      "url": "http://sit.neo.oa.api.longlian.online"
+    }
+  ],
+  "tags": [
+    {
+      "description": "企划类型的增删改查与状态管理，仅管理员可操作",
+      "name": "企划类型管理"
+    },
+    {
+      "description": "组织成员管理：入组申请审核、组员列表、邀请",
+      "name": "组织成员管理"
+    },
+    {
+      "description": "原子任务（最小任务单元）管理；任务创建后不可编辑，仅支持启用/禁用",
+      "name": "原子任务管理"
+    },
+    {
+      "description": "组织相关接口",
+      "name": "组织信息管理接口"
+    },
+    {
+      "description": "任务流模板的增删改查与状态管理，仅管理员可操作",
+      "name": "任务模板管理"
+    },
+    {
+      "description": "企划相关接口",
+      "name": "企划接口"
+    }
+  ]
+}

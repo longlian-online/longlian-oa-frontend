@@ -1,0 +1,24 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "description": "生成一次性邀请码，有效期30分钟；供超管邀请新用户注册并创建组织使用",
+    "operationId": "generateCreateOrgInviteCode",
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/InviteCodeVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "生成邀请码（超管）",
+    "tags": ["组织接口"]
+  },
+  "path": "/admin/organizations/invite-codes/create-org",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}
