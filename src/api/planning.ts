@@ -20,7 +20,7 @@ import type {
   TaskSubmitDTO,
   TaskRejectDTO,
 } from "@/types/planning";
-import { request } from "@/api/request";
+import { buildApiUrl, request } from "@/api/request";
 
 const API_BASE = "/app";
 const projectListRequests = new Map<string, Promise<PageResult<ProjectInfoVO>>>();
@@ -299,5 +299,5 @@ export async function getTaskSubmissions(
  * GET /app/task/instance/submission/{submissionId}/download
  */
 export function getSubmissionDownloadUrl(submissionId: number): string {
-  return `${API_BASE}/task/instance/submission/${submissionId}/download`;
+  return buildApiUrl(`${API_BASE}/task/instance/submission/${submissionId}/download`);
 }

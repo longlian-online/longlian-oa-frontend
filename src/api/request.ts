@@ -7,6 +7,12 @@ import {
 } from "@/lib/session";
 import type { ApiResult } from "@/types/planning";
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
+export function buildApiUrl(path: string): string {
+  return `${API_BASE_URL}${path}`;
+}
+
 export async function request<T>(url: string, options?: RequestInit): Promise<T> {
   return requestWithBase("/app", url, options);
 }
@@ -43,7 +49,7 @@ async function requestWithBase<T>(
     headers["X-Org-Id"] = currentOrgId;
   }
 
-  const response = await fetch(`${basePath}${url}`, {
+  const response = await fetch(buildApiUrl(`${basePath}${url}`), {
     ...options,
     headers,
   });
