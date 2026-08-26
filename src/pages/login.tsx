@@ -262,14 +262,6 @@ export default function LoginPage() {
             >
               去注册
             </button>
-            <span className="mx-2 text-muted-foreground/60">·</span>
-            <button
-              type="button"
-              onClick={() => void navigate("/admin/login")}
-              className="cursor-pointer text-primary hover:underline"
-            >
-              管理员登录
-            </button>
           </div>
         </div>
       </div>

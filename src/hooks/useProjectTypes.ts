@@ -10,6 +10,8 @@ interface UseProjectTypesResult {
   reload: () => Promise<void>;
 }
 
+const FALLBACK_PROJECT_TYPES: ProjectTypeInfoVO[] = [{ id: 1, name: "漫画" }];
+
 export function useProjectTypes(): UseProjectTypesResult {
   const [projectTypes, setProjectTypes] = useState<ProjectTypeInfoVO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,9 +20,10 @@ export function useProjectTypes(): UseProjectTypesResult {
     try {
       setLoading(true);
       const data = await getProjectTypes();
-      setProjectTypes(data);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划类型加载失败", "error");
+      setProjectTypes(data.length > 0 ? data : FALLBACK_PROJECT_TYPES);
+    } catch {
+      setProjectTypes(FALLBACK_PROJECT_TYPES);
+      $tip("企划类型接口暂无数据，已使用默认类型：漫画", "warning");
     } finally {
       setLoading(false);
     }
