@@ -4,6 +4,8 @@ import type {
   WorkshopTaskTemplateNodeVO,
 } from "@/types/workflowTemplate";
 
+export const WORKFLOW_TASK_DRAG_TYPE = "application/x-longlian-workflow-task";
+
 export interface WorkflowEditorValue {
   nodes: WorkshopTaskTemplateNodeCreateDTO[];
 }

@@ -31,7 +31,7 @@ export default function NodeInspector({
 }: NodeInspectorProps) {
   if (!node) {
     return (
-      <aside className="flex min-h-[520px] w-72 shrink-0 flex-col items-center justify-center rounded-2xl border bg-card px-6 text-center">
+      <aside className="flex min-h-[440px] w-full shrink-0 flex-col items-center justify-center rounded-xl border bg-card px-6 text-center xl:w-72">
         <div className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
           <PanelRight className="size-5" />
         </div>
@@ -49,7 +49,7 @@ export default function NodeInspector({
     : undefined;
 
   return (
-    <aside className="flex min-h-[520px] w-72 shrink-0 flex-col overflow-hidden rounded-2xl border bg-card">
+    <aside className="flex min-h-[440px] w-full shrink-0 flex-col overflow-hidden rounded-xl border bg-card xl:w-72">
       <div className="border-b p-4">
         <p className="text-xs font-medium text-muted-foreground">节点属性</p>
         <h2 className="mt-1 truncate text-base font-semibold text-foreground">

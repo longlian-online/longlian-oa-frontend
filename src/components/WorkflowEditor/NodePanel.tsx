@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type DragEvent } from "react";
 import { Loader2, Plus, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { getWorkflowTaskDescription, getWorkflowTaskIcon } from "@/lib/workflowVisuals";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
+import { WORKFLOW_TASK_DRAG_TYPE } from "./utils";
 
 interface NodePanelProps {
   baseTasks: BaseTaskVO[];
@@ -24,17 +25,20 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
     );
   }, [baseTasks, keyword]);
 
+  function handleDragStart(event: DragEvent<HTMLButtonElement>, taskId: string): void {
+    event.dataTransfer.effectAllowed = "copy";
+    event.dataTransfer.setData(WORKFLOW_TASK_DRAG_TYPE, taskId);
+  }
+
   return (
-    <aside className="flex min-h-[520px] w-64 shrink-0 flex-col overflow-hidden rounded-2xl border bg-card">
-      <div className="border-b p-4">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">任务节点</h2>
-            <p className="mt-1 text-xs text-muted-foreground">点击添加到流程末尾</p>
-          </div>
+    <aside className="min-w-0 overflow-hidden rounded-xl border bg-card">
+      <div className="flex min-h-12 items-center gap-3 border-b px-4 py-2">
+        <div className="flex shrink-0 items-center gap-2">
+          <h2 className="text-sm font-semibold text-foreground">任务节点</h2>
           <Badge variant="secondary">{baseTasks.length}</Badge>
         </div>
-        <div className="relative mt-3">
+        <p className="hidden text-xs text-muted-foreground lg:block">拖到下方流程区，或点击追加</p>
+        <div className="relative ml-auto w-48 max-w-full">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={keyword}
@@ -45,14 +49,14 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
+      <div className="flex min-h-16 items-center gap-2 overflow-x-auto px-3 py-2">
         {loadingBaseTasks ? (
-          <div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
+          <div className="flex w-full items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
             正在加载
           </div>
         ) : filteredTasks.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center px-4 text-center text-sm text-muted-foreground">
+          <div className="flex w-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
             没有找到匹配的任务
           </div>
         ) : (
@@ -64,28 +68,24 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
               <button
                 key={task.id}
                 type="button"
+                draggable
                 aria-label={`添加${task.name}节点`}
-                className="group rounded-lg border bg-background p-2.5 text-left transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-sm"
+                title={
+                  description ? `${task.name}：${description}` : "拖到下方流程区，或点击添加到末尾"
+                }
+                className="group inline-flex h-10 max-w-44 shrink-0 cursor-grab items-center gap-2 rounded-full border bg-background px-2.5 text-left transition-[border-color,box-shadow] hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm active:cursor-grabbing"
                 onClick={() => onAddNode(String(task.id))}
+                onDragStart={(event) => handleDragStart(event, String(task.id))}
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
-                    {task.iconUrl ? (
-                      <img src={task.iconUrl} alt="" className="size-full object-cover" />
-                    ) : (
-                      <Icon className="size-4" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-foreground">{task.name}</div>
-                    {description && (
-                      <p className="mt-0.5 truncate text-xs leading-4 text-muted-foreground">
-                        {description}
-                      </p>
-                    )}
-                  </div>
-                  <Plus className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+                <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
+                  {task.iconUrl ? (
+                    <img src={task.iconUrl} alt="" className="size-full object-cover" />
+                  ) : (
+                    <Icon className="size-3.5" />
+                  )}
                 </div>
+                <span className="truncate text-sm font-medium text-foreground">{task.name}</span>
+                <Plus className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
               </button>
             );
           })

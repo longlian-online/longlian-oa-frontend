@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type DragEvent } from "react";
 import {
   MarkerType,
   ReactFlow,
@@ -7,13 +7,19 @@ import {
   type Edge,
   type NodeMouseHandler,
   type OnNodeDrag,
+  type ReactFlowInstance,
 } from "@xyflow/react";
 import { Layers2, LocateFixed } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
 import WorkflowNode, { type WorkflowFlowNode } from "./WorkflowNode";
-import { groupNodes, getNodeLabel, type WorkflowEditorNode } from "./utils";
+import {
+  groupNodes,
+  getNodeLabel,
+  WORKFLOW_TASK_DRAG_TYPE,
+  type WorkflowEditorNode,
+} from "./utils";
 
 interface WorkflowCanvasProps {
   nodes: WorkflowEditorNode[];
@@ -22,6 +28,7 @@ interface WorkflowCanvasProps {
   onSelectNode: (localId: string | null) => void;
   onMoveToStage: (localId: string, stageIndex: number) => void;
   onMoveToParallelGroup: (localId: string, targetSort: number) => void;
+  onAddNode: (baseTaskId: string, stageIndex?: number) => void;
 }
 
 const NODE_TYPES = { workflow: WorkflowNode };
@@ -86,6 +93,7 @@ export default function WorkflowCanvas({
   onSelectNode,
   onMoveToStage,
   onMoveToParallelGroup,
+  onAddNode,
 }: WorkflowCanvasProps) {
   const initialNodes = useMemo(
     () => buildFlowNodes(nodes, baseTasks, selectedNodeId, onSelectNode),
@@ -94,6 +102,10 @@ export default function WorkflowCanvas({
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<WorkflowFlowNode>(initialNodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(buildEdges(nodes));
   const [dragging, setDragging] = useState(false);
+  const [flowInstance, setFlowInstance] = useState<ReactFlowInstance<
+    WorkflowFlowNode,
+    Edge
+  > | null>(null);
 
   useEffect(() => {
     if (!dragging) setFlowNodes(initialNodes);
@@ -135,9 +147,36 @@ export default function WorkflowCanvas({
     [nodes, onMoveToParallelGroup, onMoveToStage],
   );
 
+  const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>): void => {
+    if (!event.dataTransfer.types.includes(WORKFLOW_TASK_DRAG_TYPE)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }, []);
+
+  const handleDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>): void => {
+      const baseTaskId = event.dataTransfer.getData(WORKFLOW_TASK_DRAG_TYPE);
+      if (!baseTaskId) return;
+
+      event.preventDefault();
+      const flowPosition = flowInstance?.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      const stageIndex = flowPosition
+        ? Math.max(
+            0,
+            Math.min(groupNodes(nodes).length, Math.round((flowPosition.x - START_X) / STAGE_GAP)),
+          )
+        : undefined;
+      onAddNode(baseTaskId, stageIndex);
+    },
+    [flowInstance, nodes, onAddNode],
+  );
+
   if (nodes.length === 0) {
     return (
-      <section className="flex min-h-[480px] flex-1 flex-col overflow-hidden rounded-xl border bg-card">
+      <section className="flex h-[520px] flex-col overflow-hidden rounded-xl border bg-card">
         <div className="flex h-12 items-center justify-between border-b px-4">
           <span className="flex items-center gap-2 text-sm font-medium">
             <Layers2 className="size-4 text-muted-foreground" />
@@ -145,13 +184,17 @@ export default function WorkflowCanvas({
           </span>
           <Badge variant="outline">0 个节点</Badge>
         </div>
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+        <div
+          className="flex flex-1 flex-col items-center justify-center gap-3 text-center"
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
           <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <LocateFixed className="size-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">从左侧任务库添加第一个节点</p>
-            <p className="mt-1 text-xs text-muted-foreground">添加后可在这里调整执行顺序</p>
+            <p className="text-sm font-medium text-foreground">从上方任务库拖入第一个节点</p>
+            <p className="mt-1 text-xs text-muted-foreground">也可以点击节点卡追加到流程末尾</p>
           </div>
         </div>
       </section>
@@ -159,7 +202,7 @@ export default function WorkflowCanvas({
   }
 
   return (
-    <section className="relative min-h-[480px] flex-1 overflow-hidden rounded-xl border bg-card">
+    <section className="relative h-[520px] overflow-hidden rounded-xl border bg-card">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex h-12 items-center justify-between border-b bg-card px-4">
         <span className="flex items-center gap-2 text-sm font-medium">
           <Layers2 className="size-4 text-muted-foreground" />
@@ -186,6 +229,9 @@ export default function WorkflowCanvas({
         onNodeDragStart={() => setDragging(true)}
         onNodeDragStop={handleNodeDragStop}
         onPaneClick={() => onSelectNode(null)}
+        onInit={setFlowInstance}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
         className="bg-muted/20 pt-12"
       />
     </section>
