@@ -1,138 +1,85 @@
-import { Loader2, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Loader2, Plus, Search } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
-import { getNodeLabel, normalizeNodes, type WorkflowEditorNode } from "./utils";
 
 interface NodePanelProps {
-  nodes: WorkflowEditorNode[];
   baseTasks: BaseTaskVO[];
-  selectedBaseTaskId: string;
   loadingBaseTasks: boolean;
-  onSelectBaseTask: (baseTaskId: string) => void;
-  onAddNode: () => void;
-  onMakeParallel: (localId: string) => void;
-  onSplitStage: (localId: string) => void;
-  onMoveUp: (localId: string) => void;
-  onMoveDown: (localId: string) => void;
+  onAddNode: (baseTaskId: string) => void;
 }
 
-export default function NodePanel({
-  nodes,
-  baseTasks,
-  selectedBaseTaskId,
-  loadingBaseTasks,
-  onSelectBaseTask,
-  onAddNode,
-  onMakeParallel,
-  onSplitStage,
-  onMoveUp,
-  onMoveDown,
-}: NodePanelProps) {
+export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: NodePanelProps) {
+  const [keyword, setKeyword] = useState("");
+  const filteredTasks = useMemo(() => {
+    const query = keyword.trim().toLocaleLowerCase();
+    if (!query) return baseTasks;
+    return baseTasks.filter(
+      (task) =>
+        task.name.toLocaleLowerCase().includes(query) ||
+        task.description?.toLocaleLowerCase().includes(query),
+    );
+  }, [baseTasks, keyword]);
+
   return (
-    <aside className="flex h-[calc(100svh-12.75rem)] min-h-[360px] w-[320px] shrink-0 flex-col rounded-xl border bg-card px-5 py-4">
-      <div className="mb-4 text-sm font-medium text-foreground">任务面板</div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">原子任务</label>
-        {baseTasks.length > 0 ? (
-          <Select
-            value={selectedBaseTaskId}
-            onValueChange={(value: string | null) => onSelectBaseTask(value || "")}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={loadingBaseTasks ? "正在加载任务" : "选择任务"} />
-            </SelectTrigger>
-            <SelectContent>
-              {baseTasks.map((task) => (
-                <SelectItem key={task.id} value={String(task.id)}>
-                  {task.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
+    <aside className="flex min-h-[520px] w-64 shrink-0 flex-col overflow-hidden rounded-2xl border bg-card">
+      <div className="border-b p-4">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">任务节点</h2>
+            <p className="mt-1 text-xs text-muted-foreground">点击添加到流程末尾</p>
+          </div>
+          <Badge variant="secondary">{baseTasks.length}</Badge>
+        </div>
+        <div className="relative mt-3">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            value={selectedBaseTaskId}
-            disabled={loadingBaseTasks}
-            placeholder="输入原子任务 ID"
-            onChange={(event) => onSelectBaseTask(event.target.value)}
+            value={keyword}
+            placeholder="搜索任务"
+            className="pl-9"
+            onChange={(event) => setKeyword(event.target.value)}
           />
-        )}
+        </div>
       </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        className="h-9 justify-start gap-2"
-        disabled={!selectedBaseTaskId}
-        onClick={onAddNode}
-      >
-        <Plus data-icon="inline-start" />
-        添加任务
-      </Button>
-
-      <div className="min-h-0 flex-1 overflow-auto rounded-xl bg-secondary/60 p-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
         {loadingBaseTasks ? (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" />
             正在加载
           </div>
-        ) : nodes.length === 0 ? (
-          <div className="text-sm text-muted-foreground">
-            还没有节点。选择一个原子任务后点击添加。
+        ) : filteredTasks.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center px-4 text-center text-sm text-muted-foreground">
+            没有找到匹配的任务
           </div>
         ) : (
-          <div className="space-y-2">
-            {normalizeNodes(nodes).map((node) => (
-              <div key={node.localId} className="rounded-lg bg-background p-2">
-                <div className="truncate text-sm font-medium text-foreground">
-                  {getNodeLabel(node, baseTasks)}
+          filteredTasks.map((task) => (
+            <button
+              key={task.id}
+              type="button"
+              className="group rounded-xl border bg-background p-3 text-left transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-sm"
+              onClick={() => onAddNode(String(task.id))}
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
+                  {task.iconUrl ? (
+                    <img src={task.iconUrl} alt="" className="size-full object-cover" />
+                  ) : (
+                    <Plus className="size-4" />
+                  )}
                 </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="xs"
-                    onClick={() => onMoveUp(node.localId)}
-                  >
-                    前移
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="xs"
-                    onClick={() => onMoveDown(node.localId)}
-                  >
-                    后移
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => onMakeParallel(node.localId)}
-                  >
-                    并入上组
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => onSplitStage(node.localId)}
-                  >
-                    独立
-                  </Button>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium text-foreground">{task.name}</div>
+                  <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted-foreground">
+                    {task.description || "暂无任务说明"}
+                  </p>
                 </div>
+                <Plus className="mt-1 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
               </div>
-            ))}
-          </div>
+            </button>
+          ))
         )}
       </div>
     </aside>

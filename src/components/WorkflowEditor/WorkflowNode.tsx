@@ -1,56 +1,71 @@
-import { GripVertical, Trash2 } from "lucide-react";
+import { memo } from "react";
+import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
+import { GripVertical, Layers2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import type { BaseTaskVO } from "@/types/workflowTemplate";
-import { getNodeLabel, type WorkflowEditorNode } from "./utils";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
-interface WorkflowNodeProps {
-  node: WorkflowEditorNode;
-  baseTasks: BaseTaskVO[];
-  onDragStart: (localId: string) => void;
-  onRename: (localId: string, customName: string) => void;
-  onRemove: (localId: string) => void;
+export interface WorkflowNodeData extends Record<string, unknown> {
+  label: string;
+  description?: string;
+  iconUrl?: string;
+  stage: number;
+  parallelCount: number;
+  selected: boolean;
+  onSelect: (localId: string) => void;
 }
 
-export default function WorkflowNode({
-  node,
-  baseTasks,
-  onDragStart,
-  onRename,
-  onRemove,
-}: WorkflowNodeProps) {
+export type WorkflowFlowNode = Node<WorkflowNodeData, "workflow">;
+
+function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
   return (
-    <div
-      draggable
-      onDragStart={(event) => {
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", node.localId);
-        onDragStart(node.localId);
-      }}
-      className="w-40 cursor-grab rounded-xl border bg-background p-3 shadow-sm transition-colors active:cursor-grabbing"
+    <button
+      type="button"
+      className={cn(
+        "group w-52 rounded-2xl border bg-card p-3 text-left shadow-sm transition-[border-color,box-shadow,transform]",
+        "hover:-translate-y-0.5 hover:shadow-md",
+        data.selected && "border-primary ring-2 ring-primary/15",
+      )}
+      onClick={() => data.onSelect(id)}
     >
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-foreground">
-          <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <div className="truncate">{getNodeLabel(node, baseTasks)}</div>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label="删除节点"
-          onClick={() => onRemove(node.localId)}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-      <Input
-        value={node.customName}
-        placeholder="自定义名称"
-        className="h-7 text-xs"
-        onChange={(event) => onRename(node.localId, event.target.value)}
+      <Handle
+        type="target"
+        position={Position.Left}
+        isConnectable={false}
+        className="!size-2.5 !border-2 !border-background !bg-muted-foreground"
       />
-    </div>
+      <div className="flex items-start gap-3">
+        <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
+          {data.iconUrl ? (
+            <img src={data.iconUrl} alt="" className="size-full object-cover" />
+          ) : (
+            <GripVertical className="size-4" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-foreground">{data.label}</div>
+          <div className="mt-1 line-clamp-2 min-h-8 text-xs leading-4 text-muted-foreground">
+            {data.description || "暂无任务说明"}
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <Badge variant="outline">阶段 {data.stage}</Badge>
+        {data.parallelCount > 1 && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Layers2 className="size-3.5" />
+            {data.parallelCount} 个并行
+          </span>
+        )}
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        isConnectable={false}
+        className="!size-2.5 !border-2 !border-background !bg-primary"
+      />
+    </button>
   );
 }
+
+export default memo(WorkflowNode);

@@ -681,6 +681,19 @@
         },
         "type": "object"
       },
+      "ProjectTypeUpdateDTO": {
+        "description": "修改企划类型请求参数",
+        "properties": {
+          "name": {
+            "description": "类型名称",
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "type": "object"
+      },
       "ResultVoid": {
         "description": "通用返回结果",
         "properties": {
@@ -1324,6 +1337,77 @@
           }
         },
         "summary": "创建企划类型",
+        "tags": ["企划类型管理"]
+      }
+    },
+    "/orgadmin/project-types/{typeId}": {
+      "delete": {
+        "description": "仅允许删除未被企划引用的类型",
+        "operationId": "deleteProjectType",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "typeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "删除企划类型",
+        "tags": ["企划类型管理"]
+      },
+      "put": {
+        "operationId": "updateProjectType",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "typeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectTypeUpdateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "修改企划类型名称",
         "tags": ["企划类型管理"]
       }
     },

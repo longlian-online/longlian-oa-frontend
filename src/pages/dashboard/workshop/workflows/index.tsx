@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Loader2, Search, Workflow } from "lucide-react";
+import { Boxes, Loader2, Search, Workflow } from "lucide-react";
 
 import { getWorkshopTaskTemplateList } from "@/api/workflowTemplate";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { CreateWorkflowTemplateCard, WorkflowTemplateCard } from "@/components/WorkflowTemplate";
+import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 
 const PAGE_SIZE = 8;
 
-export default function WorkshopWorkflowsPage() {
+function WorkshopWorkflowsPageContent() {
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<WorkshopTaskTemplateVO[]>([]);
   const [page, setPage] = useState(1);
@@ -60,11 +61,20 @@ export default function WorkshopWorkflowsPage() {
         <div>
           <h1 className="text-xl font-bold text-foreground">工作流</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            管理个人流程模板，创建项目时可直接绑定。
+            管理组织流程模板，创建项目时可直接绑定。
           </p>
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/dashboard/workshop/tasks")}
+          >
+            <Boxes data-icon="inline-start" />
+            原子任务
+          </Button>
           <div className="relative w-64 max-w-full">
             <Search className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -117,5 +127,13 @@ export default function WorkshopWorkflowsPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function WorkshopWorkflowsPage() {
+  return (
+    <OrganizationAdminGuard>
+      <WorkshopWorkflowsPageContent />
+    </OrganizationAdminGuard>
   );
 }

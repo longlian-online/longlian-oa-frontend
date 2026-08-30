@@ -544,10 +544,9 @@
         "description": "验证码登录请求参数",
         "properties": {
           "code": {
-            "description": "验证码",
-            "example": "123456",
-            "maxLength": 6,
-            "minLength": 6,
+            "description": "6位字母或数字验证码",
+            "example": "A1B2C3",
+            "pattern": "^[A-Z0-9]{6}$",
             "type": "string"
           },
           "email": {
@@ -1574,6 +1573,19 @@
         },
         "type": "object"
       },
+      "ProjectTypeUpdateDTO": {
+        "description": "修改企划类型请求参数",
+        "properties": {
+          "name": {
+            "description": "类型名称",
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "type": "object"
+      },
       "ProjectUpdateDTO": {
         "description": "修改企划请求参数",
         "properties": {
@@ -1605,7 +1617,9 @@
         "description": "通过邀请码注册",
         "properties": {
           "code": {
-            "description": "邮箱验证码",
+            "description": "6位字母或数字邮箱验证码",
+            "example": "A1B2C3",
+            "pattern": "^[A-Z0-9]{6}$",
             "type": "string"
           },
           "email": {
@@ -1643,6 +1657,32 @@
         "required": ["code", "email", "inviteCode", "nickname", "password", "username"],
         "type": "object"
       },
+      "ResetPasswordDTO": {
+        "description": "找回密码请求参数",
+        "properties": {
+          "code": {
+            "description": "6位字母或数字邮箱验证码",
+            "example": "A1B2C3",
+            "pattern": "^[A-Z0-9]{6}$",
+            "type": "string"
+          },
+          "email": {
+            "description": "邮箱",
+            "example": "user@example.com",
+            "pattern": "^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z0-9]{2,6}$",
+            "type": "string"
+          },
+          "password": {
+            "description": "新密码",
+            "example": "123456",
+            "maxLength": 20,
+            "minLength": 6,
+            "type": "string"
+          }
+        },
+        "required": ["code", "email", "password"],
+        "type": "object"
+      },
       "ResourceCreateVO": {
         "description": "创建文件上传响应",
         "properties": {
@@ -1656,7 +1696,7 @@
           },
           "storageType": {
             "description": "存储类型：1-本地存储，2-阿里云OSS，3-腾讯云COS",
-            "enum": ["NONE", "LOCAL", "OSS"],
+            "enum": ["NONE", "LOCAL", "OSS", "COS"],
             "type": "string"
           },
           "uploadUrl": {
@@ -3551,6 +3591,29 @@
         "tags": ["用户接口"]
       }
     },
+    "/app/user/password": {
+      "put": {
+        "description": "使用邮箱验证码重置密码",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "找回密码",
+        "tags": ["用户接口"]
+      }
+    },
     "/app/user/register/create-organization": {
       "post": {
         "description": "使用超管生成的邀请码完成注册，并创建组织成为组织管理员",
@@ -3821,6 +3884,80 @@
         },
         "summary": "更新工坊个人任务流模板",
         "tags": ["工坊接口"]
+      }
+    },
+    "/common/file/local": {
+      "get": {
+        "description": "通过预签名 key 读取本地存储的文件内容，返回原始文件流",
+        "operationId": "readLocalFile",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "读取本地文件",
+        "tags": ["文件上传接口"]
+      },
+      "put": {
+        "description": "客户端使用预签名 URL 直传文件内容到本地存储，需校验上传者身份与文件大小",
+        "operationId": "uploadLocalFile",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "format": "byte",
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "本地上传文件",
+        "tags": ["文件上传接口"]
       }
     },
     "/common/file/upload": {
@@ -4230,6 +4367,77 @@
           }
         },
         "summary": "创建企划类型",
+        "tags": ["企划类型管理"]
+      }
+    },
+    "/orgadmin/project-types/{typeId}": {
+      "delete": {
+        "description": "仅允许删除未被企划引用的类型",
+        "operationId": "deleteProjectType",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "typeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "删除企划类型",
+        "tags": ["企划类型管理"]
+      },
+      "put": {
+        "operationId": "updateProjectType",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "typeId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectTypeUpdateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "修改企划类型名称",
         "tags": ["企划类型管理"]
       }
     },

@@ -1,4 +1,5 @@
 import { StrictMode } from "react";
+import "@xyflow/react/dist/style.css";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, useLocation, useRoutes } from "react-router";
 import routes from "~react-pages";

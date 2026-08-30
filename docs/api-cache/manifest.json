@@ -1,34 +1,34 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-08-22T16:40:20.707Z",
+  "generatedAt": "2026-08-30T17:04:04.850Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "cedc73b9edf296cab69ee3d75f39ada84c078084582f43dbe857b5d4aecca069",
-      "pathCount": 58,
-      "operationCount": 68
+      "sha256": "bf89929b36bb7830c76977f6e1a7586189b1d9713037c98bd8e6ac38327959f0",
+      "pathCount": 61,
+      "operationCount": 73
     },
     {
       "name": "公共端",
       "slug": "公共端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E5%85%AC%E5%85%B1%E7%AB%AF",
       "file": "openapi/公共端.json",
-      "sha256": "23edd90383195c8a7a95d6bdb1280b6a532814df9bb7fce98405313319b636ed",
-      "pathCount": 1,
-      "operationCount": 1
+      "sha256": "119ce9d3342b4b8833c87e232b44fb9ba0e9959c16a96f21773b57993ec799e9",
+      "pathCount": 2,
+      "operationCount": 3
     },
     {
       "name": "用户端",
       "slug": "用户端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF",
       "file": "openapi/用户端.json",
-      "sha256": "b211936af61b4697e2d3c784dd8cde45dcb0ddbe9e6da268b60b9c4a6226c415",
-      "pathCount": 31,
-      "operationCount": 36
+      "sha256": "e65fc5352de4e787cda5c49d2695dad607fc3c0dc04049b14e55478a8c9ea831",
+      "pathCount": 32,
+      "operationCount": 37
     },
     {
       "name": "管理端",
@@ -44,9 +44,9 @@
       "slug": "组织管理端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF",
       "file": "openapi/组织管理端.json",
-      "sha256": "652a056cce3572c4fff7784e9a747fba73d97021523423af14798231ea16851b",
-      "pathCount": 18,
-      "operationCount": 21
+      "sha256": "de25df459e985859fd88354e5c6a68a6b48593f806bd474851c0760f6aebfc08",
+      "pathCount": 19,
+      "operationCount": 23
     }
   ],
   "operations": [
@@ -431,6 +431,16 @@
       "sha256": "676afb93290b61463b1deafd5deb7b063434bcaefaeab82dda5635d5a4fdfc13"
     },
     {
+      "id": "全部_put_-app-user-password",
+      "document": "全部",
+      "method": "PUT",
+      "path": "/app/user/password",
+      "summary": "找回密码",
+      "tags": ["用户接口"],
+      "file": "operations/全部_put_-app-user-password.json",
+      "sha256": "27206897829b519d3e2b3942cd8932fcf2ab93f0a97187ed910f85c892e2aed3"
+    },
+    {
       "id": "全部_post_-app-user-register-create-organization",
       "document": "全部",
       "method": "POST",
@@ -509,6 +519,26 @@
       "tags": ["工坊接口"],
       "file": "operations/全部_post_-app-workshop-task-template-list.json",
       "sha256": "8c596e74115faa95d764573919586568b7cccfdd4c04d60546c2f54f330779b4"
+    },
+    {
+      "id": "全部_get_-common-file-local",
+      "document": "全部",
+      "method": "GET",
+      "path": "/common/file/local",
+      "summary": "读取本地文件",
+      "tags": ["文件上传接口"],
+      "file": "operations/全部_get_-common-file-local.json",
+      "sha256": "5e498a74ca57d3c056088216ae48fd81bb31b59abe723c54f3c860d54144a299"
+    },
+    {
+      "id": "全部_put_-common-file-local",
+      "document": "全部",
+      "method": "PUT",
+      "path": "/common/file/local",
+      "summary": "本地上传文件",
+      "tags": ["文件上传接口"],
+      "file": "operations/全部_put_-common-file-local.json",
+      "sha256": "07a144cd085f1c8dccb826c36b70c3219404694c33df45f5ac510b62c1b781d9"
     },
     {
       "id": "全部_post_-common-file-upload",
@@ -621,6 +651,26 @@
       "sha256": "75e92aa6f1d1d52c8c4f9ed91f1c452f7642dfea3ae5698fcfe11579b25b50c5"
     },
     {
+      "id": "全部_delete_-orgadmin-project-types-typeid",
+      "document": "全部",
+      "method": "DELETE",
+      "path": "/orgadmin/project-types/{typeId}",
+      "summary": "删除企划类型",
+      "tags": ["企划类型管理"],
+      "file": "operations/全部_delete_-orgadmin-project-types-typeid.json",
+      "sha256": "cb51766fe1d532505289222662947e06ff4091c792922eb4efcc8c73329a15df"
+    },
+    {
+      "id": "全部_put_-orgadmin-project-types-typeid",
+      "document": "全部",
+      "method": "PUT",
+      "path": "/orgadmin/project-types/{typeId}",
+      "summary": "修改企划类型名称",
+      "tags": ["企划类型管理"],
+      "file": "operations/全部_put_-orgadmin-project-types-typeid.json",
+      "sha256": "b5f34631c35f4c97010f0a43d0b5d17191446c9fd8e603eb557778db6144bb4c"
+    },
+    {
       "id": "全部_patch_-orgadmin-project-types-typeid-status",
       "document": "全部",
       "method": "PATCH",
@@ -729,6 +779,26 @@
       "tags": ["任务模板管理"],
       "file": "operations/全部_post_-orgadmin-task-template-list.json",
       "sha256": "b448b72ab71a44870032a44d6133d5cc8cef623d39d4bec43553b89c972e6877"
+    },
+    {
+      "id": "公共端_get_-common-file-local",
+      "document": "公共端",
+      "method": "GET",
+      "path": "/common/file/local",
+      "summary": "读取本地文件",
+      "tags": ["文件上传接口"],
+      "file": "operations/公共端_get_-common-file-local.json",
+      "sha256": "fa1f3d113e293f320b89b3339e41beda4c879b606a5011182634baad1308e77f"
+    },
+    {
+      "id": "公共端_put_-common-file-local",
+      "document": "公共端",
+      "method": "PUT",
+      "path": "/common/file/local",
+      "summary": "本地上传文件",
+      "tags": ["文件上传接口"],
+      "file": "operations/公共端_put_-common-file-local.json",
+      "sha256": "9badbba63e1715624093ed7be283d3f7f1b287acd28aac3a7524c23fb6600fb8"
     },
     {
       "id": "公共端_post_-common-file-upload",
@@ -1021,6 +1091,16 @@
       "sha256": "b018ae22c66cc717a8e38f02c7038c1d585d260cd20c89d25b037d9274ab76e3"
     },
     {
+      "id": "用户端_put_-app-user-password",
+      "document": "用户端",
+      "method": "PUT",
+      "path": "/app/user/password",
+      "summary": "找回密码",
+      "tags": ["用户接口"],
+      "file": "operations/用户端_put_-app-user-password.json",
+      "sha256": "42055fb3c285a7dfff3fc8b86466665ba3144eccceec1dca699eaf4aa0d2ca2a"
+    },
+    {
       "id": "用户端_post_-app-user-register-create-organization",
       "document": "用户端",
       "method": "POST",
@@ -1299,6 +1379,26 @@
       "tags": ["企划类型管理"],
       "file": "operations/组织管理端_post_-orgadmin-project-types.json",
       "sha256": "d4f50c87622a80e2c29d47868e7cda5f59b655af15a17cd449360f8e411eddff"
+    },
+    {
+      "id": "组织管理端_delete_-orgadmin-project-types-typeid",
+      "document": "组织管理端",
+      "method": "DELETE",
+      "path": "/orgadmin/project-types/{typeId}",
+      "summary": "删除企划类型",
+      "tags": ["企划类型管理"],
+      "file": "operations/组织管理端_delete_-orgadmin-project-types-typeid.json",
+      "sha256": "973dd9d005756c06cb56949d182ddba1ac8434f40fe79349b1e45e1662264c76"
+    },
+    {
+      "id": "组织管理端_put_-orgadmin-project-types-typeid",
+      "document": "组织管理端",
+      "method": "PUT",
+      "path": "/orgadmin/project-types/{typeId}",
+      "summary": "修改企划类型名称",
+      "tags": ["企划类型管理"],
+      "file": "operations/组织管理端_put_-orgadmin-project-types-typeid.json",
+      "sha256": "c5253f416d2787dbe3b07b64ce181c57f366b5bfb43b7bb16dc0ad8aef1918af"
     },
     {
       "id": "组织管理端_patch_-orgadmin-project-types-typeid-status",

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { BaseTaskVO } from "@/types/workflowTemplate";
+import NodeInspector from "./NodeInspector";
 import NodePanel from "./NodePanel";
 import WorkflowCanvas from "./WorkflowCanvas";
 import {
@@ -15,29 +16,31 @@ import {
 interface WorkflowEditorProps {
   value: WorkflowEditorNode[];
   baseTasks: BaseTaskVO[];
-  selectedBaseTaskId: string;
   loadingBaseTasks: boolean;
   onChange: (nodes: WorkflowEditorNode[]) => void;
-  onSelectBaseTask: (baseTaskId: string) => void;
 }
 
 export default function WorkflowEditor({
   value,
   baseTasks,
-  selectedBaseTaskId,
   loadingBaseTasks,
   onChange,
-  onSelectBaseTask,
 }: WorkflowEditorProps) {
-  const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(value[0]?.localId ?? null);
+  const selectedNode = useMemo(
+    () => value.find((node) => node.localId === selectedNodeId),
+    [selectedNodeId, value],
+  );
 
-  function updateNodes(nodes: WorkflowEditorNode[]): void {
-    onChange(normalizeNodes(nodes));
-  }
+  const updateNodes = useCallback(
+    (nodes: WorkflowEditorNode[]): void => onChange(normalizeNodes(nodes)),
+    [onChange],
+  );
 
-  function handleAddNode(): void {
-    if (!selectedBaseTaskId) return;
-    updateNodes([...value, createEditorNode(selectedBaseTaskId, baseTasks, value)]);
+  function handleAddNode(baseTaskId: string): void {
+    const nextNode = createEditorNode(baseTaskId, baseTasks, value);
+    updateNodes([...value, nextNode]);
+    setSelectedNodeId(nextNode.localId);
   }
 
   function handleRenameNode(localId: string, customName: string): void {
@@ -45,63 +48,69 @@ export default function WorkflowEditor({
   }
 
   function handleRemoveNode(localId: string): void {
-    updateNodes(value.filter((node) => node.localId !== localId));
+    const nextNodes = value.filter((node) => node.localId !== localId);
+    updateNodes(nextNodes);
+    if (selectedNodeId === localId) setSelectedNodeId(nextNodes[0]?.localId ?? null);
   }
 
   function handleMakeParallel(localId: string): void {
     const normalizedNodes = normalizeNodes(value);
-    const nodeIndex = normalizedNodes.findIndex((node) => node.localId === localId);
-    if (nodeIndex <= 0) return;
-    updateNodes(
-      moveNodeToParallelGroup(normalizedNodes, localId, normalizedNodes[nodeIndex - 1].sort),
-    );
+    const node = normalizedNodes.find((item) => item.localId === localId);
+    if (!node || node.sort <= 1) return;
+    updateNodes(moveNodeToParallelGroup(normalizedNodes, localId, node.sort - 1));
   }
 
   function handleSplitStage(localId: string): void {
     const normalizedNodes = normalizeNodes(value);
-    const nodeIndex = normalizedNodes.findIndex((node) => node.localId === localId);
-    if (nodeIndex < 0) return;
-    updateNodes(moveNodeToStage(normalizedNodes, localId, nodeIndex + 1));
+    const node = normalizedNodes.find((item) => item.localId === localId);
+    if (!node) return;
+    updateNodes(moveNodeToStage(normalizedNodes, localId, node.sort));
   }
 
-  function handleMoveToStage(localId: string, stageIndex: number): void {
-    updateNodes(moveNodeToStage(value, localId, stageIndex));
-    setDraggingNodeId(null);
-  }
+  const handleMoveToStage = useCallback(
+    (localId: string, stageIndex: number): void =>
+      updateNodes(moveNodeToStage(value, localId, stageIndex)),
+    [updateNodes, value],
+  );
 
-  function handleMoveToParallelGroup(localId: string, targetSort: number): void {
-    updateNodes(moveNodeToParallelGroup(value, localId, targetSort));
-    setDraggingNodeId(null);
-  }
+  const handleMoveToParallelGroup = useCallback(
+    (localId: string, targetSort: number): void =>
+      updateNodes(moveNodeToParallelGroup(value, localId, targetSort)),
+    [updateNodes, value],
+  );
 
   return (
-    <>
+    <div className="flex min-w-0 flex-1 gap-3 overflow-x-auto">
+      <NodePanel
+        baseTasks={baseTasks}
+        loadingBaseTasks={loadingBaseTasks}
+        onAddNode={handleAddNode}
+      />
       <WorkflowCanvas
         nodes={value}
         baseTasks={baseTasks}
-        onDragStart={setDraggingNodeId}
+        selectedNodeId={selectedNodeId}
+        onSelectNode={setSelectedNodeId}
         onMoveToStage={handleMoveToStage}
-        onMoveToParallelGroup={(localId, targetSort) => {
-          if (draggingNodeId !== localId) return;
-          handleMoveToParallelGroup(localId, targetSort);
-        }}
+        onMoveToParallelGroup={handleMoveToParallelGroup}
+      />
+      <NodeInspector
+        node={selectedNode}
+        baseTasks={baseTasks}
         onRename={handleRenameNode}
         onRemove={handleRemoveNode}
-      />
-      <NodePanel
-        nodes={value}
-        baseTasks={baseTasks}
-        selectedBaseTaskId={selectedBaseTaskId}
-        loadingBaseTasks={loadingBaseTasks}
-        onSelectBaseTask={onSelectBaseTask}
-        onAddNode={handleAddNode}
         onMakeParallel={handleMakeParallel}
         onSplitStage={handleSplitStage}
         onMoveUp={(localId) => updateNodes(moveNodeByOffset(value, localId, -1))}
         onMoveDown={(localId) => updateNodes(moveNodeByOffset(value, localId, 1))}
       />
-    </>
+    </div>
   );
 }
 
-export { buildEditorNodes, toCreateNodes, type WorkflowEditorNode } from "./utils";
+export {
+  buildEditorNodes,
+  toCreateNodes,
+  validateEditorNodes,
+  type WorkflowEditorNode,
+} from "./utils";

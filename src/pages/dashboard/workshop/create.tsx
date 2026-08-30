@@ -2,16 +2,15 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
-import {
-  createWorkshopTaskTemplate,
-  getBaseTaskList,
-  updateWorkshopTaskTemplate,
-} from "@/api/workflowTemplate";
+import { createWorkshopTaskTemplate, updateWorkshopTaskTemplate } from "@/api/workflowTemplate";
+import { getBaseTaskList } from "@/api/baseTask";
 import WorkflowEditor, {
   buildEditorNodes,
   toCreateNodes,
+  validateEditorNodes,
   type WorkflowEditorNode,
 } from "@/components/WorkflowEditor";
+import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +30,7 @@ interface WorkflowForm {
   description: string;
 }
 
-export default function CreateWorkflowPage() {
+function CreateWorkflowPageContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as CreateWorkflowLocationState | null;
@@ -45,7 +44,6 @@ export default function CreateWorkflowPage() {
   const [nodes, setNodes] = useState<WorkflowEditorNode[]>(() =>
     buildEditorNodes(editingTemplate?.nodes),
   );
-  const [selectedBaseTaskId, setSelectedBaseTaskId] = useState("");
   const [loadingBaseTasks, setLoadingBaseTasks] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -62,13 +60,10 @@ export default function CreateWorkflowPage() {
         pageNum: 1,
         pageSize: 100,
         status: "ENABLED",
-        sortBy: "refCount",
+        sortBy: "REF_COUNT",
         orderDir: "DESC",
       });
       setBaseTasks(data.list);
-      if (data.list.length > 0) {
-        setSelectedBaseTaskId(String(data.list[0].id));
-      }
     } catch (error) {
       $tip(error instanceof Error ? error.message : "原子任务加载失败", "error");
     } finally {
@@ -84,6 +79,12 @@ export default function CreateWorkflowPage() {
 
     if (nodes.length === 0) {
       $tip("请至少添加一个任务节点", "error");
+      return;
+    }
+
+    const validation = validateEditorNodes(nodes, baseTasks);
+    if (!validation.valid) {
+      $tip(validation.errors[0] || "工作流配置不完整", "error");
       return;
     }
 
@@ -157,12 +158,18 @@ export default function CreateWorkflowPage() {
         <WorkflowEditor
           value={nodes}
           baseTasks={baseTasks}
-          selectedBaseTaskId={selectedBaseTaskId}
           loadingBaseTasks={loadingBaseTasks}
           onChange={setNodes}
-          onSelectBaseTask={setSelectedBaseTaskId}
         />
       </div>
     </div>
+  );
+}
+
+export default function CreateWorkflowPage() {
+  return (
+    <OrganizationAdminGuard>
+      <CreateWorkflowPageContent />
+    </OrganizationAdminGuard>
   );
 }

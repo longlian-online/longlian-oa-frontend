@@ -49,8 +49,19 @@ export interface BaseTaskListDTO {
   pageSize?: number;
   keyword?: string;
   status?: "ENABLED" | "DISABLED";
-  sortBy?: "createdAt" | "refCount";
+  startCreatedTime?: string;
+  endCreatedTime?: string;
+  sortBy?: "CREATED_AT" | "REF_COUNT";
   orderDir?: "DESC" | "ASC";
+}
+
+export type BaseTaskStatus = "ENABLED" | "DISABLED";
+
+export interface BaseTaskCreateDTO {
+  name: string;
+  description?: string;
+  iconFileId?: string;
+  metaSchema?: string;
 }
 
 export interface BaseTaskVO {
@@ -60,6 +71,6 @@ export interface BaseTaskVO {
   iconUrl?: string;
   metaSchema?: string;
   refCount: number;
-  status: "ENABLED" | "DISABLED";
+  status: BaseTaskStatus;
   createdAt: string;
 }

@@ -165,10 +165,9 @@
         "description": "验证码登录请求参数",
         "properties": {
           "code": {
-            "description": "验证码",
-            "example": "123456",
-            "maxLength": 6,
-            "minLength": 6,
+            "description": "6位字母或数字验证码",
+            "example": "A1B2C3",
+            "pattern": "^[A-Z0-9]{6}$",
             "type": "string"
           },
           "email": {
@@ -675,7 +674,9 @@
         "description": "通过邀请码注册",
         "properties": {
           "code": {
-            "description": "邮箱验证码",
+            "description": "6位字母或数字邮箱验证码",
+            "example": "A1B2C3",
+            "pattern": "^[A-Z0-9]{6}$",
             "type": "string"
           },
           "email": {
@@ -711,6 +712,32 @@
           }
         },
         "required": ["code", "email", "inviteCode", "nickname", "password", "username"],
+        "type": "object"
+      },
+      "ResetPasswordDTO": {
+        "description": "找回密码请求参数",
+        "properties": {
+          "code": {
+            "description": "6位字母或数字邮箱验证码",
+            "example": "A1B2C3",
+            "pattern": "^[A-Z0-9]{6}$",
+            "type": "string"
+          },
+          "email": {
+            "description": "邮箱",
+            "example": "user@example.com",
+            "pattern": "^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z0-9]{2,6}$",
+            "type": "string"
+          },
+          "password": {
+            "description": "新密码",
+            "example": "123456",
+            "maxLength": 20,
+            "minLength": 6,
+            "type": "string"
+          }
+        },
+        "required": ["code", "email", "password"],
         "type": "object"
       },
       "SessionContext": {
@@ -2063,6 +2090,29 @@
           }
         },
         "summary": "已注册用户通过邀请码加入组织",
+        "tags": ["用户接口"]
+      }
+    },
+    "/app/user/password": {
+      "put": {
+        "description": "使用邮箱验证码重置密码",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "找回密码",
         "tags": ["用户接口"]
       }
     },

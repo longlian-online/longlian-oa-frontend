@@ -1,107 +1,200 @@
-import { Layers2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Background,
+  BackgroundVariant,
+  Controls,
+  MarkerType,
+  MiniMap,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
+  type Edge,
+  type NodeMouseHandler,
+  type OnNodeDrag,
+} from "@xyflow/react";
+import { Layers2, LocateFixed } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
-import WorkflowNode from "./WorkflowNode";
-import { groupNodes, type WorkflowEditorNode } from "./utils";
+import WorkflowNode, { type WorkflowFlowNode } from "./WorkflowNode";
+import { groupNodes, getNodeLabel, type WorkflowEditorNode } from "./utils";
 
 interface WorkflowCanvasProps {
   nodes: WorkflowEditorNode[];
   baseTasks: BaseTaskVO[];
-  onDragStart: (localId: string) => void;
+  selectedNodeId: string | null;
+  onSelectNode: (localId: string | null) => void;
   onMoveToStage: (localId: string, stageIndex: number) => void;
   onMoveToParallelGroup: (localId: string, targetSort: number) => void;
-  onRename: (localId: string, customName: string) => void;
-  onRemove: (localId: string) => void;
 }
 
-function StageDropZone({
-  stageIndex,
-  onDropNode,
-}: {
-  stageIndex: number;
-  onDropNode: (localId: string, stageIndex: number) => void;
-}) {
-  return (
-    <div
-      onDragOver={(event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
-      }}
-      onDrop={(event) => {
-        event.preventDefault();
-        const localId = event.dataTransfer.getData("text/plain");
-        if (localId) onDropNode(localId, stageIndex);
-      }}
-      className="h-28 w-4 rounded-full border border-dashed border-transparent transition-colors hover:border-foreground/30 hover:bg-secondary"
-      aria-label="拖到这里调整阶段顺序"
-    />
+const NODE_TYPES = { workflow: WorkflowNode };
+const STAGE_GAP = 292;
+const PARALLEL_GAP = 150;
+const START_X = 72;
+const START_Y = 80;
+
+function buildFlowNodes(
+  nodes: WorkflowEditorNode[],
+  baseTasks: BaseTaskVO[],
+  selectedNodeId: string | null,
+  onSelectNode: (localId: string) => void,
+): WorkflowFlowNode[] {
+  return groupNodes(nodes).flatMap((group, stageIndex) =>
+    group.map((node, parallelIndex) => {
+      const baseTask = baseTasks.find((task) => String(task.id) === node.baseTaskId);
+      return {
+        id: node.localId,
+        type: "workflow",
+        position: {
+          x: START_X + stageIndex * STAGE_GAP,
+          y: START_Y + parallelIndex * PARALLEL_GAP,
+        },
+        data: {
+          label: getNodeLabel(node, baseTasks),
+          description: baseTask?.description,
+          iconUrl: baseTask?.iconUrl,
+          stage: node.sort,
+          parallelCount: group.length,
+          selected: selectedNodeId === node.localId,
+          onSelect: onSelectNode,
+        },
+      } satisfies WorkflowFlowNode;
+    }),
   );
+}
+
+function buildEdges(nodes: WorkflowEditorNode[]): Edge[] {
+  const groups = groupNodes(nodes);
+  return groups.flatMap((group, groupIndex) => {
+    const nextGroup = groups[groupIndex + 1];
+    if (!nextGroup) return [];
+    return group.flatMap((source) =>
+      nextGroup.map((target) => ({
+        id: `${source.localId}-${target.localId}`,
+        source: source.localId,
+        target: target.localId,
+        type: "smoothstep",
+        markerEnd: { type: MarkerType.ArrowClosed },
+        style: { strokeWidth: 1.5 },
+      })),
+    );
+  });
 }
 
 export default function WorkflowCanvas({
   nodes,
   baseTasks,
-  onDragStart,
+  selectedNodeId,
+  onSelectNode,
   onMoveToStage,
   onMoveToParallelGroup,
-  onRename,
-  onRemove,
 }: WorkflowCanvasProps) {
-  const groupedNodes = groupNodes(nodes);
+  const initialNodes = useMemo(
+    () => buildFlowNodes(nodes, baseTasks, selectedNodeId, onSelectNode),
+    [baseTasks, nodes, onSelectNode, selectedNodeId],
+  );
+  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<WorkflowFlowNode>(initialNodes);
+  const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(buildEdges(nodes));
+  const [dragging, setDragging] = useState(false);
+
+  useEffect(() => {
+    if (!dragging) setFlowNodes(initialNodes);
+  }, [dragging, initialNodes, setFlowNodes]);
+
+  useEffect(() => {
+    setFlowEdges(buildEdges(nodes));
+  }, [nodes, setFlowEdges]);
+
+  const handleNodeClick: NodeMouseHandler<WorkflowFlowNode> = useCallback(
+    (_event, node) => onSelectNode(node.id),
+    [onSelectNode],
+  );
+
+  const handleNodeDragStop: OnNodeDrag<WorkflowFlowNode> = useCallback(
+    (_event, draggedNode) => {
+      setDragging(false);
+      const groups = groupNodes(nodes);
+      const candidates = groups
+        .map((group, index) => ({
+          group,
+          index,
+          distance: Math.abs(draggedNode.position.x - (START_X + index * STAGE_GAP)),
+        }))
+        .filter(({ group }) => !group.some((node) => node.localId === draggedNode.id));
+      const nearest = candidates.sort((prev, next) => prev.distance - next.distance)[0];
+
+      if (nearest && nearest.distance < STAGE_GAP * 0.34) {
+        onMoveToParallelGroup(draggedNode.id, nearest.group[0].sort);
+        return;
+      }
+
+      const targetStageIndex = Math.max(
+        0,
+        Math.min(groups.length, Math.round((draggedNode.position.x - START_X) / STAGE_GAP)),
+      );
+      onMoveToStage(draggedNode.id, targetStageIndex);
+    },
+    [nodes, onMoveToParallelGroup, onMoveToStage],
+  );
+
+  if (nodes.length === 0) {
+    return (
+      <section className="flex min-h-[520px] flex-1 flex-col overflow-hidden rounded-2xl border bg-card">
+        <div className="flex h-12 items-center justify-between border-b px-4">
+          <span className="flex items-center gap-2 text-sm font-medium">
+            <Layers2 className="size-4 text-muted-foreground" />
+            流程画布
+          </span>
+          <Badge variant="outline">0 个节点</Badge>
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <LocateFixed className="size-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">从左侧任务库添加第一个节点</p>
+            <p className="mt-1 text-xs text-muted-foreground">节点会按执行阶段自动排列</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="flex h-[calc(100svh-8.5rem)] min-h-[420px] flex-1 flex-col overflow-hidden rounded-xl border bg-card">
-      <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Layers2 className="h-4 w-4 text-muted-foreground" />
-          节点编排
+    <section className="relative min-h-[520px] flex-1 overflow-hidden rounded-2xl border bg-card">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex h-12 items-center justify-between border-b bg-card/90 px-4 backdrop-blur-sm">
+        <span className="flex items-center gap-2 text-sm font-medium">
+          <Layers2 className="size-4 text-muted-foreground" />
+          流程画布
+        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">拖到同列并行，拖到列间排序</span>
+          <Badge variant="outline">{nodes.length} 个节点</Badge>
         </div>
-        <div className="text-xs text-muted-foreground">拖到列间调整顺序，拖到列内设为并行</div>
       </div>
-
-      <div className="flex flex-1 items-center overflow-auto p-6">
-        {groupedNodes.length === 0 ? (
-          <div className="flex w-full flex-col items-center justify-center text-center text-sm text-muted-foreground">
-            <Layers2 className="mb-3 h-8 w-8" />
-            从右侧任务库添加节点
-          </div>
-        ) : (
-          <div className="flex min-w-max items-center gap-3">
-            <StageDropZone stageIndex={0} onDropNode={onMoveToStage} />
-            {groupedNodes.map((group, groupIndex) => (
-              <div key={group[0].sort} className="flex items-center gap-3">
-                <div
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    event.dataTransfer.dropEffect = "move";
-                  }}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    const localId = event.dataTransfer.getData("text/plain");
-                    if (localId) onMoveToParallelGroup(localId, group[0].sort);
-                  }}
-                  className="flex min-h-32 flex-col justify-center gap-3 rounded-xl border border-dashed border-transparent p-2 transition-colors hover:border-foreground/20 hover:bg-secondary/40"
-                >
-                  {group.map((node) => (
-                    <WorkflowNode
-                      key={node.localId}
-                      node={node}
-                      baseTasks={baseTasks}
-                      onDragStart={onDragStart}
-                      onRename={onRename}
-                      onRemove={onRemove}
-                    />
-                  ))}
-                </div>
-                {groupIndex < groupedNodes.length - 1 && (
-                  <div className="h-0.5 w-8 bg-foreground" aria-hidden="true" />
-                )}
-                <StageDropZone stageIndex={groupIndex + 1} onDropNode={onMoveToStage} />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <ReactFlow<WorkflowFlowNode, Edge>
+        nodes={flowNodes}
+        edges={flowEdges}
+        nodeTypes={NODE_TYPES}
+        minZoom={0.35}
+        maxZoom={1.6}
+        fitView
+        fitViewOptions={{ padding: 0.24 }}
+        nodesConnectable={false}
+        deleteKeyCode={null}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={handleNodeClick}
+        onNodeDragStart={() => setDragging(true)}
+        onNodeDragStop={handleNodeDragStop}
+        onPaneClick={() => onSelectNode(null)}
+        className="pt-12"
+      >
+        <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
+        <Controls position="bottom-left" showInteractive={false} />
+        <MiniMap position="bottom-right" pannable zoomable nodeColor="var(--primary)" />
+      </ReactFlow>
     </section>
   );
 }

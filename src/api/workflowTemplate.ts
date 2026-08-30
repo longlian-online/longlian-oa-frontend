@@ -1,8 +1,6 @@
 import { request } from "@/api/request";
 import type { PageResult } from "@/types/planning";
 import type {
-  BaseTaskListDTO,
-  BaseTaskVO,
   TaskTemplateOptionVO,
   WorkshopTaskTemplateCreateDTO,
   WorkshopTaskTemplateDTO,
@@ -39,11 +37,4 @@ export async function updateWorkshopTaskTemplate(
 
 export async function getTaskTemplateOptions(): Promise<TaskTemplateOptionVO[]> {
   return request("/task-template/options");
-}
-
-export async function getBaseTaskList(params?: BaseTaskListDTO): Promise<PageResult<BaseTaskVO>> {
-  return request("/task/base/list", {
-    method: "POST",
-    body: JSON.stringify(params || {}),
-  });
 }

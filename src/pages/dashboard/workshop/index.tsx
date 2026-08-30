@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Filter, Search, Workflow } from "lucide-react";
+import { Boxes, Filter, Search, Workflow } from "lucide-react";
 
 import { getWorkshopList } from "@/api/workshop";
 import EmptyState from "@/components/EmptyState";
@@ -18,12 +18,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { isOrganizationAdmin } from "@/lib/session";
 import type { WorkshopProjectInfoVO } from "@/types/workshop";
 
 const PAGE_SIZE = 8;
 
 export default function WorkshopPage() {
   const navigate = useNavigate();
+  const isOrgAdmin = isOrganizationAdmin();
   const { projectTypes } = useProjectTypes();
   const [projects, setProjects] = useState<WorkshopProjectInfoVO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,15 +79,28 @@ export default function WorkshopPage() {
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => void navigate("/dashboard/workshop/workflows")}
-          >
-            <Workflow className="h-4 w-4" />
-            工作流
-          </Button>
+          {isOrgAdmin && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void navigate("/dashboard/workshop/tasks")}
+              >
+                <Boxes data-icon="inline-start" />
+                原子任务
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void navigate("/dashboard/workshop/workflows")}
+              >
+                <Workflow data-icon="inline-start" />
+                工作流
+              </Button>
+            </>
+          )}
 
           <Button
             type="button"

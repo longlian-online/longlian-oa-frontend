@@ -52,7 +52,7 @@
           },
           "storageType": {
             "description": "存储类型：1-本地存储，2-阿里云OSS，3-腾讯云COS",
-            "enum": ["NONE", "LOCAL", "OSS"],
+            "enum": ["NONE", "LOCAL", "OSS", "COS"],
             "type": "string"
           },
           "uploadUrl": {
@@ -96,6 +96,80 @@
   },
   "openapi": "3.0.1",
   "paths": {
+    "/common/file/local": {
+      "get": {
+        "description": "通过预签名 key 读取本地存储的文件内容，返回原始文件流",
+        "operationId": "readLocalFile",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "读取本地文件",
+        "tags": ["文件上传接口"]
+      },
+      "put": {
+        "description": "客户端使用预签名 URL 直传文件内容到本地存储，需校验上传者身份与文件大小",
+        "operationId": "uploadLocalFile",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "format": "byte",
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "本地上传文件",
+        "tags": ["文件上传接口"]
+      }
+    },
     "/common/file/upload": {
       "post": {
         "description": "获取预签名上传地址，前端拿到 uploadUrl 后直接向存储服务上传文件，上传完成后将 fileId 传给业务接口",

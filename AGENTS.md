@@ -87,6 +87,8 @@ src/
 <type>(<scope>): <subject>
 ```
 
+其中 `<subject>` 必须使用简体中文描述；`<scope>` 可使用中文或项目中的代码标识，OAuth、API、React 等技术专有名词可保留英文。
+
 | type       | 说明                   |
 | ---------- | ---------------------- |
 | `feat`     | 新功能                 |
@@ -98,7 +100,7 @@ src/
 | `chore`    | 构建/工具/依赖变更     |
 | `revert`   | 回滚                   |
 
-示例：`feat(login): add oauth support`、`fix: handle events on blur`
+示例：`feat(登录): 新增 OAuth 登录支持`、`fix: 修复失焦事件处理`
 
 Merge commit 自动跳过校验。
 
@@ -154,4 +156,4 @@ npx skills install
 1. `git add` 暂存文件
 2. pre-commit hook 自动 fmt + lint
 3. lint 报错则修复，重新 `git add`
-4. `git commit -m "type(scope): subject"`
+4. `git commit -m "type(scope): 中文主题"`

@@ -74,3 +74,7 @@ export function getSessionRoles(): string[] {
     return [];
   }
 }
+
+export function isOrganizationAdmin(): boolean {
+  return getSessionRoles().includes("ORG_ADMIN");
+}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useMachine } from "@xstate/react";
 
 import {
   abandonTask,
@@ -31,6 +32,7 @@ import type {
 import TaskActionPanel from "./TaskActionPanel";
 import TaskFlowViewer from "./TaskFlowViewer";
 import TaskSubmitPanel from "./TaskSubmitPanel";
+import { workflowInstanceMachine } from "./workflowMachine";
 
 interface WorkflowInstanceProps {
   itemId: string;
@@ -57,10 +59,9 @@ function findNodeByInstance(
 export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const currentUserId = getUserId();
+  const [workflowState, sendWorkflowEvent] = useMachine(workflowInstanceMachine);
   const [taskFlow, setTaskFlow] = useState<ItemTaskFlowVO | null>(null);
   const [instances, setInstances] = useState<ItemTaskInstanceVO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [mutatingInstanceId, setMutatingInstanceId] = useState<string | null>(null);
   const [submitTarget, setSubmitTarget] = useState<{
     instance: ItemTaskInstanceVO;
     node?: ItemTaskNodeVO;
@@ -76,19 +77,19 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     void loadData();
   }, [itemId]);
 
-  async function loadData(): Promise<void> {
+  async function loadData(background = false): Promise<void> {
     try {
-      setLoading(true);
+      if (!background) sendWorkflowEvent({ type: "LOAD" });
       const [flowData, instanceData] = await Promise.all([
         getItemTaskFlow(itemId),
         getItemTaskInstances(itemId),
       ]);
       setTaskFlow(flowData);
       setInstances(instanceData);
+      sendWorkflowEvent({ type: "LOADED" });
     } catch (error) {
       $tip(error instanceof Error ? error.message : "任务流加载失败", "error");
-    } finally {
-      setLoading(false);
+      sendWorkflowEvent({ type: background ? "ACTION_FAILED" : "LOAD_FAILED" });
     }
   }
 
@@ -98,14 +99,13 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     successMessage: string,
   ): Promise<void> {
     try {
-      setMutatingInstanceId(instanceId);
+      sendWorkflowEvent({ type: "MUTATE", instanceId });
       await action();
       $tip(successMessage, "success");
-      await loadData();
+      await loadData(true);
     } catch (error) {
       $tip(error instanceof Error ? error.message : "任务操作失败", "error");
-    } finally {
-      setMutatingInstanceId(null);
+      sendWorkflowEvent({ type: "ACTION_FAILED" });
     }
   }
 
@@ -169,12 +169,23 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     await runInstanceAction(instanceId, () => resetTask(instanceId), "任务已重置");
   }
 
-  if (loading) {
+  const mutatingInstanceId = workflowState.context.mutatingInstanceId;
+
+  if (workflowState.matches("loading")) {
     return <div className="py-8 text-center text-sm text-muted-foreground">正在加载任务流...</div>;
   }
 
-  if (!taskFlow) {
-    return <div className="py-8 text-center text-sm text-muted-foreground">任务流不存在</div>;
+  if (!taskFlow || workflowState.matches("error")) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-8 text-center text-sm text-muted-foreground">
+        <span>{workflowState.matches("error") ? "任务流加载失败" : "任务流不存在"}</span>
+        {workflowState.matches("error") && (
+          <Button variant="outline" size="sm" onClick={() => void loadData()}>
+            重新加载
+          </Button>
+        )}
+      </div>
+    );
   }
 
   return (

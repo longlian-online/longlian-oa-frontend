@@ -16,6 +16,11 @@ export interface WorkflowEditorNode {
   parallelSort: number;
 }
 
+export interface WorkflowValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
 export function getNodeLabel(node: WorkflowEditorNode, baseTasks: BaseTaskVO[]): string {
   const baseTask = baseTasks.find((task) => String(task.id) === node.baseTaskId);
   return node.customName || baseTask?.name || "未命名任务";
@@ -71,6 +76,33 @@ export function toCreateNodes(nodes: WorkflowEditorNode[]): WorkshopTaskTemplate
     sort: node.sort,
     parallelSort: node.parallelSort,
   }));
+}
+
+export function validateEditorNodes(
+  nodes: WorkflowEditorNode[],
+  baseTasks: BaseTaskVO[],
+): WorkflowValidationResult {
+  const errors: string[] = [];
+  if (nodes.length === 0) errors.push("请至少添加一个任务节点");
+
+  const localIds = new Set<string>();
+  nodes.forEach((node) => {
+    if (localIds.has(node.localId)) errors.push("存在重复节点，请删除后重新添加");
+    localIds.add(node.localId);
+
+    const baseTask = baseTasks.find((task) => String(task.id) === node.baseTaskId);
+    if (!baseTask) errors.push(`节点「${node.customName || node.baseTaskId}」的基础任务不存在`);
+    if (baseTask?.status === "DISABLED") errors.push(`基础任务「${baseTask.name}」已停用`);
+  });
+
+  const normalizedNodes = normalizeNodes(nodes);
+  normalizedNodes.forEach((node, index) => {
+    if (node.sort < 1 || node.parallelSort < 1) {
+      errors.push(`第 ${index + 1} 个节点的流程位置无效`);
+    }
+  });
+
+  return { valid: errors.length === 0, errors: Array.from(new Set(errors)) };
 }
 
 export function groupNodes(nodes: WorkflowEditorNode[]): WorkflowEditorNode[][] {

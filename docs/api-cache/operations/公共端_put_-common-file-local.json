@@ -1,0 +1,49 @@
+{
+  "document": "公共端",
+  "method": "PUT",
+  "operation": {
+    "description": "客户端使用预签名 URL 直传文件内容到本地存储，需校验上传者身份与文件大小",
+    "operationId": "uploadLocalFile",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "key",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "items": {
+              "format": "byte",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "本地上传文件",
+    "tags": ["文件上传接口"]
+  },
+  "path": "/common/file/local",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E5%85%AC%E5%85%B1%E7%AB%AF"
+}
