@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { getWorkflowTaskDescription } from "@/lib/workflowVisuals";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
 import { getNodeLabel, type WorkflowEditorNode } from "./utils";
 
@@ -43,6 +44,9 @@ export default function NodeInspector({
   }
 
   const baseTask = baseTasks.find((task) => String(task.id) === node.baseTaskId);
+  const description = baseTask
+    ? getWorkflowTaskDescription(baseTask.name, baseTask.description)
+    : undefined;
 
   return (
     <aside className="flex min-h-[520px] w-72 shrink-0 flex-col overflow-hidden rounded-2xl border bg-card">
@@ -70,9 +74,9 @@ export default function NodeInspector({
         <div>
           <p className="text-sm font-medium text-foreground">基础任务</p>
           <p className="mt-2 text-sm text-muted-foreground">{baseTask?.name || "未知任务"}</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            {baseTask?.description || "暂无任务说明"}
-          </p>
+          {description && (
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
+          )}
         </div>
 
         <Separator />

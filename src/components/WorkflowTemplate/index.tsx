@@ -1,17 +1,10 @@
 import type { LucideIcon } from "lucide-react";
-import {
-  BadgeCheck,
-  ChevronRight,
-  Languages,
-  Megaphone,
-  Plus,
-  SquarePen,
-  Star,
-} from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
 import type {
   WorkflowTemplateScope,
   WorkshopTaskTemplateNodeVO,
@@ -42,14 +35,6 @@ function getNodeLabel(node: WorkshopTaskTemplateNodeVO): string {
   return node.customName || node.baseTaskName || "未命名任务";
 }
 
-function getNodeIcon(label: string): LucideIcon {
-  if (label.includes("翻译") || label.includes("校对")) return Languages;
-  if (label.includes("审核") || label.includes("编辑")) return SquarePen;
-  if (label.includes("发布")) return Megaphone;
-  if (label.includes("创建")) return BadgeCheck;
-  return Star;
-}
-
 function getStages(nodes: WorkshopTaskTemplateNodeVO[]): WorkflowStage[] {
   const grouped = new Map<number, WorkshopTaskTemplateNodeVO[]>();
 
@@ -70,7 +55,7 @@ function getStages(nodes: WorkshopTaskTemplateNodeVO[]): WorkflowStage[] {
       return {
         label,
         parallelCount: sortedGroup.length,
-        icon: getNodeIcon(label),
+        icon: getWorkflowTaskIcon(sortedGroup[0].baseTaskName || label),
       };
     });
 }

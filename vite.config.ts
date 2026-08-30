@@ -48,7 +48,7 @@ export default defineConfig({
     proxy: {
       "/app": apiProxy,
       "/common": apiProxy,
-      "/admin": apiProxy,
+      "^/admin/(?!login(?:/|$)|$).*": apiProxy,
       "/orgadmin": apiProxy,
     },
   },

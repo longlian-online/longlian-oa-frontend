@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Background,
-  BackgroundVariant,
-  Controls,
   MarkerType,
-  MiniMap,
   ReactFlow,
   useEdgesState,
   useNodesState,
@@ -29,8 +25,8 @@ interface WorkflowCanvasProps {
 }
 
 const NODE_TYPES = { workflow: WorkflowNode };
-const STAGE_GAP = 292;
-const PARALLEL_GAP = 150;
+const STAGE_GAP = 316;
+const PARALLEL_GAP = 132;
 const START_X = 72;
 const START_Y = 80;
 
@@ -52,6 +48,7 @@ function buildFlowNodes(
         },
         data: {
           label: getNodeLabel(node, baseTasks),
+          taskName: baseTask?.name ?? getNodeLabel(node, baseTasks),
           description: baseTask?.description,
           iconUrl: baseTask?.iconUrl,
           stage: node.sort,
@@ -140,11 +137,11 @@ export default function WorkflowCanvas({
 
   if (nodes.length === 0) {
     return (
-      <section className="flex min-h-[520px] flex-1 flex-col overflow-hidden rounded-2xl border bg-card">
+      <section className="flex min-h-[480px] flex-1 flex-col overflow-hidden rounded-xl border bg-card">
         <div className="flex h-12 items-center justify-between border-b px-4">
           <span className="flex items-center gap-2 text-sm font-medium">
             <Layers2 className="size-4 text-muted-foreground" />
-            流程画布
+            流程阶段
           </span>
           <Badge variant="outline">0 个节点</Badge>
         </div>
@@ -154,7 +151,7 @@ export default function WorkflowCanvas({
           </div>
           <div>
             <p className="text-sm font-medium text-foreground">从左侧任务库添加第一个节点</p>
-            <p className="mt-1 text-xs text-muted-foreground">节点会按执行阶段自动排列</p>
+            <p className="mt-1 text-xs text-muted-foreground">添加后可在这里调整执行顺序</p>
           </div>
         </div>
       </section>
@@ -162,11 +159,11 @@ export default function WorkflowCanvas({
   }
 
   return (
-    <section className="relative min-h-[520px] flex-1 overflow-hidden rounded-2xl border bg-card">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex h-12 items-center justify-between border-b bg-card/90 px-4 backdrop-blur-sm">
+    <section className="relative min-h-[480px] flex-1 overflow-hidden rounded-xl border bg-card">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex h-12 items-center justify-between border-b bg-card px-4">
         <span className="flex items-center gap-2 text-sm font-medium">
           <Layers2 className="size-4 text-muted-foreground" />
-          流程画布
+          流程阶段
         </span>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">拖到同列并行，拖到列间排序</span>
@@ -177,10 +174,10 @@ export default function WorkflowCanvas({
         nodes={flowNodes}
         edges={flowEdges}
         nodeTypes={NODE_TYPES}
-        minZoom={0.35}
-        maxZoom={1.6}
+        minZoom={0.55}
+        maxZoom={1.35}
         fitView
-        fitViewOptions={{ padding: 0.24 }}
+        fitViewOptions={{ padding: 0.18 }}
         nodesConnectable={false}
         deleteKeyCode={null}
         onNodesChange={onNodesChange}
@@ -189,12 +186,8 @@ export default function WorkflowCanvas({
         onNodeDragStart={() => setDragging(true)}
         onNodeDragStop={handleNodeDragStop}
         onPaneClick={() => onSelectNode(null)}
-        className="pt-12"
-      >
-        <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
-        <Controls position="bottom-left" showInteractive={false} />
-        <MiniMap position="bottom-right" pannable zoomable nodeColor="var(--primary)" />
-      </ReactFlow>
+        className="bg-muted/20 pt-12"
+      />
     </section>
   );
 }

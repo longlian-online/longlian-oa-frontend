@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useState } from "react";
 
+import { useConfirm } from "@/hooks/useConfirm";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
 import NodeInspector from "./NodeInspector";
 import NodePanel from "./NodePanel";
 import WorkflowCanvas from "./WorkflowCanvas";
 import {
   createEditorNode,
+  getNodeLabel,
   moveNodeByOffset,
   moveNodeToParallelGroup,
   moveNodeToStage,
@@ -26,6 +28,7 @@ export default function WorkflowEditor({
   loadingBaseTasks,
   onChange,
 }: WorkflowEditorProps) {
+  const confirm = useConfirm();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(value[0]?.localId ?? null);
   const selectedNode = useMemo(
     () => value.find((node) => node.localId === selectedNodeId),
@@ -47,7 +50,16 @@ export default function WorkflowEditor({
     updateNodes(value.map((node) => (node.localId === localId ? { ...node, customName } : node)));
   }
 
-  function handleRemoveNode(localId: string): void {
+  async function handleRemoveNode(localId: string): Promise<void> {
+    const node = value.find((item) => item.localId === localId);
+    const confirmed = await confirm({
+      title: "删除节点？",
+      description: `「${node ? getNodeLabel(node, baseTasks) : "该"}」将从当前流程中移除。`,
+      confirmText: "删除",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
     const nextNodes = value.filter((node) => node.localId !== localId);
     updateNodes(nextNodes);
     if (selectedNodeId === localId) setSelectedNodeId(nextNodes[0]?.localId ?? null);

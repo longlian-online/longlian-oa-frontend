@@ -3,6 +3,7 @@ import { Loader2, Plus, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { getWorkflowTaskDescription, getWorkflowTaskIcon } from "@/lib/workflowVisuals";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
 
 interface NodePanelProps {
@@ -55,31 +56,39 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
             没有找到匹配的任务
           </div>
         ) : (
-          filteredTasks.map((task) => (
-            <button
-              key={task.id}
-              type="button"
-              className="group rounded-xl border bg-background p-3 text-left transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-sm"
-              onClick={() => onAddNode(String(task.id))}
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
-                  {task.iconUrl ? (
-                    <img src={task.iconUrl} alt="" className="size-full object-cover" />
-                  ) : (
-                    <Plus className="size-4" />
-                  )}
+          filteredTasks.map((task) => {
+            const Icon = getWorkflowTaskIcon(task.name);
+            const description = getWorkflowTaskDescription(task.name, task.description);
+
+            return (
+              <button
+                key={task.id}
+                type="button"
+                aria-label={`添加${task.name}节点`}
+                className="group rounded-lg border bg-background p-2.5 text-left transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-sm"
+                onClick={() => onAddNode(String(task.id))}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
+                    {task.iconUrl ? (
+                      <img src={task.iconUrl} alt="" className="size-full object-cover" />
+                    ) : (
+                      <Icon className="size-4" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-foreground">{task.name}</div>
+                    {description && (
+                      <p className="mt-0.5 truncate text-xs leading-4 text-muted-foreground">
+                        {description}
+                      </p>
+                    )}
+                  </div>
+                  <Plus className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-foreground">{task.name}</div>
-                  <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted-foreground">
-                    {task.description || "暂无任务说明"}
-                  </p>
-                </div>
-                <Plus className="mt-1 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
-              </div>
-            </button>
-          ))
+              </button>
+            );
+          })
         )}
       </div>
     </aside>
