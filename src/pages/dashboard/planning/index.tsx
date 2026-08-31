@@ -109,9 +109,9 @@ export default function Planning() {
       ) : (
         <>
           {projects.length === 0 ? (
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <CreateProjectCard onClick={() => navigate("/dashboard/planning/create")} />
-              <div className="md:col-span-1 xl:col-span-2">
+              <div className="md:col-span-1 lg:col-span-2 xl:col-span-3">
                 <EmptyState
                   icon={<FolderOpen className="h-5 w-5 text-muted-foreground" />}
                   title="还没有企划"
@@ -127,7 +127,7 @@ export default function Planning() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <CreateProjectCard onClick={() => navigate("/dashboard/planning/create")} />
               {projects.map((project) => (
                 <ProjectCard
@@ -160,7 +160,7 @@ function CreateProjectCard({ onClick }: CreateProjectCardProps) {
   return (
     <div
       onClick={onClick}
-      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-6 transition-colors hover:border-primary hover:bg-primary/[0.02]"
+      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-4 transition-colors hover:border-primary hover:bg-primary/[0.02]"
     >
       <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40 transition-colors group-hover:border-primary/40 group-hover:bg-primary/5">
         <Plus className="text-muted-foreground transition-colors group-hover:text-primary" />
@@ -186,7 +186,7 @@ function ProjectCard({ project, onClick }: ProjectCardProps) {
   return (
     <article
       onClick={onClick}
-      className="group flex aspect-[5/3] cursor-pointer overflow-hidden rounded-xl border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md"
+      className="group flex aspect-[5/3] cursor-pointer overflow-hidden rounded-lg border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md"
     >
       <div className="h-full w-[40%] shrink-0 overflow-hidden bg-muted">
         {project.coverUrl ? (
@@ -202,7 +202,7 @@ function ProjectCard({ project, onClick }: ProjectCardProps) {
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col p-5">
+      <div className="flex min-w-0 flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-2">
           <h3 className="line-clamp-2 text-base font-semibold leading-6 text-foreground">
             {project.title}

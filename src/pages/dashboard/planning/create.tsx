@@ -33,10 +33,10 @@ export default function CreateProject() {
     typeId: "",
     description: "",
   });
-  const [tags, setTags] = useState<TagItem[]>([{ key: "原作者", value: "ぶらぽ" }]);
+  const [tags, setTags] = useState<TagItem[]>([]);
   const [newTagKey, setNewTagKey] = useState("");
   const [newTagValue, setNewTagValue] = useState("");
-  const [showTagInput, setShowTagInput] = useState(false);
+  const [showTagInput, setShowTagInput] = useState(true);
   const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(null);
   const selectedProjectType = projectTypes.find((type) => type.id === formData.typeId);
 
@@ -58,6 +58,18 @@ export default function CreateProject() {
   async function handleSubmit(): Promise<void> {
     if (!canSubmit || !coverFile) return;
 
+    const pendingTagKey = newTagKey.trim();
+    const pendingTagValue = newTagValue.trim();
+    if ((pendingTagKey && !pendingTagValue) || (!pendingTagKey && pendingTagValue)) {
+      $tip("请补全元信息的标签名和值", "error");
+      return;
+    }
+
+    const submittedTags =
+      pendingTagKey && pendingTagValue
+        ? [...tags, { key: pendingTagKey, value: pendingTagValue }]
+        : tags;
+
     try {
       setLoading(true);
       await createProject({
@@ -66,7 +78,7 @@ export default function CreateProject() {
         typeId: formData.typeId,
         description: formData.description,
         coverFileId: coverFile.fileId,
-        metadata: JSON.stringify({ tags }),
+        metadata: JSON.stringify({ tags: submittedTags }),
       });
       $tip("企划创建成功", "success");
       void navigate("/dashboard/planning");
@@ -141,15 +153,20 @@ export default function CreateProject() {
             />
 
             <div className="mt-3 flex items-center gap-3 rounded-lg border bg-background/60 p-2.5">
-              <button
-                type="button"
-                className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-dashed border-input transition-colors hover:border-primary/50 hover:bg-primary/[0.03]"
-              >
-                <Plus className="h-4 w-4 text-muted-foreground" />
-              </button>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted">
+                {coverFile?.previewUrl ? (
+                  <img
+                    src={coverFile.previewUrl}
+                    alt="封面缩略图"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">缩略图</p>
-                <p className="text-xs text-muted-foreground">用于小尺寸场景，可后续裁剪</p>
+                <p className="text-xs text-muted-foreground">创建后自动使用封面图片</p>
               </div>
             </div>
           </section>
