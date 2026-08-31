@@ -36,13 +36,9 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
+import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 import type { UploadedFileInfo } from "@/types/file";
 import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
-
-interface TagItem {
-  key: string;
-  value: string;
-}
 
 interface ProjectEditForm {
   title: string;
@@ -55,16 +51,6 @@ function getStatusLabel(status: ProjectStatus): string {
   if (status === "COMPLETED" || status === "已完成") return "已完成";
   if (status === "ARCHIVED" || status === "已归档") return "已归档";
   return "进行中";
-}
-
-function parseMetadataTags(metadata?: string): TagItem[] {
-  if (!metadata) return [];
-  try {
-    const parsed = JSON.parse(metadata) as { tags?: TagItem[] };
-    return Array.isArray(parsed.tags) ? parsed.tags : [];
-  } catch {
-    return [];
-  }
 }
 
 export default function ProjectDetail() {
@@ -173,7 +159,7 @@ export default function ProjectDetail() {
     return <div className="py-8 text-center text-muted-foreground">企划不存在</div>;
   }
 
-  const tags = parseMetadataTags(project.metadata);
+  const tags = parseProjectMetadataTags(project.metadata);
   const statusLabel = getStatusLabel(project.status);
 
   return (

@@ -9,6 +9,7 @@ import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -18,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 import type { ProjectInfoVO } from "@/types/planning";
 
 const PAGE_SIZE = 8;
@@ -107,7 +109,7 @@ export default function Planning() {
       ) : (
         <>
           {projects.length === 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
               <CreateProjectCard onClick={() => navigate("/dashboard/planning/create")} />
               <div className="md:col-span-1 xl:col-span-2">
                 <EmptyState
@@ -125,7 +127,7 @@ export default function Planning() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
               <CreateProjectCard onClick={() => navigate("/dashboard/planning/create")} />
               {projects.map((project) => (
                 <ProjectCard
@@ -158,7 +160,7 @@ function CreateProjectCard({ onClick }: CreateProjectCardProps) {
   return (
     <div
       onClick={onClick}
-      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-card p-8 transition-colors hover:border-primary hover:bg-primary/[0.02]"
+      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-6 transition-colors hover:border-primary hover:bg-primary/[0.02]"
     >
       <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40 transition-colors group-hover:border-primary/40 group-hover:bg-primary/5">
         <Plus className="text-muted-foreground transition-colors group-hover:text-primary" />
@@ -179,10 +181,12 @@ interface ProjectCardProps {
 }
 
 function ProjectCard({ project, onClick }: ProjectCardProps) {
+  const metadataTags = parseProjectMetadataTags(project.metadata).slice(0, 2);
+
   return (
-    <div
+    <article
       onClick={onClick}
-      className="group flex aspect-[5/3] cursor-pointer overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/60 transition-shadow hover:shadow-md"
+      className="group flex aspect-[5/3] cursor-pointer overflow-hidden rounded-xl border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md"
     >
       <div className="h-full w-[40%] shrink-0 overflow-hidden bg-muted">
         {project.coverUrl ? (
@@ -198,43 +202,42 @@ function ProjectCard({ project, onClick }: ProjectCardProps) {
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-2.5 py-4 pl-8 pr-4">
-        <div className="flex h-[46px] items-center">
-          <h3 className="line-clamp-2 text-base font-normal leading-6 text-foreground">
+      <div className="flex min-w-0 flex-1 flex-col p-5">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="line-clamp-2 text-base font-semibold leading-6 text-foreground">
             {project.title}
           </h3>
+          <Badge variant="outline" className="shrink-0 font-normal">
+            {project.projectType}
+          </Badge>
         </div>
 
-        <div className="h-6 text-right text-base leading-6 text-foreground">
-          {project.projectType}
+        <p className="mt-2 line-clamp-2 min-h-9 text-xs leading-[18px] text-muted-foreground">
+          {project.description || "暂无简介"}
+        </p>
+
+        <div className="mt-3 flex min-h-5 flex-wrap gap-1.5 overflow-hidden">
+          {metadataTags.map((tag, index) => (
+            <span
+              key={`${tag.key}-${tag.value}-${index}`}
+              className="inline-flex max-w-full items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] leading-4"
+            >
+              <span className="shrink-0 text-muted-foreground">{tag.key}</span>
+              <span className="truncate text-foreground">{tag.value}</span>
+            </span>
+          ))}
         </div>
 
-        <div className="flex h-0.5 justify-end gap-2.5">
-          <span className="h-0.5 w-1 bg-muted-foreground" />
-          <span className="h-0.5 w-2 bg-muted-foreground" />
-          <span className="h-0.5 w-8 bg-foreground" />
-        </div>
-
-        {project.description && (
-          <p className="line-clamp-3 h-[55px] text-xs leading-[18px] text-muted-foreground">
-            {project.description}
-          </p>
-        )}
-
-        <div className="mt-auto flex h-9 items-center gap-2.5">
+        <div className="mt-auto flex items-center gap-2 pt-3">
           <Avatar className="size-9">
             <AvatarImage src={project.creatorAvatarUrl} />
             <AvatarFallback className="text-[10px]">{project.title.charAt(0)}</AvatarFallback>
           </Avatar>
-          <div className="flex-1" />
-          <Button
-            size="sm"
-            className="h-[34px] rounded-xl bg-foreground px-2 text-xs text-background"
-          >
-            探索企划
-          </Button>
+          <span className="ml-auto text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+            查看企划
+          </span>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

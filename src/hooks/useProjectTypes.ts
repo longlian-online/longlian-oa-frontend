@@ -10,7 +10,7 @@ interface UseProjectTypesResult {
   reload: () => Promise<void>;
 }
 
-const FALLBACK_PROJECT_TYPES: ProjectTypeInfoVO[] = [{ id: 1, name: "漫画" }];
+const FALLBACK_PROJECT_TYPES: ProjectTypeInfoVO[] = [{ id: "1", name: "漫画" }];
 
 export function useProjectTypes(): UseProjectTypesResult {
   const [projectTypes, setProjectTypes] = useState<ProjectTypeInfoVO[]>([]);

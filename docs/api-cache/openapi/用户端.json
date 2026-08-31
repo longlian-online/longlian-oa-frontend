@@ -108,6 +108,10 @@
       "ItemTaskNodeVO": {
         "description": "任务流节点信息（含执行状态，用于流程图可视化）",
         "properties": {
+          "baseTaskIconName": {
+            "description": "原子任务 Lucide 图标组件名",
+            "type": "string"
+          },
           "baseTaskIconUrl": {
             "description": "原子任务图标URL",
             "type": "string"
@@ -1026,6 +1030,10 @@
       "WorkshopTaskTemplateNodeVO": {
         "description": "工坊任务流模板节点信息（卡片简化版，不含 metaSchema）",
         "properties": {
+          "baseTaskIconName": {
+            "description": "原子任务 Lucide 图标组件名",
+            "type": "string"
+          },
           "baseTaskIconUrl": {
             "description": "原子任务图标URL",
             "type": "string"

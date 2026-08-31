@@ -7,15 +7,10 @@ import FileUpload from "@/components/FileUpload";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
 import type { UploadedFileInfo } from "@/types/file";
 
@@ -29,7 +24,7 @@ const fieldClassName =
 
 export default function CreateProject() {
   const navigate = useNavigate();
-  const { projectTypes } = useProjectTypes();
+  const { projectTypes, loading: loadingProjectTypes } = useProjectTypes();
   const coverBizId = getCurrentOrgId() ?? "cover";
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -43,6 +38,7 @@ export default function CreateProject() {
   const [newTagValue, setNewTagValue] = useState("");
   const [showTagInput, setShowTagInput] = useState(false);
   const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(null);
+  const selectedProjectType = projectTypes.find((type) => type.id === formData.typeId);
 
   const canSubmit = Boolean(formData.title && formData.typeId && coverFile?.fileId);
 
@@ -67,7 +63,7 @@ export default function CreateProject() {
       await createProject({
         title: formData.title,
         alias: formData.alias || formData.title,
-        typeId: Number(formData.typeId),
+        typeId: formData.typeId,
         description: formData.description,
         coverFileId: coverFile.fileId,
         metadata: JSON.stringify({ tags }),
@@ -199,12 +195,24 @@ export default function CreateProject() {
                     setFormData({ ...formData, typeId: value || "" })
                   }
                 >
-                  <SelectTrigger className={fieldClassName}>
-                    <SelectValue placeholder="选择类型" />
+                  <SelectTrigger
+                    className={cn(
+                      fieldClassName,
+                      "h-10 w-full justify-between px-3 text-sm font-medium",
+                    )}
+                    disabled={loadingProjectTypes}
+                  >
+                    <span
+                      className={cn("truncate", !selectedProjectType && "text-muted-foreground")}
+                    >
+                      {loadingProjectTypes
+                        ? "正在加载类型"
+                        : selectedProjectType?.name || "选择类型"}
+                    </span>
                   </SelectTrigger>
                   <SelectContent>
                     {projectTypes.map((type) => (
-                      <SelectItem key={type.id} value={String(type.id)}>
+                      <SelectItem key={type.id} value={type.id}>
                         {type.name}
                       </SelectItem>
                     ))}

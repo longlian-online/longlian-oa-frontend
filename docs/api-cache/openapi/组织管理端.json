@@ -103,6 +103,12 @@
             "description": "图标文件ID",
             "type": "string"
           },
+          "iconName": {
+            "description": "Lucide 图标组件名",
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
           "metaSchema": {
             "description": "元数据字段定义(JSON数组)，示例：[{\"name\":\"附件\",\"fieldType\":\"file\",\"required\":true},{\"name\":\"作者\",\"fieldType\":\"text\",\"required\":true},{\"name\":\"源链接\",\"fieldType\":\"text\",\"required\":true}]",
             "type": "string"
@@ -177,6 +183,10 @@
           },
           "description": {
             "description": "任务说明",
+            "type": "string"
+          },
+          "iconName": {
+            "description": "Lucide 图标组件名",
             "type": "string"
           },
           "iconUrl": {
@@ -916,6 +926,10 @@
       "TaskTemplateNodeVO": {
         "description": "任务模板节点信息",
         "properties": {
+          "baseTaskIconName": {
+            "description": "原子任务 Lucide 图标组件名",
+            "type": "string"
+          },
           "baseTaskIconUrl": {
             "description": "原子任务图标URL",
             "type": "string"

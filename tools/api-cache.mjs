@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
+import { execFile as execFileCallback } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import process from "node:process";
+import { promisify } from "node:util";
 
 const DEFAULT_SOURCE_URL = "https://sit.neo.oa.api.longlian.online/v3/api-docs";
 const SOURCE_URL = process.env.LONGLIAN_API_DOCS_URL || DEFAULT_SOURCE_URL;
@@ -13,6 +15,7 @@ const OPERATIONS_DIR = join(CACHE_DIR, "operations");
 const MANIFEST_FILE = join(CACHE_DIR, "manifest.json");
 const SUMMARY_FILE = join(CACHE_DIR, "summary.md");
 const COMMANDS = new Set(["update", "check"]);
+const execFile = promisify(execFileCallback);
 
 const command = process.argv[2] || "check";
 
@@ -57,8 +60,30 @@ async function updateCache() {
 
   await writeJson(MANIFEST_FILE, manifest);
   await writeFile(SUMMARY_FILE, buildSummary(manifest), "utf8");
+  await formatCache();
 
   console.log(`API 缓存已更新：${documents.length} 组文档，${operations.length} 个接口。`);
+}
+
+async function formatCache() {
+  const binary = join(
+    process.cwd(),
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "vp.cmd" : "vp",
+  );
+
+  if (process.platform === "win32") {
+    await execFile(process.env.ComSpec || "cmd.exe", [
+      "/d",
+      "/s",
+      "/c",
+      `"${binary}" fmt "${CACHE_DIR}" --write`,
+    ]);
+    return;
+  }
+
+  await execFile(binary, ["fmt", CACHE_DIR, "--write"]);
 }
 
 async function checkCache() {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { CheckCircle2, Circle, Loader2, Lock, Plus, Send, Trash2, Workflow } from "lucide-react";
+import { ChevronRight, Loader2, Plus, Send, Trash2, Workflow } from "lucide-react";
 
 import {
   createProjectItem,
@@ -72,12 +72,6 @@ function getStatusVariant(status: ProjectItemStatus): "default" | "secondary" | 
   return "outline";
 }
 
-function getNodeIcon(state: ProjectItemNodeState) {
-  if (state === "COMPLETED") return <CheckCircle2 className="h-3.5 w-3.5" />;
-  if (state === "IN_PROGRESS") return <Circle className="h-3.5 w-3.5 fill-foreground" />;
-  return <Lock className="h-3.5 w-3.5" />;
-}
-
 function sortNodes(nodes: ProjectItemNodeVO[]): ProjectItemNodeVO[] {
   return [...nodes].sort((prev, next) => {
     if (prev.sort !== next.sort) return prev.sort - next.sort;
@@ -91,25 +85,21 @@ function ProjectItemNodeList({ nodes }: { nodes: ProjectItemNodeVO[] }) {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {sortNodes(nodes).map((node) => (
+    <div className="flex flex-wrap gap-1.5">
+      {sortNodes(nodes).map((node, index) => (
         <div
           key={`${node.sort}-${node.parallelSort}-${node.name}`}
           className={cn(
-            "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs",
-            node.state === "COMPLETED" && "border-foreground/15 bg-foreground text-background",
-            node.state === "IN_PROGRESS" && "border-foreground bg-background text-foreground",
-            node.state === "LOCKED" && "border-border bg-muted/40 text-muted-foreground",
+            "flex max-w-full items-center gap-1 text-xs",
+            node.state === "IN_PROGRESS" ? "font-medium text-foreground" : "text-muted-foreground",
           )}
         >
-          {getNodeIcon(node.state)}
           <span className="max-w-24 truncate">{node.name}</span>
           {node.parallelCount > 1 && (
-            <span className="rounded bg-background/20 px-1 text-[10px] leading-4">
-              +{node.parallelCount - 1}
-            </span>
+            <span className="text-[10px] text-muted-foreground">+{node.parallelCount - 1}</span>
           )}
           <span className="sr-only">{NODE_LABELS[node.state]}</span>
+          {index < nodes.length - 1 && <span className="ml-0.5 text-border">/</span>}
         </div>
       ))}
     </div>
@@ -253,8 +243,8 @@ export default function ProjectItemSection({
   }
 
   return (
-    <section className="rounded-xl border bg-card p-5 shadow-sm">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <section>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-3">
         <div>
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Workflow className="h-4 w-4 text-muted-foreground" />
@@ -293,11 +283,11 @@ export default function ProjectItemSection({
           }
         />
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
             <article
               key={item.id}
-              className="rounded-xl border bg-background p-4 transition-colors hover:border-foreground/20"
+              className="flex flex-col rounded-xl border bg-card p-4 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -309,8 +299,8 @@ export default function ProjectItemSection({
                       {STATUS_LABELS[item.status]}
                     </Badge>
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    当前节点：{item.currentNodeName || "暂无"}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    当前阶段：{item.currentNodeName || "尚未开始"}
                   </p>
                 </div>
                 {isCreator && (
@@ -331,9 +321,10 @@ export default function ProjectItemSection({
                       </Button>
                     )}
                     <Button
-                      variant="destructive"
+                      variant="ghost"
                       size="icon-sm"
                       aria-label="删除项目"
+                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       disabled={mutatingItemId === item.id}
                       onClick={() => void handleDeleteItem(item)}
                     >
@@ -343,22 +334,30 @@ export default function ProjectItemSection({
                 )}
               </div>
 
-              <div className="mt-4 space-y-3">
+              <div className="mt-4 border-t pt-3">
                 <div className="flex items-center gap-3">
                   <Progress value={item.progressPercent} className="h-1.5 flex-1" />
                   <span className="w-10 text-right text-xs font-medium text-muted-foreground">
                     {item.progressPercent}%
                   </span>
                 </div>
-                <ProjectItemNodeList nodes={item.nodes} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => void navigate(`/dashboard/planning/${projectId}/items/${item.id}`)}
-                >
-                  查看任务流
-                </Button>
+                <div className="mt-3">
+                  <ProjectItemNodeList nodes={item.nodes} />
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-1 text-xs"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void navigate(`/dashboard/planning/${projectId}/items/${item.id}`);
+                    }}
+                  >
+                    查看任务流
+                    <ChevronRight data-icon="inline-end" />
+                  </Button>
+                </div>
               </div>
             </article>
           ))}

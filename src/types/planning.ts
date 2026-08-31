@@ -22,7 +22,7 @@ export type EnableStatus = "ENABLED" | "DISABLED";
 // ==================== 企划类型 ====================
 
 export interface ProjectTypeInfoVO {
-  id: number;
+  id: string;
   name: string; // 类型名称（如：漫画/小说/美术/视频）
 }
 
@@ -202,7 +202,7 @@ export interface ProjectListDTO {
 export interface ProjectCreateDTO {
   title: string;
   alias: string;
-  typeId: number;
+  typeId: string;
   metadata: string;
   description: string;
   coverFileId: string;
