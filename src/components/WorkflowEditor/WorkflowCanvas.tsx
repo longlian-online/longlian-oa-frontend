@@ -28,6 +28,7 @@ interface WorkflowCanvasProps {
   onSelectNode: (localId: string | null) => void;
   onMoveToStage: (localId: string, stageIndex: number) => void;
   onMoveToParallelGroup: (localId: string, targetSort: number) => void;
+  onRemoveNode: (localId: string) => void;
   onAddNode: (baseTaskId: string, stageIndex?: number) => void;
 }
 
@@ -36,12 +37,14 @@ const STAGE_GAP = 316;
 const PARALLEL_GAP = 132;
 const START_X = 72;
 const START_Y = 80;
+const PARALLEL_SNAP_DISTANCE = 52;
 
 function buildFlowNodes(
   nodes: WorkflowEditorNode[],
   baseTasks: BaseTaskVO[],
   selectedNodeId: string | null,
   onSelectNode: (localId: string) => void,
+  onRemoveNode: (localId: string) => void,
 ): WorkflowFlowNode[] {
   return groupNodes(nodes).flatMap((group, stageIndex) =>
     group.map((node, parallelIndex) => {
@@ -63,6 +66,7 @@ function buildFlowNodes(
           parallelCount: group.length,
           selected: selectedNodeId === node.localId,
           onSelect: onSelectNode,
+          onRemove: onRemoveNode,
         },
       } satisfies WorkflowFlowNode;
     }),
@@ -80,8 +84,9 @@ function buildEdges(nodes: WorkflowEditorNode[]): Edge[] {
         source: source.localId,
         target: target.localId,
         type: "smoothstep",
+        animated: true,
         markerEnd: { type: MarkerType.ArrowClosed },
-        style: { strokeWidth: 1.5 },
+        style: { strokeWidth: 1.5, strokeDasharray: "6 6" },
       })),
     );
   });
@@ -94,11 +99,12 @@ export default function WorkflowCanvas({
   onSelectNode,
   onMoveToStage,
   onMoveToParallelGroup,
+  onRemoveNode,
   onAddNode,
 }: WorkflowCanvasProps) {
   const initialNodes = useMemo(
-    () => buildFlowNodes(nodes, baseTasks, selectedNodeId, onSelectNode),
-    [baseTasks, nodes, onSelectNode, selectedNodeId],
+    () => buildFlowNodes(nodes, baseTasks, selectedNodeId, onSelectNode, onRemoveNode),
+    [baseTasks, nodes, onRemoveNode, onSelectNode, selectedNodeId],
   );
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<WorkflowFlowNode>(initialNodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(buildEdges(nodes));
@@ -134,7 +140,7 @@ export default function WorkflowCanvas({
         .filter(({ group }) => !group.some((node) => node.localId === draggedNode.id));
       const nearest = candidates.sort((prev, next) => prev.distance - next.distance)[0];
 
-      if (nearest && nearest.distance < STAGE_GAP * 0.34) {
+      if (nearest && nearest.distance < PARALLEL_SNAP_DISTANCE) {
         onMoveToParallelGroup(draggedNode.id, nearest.group[0].sort);
         return;
       }
@@ -210,7 +216,7 @@ export default function WorkflowCanvas({
           流程阶段
         </span>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">拖到同列并行，拖到列间排序</span>
+          <span className="text-xs text-muted-foreground">靠近节点同列并行，拖到列间新增阶段</span>
           <Badge variant="outline">{nodes.length} 个节点</Badge>
         </div>
       </div>

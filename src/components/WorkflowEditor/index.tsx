@@ -171,6 +171,7 @@ export default function WorkflowEditor({
           onSelectNode={setSelectedNodeId}
           onMoveToStage={handleMoveToStage}
           onMoveToParallelGroup={handleMoveToParallelGroup}
+          onRemoveNode={(localId) => void handleRemoveNode(localId)}
           onAddNode={handleAddNode}
         />
         <NodeInspectorOverlay

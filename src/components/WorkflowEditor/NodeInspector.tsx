@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { getWorkflowTaskDescription, getWorkflowTaskIcon } from "@/lib/workflowVisuals";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
-import { getNodeLabel, type WorkflowEditorNode } from "./utils";
+import type { WorkflowEditorNode } from "./utils";
 
 interface NodeInspectorProps {
   node?: WorkflowEditorNode;
@@ -53,10 +53,7 @@ export default function NodeInspector({
     <aside className="flex min-h-[440px] w-full shrink-0 flex-col overflow-hidden rounded-xl border bg-card xl:w-72">
       <div className="border-b p-4">
         <p className="text-xs font-medium text-muted-foreground">节点属性</p>
-        <h2 className="mt-1 truncate text-base font-semibold text-foreground">
-          {getNodeLabel(node, baseTasks)}
-        </h2>
-        <div className="mt-3 flex gap-2">
+        <div className="mt-2 flex gap-2">
           <Badge variant="outline">阶段 {node.sort}</Badge>
           <Badge variant="secondary">并行序号 {node.parallelSort}</Badge>
         </div>
