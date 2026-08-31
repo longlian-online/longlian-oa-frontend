@@ -7,3 +7,8 @@ export interface UserInfoVO {
   defaultOrgId?: string;
   roles?: string[];
 }
+
+export interface UpdateMyInfoDTO {
+  nickname: string;
+  avatarFileId?: string;
+}
