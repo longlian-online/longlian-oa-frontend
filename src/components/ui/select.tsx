@@ -6,7 +6,56 @@ import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react";
 
-const Select = SelectPrimitive.Root;
+interface SelectLabelContextValue {
+  labels: Map<string, string>;
+  registerLabel: (value: unknown, label: string) => void;
+}
+
+const SelectLabelContext = React.createContext<SelectLabelContextValue | null>(null);
+
+function getItemLabel(children: React.ReactNode): string {
+  if (typeof children === "string" || typeof children === "number") return String(children);
+  if (Array.isArray(children)) return children.map(getItemLabel).join("");
+  if (React.isValidElement<{ children?: React.ReactNode }>(children)) {
+    return getItemLabel(children.props.children);
+  }
+  return "";
+}
+
+function getSelectValueKey(value: unknown): string | null {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint"
+  ) {
+    return String(value);
+  }
+  return null;
+}
+
+function Select<Value, Multiple extends boolean | undefined = false>({
+  children,
+  ...props
+}: SelectPrimitive.Root.Props<Value, Multiple>) {
+  const [labels, setLabels] = React.useState<Map<string, string>>(() => new Map());
+  const registerLabel = React.useCallback((value: unknown, label: string): void => {
+    const key = getSelectValueKey(value);
+    if (!key || !label) return;
+    setLabels((current) => {
+      if (current.get(key) === label) return current;
+      const next = new Map(current);
+      next.set(key, label);
+      return next;
+    });
+  }, []);
+
+  return (
+    <SelectLabelContext.Provider value={{ labels, registerLabel }}>
+      <SelectPrimitive.Root {...props}>{children}</SelectPrimitive.Root>
+    </SelectLabelContext.Provider>
+  );
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
@@ -18,13 +67,23 @@ function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   );
 }
 
-function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
+function SelectValue({ className, children, placeholder, ...props }: SelectPrimitive.Value.Props) {
+  const context = React.useContext(SelectLabelContext);
+
   return (
     <SelectPrimitive.Value
       data-slot="select-value"
       className={cn("flex flex-1 text-left", className)}
+      placeholder={placeholder}
       {...props}
-    />
+    >
+      {children ??
+        ((value: unknown) => {
+          if (value === null || value === undefined || value === "") return placeholder;
+          const key = getSelectValueKey(value);
+          return key ? (context?.labels.get(key) ?? key) : "";
+        })}
+    </SelectPrimitive.Value>
   );
 }
 
@@ -106,7 +165,10 @@ function SelectLabel({ className, ...props }: SelectPrimitive.GroupLabel.Props) 
   );
 }
 
-function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Props) {
+function SelectItem({ className, children, value, onClick, ...props }: SelectPrimitive.Item.Props) {
+  const context = React.useContext(SelectLabelContext);
+  const label = getItemLabel(children);
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
@@ -114,6 +176,11 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
         "relative flex w-full cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className,
       )}
+      value={value}
+      onClick={(event) => {
+        context?.registerLabel(value, label);
+        onClick?.(event);
+      }}
       {...props}
     >
       <SelectPrimitive.ItemText className="flex flex-1 shrink-0 gap-2 whitespace-nowrap">
