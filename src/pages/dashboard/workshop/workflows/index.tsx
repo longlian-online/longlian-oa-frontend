@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Boxes, Loader2, Search, Workflow } from "lucide-react";
 
 import { getWorkshopTaskTemplateList } from "@/api/workflowTemplate";
+import { changeTaskTemplateStatus } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { CreateWorkflowTemplateCard, WorkflowTemplateCard } from "@/components/WorkflowTemplate";
@@ -10,18 +11,21 @@ import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 
 const PAGE_SIZE = 8;
 
 function WorkshopWorkflowsPageContent() {
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const [templates, setTemplates] = useState<WorkshopTaskTemplateVO[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(true);
+  const [disablingTemplateId, setDisablingTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
     void loadTemplates();
@@ -53,6 +57,27 @@ function WorkshopWorkflowsPageContent() {
     void navigate("/dashboard/workshop/create", {
       state: { template },
     });
+  }
+
+  async function handleDisable(template: WorkshopTaskTemplateVO): Promise<void> {
+    const confirmed = await confirm({
+      title: "禁用工作流？",
+      description: `禁用后「${template.name}」不能再用于创建新项目，已有任务流不受影响。`,
+      confirmText: "禁用",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
+    try {
+      setDisablingTemplateId(template.id);
+      await changeTaskTemplateStatus(template.id, "DISABLED");
+      $tip("工作流已禁用", "success");
+      await loadTemplates();
+    } catch (error) {
+      $tip(error instanceof Error ? error.message : "禁用工作流失败", "error");
+    } finally {
+      setDisablingTemplateId(null);
+    }
   }
 
   return (
@@ -113,7 +138,13 @@ function WorkshopWorkflowsPageContent() {
           <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
             <CreateWorkflowTemplateCard onClick={() => navigate("/dashboard/workshop/create")} />
             {templates.map((template) => (
-              <WorkflowTemplateCard key={template.id} template={template} onEdit={handleEdit} />
+              <WorkflowTemplateCard
+                key={template.id}
+                template={template}
+                onEdit={handleEdit}
+                onDisable={(currentTemplate) => void handleDisable(currentTemplate)}
+                disabling={disablingTemplateId === template.id}
+              />
             ))}
           </div>
 

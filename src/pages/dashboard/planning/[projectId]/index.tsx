@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import {
   BarChart3,
+  Ban,
   Check,
   CirclePlus,
   Info,
@@ -18,6 +19,7 @@ import {
   removeProjectFromWorkshop,
   updateProject,
 } from "@/api/planning";
+import { changeProjectStatus } from "@/api/organizationAdmin";
 import FileUpload from "@/components/FileUpload";
 import ProjectItemSection from "@/components/ProjectItem";
 import { $tip } from "@/components/tip";
@@ -36,6 +38,7 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
+import { isOrganizationAdmin } from "@/lib/session";
 import type { UploadedFileInfo } from "@/types/file";
 import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
 
@@ -54,11 +57,14 @@ function getStatusLabel(status: ProjectStatus): string {
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
   const confirm = useConfirm();
+  const isOrgAdmin = isOrganizationAdmin();
   const [project, setProject] = useState<ProjectDetailInfoVO | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [workshopLoading, setWorkshopLoading] = useState(false);
+  const [disablingProject, setDisablingProject] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(null);
   const [editForm, setEditForm] = useState<ProjectEditForm>({
@@ -149,6 +155,29 @@ export default function ProjectDetail() {
     }
   }
 
+  async function handleDisableProject(): Promise<void> {
+    if (!projectId || !project) return;
+
+    const confirmed = await confirm({
+      title: "禁用企划？",
+      description: `禁用后「${project.title}」将不再在用户端展示，已有数据会保留。`,
+      confirmText: "禁用",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
+    try {
+      setDisablingProject(true);
+      await changeProjectStatus(projectId, "DISABLED");
+      $tip("企划已禁用", "success");
+      void navigate("/dashboard/planning", { replace: true });
+    } catch (error) {
+      $tip(error instanceof Error ? error.message : "禁用企划失败", "error");
+    } finally {
+      setDisablingProject(false);
+    }
+  }
+
   if (loading) {
     return <div className="py-8 text-center text-muted-foreground">加载中...</div>;
   }
@@ -181,6 +210,22 @@ export default function ProjectDetail() {
             <Button variant="outline" size="sm" onClick={openEditDialog}>
               <Pencil className="h-4 w-4" />
               编辑
+            </Button>
+          )}
+          {isOrgAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              disabled={disablingProject}
+              onClick={() => void handleDisableProject()}
+            >
+              {disablingProject ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Ban className="h-4 w-4" />
+              )}
+              禁用
             </Button>
           )}
           <Button

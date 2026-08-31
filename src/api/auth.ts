@@ -7,6 +7,7 @@ import type {
   LoginByPwdDTO,
   LoginVO,
   RegisterByInviteDTO,
+  ResetPasswordDTO,
 } from "@/types/auth";
 
 /**
@@ -38,6 +39,17 @@ export async function loginByCode(dto: LoginByCodeDTO): Promise<LoginVO> {
 export async function sendVerificationCode(dto: EmailCodeDTO): Promise<void> {
   return request("/session/email/code", {
     method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+/**
+ * 使用邮箱验证码重置密码
+ * PUT /app/user/password
+ */
+export async function resetPassword(dto: ResetPasswordDTO): Promise<void> {
+  return request("/user/password", {
+    method: "PUT",
     body: JSON.stringify(dto),
   });
 }

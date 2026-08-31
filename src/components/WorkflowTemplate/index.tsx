@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { ChevronRight, Plus } from "lucide-react";
+import { Ban, ChevronRight, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import type {
 interface WorkflowTemplateCardProps {
   template: WorkshopTaskTemplateVO;
   onEdit: (template: WorkshopTaskTemplateVO) => void;
+  onDisable?: (template: WorkshopTaskTemplateVO) => void;
+  disabling?: boolean;
 }
 
 interface CreateWorkflowTemplateCardProps {
@@ -120,7 +122,12 @@ function WorkflowDiagram({ nodes }: { nodes: WorkshopTaskTemplateNodeVO[] }) {
   );
 }
 
-export function WorkflowTemplateCard({ template, onEdit }: WorkflowTemplateCardProps) {
+export function WorkflowTemplateCard({
+  template,
+  onEdit,
+  onDisable,
+  disabling = false,
+}: WorkflowTemplateCardProps) {
   const taskCount = template.taskCount || template.nodes.length;
 
   return (
@@ -147,19 +154,33 @@ export function WorkflowTemplateCard({ template, onEdit }: WorkflowTemplateCardP
 
       <div className="flex items-center justify-between text-xs leading-[18px]">
         <div className="text-foreground">任务数：{taskCount}</div>
-        {template.isMine ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 px-2 text-xs"
-            onClick={() => onEdit(template)}
-          >
-            编辑
-            <ChevronRight data-icon="inline-end" />
-          </Button>
-        ) : (
-          <span className="text-muted-foreground">可用于创建项目</span>
-        )}
+        <div className="flex items-center gap-1">
+          {onDisable && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 px-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+              disabled={disabling}
+              onClick={() => onDisable(template)}
+            >
+              <Ban className="size-3.5" />
+              禁用
+            </Button>
+          )}
+          {template.isMine ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 px-2 text-xs"
+              onClick={() => onEdit(template)}
+            >
+              编辑
+              <ChevronRight data-icon="inline-end" />
+            </Button>
+          ) : (
+            <span className="text-muted-foreground">可用于创建项目</span>
+          )}
+        </div>
       </div>
     </article>
   );
