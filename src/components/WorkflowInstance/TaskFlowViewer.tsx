@@ -1,19 +1,11 @@
-import { useMemo } from "react";
-import {
-  Background,
-  BackgroundVariant,
-  Controls,
-  MarkerType,
-  MiniMap,
-  ReactFlow,
-  type Edge,
-} from "@xyflow/react";
+import { Fragment, useMemo } from "react";
 import { Layers2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 import type { ItemTaskInstanceVO, ItemTaskNodeVO } from "@/types/workflowInstance";
-import TaskNodeCard, { type TaskFlowNode } from "./TaskNodeCard";
+import TaskNodeCard from "./TaskNodeCard";
 
 interface TaskFlowViewerProps {
   nodes: ItemTaskNodeVO[];
@@ -28,10 +20,6 @@ interface NodeGroup {
   sort: number;
   nodes: ItemTaskNodeVO[];
 }
-
-const NODE_TYPES = { task: TaskNodeCard };
-const STAGE_GAP = 310;
-const PARALLEL_GAP = 180;
 
 function groupNodes(nodes: ItemTaskNodeVO[]): NodeGroup[] {
   const grouped = new Map<number, ItemTaskNodeVO[]>();
@@ -51,66 +39,8 @@ function findInstance(node: ItemTaskNodeVO, instances: ItemTaskInstanceVO[]) {
   );
 }
 
-function buildGraph(
-  groups: NodeGroup[],
-  instances: ItemTaskInstanceVO[],
-  currentUserId: string | null | undefined,
-  mutatingInstanceId: string | null | undefined,
-  onClaim: (instanceId: string) => void,
-  onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void,
-): { flowNodes: TaskFlowNode[]; edges: Edge[] } {
-  const flowNodes = groups.flatMap((group, groupIndex) =>
-    group.nodes.map((node, parallelIndex) => {
-      const instance = findInstance(node, instances);
-      return {
-        id: String(node.id),
-        type: "task",
-        draggable: false,
-        position: { x: 70 + groupIndex * STAGE_GAP, y: 75 + parallelIndex * PARALLEL_GAP },
-        data: {
-          node,
-          instance,
-          currentUserId,
-          mutating: Boolean(instance && instance.id === mutatingInstanceId),
-          onClaim,
-          onSubmit,
-        },
-      } satisfies TaskFlowNode;
-    }),
-  );
-
-  const edges = groups.flatMap((group, groupIndex) => {
-    const nextGroup = groups[groupIndex + 1];
-    if (!nextGroup) return [];
-    return group.nodes.flatMap((source) =>
-      nextGroup.nodes.map((target) => ({
-        id: `${source.id}-${target.id}`,
-        source: String(source.id),
-        target: String(target.id),
-        type: "smoothstep",
-        animated: source.taskStatus === "COMPLETED" && target.taskStatus !== "COMPLETED",
-        markerEnd: { type: MarkerType.ArrowClosed },
-        style: { strokeWidth: 1.5 },
-      })),
-    );
-  });
-  return { flowNodes, edges };
-}
-
 export default function TaskFlowViewer(props: TaskFlowViewerProps) {
   const groups = useMemo(() => groupNodes(props.nodes), [props.nodes]);
-  const graph = useMemo(
-    () =>
-      buildGraph(
-        groups,
-        props.instances,
-        props.currentUserId,
-        props.mutatingInstanceId,
-        props.onClaim,
-        props.onSubmit,
-      ),
-    [groups, props],
-  );
 
   if (groups.length === 0) {
     return (
@@ -146,23 +76,57 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
           })}
         </div>
       </div>
-      <div className="h-[520px]">
-        <ReactFlow<TaskFlowNode, Edge>
-          nodes={graph.flowNodes}
-          edges={graph.edges}
-          nodeTypes={NODE_TYPES}
-          fitView
-          fitViewOptions={{ padding: 0.22 }}
-          minZoom={0.35}
-          maxZoom={1.5}
-          nodesConnectable={false}
-          nodesDraggable={false}
-          elementsSelectable={false}
-        >
-          <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
-          <Controls position="bottom-left" showInteractive={false} />
-          <MiniMap position="bottom-right" pannable zoomable nodeColor="var(--primary)" />
-        </ReactFlow>
+      <div className="overflow-x-auto px-5 py-6">
+        <div className="flex min-w-max items-stretch">
+          {groups.map((group, groupIndex) => {
+            const completed = group.nodes.filter((node) => node.taskStatus === "COMPLETED").length;
+            const stageCompleted = completed === group.nodes.length;
+
+            return (
+              <Fragment key={group.sort}>
+                {groupIndex > 0 && (
+                  <div className="flex w-12 shrink-0 items-center pt-8" aria-hidden="true">
+                    <div className="h-px flex-1 bg-border" />
+                    <div
+                      className={cn(
+                        "size-1.5 rotate-45 border-r border-t",
+                        stageCompleted ? "border-primary" : "border-muted-foreground",
+                      )}
+                    />
+                  </div>
+                )}
+                <section className="flex w-60 shrink-0 flex-col">
+                  <div className="mb-3 flex items-center justify-between px-1">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      阶段 {group.sort}
+                    </span>
+                    {group.nodes.length > 1 && (
+                      <span className="text-xs text-muted-foreground">
+                        并行 {group.nodes.length}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {group.nodes.map((node) => {
+                      const instance = findInstance(node, props.instances);
+                      return (
+                        <TaskNodeCard
+                          key={node.id}
+                          node={node}
+                          instance={instance}
+                          currentUserId={props.currentUserId}
+                          mutating={Boolean(instance && instance.id === props.mutatingInstanceId)}
+                          onClaim={props.onClaim}
+                          onSubmit={props.onSubmit}
+                        />
+                      );
+                    })}
+                  </div>
+                </section>
+              </Fragment>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
