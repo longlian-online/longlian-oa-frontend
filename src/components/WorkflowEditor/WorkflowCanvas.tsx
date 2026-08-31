@@ -57,6 +57,7 @@ function buildFlowNodes(
           label: getNodeLabel(node, baseTasks),
           taskName: baseTask?.name ?? getNodeLabel(node, baseTasks),
           description: baseTask?.description,
+          iconName: baseTask?.iconName,
           iconUrl: baseTask?.iconUrl,
           stage: node.sort,
           parallelCount: group.length,

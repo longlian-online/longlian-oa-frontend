@@ -11,6 +11,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { UploadedFileInfo } from "@/types/file";
 
@@ -25,8 +32,9 @@ interface TaskSubmitPanelProps {
 
 interface MetaFieldSchema {
   name: string;
-  fieldType?: "text" | "textarea" | "file";
+  fieldType?: "text" | "textarea" | "file" | "number" | "select";
   required?: boolean;
+  options?: string[];
 }
 
 type FieldValue = string | UploadedFileInfo | null;
@@ -43,8 +51,16 @@ function parseMetaSchema(metaSchema?: string): MetaFieldSchema[] {
       .map((item) => ({
         name: typeof item.name === "string" ? item.name : "字段",
         fieldType:
-          item.fieldType === "textarea" || item.fieldType === "file" ? item.fieldType : "text",
+          item.fieldType === "textarea" ||
+          item.fieldType === "file" ||
+          item.fieldType === "number" ||
+          item.fieldType === "select"
+            ? item.fieldType
+            : "text",
         required: item.required === true,
+        options: Array.isArray(item.options)
+          ? item.options.filter((option): option is string => typeof option === "string")
+          : [],
       }));
   } catch {
     return [];
@@ -110,8 +126,27 @@ export default function TaskSubmitPanel({
                     description="支持图片、文档或压缩包"
                     onChange={(file) => setFormData({ ...formData, [field.name]: file })}
                   />
+                ) : field.fieldType === "select" ? (
+                  <Select
+                    value={(formData[field.name] as string | undefined) ?? ""}
+                    onValueChange={(value: string | null) =>
+                      setFormData({ ...formData, [field.name]: value || "" })
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={`选择${field.name}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {field.options?.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <Input
+                    type={field.fieldType === "number" ? "number" : "text"}
                     value={(formData[field.name] as string | undefined) ?? ""}
                     onChange={(event) =>
                       setFormData({ ...formData, [field.name]: event.target.value })

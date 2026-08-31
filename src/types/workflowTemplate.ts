@@ -33,6 +33,7 @@ export interface WorkshopTaskTemplateNodeVO {
   id?: string;
   baseTaskId: string;
   baseTaskName?: string;
+  baseTaskIconName?: string;
   baseTaskIconUrl?: string;
   customName?: string;
   sort: number;
@@ -61,6 +62,7 @@ export interface BaseTaskCreateDTO {
   name: string;
   description?: string;
   iconFileId?: string;
+  iconName?: string;
   metaSchema?: string;
 }
 
@@ -68,6 +70,7 @@ export interface BaseTaskVO {
   id: string;
   name: string;
   description?: string;
+  iconName?: string;
   iconUrl?: string;
   metaSchema?: string;
   refCount: number;

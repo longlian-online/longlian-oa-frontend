@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { UploadedFileInfo } from "@/types/file";
 import type { MetaFieldSchema } from "@/types/planning";
@@ -81,6 +88,38 @@ export function TaskSubmitDialog({
             title={`上传${field.name}`}
             description="支持文档、图片或压缩包，最大 50MB"
             onChange={(file) => setFormData({ ...formData, [field.name]: file })}
+          />
+        );
+      case "select":
+        return (
+          <Select
+            value={value}
+            onValueChange={(selected: string | null) =>
+              setFormData({ ...formData, [field.name]: selected || "" })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={`选择${field.name}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options?.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      case "number":
+        return (
+          <Input
+            type="number"
+            placeholder={`请输入${field.name}`}
+            value={value}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setFormData({ ...formData, [field.name]: e.target.value })
+            }
+            required={field.required}
           />
         );
       default:

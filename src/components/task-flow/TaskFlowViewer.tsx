@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ItemTaskNodeVO, TaskInstanceStatus } from "@/types/planning";
 
@@ -97,6 +98,7 @@ function TaskNodeCard({
 }) {
   const style = getStatusStyle(node.taskStatus);
   const StatusIcon = style.icon;
+  const TaskIcon = getWorkflowTaskIcon(node.name, node.baseTaskIconName);
   const isAssignedToMe = node.assigneeId === currentUserId;
   const isRejected = !!rejectedInfo;
 
@@ -120,8 +122,16 @@ function TaskNodeCard({
           )}
         </div>
 
-        {/* 节点名称 */}
-        <div className="font-medium">{node.name}</div>
+        <div className="flex items-center gap-2 font-medium">
+          <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-background/70 text-foreground">
+            {node.baseTaskIconUrl ? (
+              <img src={node.baseTaskIconUrl} alt="" className="size-full object-cover" />
+            ) : (
+              <TaskIcon className="size-3.5" />
+            )}
+          </div>
+          <span className="truncate">{node.name}</span>
+        </div>
 
         {/* 执行人信息 */}
         {node.assigneeId ? (

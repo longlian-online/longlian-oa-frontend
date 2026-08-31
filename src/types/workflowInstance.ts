@@ -10,6 +10,8 @@ export interface ItemTaskNodeVO {
   id: string;
   baseTaskId: string;
   name: string;
+  baseTaskIconName?: string;
+  baseTaskIconUrl?: string;
   metaSchema?: string;
   sort: number;
   parallelSort: number;

@@ -61,7 +61,7 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
           </div>
         ) : (
           filteredTasks.map((task) => {
-            const Icon = getWorkflowTaskIcon(task.name);
+            const Icon = getWorkflowTaskIcon(task.name, task.iconName);
             const description = getWorkflowTaskDescription(task.name, task.description);
 
             return (

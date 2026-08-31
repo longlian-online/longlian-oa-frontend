@@ -10,6 +10,7 @@ export interface WorkflowNodeData extends Record<string, unknown> {
   label: string;
   taskName: string;
   description?: string;
+  iconName?: string;
   iconUrl?: string;
   stage: number;
   parallelCount: number;
@@ -20,7 +21,7 @@ export interface WorkflowNodeData extends Record<string, unknown> {
 export type WorkflowFlowNode = Node<WorkflowNodeData, "workflow">;
 
 function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
-  const Icon = getWorkflowTaskIcon(data.taskName);
+  const Icon = getWorkflowTaskIcon(data.taskName, data.iconName);
   const description = getWorkflowTaskDescription(data.taskName, data.description);
 
   return (

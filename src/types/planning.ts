@@ -108,6 +108,7 @@ export interface TaskTemplateNodeVO {
   id: number;
   baseTaskId: number;
   baseTaskName: string;
+  baseTaskIconName?: string;
   baseTaskIconUrl?: string;
   metaSchema?: string; // 元数据字段定义(JSON数组)
   sort: number; // 步骤顺序（相同 sort 值表示并行节点）
@@ -120,6 +121,7 @@ export interface BaseTaskVO {
   id: number;
   name: string; // 任务名称
   description?: string; // 任务说明
+  iconName?: string; // Lucide 图标组件名
   iconUrl?: string; // 图标URL
   metaSchema?: string; // 元数据字段定义(JSON数组)
   refCount: number; // 引用次数
@@ -143,6 +145,8 @@ export interface ItemTaskNodeVO {
   id: number;
   baseTaskId: number;
   name: string;
+  baseTaskIconName?: string;
+  baseTaskIconUrl?: string;
   metaSchema?: string; // 节点元数据字段定义快照(JSON数组)
   sort: number;
   parallelSort: number;
