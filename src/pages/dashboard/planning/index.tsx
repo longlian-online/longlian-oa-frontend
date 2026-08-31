@@ -87,7 +87,7 @@ export default function Planning() {
                 }
               }}
             >
-              <SelectTrigger className="h-9 w-28 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0">
+              <SelectTrigger className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0">
                 <Filter className="mr-1.5 h-3.5 w-3.5" />
                 <SelectValue />
               </SelectTrigger>

@@ -7,7 +7,7 @@ export interface WorkshopListDTO {
 }
 
 export interface WorkshopProjectInfoVO {
-  id: number;
+  id: string;
   title: string;
   coverUrl?: string;
   creatorAvatarUrl?: string;

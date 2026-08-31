@@ -1,9 +1,8 @@
-import { useNavigate, useParams } from "react-router";
+import { useParams } from "react-router";
 
 import WorkflowInstance from "@/components/WorkflowInstance";
 
 export default function ProjectItemTaskPage() {
-  const navigate = useNavigate();
   const { projectId, itemId } = useParams<{ projectId: string; itemId: string }>();
 
   if (!projectId || !itemId) {
@@ -12,10 +11,7 @@ export default function ProjectItemTaskPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <WorkflowInstance
-        itemId={itemId}
-        onBack={() => void navigate(`/dashboard/planning/${projectId}`)}
-      />
+      <WorkflowInstance itemId={itemId} />
     </div>
   );
 }

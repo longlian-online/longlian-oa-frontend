@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useParams } from "react-router";
 import {
-  ArrowLeft,
   BarChart3,
   Check,
   CirclePlus,
@@ -55,7 +54,6 @@ function getStatusLabel(status: ProjectStatus): string {
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
-  const navigate = useNavigate();
   const confirm = useConfirm();
   const [project, setProject] = useState<ProjectDetailInfoVO | null>(null);
   const [loading, setLoading] = useState(true);
@@ -166,14 +164,6 @@ export default function ProjectDetail() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
       <div className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="返回企划列表"
-            onClick={() => navigate("/dashboard/planning")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight text-foreground">

@@ -122,7 +122,7 @@ export default function WorkshopPage() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="h-8 w-32">
+            <SelectTrigger className="h-8 w-36 shrink-0">
               <Filter className="mr-1.5 h-3.5 w-3.5" />
               <SelectValue />
             </SelectTrigger>

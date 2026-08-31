@@ -9,6 +9,17 @@ import type { ApiResult } from "@/types/planning";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
+function parseApiResponse<T>(responseText: string): ApiResult<T> | T {
+  // Snowflake IDs exceed JavaScript's safe integer range. Preserve matching ID fields
+  // as strings before JSON.parse converts and rounds their trailing digits.
+  const safeResponseText = responseText.replace(
+    /("(?:id|[A-Za-z][A-Za-z0-9]*Id)"\s*:\s*)(-?\d{16,})(?=\s*[,}])/g,
+    '$1"$2"',
+  );
+
+  return JSON.parse(safeResponseText) as ApiResult<T> | T;
+}
+
 export function buildApiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }
@@ -72,7 +83,7 @@ async function requestWithBase<T>(
     return undefined as T;
   }
 
-  const result = JSON.parse(responseText) as ApiResult<T> | T;
+  const result = parseApiResponse<T>(responseText);
 
   if (isApiResult(result)) {
     if (result.code !== 0) {

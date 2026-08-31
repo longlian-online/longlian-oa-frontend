@@ -24,6 +24,7 @@ import { buildApiUrl, request } from "@/api/request";
 
 const API_BASE = "/app";
 const projectListRequests = new Map<string, Promise<PageResult<ProjectInfoVO>>>();
+const projectDetailRequests = new Map<string, Promise<ProjectDetailInfoVO>>();
 let projectTypesRequest: Promise<ProjectTypeInfoVO[]> | null = null;
 
 function toQueryString(params: Record<string, string | number | undefined>): string {
@@ -88,7 +89,17 @@ export async function getProjectList(dto: ProjectListDTO): Promise<PageResult<Pr
  * GET /app/projects/{projectId}
  */
 export async function getProjectDetail(projectId: number | string): Promise<ProjectDetailInfoVO> {
-  return request(`/projects/${projectId}`);
+  const requestKey = String(projectId);
+  const existingRequest = projectDetailRequests.get(requestKey);
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const detailRequest = request<ProjectDetailInfoVO>(`/projects/${projectId}`).finally(() => {
+    projectDetailRequests.delete(requestKey);
+  });
+  projectDetailRequests.set(requestKey, detailRequest);
+  return detailRequest;
 }
 
 /**

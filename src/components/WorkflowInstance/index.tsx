@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMachine } from "@xstate/react";
-import { ArrowLeft } from "lucide-react";
 
 import {
   abandonTask,
@@ -37,7 +36,6 @@ import { workflowInstanceMachine } from "./workflowMachine";
 
 interface WorkflowInstanceProps {
   itemId: string;
-  onBack: () => void;
 }
 
 function getSortedInstances(instances: ItemTaskInstanceVO[]): ItemTaskInstanceVO[] {
@@ -64,7 +62,7 @@ function isNodeUnlocked(node: ItemTaskNodeVO, nodes: ItemTaskNodeVO[]): boolean 
     .every((candidate) => candidate.taskStatus === "COMPLETED");
 }
 
-export default function WorkflowInstance({ itemId, onBack }: WorkflowInstanceProps) {
+export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const currentUserId = getUserId();
   const [workflowState, sendWorkflowEvent] = useMachine(workflowInstanceMachine);
@@ -205,9 +203,6 @@ export default function WorkflowInstance({ itemId, onBack }: WorkflowInstancePro
   return (
     <div className="space-y-4">
       <header className="flex min-h-12 items-center gap-3 px-1">
-        <Button variant="ghost" size="icon-sm" aria-label="返回企划" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">项目任务流</p>
           <h1 className="truncate text-lg font-semibold text-foreground">{taskFlow.name}</h1>

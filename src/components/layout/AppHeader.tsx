@@ -36,6 +36,10 @@ const subMenus: Record<string, { to: string; label: string }[]> = {
   "/dashboard/archive": [{ to: "/dashboard/archive", label: "已归档项目" }],
 };
 
+function isSubMenuActive(pathname: string, targetPath: string): boolean {
+  return pathname === targetPath || pathname.startsWith(`${targetPath}/`);
+}
+
 export default function AppHeader() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -118,10 +122,10 @@ export default function AppHeader() {
             key={to}
             to={to}
             end
-            className={({ isActive }) =>
+            className={() =>
               cn(
                 "rounded-md px-3 py-1.5 text-sm transition-colors",
-                isActive
+                isSubMenuActive(pathname, to)
                   ? "bg-secondary text-foreground font-medium"
                   : "text-muted-foreground hover:text-foreground",
               )

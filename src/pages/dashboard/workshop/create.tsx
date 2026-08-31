@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { createWorkshopTaskTemplate, updateWorkshopTaskTemplate } from "@/api/workflowTemplate";
 import { getBaseTaskList } from "@/api/baseTask";
@@ -114,16 +114,6 @@ function CreateWorkflowPageContent() {
   return (
     <div className="-m-6 flex min-h-[calc(100svh-3.5rem)] flex-col bg-background">
       <div className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-4">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="返回"
-          onClick={() => navigate("/dashboard/workshop/workflows")}
-          className="text-muted-foreground"
-        >
-          <ArrowLeft />
-        </Button>
         <h1 className="text-lg font-bold leading-6 text-foreground">
           {isEditing ? "编辑工作流程" : "创建工作流程"}
         </h1>

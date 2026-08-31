@@ -286,10 +286,7 @@ function BaseTaskManagementContent() {
               const Icon = getWorkflowTaskIcon(task.name, task.iconName);
 
               return (
-                <article
-                  key={task.id}
-                  className="flex min-h-40 flex-col rounded-xl border bg-card p-4"
-                >
+                <article key={task.id} className="flex flex-col rounded-lg border bg-card p-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-3">
                       <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
@@ -312,7 +309,7 @@ function BaseTaskManagementContent() {
                       {task.status === "ENABLED" ? "已启用" : "已禁用"}
                     </Badge>
                   </div>
-                  <div className="mt-auto flex items-end justify-between gap-3 pt-4">
+                  <div className="mt-3 flex items-center justify-between gap-3 border-t pt-2.5">
                     <div className="text-xs text-muted-foreground">
                       已被 {task.refCount} 个模板引用
                     </div>

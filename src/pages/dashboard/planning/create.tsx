@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, Check, ImagePlus, Info, Loader2, Plus, Tags, X } from "lucide-react";
+import { Check, ImagePlus, Info, Loader2, Plus, Tags, X } from "lucide-react";
 
 import { createProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
@@ -93,15 +93,6 @@ export default function CreateProject() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
       <div className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="flex items-start gap-3">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="mt-0.5"
-            aria-label="返回企划列表"
-            onClick={() => navigate("/dashboard/planning")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight text-foreground">发布新企划</h1>
