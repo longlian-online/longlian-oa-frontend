@@ -1,8 +1,6 @@
 import { Fragment, useMemo } from "react";
-import { Layers2 } from "lucide-react";
+import { Check, Layers2 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { ItemTaskInstanceVO, ItemTaskNodeVO } from "@/types/workflowInstance";
 import TaskNodeCard from "./TaskNodeCard";
@@ -39,8 +37,76 @@ function findInstance(node: ItemTaskNodeVO, instances: ItemTaskInstanceVO[]) {
   );
 }
 
+interface StageTimelineProps {
+  groups: NodeGroup[];
+  currentStageSort?: number;
+}
+
+function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
+  return (
+    <div className="mt-4 overflow-x-auto pb-1">
+      <ol className="flex min-w-max items-start px-1">
+        {groups.map((group, index) => {
+          const completed = group.nodes.filter((node) => node.taskStatus === "COMPLETED").length;
+          const stageName = Array.from(new Set(group.nodes.map((node) => node.name))).join(" / ");
+          const isCompleted = completed === group.nodes.length;
+          const isCurrent = group.sort === currentStageSort;
+          const previousGroup = groups[index - 1];
+          const previousCompleted = previousGroup
+            ? previousGroup.nodes.every((node) => node.taskStatus === "COMPLETED")
+            : false;
+
+          return (
+            <li
+              key={group.sort}
+              className="relative flex w-28 shrink-0 flex-col items-center text-center"
+            >
+              {index > 0 && (
+                <span
+                  className={cn(
+                    "absolute right-1/2 top-3 h-px w-full",
+                    previousCompleted ? "bg-foreground" : "bg-border",
+                  )}
+                  aria-hidden="true"
+                />
+              )}
+              <span
+                className={cn(
+                  "relative z-10 flex size-6 items-center justify-center rounded-full text-xs font-semibold",
+                  isCompleted
+                    ? "bg-foreground text-background"
+                    : isCurrent
+                      ? "border-2 border-foreground bg-background text-foreground"
+                      : "bg-muted text-muted-foreground",
+                )}
+              >
+                {isCompleted ? <Check className="size-3.5" /> : group.sort}
+              </span>
+              <span
+                className={cn(
+                  "mt-2 line-clamp-1 max-w-full px-2 text-xs font-medium",
+                  isCurrent || isCompleted ? "text-foreground" : "text-muted-foreground",
+                )}
+                title={stageName}
+              >
+                {stageName}
+              </span>
+              <span className="mt-0.5 text-[11px] text-muted-foreground">
+                {completed}/{group.nodes.length} 完成
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
 export default function TaskFlowViewer(props: TaskFlowViewerProps) {
   const groups = useMemo(() => groupNodes(props.nodes), [props.nodes]);
+  const currentStageSort = groups.find((group) =>
+    group.nodes.some((node) => node.taskStatus !== "COMPLETED"),
+  )?.sort;
 
   if (groups.length === 0) {
     return (
@@ -52,31 +118,14 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
 
   return (
     <section className="overflow-hidden rounded-2xl border bg-card">
-      <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-b px-4 py-2">
+      <div className="border-b px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Layers2 className="size-4 text-muted-foreground" />
           流程进度
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {groups.map((group) => {
-            const completed = group.nodes.filter((node) => node.taskStatus === "COMPLETED").length;
-            const percentage = Math.round((completed / group.nodes.length) * 100);
-            return (
-              <div key={group.sort} className="flex items-center gap-2">
-                <Badge variant={completed === group.nodes.length ? "secondary" : "outline"}>
-                  阶段 {group.sort} · {completed}/{group.nodes.length}
-                </Badge>
-                <Progress
-                  value={percentage}
-                  className="w-16"
-                  aria-label={`阶段 ${group.sort} 完成进度`}
-                />
-              </div>
-            );
-          })}
-        </div>
+        <StageTimeline groups={groups} currentStageSort={currentStageSort} />
       </div>
-      <div className="overflow-x-auto px-5 py-6">
+      <div className="overflow-x-scroll px-5 py-6 pb-8 [scrollbar-gutter:stable]">
         <div className="flex min-w-max items-stretch">
           {groups.map((group, groupIndex) => {
             const completed = group.nodes.filter((node) => node.taskStatus === "COMPLETED").length;
@@ -85,7 +134,7 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
             return (
               <Fragment key={group.sort}>
                 {groupIndex > 0 && (
-                  <div className="flex w-12 shrink-0 items-center pt-8" aria-hidden="true">
+                  <div className="flex w-12 shrink-0 items-center" aria-hidden="true">
                     <div className="h-px flex-1 bg-border" />
                     <div
                       className={cn(
@@ -96,16 +145,6 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
                   </div>
                 )}
                 <section className="flex w-60 shrink-0 flex-col">
-                  <div className="mb-3 flex items-center justify-between px-1">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      阶段 {group.sort}
-                    </span>
-                    {group.nodes.length > 1 && (
-                      <span className="text-xs text-muted-foreground">
-                        并行 {group.nodes.length}
-                      </span>
-                    )}
-                  </div>
                   <div className="flex flex-col gap-3">
                     {group.nodes.map((node) => {
                       const instance = findInstance(node, props.instances);
@@ -116,6 +155,9 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
                           instance={instance}
                           currentUserId={props.currentUserId}
                           mutating={Boolean(instance && instance.id === props.mutatingInstanceId)}
+                          canSubmit={props.nodes
+                            .filter((candidate) => candidate.sort < node.sort)
+                            .every((candidate) => candidate.taskStatus === "COMPLETED")}
                           onClaim={props.onClaim}
                           onSubmit={props.onSubmit}
                         />

@@ -16,6 +16,7 @@ interface TaskNodeCardProps {
   instance?: ItemTaskInstanceVO;
   currentUserId?: string | null;
   mutating: boolean;
+  canSubmit: boolean;
   onClaim: (instanceId: string) => void;
   onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
 }
@@ -48,10 +49,12 @@ export default function TaskNodeCard({
   instance,
   currentUserId,
   mutating,
+  canSubmit,
   onClaim,
   onSubmit,
 }: TaskNodeCardProps) {
-  const status = node.taskStatus ?? instance?.status ?? null;
+  // taskStatus 为 null 明确表示后续节点尚未解锁，不能回退为任务实例状态。
+  const status = node.taskStatus === undefined ? (instance?.status ?? null) : node.taskStatus;
   const style = getNodeStyle(status);
   const StatusIcon = style.icon;
   const TaskIcon = getWorkflowTaskIcon(node.name, node.baseTaskIconName);
@@ -111,7 +114,7 @@ export default function TaskNodeCard({
             接取任务
           </Button>
         )}
-        {status === "CLAIMED" && isAssignedToMe && instance && (
+        {status === "CLAIMED" && isAssignedToMe && instance && canSubmit && (
           <Button
             size="xs"
             className="w-full"
@@ -120,6 +123,9 @@ export default function TaskNodeCard({
           >
             提交任务
           </Button>
+        )}
+        {status === "CLAIMED" && isAssignedToMe && !canSubmit && (
+          <span className="text-xs text-muted-foreground">等待前置阶段完成</span>
         )}
         {status === "CLAIMED" && !isAssignedToMe && (
           <span className="text-xs text-muted-foreground">其他成员处理中</span>

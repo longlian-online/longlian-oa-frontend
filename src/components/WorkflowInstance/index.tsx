@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMachine } from "@xstate/react";
+import { ArrowLeft } from "lucide-react";
 
 import {
   abandonTask,
@@ -36,6 +37,7 @@ import { workflowInstanceMachine } from "./workflowMachine";
 
 interface WorkflowInstanceProps {
   itemId: string;
+  onBack: () => void;
 }
 
 function getSortedInstances(instances: ItemTaskInstanceVO[]): ItemTaskInstanceVO[] {
@@ -56,7 +58,13 @@ function findNodeByInstance(
   );
 }
 
-export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
+function isNodeUnlocked(node: ItemTaskNodeVO, nodes: ItemTaskNodeVO[]): boolean {
+  return nodes
+    .filter((candidate) => candidate.sort < node.sort)
+    .every((candidate) => candidate.taskStatus === "COMPLETED");
+}
+
+export default function WorkflowInstance({ itemId, onBack }: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const currentUserId = getUserId();
   const [workflowState, sendWorkflowEvent] = useMachine(workflowInstanceMachine);
@@ -72,6 +80,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const [detail, setDetail] = useState<TaskInstanceDetailVO | null>(null);
 
   const sortedInstances = useMemo(() => getSortedInstances(instances), [instances]);
+  const visibleInstances = sortedInstances;
 
   useEffect(() => {
     void loadData();
@@ -110,9 +119,14 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   }
 
   function openSubmit(instance: ItemTaskInstanceVO, node?: ItemTaskNodeVO): void {
+    const targetNode = node ?? findNodeByInstance(instance, taskFlow?.nodes ?? []);
+    if (targetNode && !isNodeUnlocked(targetNode, taskFlow?.nodes ?? [])) {
+      $tip("请先完成前置阶段", "error");
+      return;
+    }
     setSubmitTarget({
       instance,
-      node: node ?? findNodeByInstance(instance, taskFlow?.nodes ?? []),
+      node: targetNode,
     });
   }
 
@@ -190,12 +204,18 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border bg-card p-4">
-        <h1 className="text-xl font-semibold text-foreground">{taskFlow.name}</h1>
-        {taskFlow.description && (
-          <p className="mt-1 text-sm text-muted-foreground">{taskFlow.description}</p>
-        )}
-      </section>
+      <header className="flex min-h-12 items-center gap-3 px-1">
+        <Button variant="ghost" size="icon-sm" aria-label="返回企划" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">项目任务流</p>
+          <h1 className="truncate text-lg font-semibold text-foreground">{taskFlow.name}</h1>
+          {taskFlow.description && (
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">{taskFlow.description}</p>
+          )}
+        </div>
+      </header>
 
       <TaskFlowViewer
         nodes={taskFlow.nodes}
@@ -209,9 +229,13 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
       />
 
       <TaskActionPanel
-        instances={sortedInstances}
+        instances={visibleInstances}
         currentUserId={currentUserId}
         mutatingInstanceId={mutatingInstanceId}
+        canSubmit={(instance) => {
+          const node = findNodeByInstance(instance, taskFlow.nodes);
+          return !node || isNodeUnlocked(node, taskFlow.nodes);
+        }}
         onClaim={(instanceId) =>
           void runInstanceAction(instanceId, () => claimTask(instanceId), "任务已接取")
         }

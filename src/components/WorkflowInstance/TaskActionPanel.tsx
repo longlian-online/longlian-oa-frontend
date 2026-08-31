@@ -8,6 +8,7 @@ interface TaskActionPanelProps {
   instances: ItemTaskInstanceVO[];
   currentUserId?: string | null;
   mutatingInstanceId?: string | null;
+  canSubmit: (instance: ItemTaskInstanceVO) => boolean;
   onSubmit: (instance: ItemTaskInstanceVO) => void;
   onClaim: (instanceId: string) => void;
   onAbandon: (instanceId: string) => void;
@@ -32,6 +33,7 @@ export default function TaskActionPanel({
   instances,
   currentUserId,
   mutatingInstanceId,
+  canSubmit,
   onSubmit,
   onClaim,
   onAbandon,
@@ -54,6 +56,7 @@ export default function TaskActionPanel({
         {instances.map((instance) => {
           const isMine = Boolean(instance.assigneeId && instance.assigneeId === currentUserId);
           const isMutating = mutatingInstanceId === instance.id;
+          const instanceCanSubmit = canSubmit(instance);
 
           return (
             <div
@@ -81,7 +84,7 @@ export default function TaskActionPanel({
                     接取
                   </Button>
                 )}
-                {instance.status === "CLAIMED" && isMine && (
+                {instance.status === "CLAIMED" && isMine && instanceCanSubmit && (
                   <>
                     <Button size="xs" disabled={isMutating} onClick={() => onSubmit(instance)}>
                       提交
@@ -95,6 +98,9 @@ export default function TaskActionPanel({
                       放弃
                     </Button>
                   </>
+                )}
+                {instance.status === "CLAIMED" && isMine && !instanceCanSubmit && (
+                  <span className="text-xs text-muted-foreground">等待前置阶段完成</span>
                 )}
                 {instance.status === "COMPLETED" && (
                   <>
