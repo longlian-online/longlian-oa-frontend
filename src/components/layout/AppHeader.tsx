@@ -27,13 +27,6 @@ const subMenus: Record<string, { to: string; label: string }[]> = {
     { to: "/dashboard/planning", label: "浏览" },
     { to: "/dashboard/workshop", label: "工坊" },
   ],
-  "/dashboard/todos": [{ to: "/dashboard/todos", label: "全部待办" }],
-  "/dashboard/square": [{ to: "/dashboard/square", label: "可接取任务" }],
-  "/dashboard/recommend": [
-    { to: "/dashboard/recommend", label: "安利列表" },
-    { to: "/dashboard/recommend/create", label: "发布安利" },
-  ],
-  "/dashboard/archive": [{ to: "/dashboard/archive", label: "已归档项目" }],
 };
 
 function isSubMenuActive(pathname: string, targetPath: string): boolean {

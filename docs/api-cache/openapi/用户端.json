@@ -925,8 +925,7 @@
           },
           "id": {
             "description": "企划ID",
-            "format": "int64",
-            "type": "integer"
+            "type": "string"
           },
           "lastSubmitterAt": {
             "description": "最近一次提交的时间",

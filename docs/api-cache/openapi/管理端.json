@@ -90,8 +90,7 @@
           },
           "id": {
             "description": "管理员ID",
-            "format": "int64",
-            "type": "integer"
+            "type": "string"
           },
           "lastLoginAt": {
             "description": "最后登录时间",

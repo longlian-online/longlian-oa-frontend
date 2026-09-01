@@ -1,11 +1,4 @@
-import {
-  // Archive,
-  Bell,
-  BookOpen,
-  // CheckSquare,
-  // Megaphone,
-  // ShoppingBag,
-} from "lucide-react";
+import { Bell, BookOpen } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 
 import { cn } from "@/lib/utils";
@@ -17,30 +10,6 @@ const navItems = [
     icon: BookOpen,
     activePrefixes: ["/dashboard/planning", "/dashboard/workshop"],
   },
-  // {
-  //   to: "/dashboard/todos",
-  //   label: "待办",
-  //   icon: CheckSquare,
-  //   activePrefixes: ["/dashboard/todos"],
-  // },
-  // {
-  //   to: "/dashboard/square",
-  //   label: "任务广场",
-  //   icon: ShoppingBag,
-  //   activePrefixes: ["/dashboard/square"],
-  // },
-  // {
-  //   to: "/dashboard/recommend",
-  //   label: "安利",
-  //   icon: Megaphone,
-  //   activePrefixes: ["/dashboard/recommend"],
-  // },
-  // {
-  //   to: "/dashboard/archive",
-  //   label: "归档",
-  //   icon: Archive,
-  //   activePrefixes: ["/dashboard/archive"],
-  // },
 ] as const;
 
 function isPathActive(pathname: string, prefixes: readonly string[]): boolean {

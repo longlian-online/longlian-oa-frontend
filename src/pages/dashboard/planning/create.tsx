@@ -96,17 +96,11 @@ export default function CreateProject() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight text-foreground">发布新企划</h1>
-              <span className="rounded-full border bg-primary/5 px-2 py-0.5 text-xs text-primary">
-                草稿
-              </span>
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">填写基础信息、封面与元信息。</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
-            暂存
-          </Button>
           <Button
             size="sm"
             className="min-w-24"
