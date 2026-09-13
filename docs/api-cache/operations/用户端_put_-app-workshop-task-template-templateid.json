@@ -1,0 +1,47 @@
+{
+  "document": "用户端",
+  "method": "PUT",
+  "operation": {
+    "description": "仅模板创建者可更新自己的个人模板（isMine=true 时前端展示更新按钮）。组织通用模板不可在此更新。",
+    "operationId": "updateWorkshopTaskTemplate",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "任务流模板ID",
+        "in": "path",
+        "name": "templateId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/WorkshopTaskTemplateCreateDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "更新工坊个人任务流模板",
+    "tags": ["工坊接口"]
+  },
+  "path": "/app/workshop/task-template/{templateId}",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

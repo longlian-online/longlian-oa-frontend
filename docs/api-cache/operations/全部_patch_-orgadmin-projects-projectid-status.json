@@ -1,0 +1,53 @@
+{
+  "document": "全部",
+  "method": "PATCH",
+  "operation": {
+    "description": "禁用后用户端不展示该企划。status: ENABLED-启用，DISABLED-禁用",
+    "operationId": "changeProjectStatus",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "projectId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ChangeStatusDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/ResultVoid"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "启用/禁用企划",
+    "tags": ["企划接口"]
+  },
+  "path": "/orgadmin/projects/{projectId}/status",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

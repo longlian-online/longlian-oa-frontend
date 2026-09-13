@@ -1,0 +1,44 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "description": "支持名称模糊搜索、状态筛选、创建时间区间；支持按创建时间或引用次数排序，默认按引用次数倒序",
+    "operationId": "listTaskTemplates",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TaskTemplateListDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOTaskTemplateListVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询任务模板列表",
+    "tags": ["任务模板管理"]
+  },
+  "path": "/orgadmin/task/template/list",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

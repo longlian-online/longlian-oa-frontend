@@ -1,0 +1,34 @@
+{
+  "document": "用户端",
+  "method": "POST",
+  "operation": {
+    "description": "使用邮箱+验证码登录",
+    "operationId": "loginByCode",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/LoginByCodeDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/LoginVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "验证码登录",
+    "tags": ["用户会话接口"]
+  },
+  "path": "/app/session/email",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

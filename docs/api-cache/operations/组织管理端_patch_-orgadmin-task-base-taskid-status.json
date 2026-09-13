@@ -1,0 +1,53 @@
+{
+  "document": "组织管理端",
+  "method": "PATCH",
+  "operation": {
+    "description": "禁用后该任务无法被添加到新模板节点中，已引用的节点不受影响。status: ENABLED-启用，DISABLED-禁用",
+    "operationId": "changeBaseTaskStatus",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "taskId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ChangeStatusDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/ResultVoid"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "启用/禁用原子任务",
+    "tags": ["原子任务管理"]
+  },
+  "path": "/orgadmin/task/base/{taskId}/status",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
+}

@@ -1,0 +1,37 @@
+{
+  "document": "用户端",
+  "method": "DELETE",
+  "operation": {
+    "description": "将指定企划从当前用户的个人工坊中移除",
+    "operationId": "removeFromWorkshop",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "企划ID",
+        "in": "path",
+        "name": "projectId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "从工坊移除企划",
+    "tags": ["企划接口"]
+  },
+  "path": "/app/projects/{projectId}/workshop",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}
