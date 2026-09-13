@@ -44,15 +44,17 @@ vp dev
 
 ## Docker 开发
 
-容器内用 pnpm 按锁文件安装依赖，再用 `vp dev` 跑 Vite。源码 bind-mount 进 `/app`，`node_modules` 走具名卷，避免被挂载盖掉。
+容器内用 pnpm 按锁文件安装依赖，再用 `vp dev` 跑 Vite。源码 bind-mount 进 `/app`，额外挂 `/app/node_modules`，避免被源码挂载盖掉。
 
 ```bash
-docker compose up --build
+docker build -f Dockerfile.dev -t longlian-oa-frontend:dev .
+docker run --rm -it -p 5173:5173 \
+  -e CHOKIDAR_USEPOLLING=true \
+  -v "$PWD":/app -v /app/node_modules \
+  longlian-oa-frontend:dev
 ```
 
-浏览器打开 http://localhost:5173 。改依赖后需要重建并丢掉旧 `node_modules` 卷：`docker compose down -v && docker compose up --build`。
-
-本仓库根目录就是前端，不需要再套一层 `./web` 或 `docker-compose.dev.yml` overlay。若被父仓库放在 `./web`，把 compose 里的 `context` / volume 改成 `./web` 即可。
+浏览器打开 http://localhost:5173 。改依赖后重新 `docker build` 再跑；`-v /app/node_modules` 是匿名卷，容器删掉即丢，不会残留旧依赖。
 
 ---
 

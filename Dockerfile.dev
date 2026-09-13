@@ -1,13 +1,17 @@
-# 前端开发镜像：只装依赖。源码由 compose bind-mount 到 /app，Vite 在容器内跑。
+# 前端开发镜像：只装依赖。源码 bind-mount 到 /app 后跑 Vite。
 #
 # 相对「npm ci + package-lock + 整目录挂载」：
 # - 本仓库 packageManager 是 pnpm@10.33.0，锁文件是 pnpm-lock.yaml
-# - 不把源码打进镜像；node_modules 用具名卷，避免 bind-mount 盖掉
+# - 不把源码打进镜像；另挂 /app/node_modules，避免 bind-mount 盖掉依赖
 # - --ignore-scripts：跳过 postinstall 里改 git hooks（容器内无意义且会失败）
 # - 用 vp 起开发服务器，与项目工具链一致
 #
-# 使用：docker compose up --build
-# 改依赖：docker compose down -v && docker compose up --build
+# 构建: docker build -f Dockerfile.dev -t longlian-oa-frontend:dev .
+# 运行:
+#   docker run --rm -it -p 5173:5173 \
+#     -e CHOKIDAR_USEPOLLING=true \
+#     -v "$PWD":/app -v /app/node_modules \
+#     longlian-oa-frontend:dev
 
 FROM node:24-bookworm-slim
 
