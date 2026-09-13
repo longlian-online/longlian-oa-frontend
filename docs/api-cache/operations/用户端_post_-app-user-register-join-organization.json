@@ -1,0 +1,27 @@
+{
+  "document": "用户端",
+  "method": "POST",
+  "operation": {
+    "description": "使用组织管理员生成的邀请码完成注册，并加入指定组织",
+    "operationId": "registerAndJoinOrganizationByInvite",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/RegisterByInviteDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "通过邀请码注册并加入组织",
+    "tags": ["用户接口"]
+  },
+  "path": "/app/user/register/join-organization",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

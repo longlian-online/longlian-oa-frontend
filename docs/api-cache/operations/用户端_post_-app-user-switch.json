@@ -1,0 +1,44 @@
+{
+  "document": "用户端",
+  "method": "POST",
+  "operation": {
+    "description": "切换用户当前所在组织",
+    "operationId": "switchOrg",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/OrgIdDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/UserOrgSwitchVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "切换组织",
+    "tags": ["用户接口"]
+  },
+  "path": "/app/user/switch",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

@@ -1,0 +1,36 @@
+{
+  "document": "用户端",
+  "method": "POST",
+  "operation": {
+    "operationId": "createProject",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ProjectCreateDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "创建企划",
+    "tags": ["企划接口"]
+  },
+  "path": "/app/projects",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

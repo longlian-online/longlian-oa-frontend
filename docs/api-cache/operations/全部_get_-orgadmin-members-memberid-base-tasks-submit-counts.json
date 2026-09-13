@@ -1,0 +1,43 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "operationId": "getMemberBaseTaskSubmitCounts",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "成员ID",
+        "in": "path",
+        "name": "memberId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/OrgMemberBaseTaskSubmitCountVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "查询组员各原子任务提交数",
+    "tags": ["组织成员管理"]
+  },
+  "path": "/orgadmin/members/{memberId}/base-tasks/submit-counts",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

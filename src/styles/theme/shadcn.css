@@ -64,4 +64,29 @@
 
     --radius: 0.75rem;
   }
+
+  /* ── Pink 主题覆盖 ── */
+  [data-color-theme="pink"] {
+    --primary: oklch(64% 0.24 350);
+    --primary-foreground: oklch(98% 0 0);
+    --accent: oklch(80% 0.1 350);
+    --accent-foreground: oklch(30% 0.08 350);
+    --ring: oklch(64% 0.24 350);
+    --secondary: oklch(93% 0.04 350);
+    --secondary-foreground: oklch(30% 0.08 350);
+    --muted: oklch(93% 0.04 350);
+    --muted-foreground: oklch(50% 0.04 350);
+  }
+
+  [data-color-theme="pink"].dark {
+    --primary: oklch(72% 0.22 350);
+    --primary-foreground: oklch(14% 0 0);
+    --accent: oklch(30% 0.08 350);
+    --accent-foreground: oklch(90% 0.12 350);
+    --ring: oklch(72% 0.22 350);
+    --secondary: oklch(20% 0.04 350);
+    --secondary-foreground: oklch(90% 0.12 350);
+    --muted: oklch(20% 0.04 350);
+    --muted-foreground: oklch(62% 0.06 350);
+  }
 }

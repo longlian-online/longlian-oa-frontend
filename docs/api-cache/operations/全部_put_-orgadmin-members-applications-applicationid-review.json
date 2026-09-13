@@ -1,0 +1,47 @@
+{
+  "document": "全部",
+  "method": "PUT",
+  "operation": {
+    "description": "管理员对单条申请执行通过(APPROVED)或拒绝(REJECTED)操作",
+    "operationId": "reviewApplication",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "入组申请ID",
+        "in": "path",
+        "name": "applicationId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ApplicationReviewDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "审核入组申请",
+    "tags": ["组织成员管理"]
+  },
+  "path": "/orgadmin/members/applications/{applicationId}/review",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}
