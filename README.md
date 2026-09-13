@@ -42,6 +42,18 @@ npx skills install
 vp dev
 ```
 
+## Docker 开发
+
+容器内用 pnpm 按锁文件安装依赖，再用 `vp dev` 跑 Vite。源码 bind-mount 进 `/app`，`node_modules` 走具名卷，避免被挂载盖掉。
+
+```bash
+docker compose up --build
+```
+
+浏览器打开 http://localhost:5173 。改依赖后重启容器即可，入口脚本会按 `pnpm-lock.yaml` 同步。
+
+本仓库根目录就是前端，不需要再套一层 `./web` 或 `docker-compose.dev.yml` overlay。若被父仓库放在 `./web`，把 compose 里的 `context` / volume 改成 `./web` 即可。
+
 ---
 
 ## 常用命令

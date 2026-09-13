@@ -33,6 +33,11 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
+  server: {
+    watch: {
+      usePolling: process.env.CHOKIDAR_USEPOLLING === "true",
+    },
+  },
   staged: {
     "*": "vp check --fix",
   },
