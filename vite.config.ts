@@ -47,6 +47,7 @@ export default defineConfig({
   server: {
     watch: {
       usePolling: process.env.CHOKIDAR_USEPOLLING === "true",
+    },
     proxy: {
       "/app": apiProxy,
       "/common": apiProxy,
