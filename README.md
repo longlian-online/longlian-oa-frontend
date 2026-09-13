@@ -50,7 +50,7 @@ vp dev
 docker compose up --build
 ```
 
-浏览器打开 http://localhost:5173 。改依赖后重启容器即可，入口脚本会按 `pnpm-lock.yaml` 同步。
+浏览器打开 http://localhost:5173 。改依赖后需要重建并丢掉旧 `node_modules` 卷：`docker compose down -v && docker compose up --build`。
 
 本仓库根目录就是前端，不需要再套一层 `./web` 或 `docker-compose.dev.yml` overlay。若被父仓库放在 `./web`，把 compose 里的 `context` / volume 改成 `./web` 即可。
 
