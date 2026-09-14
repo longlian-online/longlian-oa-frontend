@@ -1,0 +1,54 @@
+# 推送 semver tag 时构建 Vite dist，打成 tar.gz，挂到 GitHub Release。
+# 产物: longlian-oa-frontend-v1.2.3.tar.gz（解压后根目录即 index.html）
+# 拉取:
+#   curl -fsSL -o dist.tar.gz \
+#     https://github.com/longlian-online/longlian-oa-frontend/releases/download/v1.2.3/longlian-oa-frontend-v1.2.3.tar.gz
+name: Publish static dist
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  publish:
+    name: Build and release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    concurrency:
+      group: static-publish-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Pack dist
+        run: |
+          test -f dist/index.html
+          tar -C dist -czf "longlian-oa-frontend-${GITHUB_REF_NAME}.tar.gz" .
+          tar -tzf "longlian-oa-frontend-${GITHUB_REF_NAME}.tar.gz" | grep -q 'index.html'
+
+      - name: Upload GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          files: longlian-oa-frontend-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true
+          fail_on_unmatched_files: true

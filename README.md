@@ -58,6 +58,18 @@ vp dev
 
 ---
 
+## 发布产物
+
+推送 `v*.*.*` tag 后，GitHub Actions 构建 `dist` 并挂到 [GitHub Release](https://github.com/longlian-online/longlian-oa-frontend/releases)。
+
+```bash
+curl -fsSL -o dist.tar.gz \
+  https://github.com/longlian-online/longlian-oa-frontend/releases/download/v1.2.3/longlian-oa-frontend-v1.2.3.tar.gz
+mkdir -p dist && tar -xzf dist.tar.gz -C dist
+```
+
+解压后根目录即 `index.html`，可直接交给 nginx / CDN。
+
 ## 目录结构
 
 ```
