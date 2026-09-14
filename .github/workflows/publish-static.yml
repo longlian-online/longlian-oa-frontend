@@ -1,0 +1,157 @@
+# 推送 semver tag 时构建 Vite dist，打成 tar.gz。
+# GitHub Actions 同时挂到 GitHub Release 与 CNB Release（不跑 CNB CI）。
+#
+# 产物: longlian-oa-frontend-v1.2.3.tar.gz（解压后根目录即 index.html）
+#
+# GitHub 拉取（公开仓无需登录）:
+#   curl -fsSL -o dist.tar.gz \
+#     https://github.com/longlian-online/longlian-oa-frontend/releases/download/v1.2.3/longlian-oa-frontend-v1.2.3.tar.gz
+#
+# CNB 拉取:
+#   curl -fsSL -L -o dist.tar.gz \
+#     -H "Authorization: Bearer $CNB_TOKEN" \
+#     -H "Accept: application/vnd.cnb.api+json" \
+#     https://api.cnb.cool/longlian.online/longlian-oa-frontend/-/releases/download/v1.2.3/longlian-oa-frontend-v1.2.3.tar.gz
+#
+# CNB 需仓库 Secrets: GIT_PASSWORD（CNB 访问令牌，用户名固定 cnb；
+# 需 group-resource 写、repo 写、repo-release 写。首次会创建
+# cnb.cool/longlian.online/longlian-oa-frontend）
+name: Publish static dist
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+env:
+  CNB_API: https://api.cnb.cool
+  CNB_REPO: longlian.online/longlian-oa-frontend
+
+jobs:
+  publish:
+    name: Build and release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    concurrency:
+      group: static-publish-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Pack dist
+        run: |
+          test -f dist/index.html
+          tar -C dist -czf "longlian-oa-frontend-${GITHUB_REF_NAME}.tar.gz" .
+          tar -tzf "longlian-oa-frontend-${GITHUB_REF_NAME}.tar.gz" | grep -q 'index.html'
+
+      - name: Upload GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          files: longlian-oa-frontend-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+
+      - name: Ensure CNB repository
+        env:
+          GIT_PASSWORD: ${{ secrets.GIT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GIT_PASSWORD}" ]; then
+            echo "::error::Set Actions secret GIT_PASSWORD to a CNB token (user cnb) with group-resource:rw and repo-release:rw"
+            exit 1
+          fi
+          code="$(curl -sS -o /tmp/cnb-repo.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${GIT_PASSWORD}" \
+            -H "Accept: application/vnd.cnb.api+json" \
+            "${CNB_API}/${CNB_REPO}")"
+          if [ "${code}" = "200" ]; then
+            echo "CNB repo exists"
+            exit 0
+          fi
+          if [ "${code}" != "404" ]; then
+            echo "::error::GET ${CNB_REPO} returned ${code}"
+            cat /tmp/cnb-repo.json
+            exit 1
+          fi
+          echo "Creating CNB repo ${CNB_REPO}"
+          curl -sS -f -X POST \
+            -H "Authorization: Bearer ${GIT_PASSWORD}" \
+            -H "Accept: application/vnd.cnb.api+json" \
+            -H "Content-Type: application/json" \
+            -d '{"name":"longlian-oa-frontend","visibility":"public","description":"longlian-oa frontend"}' \
+            "${CNB_API}/longlian.online/-/repos"
+
+      - name: Sync git to CNB
+        uses: docker://tencentcom/git-sync@sha256:b7c4672616ddea5b89948dcd034610b29d37d8430e74b4bc83b421c963c25f77 # latest
+        env:
+          PLUGIN_TARGET_URL: "https://cnb.cool/longlian.online/longlian-oa-frontend.git"
+          PLUGIN_AUTH_TYPE: "https"
+          PLUGIN_USERNAME: "cnb"
+          PLUGIN_PASSWORD: ${{ secrets.GIT_PASSWORD }}
+          PLUGIN_FORCE: "false"
+          PLUGIN_PUSH_TAGS: "true"
+
+      - name: Upload CNB Release
+        env:
+          GIT_PASSWORD: ${{ secrets.GIT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          FILE="longlian-oa-frontend-${TAG}.tar.gz"
+          test -f "${FILE}"
+          AUTH=(-H "Authorization: Bearer ${GIT_PASSWORD}" -H "Accept: application/vnd.cnb.api+json")
+
+          code="$(curl -sS -o /tmp/cnb-rel.json -w '%{http_code}' \
+            "${AUTH[@]}" \
+            "${CNB_API}/${CNB_REPO}/-/releases/tags/${TAG}")"
+          if [ "${code}" = "200" ]; then
+            REL_ID="$(python3 -c 'import json; print(json.load(open("/tmp/cnb-rel.json"))["id"])')"
+          elif [ "${code}" = "404" ]; then
+            curl -sS -f -X POST \
+              "${AUTH[@]}" \
+              -H "Content-Type: application/json" \
+              -d "{\"tag_name\":\"${TAG}\",\"name\":\"${TAG}\",\"target_commitish\":\"${GITHUB_SHA}\",\"make_latest\":\"true\"}" \
+              "${CNB_API}/${CNB_REPO}/-/releases" \
+              -o /tmp/cnb-rel.json
+            REL_ID="$(python3 -c 'import json; print(json.load(open("/tmp/cnb-rel.json"))["id"])')"
+          else
+            echo "::error::GET release ${TAG} returned ${code}"
+            cat /tmp/cnb-rel.json
+            exit 1
+          fi
+          echo "CNB release id=${REL_ID}"
+
+          SIZE="$(wc -c < "${FILE}" | tr -d ' ')"
+          curl -sS -f -X POST \
+            "${AUTH[@]}" \
+            -H "Content-Type: application/json" \
+            -d "{\"asset_name\":\"${FILE}\",\"size\":${SIZE},\"overwrite\":true}" \
+            "${CNB_API}/${CNB_REPO}/-/releases/${REL_ID}/asset-upload-url" \
+            -o /tmp/cnb-upload.json
+          UPLOAD_URL="$(python3 -c 'import json; print(json.load(open("/tmp/cnb-upload.json"))["upload_url"])')"
+          VERIFY_URL="$(python3 -c 'import json; print(json.load(open("/tmp/cnb-upload.json"))["verify_url"])')"
+          curl -sS -f -X PUT --data-binary "@${FILE}" "${UPLOAD_URL}"
+          curl -sS -f -X POST "${AUTH[@]}" "${VERIFY_URL}"
+          echo "Uploaded ${FILE} to CNB release ${TAG}"
