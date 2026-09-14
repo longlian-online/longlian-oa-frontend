@@ -60,11 +60,25 @@ vp dev
 
 ## 发布产物
 
-推送 `v*.*.*` tag 后，GitHub Actions 构建 `dist` 并挂到 [GitHub Release](https://github.com/longlian-online/longlian-oa-frontend/releases)。
+推送 `v*.*.*` tag 后，GitHub Actions 构建 `dist`，同时挂到 GitHub Release 和 CNB Release（不跑 CNB 流水线）。
+
+仓库需配置 Actions secret `GIT_PASSWORD`：CNB 访问令牌（用户名 `cnb`），权限含组织建仓、仓库写、Release 写。首次发布会创建 [cnb.cool/longlian.online/longlian-oa-frontend](https://cnb.cool/longlian.online/longlian-oa-frontend)。
+
+GitHub（公开仓无需登录）：
 
 ```bash
 curl -fsSL -o dist.tar.gz \
   https://github.com/longlian-online/longlian-oa-frontend/releases/download/v1.2.3/longlian-oa-frontend-v1.2.3.tar.gz
+mkdir -p dist && tar -xzf dist.tar.gz -C dist
+```
+
+CNB：
+
+```bash
+curl -fsSL -L -o dist.tar.gz \
+  -H "Authorization: Bearer $CNB_TOKEN" \
+  -H "Accept: application/vnd.cnb.api+json" \
+  https://api.cnb.cool/longlian.online/longlian-oa-frontend/-/releases/download/v1.2.3/longlian-oa-frontend-v1.2.3.tar.gz
 mkdir -p dist && tar -xzf dist.tar.gz -C dist
 ```
 
