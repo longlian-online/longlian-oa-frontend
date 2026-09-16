@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import Pages from "vite-plugin-pages";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
-import type { Plugin } from "vite";
+import type { Plugin, ProxyOptions } from "vite-plus";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,11 +26,33 @@ function ignoreUnknownRequests(): Plugin {
   };
 }
 
+const apiProxy: ProxyOptions = {
+  target: "https://sit.neo.oa.api.longlian.online",
+  changeOrigin: true,
+  configure(proxy) {
+    proxy.on("proxyReq", (proxyRequest) => {
+      proxyRequest.removeHeader("origin");
+      proxyRequest.removeHeader("referer");
+    });
+  },
+};
+
 export default defineConfig({
   plugins: [ignoreUnknownRequests(), Pages({ dirs: "src/pages" }), react(), tailwindcss()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
+    },
+  },
+  server: {
+    watch: {
+      usePolling: process.env.CHOKIDAR_USEPOLLING === "true",
+    },
+    proxy: {
+      "/app": apiProxy,
+      "/common": apiProxy,
+      "^/admin/(?!login(?:/|$)|$).*": apiProxy,
+      "/orgadmin": apiProxy,
     },
   },
   staged: {

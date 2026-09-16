@@ -1,0 +1,44 @@
+{
+  "document": "组织管理端",
+  "method": "POST",
+  "operation": {
+    "description": "支持名称模糊搜索、状态筛选、创建时间区间；支持按创建时间或引用次数排序，默认按引用次数倒序",
+    "operationId": "listBaseTasks",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/BaseTaskListDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOBaseTaskVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询原子任务列表",
+    "tags": ["原子任务管理"]
+  },
+  "path": "/orgadmin/task/base/list",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
+}

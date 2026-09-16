@@ -1,0 +1,35 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "通过预签名 key 读取本地存储的文件内容，返回原始文件流",
+    "operationId": "readLocalFile",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "key",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "format": "binary",
+              "type": "string"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "读取本地文件",
+    "tags": ["文件上传接口"]
+  },
+  "path": "/common/file/local",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

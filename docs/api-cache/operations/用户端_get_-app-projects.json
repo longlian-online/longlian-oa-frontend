@@ -1,0 +1,42 @@
+{
+  "document": "用户端",
+  "method": "GET",
+  "operation": {
+    "description": "支持关键词搜索、类型筛选、排序，仅返回启用状态企划",
+    "operationId": "getProjectList",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "query",
+        "name": "projectListDTO",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ProjectListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOProjectInfoVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询企划列表",
+    "tags": ["企划接口"]
+  },
+  "path": "/app/projects",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

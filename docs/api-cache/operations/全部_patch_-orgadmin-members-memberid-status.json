@@ -1,0 +1,53 @@
+{
+  "document": "全部",
+  "method": "PATCH",
+  "operation": {
+    "description": "禁用后用户无法登录；超管身份不可被禁用。status: ENABLED-启用，DISABLED-禁用",
+    "operationId": "changeMemberStatus",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "memberId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ChangeStatusDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/ResultVoid"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "启用/禁用组员",
+    "tags": ["组织成员管理"]
+  },
+  "path": "/orgadmin/members/{memberId}/status",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

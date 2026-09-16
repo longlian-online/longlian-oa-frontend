@@ -1,0 +1,3 @@
+display_name: longlian API 规范
+short_description: 接入 longlian-oa API 前检查 Swagger 缓存并使用最新接口。
+default_prompt: 修改 API、类型或接口文档时使用 longlian API 规范。

@@ -1,0 +1,44 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "description": "仅返回 status=PENDING(待审核) 的申请，默认按申请时间倒序",
+    "operationId": "listApplications",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ApplicationListDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOApplicationInfoVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询待审核入组申请列表",
+    "tags": ["组织成员管理"]
+  },
+  "path": "/orgadmin/members/applications",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

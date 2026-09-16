@@ -42,6 +42,20 @@ npx skills install
 vp dev
 ```
 
+## Docker 开发
+
+容器内用 pnpm 按锁文件安装依赖，再用 `vp dev` 跑 Vite。源码 bind-mount 进 `/app`，额外挂 `/app/node_modules`，避免被源码挂载盖掉。
+
+```bash
+docker build -f Dockerfile.dev -t longlian-oa-frontend:dev .
+docker run --rm -it -p 5173:5173 \
+  -e CHOKIDAR_USEPOLLING=true \
+  -v "$PWD":/app -v /app/node_modules \
+  longlian-oa-frontend:dev
+```
+
+浏览器打开 http://localhost:5173 。改依赖后重新 `docker build` 再跑；`-v /app/node_modules` 是匿名卷，容器删掉即丢，不会残留旧依赖。
+
 ---
 
 ## 常用命令
@@ -106,10 +120,10 @@ src/
 
 ### 两个独立维度
 
-| 维度 | 切换方式 | 存储 |
-|------|----------|------|
-| 亮/暗模式 | `<html>` 加/移除 `.dark` 类 | `localStorage("theme")` |
-| 颜色主题 | `<html>` 设置 `data-color-theme="pink"` 等 | `localStorage("color-theme")` |
+| 维度      | 切换方式                                   | 存储                          |
+| --------- | ------------------------------------------ | ----------------------------- |
+| 亮/暗模式 | `<html>` 加/移除 `.dark` 类                | `localStorage("theme")`       |
+| 颜色主题  | `<html>` 设置 `data-color-theme="pink"` 等 | `localStorage("color-theme")` |
 
 两者完全独立，可以任意组合（如：暗色 + 粉色主题）。
 
@@ -133,7 +147,11 @@ src/
 [data-color-theme="blue"] {
   --theme-accent-start: #3b82f6;
   --theme-accent-end: #1d4ed8;
-  --theme-accent-gradient: linear-gradient(279deg, var(--theme-accent-start) 0%, var(--theme-accent-end) 100%);
+  --theme-accent-gradient: linear-gradient(
+    279deg,
+    var(--theme-accent-start) 0%,
+    var(--theme-accent-end) 100%
+  );
   --theme-accent-solid: #2563eb;
   --theme-accent-solid-a3: rgba(37, 99, 235, 0.3);
 }

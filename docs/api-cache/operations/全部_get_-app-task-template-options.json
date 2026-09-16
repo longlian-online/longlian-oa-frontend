@@ -1,0 +1,37 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "创建项目弹窗使用的流程模板下拉选项，查询组织通用模板+我的个人模板",
+    "operationId": "listTaskTemplateOptions",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/TaskTemplateOptionVO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "获取用户可选流程模板",
+    "tags": ["流程模板接口"]
+  },
+  "path": "/app/task-template/options",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

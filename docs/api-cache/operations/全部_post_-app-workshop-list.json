@@ -1,0 +1,44 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "description": "查询当前用户工坊中的企划列表，支持标题模糊搜索、类型筛选、仅看我创建，默认按添加时间倒序。",
+    "operationId": "getMyWorkshopList",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/WorkshopListDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOWorkshopProjectInfoVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询工坊企划列表",
+    "tags": ["工坊接口"]
+  },
+  "path": "/app/workshop/list",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

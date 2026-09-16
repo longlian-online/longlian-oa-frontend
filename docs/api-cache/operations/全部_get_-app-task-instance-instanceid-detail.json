@@ -1,0 +1,44 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "返回任务实例信息及最近一次提交的元数据详情",
+    "operationId": "getTaskInstanceDetail",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "任务实例ID",
+        "in": "path",
+        "name": "instanceId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/TaskInstanceDetailVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "查看任务实例详情",
+    "tags": ["任务实例接口"]
+  },
+  "path": "/app/task/instance/{instanceId}/detail",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

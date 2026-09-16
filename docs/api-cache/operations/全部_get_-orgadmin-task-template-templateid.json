@@ -1,0 +1,44 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "返回模板基本信息及完整节点列表",
+    "operationId": "getTaskTemplateDetail",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "任务模板ID",
+        "in": "path",
+        "name": "templateId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/TaskTemplateDetailVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "获取任务模板详情",
+    "tags": ["任务模板管理"]
+  },
+  "path": "/orgadmin/task/template/{templateId}",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

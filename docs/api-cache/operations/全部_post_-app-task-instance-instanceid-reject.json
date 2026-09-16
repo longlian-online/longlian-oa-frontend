@@ -1,0 +1,47 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "description": "下一阶段执行人可将已完成（COMPLETED）的任务打回，任务恢复为 CLAIMED 状态，提交记录标记为 REJECTED，需填写打回意见",
+    "operationId": "rejectTask",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "任务实例ID",
+        "in": "path",
+        "name": "instanceId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TaskRejectDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "打回任务",
+    "tags": ["任务实例接口"]
+  },
+  "path": "/app/task/instance/{instanceId}/reject",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

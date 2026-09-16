@@ -1,0 +1,16 @@
+{
+  "document": "全部",
+  "method": "DELETE",
+  "operation": {
+    "operationId": "logout_1",
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "管理员登出",
+    "tags": ["管理员会话接口"]
+  },
+  "path": "/admin/session",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}
