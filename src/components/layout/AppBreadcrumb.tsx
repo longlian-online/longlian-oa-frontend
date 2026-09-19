@@ -20,8 +20,8 @@ function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
 
     const projectPath = `/dashboard/planning/${segments[2]}`;
     items.push({ label: "企划详情", to: projectPath });
-    if (segments[3] === "items" && segments[4]) {
-      items.push({ label: "项目任务流" });
+    if (segments[3] === "items") {
+      items.push({ label: segments[4] ? "项目任务流" : "项目列表" });
     }
     return items;
   }

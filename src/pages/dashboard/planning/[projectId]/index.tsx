@@ -346,6 +346,7 @@ export default function ProjectDetail() {
           <ProjectItemSection
             projectId={projectId!}
             isCreator={project.isCreator}
+            showDetailLink
             onChanged={loadProjectDetail}
           />
         </main>
