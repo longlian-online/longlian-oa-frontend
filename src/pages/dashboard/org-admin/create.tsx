@@ -2,26 +2,33 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 
-import { getBaseTaskList } from "@/api/baseTask";
-import { createWorkshopTaskTemplate, updateWorkshopTaskTemplate } from "@/api/workflowTemplate";
+import {
+  createOrganizationTaskTemplate,
+  getOrganizationBaseTaskList,
+  getOrganizationTaskTemplate,
+  updateOrganizationTaskTemplate,
+} from "@/api/organizationAdmin";
 import WorkflowEditor, {
   buildEditorNodes,
   toCreateNodes,
   validateEditorNodes,
   type WorkflowEditorNode,
 } from "@/components/WorkflowEditor";
+import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { BaseTaskVO } from "@/types/workflowTemplate";
 import type {
-  BaseTaskVO,
-  WorkshopTaskTemplateCreateDTO,
-  WorkshopTaskTemplateVO,
-} from "@/types/workflowTemplate";
+  OrganizationBaseTaskVO,
+  OrganizationTaskTemplateCreateDTO,
+  OrganizationTaskTemplateDetailVO,
+  OrganizationTaskTemplateVO,
+} from "@/types/organizationAdmin";
 
 interface CreateWorkflowLocationState {
-  template?: WorkshopTaskTemplateVO;
+  template?: OrganizationTaskTemplateVO;
 }
 
 interface WorkflowForm {
@@ -29,7 +36,45 @@ interface WorkflowForm {
   description: string;
 }
 
-function CreateWorkflowPageContent() {
+function toEditorBaseTask(task: OrganizationBaseTaskVO): BaseTaskVO {
+  return {
+    id: task.id,
+    name: task.name ?? "未命名任务",
+    description: task.description,
+    iconName: task.iconName,
+    iconUrl: task.iconUrl,
+    metaSchema: task.metaSchema,
+    refCount: task.refCount,
+    status: task.status,
+    createdAt: task.createdAt ?? "",
+  };
+}
+
+function toEditorTemplate(detail: OrganizationTaskTemplateDetailVO) {
+  return {
+    id: detail.id,
+    name: detail.name ?? "未命名工作流",
+    description: detail.description,
+    scope: "ORGANIZATION" as const,
+    taskCount: detail.nodes.length,
+    isMine: true,
+    nodes: detail.nodes.flatMap((node) => {
+      if (!node.baseTaskId || node.sort === undefined) return [];
+      return [
+        {
+          baseTaskId: node.baseTaskId,
+          baseTaskName: node.baseTaskName,
+          baseTaskIconName: node.baseTaskIconName,
+          baseTaskIconUrl: node.baseTaskIconUrl,
+          sort: node.sort,
+          parallelSort: node.parallelSort,
+        },
+      ];
+    }),
+  };
+}
+
+function OrganizationAdminCreateWorkflowContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as CreateWorkflowLocationState | null;
@@ -40,13 +85,12 @@ function CreateWorkflowPageContent() {
     description: editingTemplate?.description ?? "",
   });
   const [baseTasks, setBaseTasks] = useState<BaseTaskVO[]>([]);
-  const [nodes, setNodes] = useState<WorkflowEditorNode[]>(() =>
-    buildEditorNodes(editingTemplate?.nodes),
-  );
+  const [nodes, setNodes] = useState<WorkflowEditorNode[]>([]);
   const [loadingBaseTasks, setLoadingBaseTasks] = useState(true);
+  const [loadingTemplate, setLoadingTemplate] = useState(isEditing);
   const [saving, setSaving] = useState(false);
 
-  const canSave = Boolean(formData.name.trim() && nodes.length > 0 && !saving);
+  const canSave = Boolean(formData.name.trim() && nodes.length > 0 && !saving && !loadingTemplate);
 
   useEffect(() => {
     void loadBaseTasks();
@@ -55,20 +99,48 @@ function CreateWorkflowPageContent() {
   async function loadBaseTasks(): Promise<void> {
     try {
       setLoadingBaseTasks(true);
-      const data = await getBaseTaskList({
+      const data = await getOrganizationBaseTaskList({
         pageNum: 1,
         pageSize: 100,
         status: "ENABLED",
         sortBy: "REF_COUNT",
         orderDir: "DESC",
       });
-      setBaseTasks(data.list);
+      setBaseTasks(data.list.map(toEditorBaseTask));
     } catch (error) {
       $tip(error instanceof Error ? error.message : "原子任务加载失败", "error");
     } finally {
       setLoadingBaseTasks(false);
     }
   }
+
+  useEffect(() => {
+    if (!editingTemplate) {
+      setLoadingTemplate(false);
+      return;
+    }
+
+    const templateId = editingTemplate.id;
+
+    async function loadTemplate(): Promise<void> {
+      try {
+        setLoadingTemplate(true);
+        const detail = await getOrganizationTaskTemplate(templateId);
+        const editorTemplate = toEditorTemplate(detail);
+        setFormData({
+          name: editorTemplate.name,
+          description: editorTemplate.description ?? "",
+        });
+        setNodes(buildEditorNodes(editorTemplate.nodes));
+      } catch (error) {
+        $tip(error instanceof Error ? error.message : "工作流详情加载失败", "error");
+      } finally {
+        setLoadingTemplate(false);
+      }
+    }
+
+    void loadTemplate();
+  }, [editingTemplate]);
 
   async function handleSave(): Promise<void> {
     if (!formData.name.trim()) {
@@ -87,22 +159,26 @@ function CreateWorkflowPageContent() {
       return;
     }
 
-    const payload: WorkshopTaskTemplateCreateDTO = {
+    const payload: OrganizationTaskTemplateCreateDTO = {
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
-      nodes: toCreateNodes(nodes),
+      nodes: toCreateNodes(nodes).map(({ baseTaskId, sort, parallelSort }) => ({
+        baseTaskId,
+        sort,
+        parallelSort,
+      })),
     };
 
     try {
       setSaving(true);
       if (editingTemplate) {
-        await updateWorkshopTaskTemplate(String(editingTemplate.id), payload);
+        await updateOrganizationTaskTemplate(String(editingTemplate.id), payload);
         $tip("流程模板已更新", "success");
       } else {
-        await createWorkshopTaskTemplate(payload);
+        await createOrganizationTaskTemplate(payload);
         $tip("流程模板已创建", "success");
       }
-      void navigate("/dashboard/workshop/workflows");
+      void navigate("/dashboard/org-admin/workflows");
     } catch (error) {
       $tip(error instanceof Error ? error.message : "流程模板保存失败", "error");
     } finally {
@@ -155,6 +231,10 @@ function CreateWorkflowPageContent() {
   );
 }
 
-export default function CreateWorkflowPage() {
-  return <CreateWorkflowPageContent />;
+export default function OrganizationAdminCreateWorkflowPage() {
+  return (
+    <OrganizationAdminGuard>
+      <OrganizationAdminCreateWorkflowContent />
+    </OrganizationAdminGuard>
+  );
 }

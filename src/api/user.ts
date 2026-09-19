@@ -1,6 +1,6 @@
 import { request } from "@/api/request";
 import type { JoinByInviteCodeDTO, InviteInfoVO } from "@/types/auth";
-import type { UpdateMyInfoDTO, UserInfoVO } from "@/types/user";
+import type { OrganizationSimpleInfoVO, UpdateMyInfoDTO, UserInfoVO } from "@/types/user";
 
 let currentUserRequest: Promise<UserInfoVO> | null = null;
 
@@ -9,6 +9,10 @@ export async function getCurrentUser(): Promise<UserInfoVO> {
     currentUserRequest = null;
   });
   return currentUserRequest;
+}
+
+export async function getUserOrganizations(): Promise<OrganizationSimpleInfoVO[]> {
+  return request("/user/organizations");
 }
 
 export async function updateMyInfo(dto: UpdateMyInfoDTO): Promise<void> {

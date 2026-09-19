@@ -11,7 +11,11 @@ import {
   X,
 } from "lucide-react";
 
-import { changeBaseTaskStatus, createBaseTask, getBaseTaskList } from "@/api/baseTask";
+import {
+  changeBaseTaskStatus,
+  createOrganizationBaseTask,
+  getOrganizationBaseTaskList,
+} from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PageLoading from "@/components/PageLoading";
@@ -38,7 +42,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
-import type { BaseTaskCreateDTO, BaseTaskVO } from "@/types/workflowTemplate";
+import type {
+  OrganizationBaseTaskCreateDTO,
+  OrganizationBaseTaskVO,
+} from "@/types/organizationAdmin";
 
 const PAGE_SIZE = 12;
 type LucideIconEntry = [string, LucideIcon];
@@ -71,7 +78,7 @@ const FIELD_TYPE_LABELS: Record<TaskMetaFieldType, string> = {
 const EMPTY_FORM: BaseTaskForm = { name: "", description: "", iconName: undefined, metaFields: [] };
 
 function BaseTaskManagementContent() {
-  const [tasks, setTasks] = useState<BaseTaskVO[]>([]);
+  const [tasks, setTasks] = useState<OrganizationBaseTaskVO[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -98,7 +105,7 @@ function BaseTaskManagementContent() {
   async function loadTasks(): Promise<void> {
     try {
       setLoading(true);
-      const data = await getBaseTaskList({
+      const data = await getOrganizationBaseTaskList({
         pageNum: page,
         pageSize: PAGE_SIZE,
         keyword: keyword || undefined,
@@ -202,7 +209,7 @@ function BaseTaskManagementContent() {
         )
       : undefined;
 
-    const payload: BaseTaskCreateDTO = {
+    const payload: OrganizationBaseTaskCreateDTO = {
       name,
       description: form.description.trim() || undefined,
       iconName: form.iconName,
@@ -211,7 +218,7 @@ function BaseTaskManagementContent() {
 
     try {
       setCreating(true);
-      await createBaseTask(payload);
+      await createOrganizationBaseTask(payload);
       $tip("原子任务已创建", "success");
       setCreateOpen(false);
       setForm(EMPTY_FORM);
@@ -226,7 +233,7 @@ function BaseTaskManagementContent() {
     }
   }
 
-  async function handleToggleStatus(task: BaseTaskVO): Promise<void> {
+  async function handleToggleStatus(task: OrganizationBaseTaskVO): Promise<void> {
     const nextStatus = task.status === "ENABLED" ? "DISABLED" : "ENABLED";
     try {
       setMutatingId(task.id);
@@ -283,7 +290,8 @@ function BaseTaskManagementContent() {
         <>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {tasks.map((task) => {
-              const Icon = getWorkflowTaskIcon(task.name, task.iconName);
+              const taskName = task.name ?? "未命名任务";
+              const Icon = getWorkflowTaskIcon(taskName, task.iconName);
 
               return (
                 <article key={task.id} className="flex flex-col rounded-lg border bg-card p-3.5">
@@ -298,7 +306,7 @@ function BaseTaskManagementContent() {
                       </div>
                       <div className="min-w-0">
                         <h2 className="truncate text-sm font-semibold text-foreground">
-                          {task.name}
+                          {taskName}
                         </h2>
                         <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
                           {task.description || "暂无任务说明"}
@@ -316,6 +324,11 @@ function BaseTaskManagementContent() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className={
+                        task.status === "ENABLED"
+                          ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          : "text-muted-foreground"
+                      }
                       disabled={mutatingId === task.id}
                       onClick={() => void handleToggleStatus(task)}
                     >

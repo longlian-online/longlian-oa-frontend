@@ -19,13 +19,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useUploadFile } from "@/hooks/useUploadFile";
-import { clearSession } from "@/lib/session";
+import { clearSession, isOrganizationAdmin } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 const subMenus: Record<string, { to: string; label: string }[]> = {
   "/dashboard/planning": [
     { to: "/dashboard/planning", label: "浏览" },
     { to: "/dashboard/workshop", label: "工坊" },
+  ],
+  "/dashboard/org-admin": [
+    { to: "/dashboard/org-admin/projects", label: "企划" },
+    { to: "/dashboard/org-admin/project-types", label: "企划类型" },
+    { to: "/dashboard/org-admin/members", label: "成员" },
+    { to: "/dashboard/org-admin/applications", label: "入组申请" },
+    { to: "/dashboard/org-admin/invites", label: "组织邀请" },
+    { to: "/dashboard/org-admin/tasks", label: "原子任务" },
+    { to: "/dashboard/org-admin/workflows", label: "工作流" },
+    { to: "/dashboard/org-admin/settings", label: "组织设置" },
   ],
 };
 
@@ -43,10 +53,13 @@ export default function AppHeader() {
   const [inviteCode, setInviteCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const section = pathname.startsWith("/dashboard/workshop")
-    ? "/dashboard/planning"
-    : "/" + pathname.split("/").slice(1, 3).join("/");
-  const items = subMenus[section] ?? [];
+  const section = pathname.startsWith("/dashboard/org-admin")
+    ? "/dashboard/org-admin"
+    : pathname.startsWith("/dashboard/workshop")
+      ? "/dashboard/planning"
+      : "/" + pathname.split("/").slice(1, 3).join("/");
+  const items =
+    section === "/dashboard/org-admin" && !isOrganizationAdmin() ? [] : (subMenus[section] ?? []);
 
   const handleJoinOrganization = async (): Promise<void> => {
     const normalizedInviteCode = inviteCode.trim();
