@@ -26,6 +26,13 @@ function ignoreUnknownRequests(): Plugin {
   };
 }
 
+export function isAdminApiPath(pathname: string): boolean {
+  return (
+    pathname === "/admin/session" ||
+    /^\/admin\/(?:admins|organizations|scheduled-tasks)\//.test(pathname)
+  );
+}
+
 const apiProxy: ProxyOptions = {
   target: "https://sit.neo.oa.api.longlian.online",
   changeOrigin: true,
@@ -45,10 +52,14 @@ export default defineConfig({
     },
   },
   server: {
+    watch: {
+      usePolling: process.env.CHOKIDAR_USEPOLLING === "true",
+    },
     proxy: {
       "/app": apiProxy,
       "/common": apiProxy,
-      "^/admin/(?!login(?:/|$)|$).*": apiProxy,
+      "^/admin/session$": apiProxy,
+      "^/admin/(?:admins|organizations|scheduled-tasks)/": apiProxy,
       "/orgadmin": apiProxy,
     },
   },

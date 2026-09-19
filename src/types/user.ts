@@ -8,6 +8,12 @@ export interface UserInfoVO {
   roles?: string[];
 }
 
+export interface OrganizationSimpleInfoVO {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+}
+
 export interface UpdateMyInfoDTO {
   nickname: string;
   avatarFileId?: string;
