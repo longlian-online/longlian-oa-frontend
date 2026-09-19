@@ -94,7 +94,7 @@ export default function TipProvider() {
   }
 
   return createPortal(
-    <div className="pointer-events-none fixed left-1/2 top-5 z-50 flex w-[min(92vw,420px)] -translate-x-1/2 flex-col items-center gap-2">
+    <div className="pointer-events-none fixed left-1/2 top-5 z-[100] flex w-[min(92vw,420px)] -translate-x-1/2 flex-col items-center gap-2">
       {tips.map((tip) => {
         const icon = tip.icon === false ? null : (tip.icon ?? defaultIcon[tip.type]);
 

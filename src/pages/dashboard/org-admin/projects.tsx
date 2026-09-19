@@ -32,6 +32,12 @@ function getStatusLabel(status: AdminProjectStatus): string {
   return "进行中";
 }
 
+function formatDate(value?: string): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("zh-CN");
+}
+
 function OrganizationAdminProjectsContent() {
   const navigate = useNavigate();
   const confirm = useConfirm();
@@ -145,6 +151,8 @@ function OrganizationAdminProjectsContent() {
                 <TableRow>
                   <TableHead>企划</TableHead>
                   <TableHead>类型</TableHead>
+                  <TableHead>创建人</TableHead>
+                  <TableHead>创建时间</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead className="w-24 text-right">操作</TableHead>
                 </TableRow>
@@ -157,12 +165,9 @@ function OrganizationAdminProjectsContent() {
                       <TableCell>
                         <button
                           type="button"
-                          className="flex min-w-52 items-center gap-3 text-left"
+                          className="min-w-52 text-left"
                           onClick={() => void navigate(`/dashboard/planning/${project.id}`)}
                         >
-                          <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-sm font-semibold text-muted-foreground">
-                            {(project.title ?? "未命名").slice(0, 2)}
-                          </div>
                           <span className="truncate font-medium text-foreground">
                             {project.title ?? "未命名企划"}
                           </span>
@@ -170,6 +175,12 @@ function OrganizationAdminProjectsContent() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {project.typeName ?? "未分类"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {project.creatorNickname ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatDate(project.createdAt)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={disabled ? "secondary" : "outline"}>

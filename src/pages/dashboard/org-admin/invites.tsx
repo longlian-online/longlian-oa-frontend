@@ -8,14 +8,29 @@ import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import type { InviteCodeVO } from "@/types/organizationAdmin";
 
+const INVITE_STORAGE_KEY = "organization-admin:join-invite";
+
 function formatDate(value?: string): string {
   if (!value) return "—";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString("zh-CN");
 }
 
+function readStoredInvite(): InviteCodeVO | null {
+  const rawInvite = sessionStorage.getItem(INVITE_STORAGE_KEY);
+  if (!rawInvite) return null;
+
+  try {
+    const invite = JSON.parse(rawInvite) as InviteCodeVO;
+    return invite.inviteCode ? invite : null;
+  } catch {
+    sessionStorage.removeItem(INVITE_STORAGE_KEY);
+    return null;
+  }
+}
+
 function OrganizationInvitesContent() {
-  const [invite, setInvite] = useState<InviteCodeVO | null>(null);
+  const [invite, setInvite] = useState<InviteCodeVO | null>(readStoredInvite);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -23,7 +38,9 @@ function OrganizationInvitesContent() {
     try {
       setLoading(true);
       setCopied(false);
-      setInvite(await createJoinInviteCode());
+      const nextInvite = await createJoinInviteCode();
+      setInvite(nextInvite);
+      sessionStorage.setItem(INVITE_STORAGE_KEY, JSON.stringify(nextInvite));
       $tip("邀请码已生成", "success");
     } catch (error) {
       $tip(error instanceof Error ? error.message : "邀请码生成失败", "error");

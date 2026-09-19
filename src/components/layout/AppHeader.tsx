@@ -3,7 +3,7 @@ import { Bell, LogOut, Pencil, Plus, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 
 import { logout } from "@/api/auth";
-import { joinOrganizationByInvite, updateMyInfo } from "@/api/user";
+import { getInviteInfo, joinOrganizationByInvite, updateMyInfo } from "@/api/user";
 import { $tip } from "@/components/tip";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,6 +21,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useUploadFile } from "@/hooks/useUploadFile";
 import { clearSession, isOrganizationAdmin } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import type { InviteInfoVO } from "@/types/auth";
 
 const subMenus: Record<string, { to: string; label: string }[]> = {
   "/dashboard/planning": [
@@ -50,7 +51,10 @@ export default function AppHeader() {
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const { uploading: isUploadingAvatar, uploadFile } = useUploadFile();
   const [isJoinOpen, setIsJoinOpen] = useState(false);
+  const [isInviteConfirmOpen, setIsInviteConfirmOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
+  const [inviteInfo, setInviteInfo] = useState<InviteInfoVO | null>(null);
+  const [isLoadingInviteInfo, setIsLoadingInviteInfo] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const section = pathname.startsWith("/dashboard/org-admin")
@@ -68,12 +72,29 @@ export default function AppHeader() {
       return;
     }
 
+    setIsLoadingInviteInfo(true);
+    try {
+      const result = await getInviteInfo(normalizedInviteCode);
+      setInviteInfo(result);
+      setIsJoinOpen(false);
+      setIsInviteConfirmOpen(true);
+    } catch (error) {
+      $tip(error instanceof Error ? error.message : "邀请码查询失败", "error");
+    } finally {
+      setIsLoadingInviteInfo(false);
+    }
+  };
+
+  const handleConfirmJoinOrganization = async (): Promise<void> => {
+    if (!inviteInfo || !inviteCode.trim()) return;
+
     setIsJoining(true);
     try {
-      await joinOrganizationByInvite({ inviteCode: normalizedInviteCode });
+      await joinOrganizationByInvite({ inviteCode: inviteCode.trim() });
       $tip("已加入组织", "success");
       setInviteCode("");
-      setIsJoinOpen(false);
+      setInviteInfo(null);
+      setIsInviteConfirmOpen(false);
     } catch (error) {
       $tip(error instanceof Error ? error.message : "加入组织失败", "error");
     } finally {
@@ -236,8 +257,49 @@ export default function AppHeader() {
             <Button variant="outline" onClick={() => setIsJoinOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleJoinOrganization} disabled={isJoining}>
-              {isJoining ? "加入中..." : "加入"}
+            <Button onClick={handleJoinOrganization} disabled={isJoining || isLoadingInviteInfo}>
+              {isLoadingInviteInfo ? "查询中..." : "下一步"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isInviteConfirmOpen}
+        onOpenChange={(open) => {
+          setIsInviteConfirmOpen(open);
+          if (!open) setInviteInfo(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>确认加入组织</DialogTitle>
+            <DialogDescription>请确认邀请码对应的组织信息。</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 rounded-xl border bg-muted/30 p-4">
+            <div>
+              <p className="text-xs text-muted-foreground">组织名称</p>
+              <p className="mt-1 text-base font-semibold text-foreground">
+                {inviteInfo?.orgName ?? "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">组织 ID</p>
+              <p className="mt-1 break-all text-sm text-foreground">{inviteInfo?.orgId ?? "—"}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsInviteConfirmOpen(false);
+                setIsJoinOpen(true);
+              }}
+            >
+              返回修改
+            </Button>
+            <Button onClick={() => void handleConfirmJoinOrganization()} disabled={isJoining}>
+              {isJoining ? "加入中..." : "确认加入"}
             </Button>
           </DialogFooter>
         </DialogContent>
