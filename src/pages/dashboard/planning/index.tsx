@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { ChevronDown, Clock, Filter, FolderOpen, Plus } from "lucide-react";
+import { Clock, Filter, FolderOpen, Plus } from "lucide-react";
 
 import { getProjectList } from "@/api/planning";
 import EmptyState from "@/components/EmptyState";
@@ -20,9 +20,20 @@ import {
 } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
-import type { ProjectInfoVO } from "@/types/planning";
+import type { ProjectInfoVO, ProjectListDTO } from "@/types/planning";
 
 const PAGE_SIZE = 8;
+const DEFAULT_TIME_SORT: Required<Pick<ProjectListDTO, "sortByTime" | "orderDir">> = {
+  sortByTime: "CREATE",
+  orderDir: "DESC",
+};
+
+const timeSortOptions = [
+  { value: "CREATE-DESC", label: "最新创建" },
+  { value: "CREATE-ASC", label: "最早创建" },
+  { value: "UPDATE-DESC", label: "最近更新" },
+  { value: "UPDATE-ASC", label: "最早更新" },
+] as const;
 
 export default function Planning() {
   const navigate = useNavigate();
@@ -31,12 +42,13 @@ export default function Planning() {
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
   const [selectedType, setSelectedType] = useState("all");
+  const [timeSort, setTimeSort] = useState(DEFAULT_TIME_SORT);
   const [pageNum, setPageNum] = useState(1);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
     void loadProjects();
-  }, [pageNum, selectedType]);
+  }, [pageNum, selectedType, timeSort]);
 
   async function loadProjects(targetPage = pageNum): Promise<void> {
     try {
@@ -46,6 +58,8 @@ export default function Planning() {
         pageSize: PAGE_SIZE,
         keyword: keyword || undefined,
         projectType: selectedType === "all" ? undefined : selectedType,
+        sortByTime: timeSort.sortByTime,
+        orderDir: timeSort.orderDir,
       });
       setProjects(result.list);
       setTotal(result.total);
@@ -73,11 +87,31 @@ export default function Planning() {
         onSearchSubmit={handleSearch}
         actions={
           <>
-            <Button variant="ghost" size="sm" className="h-9 gap-1 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              时间
-              <ChevronDown className="h-3 w-3" />
-            </Button>
+            <Select
+              value={`${timeSort.sortByTime}-${timeSort.orderDir}`}
+              onValueChange={(value: string | null) => {
+                const [sortByTime, orderDir] = value?.split("-") ?? [];
+                if (
+                  (sortByTime === "CREATE" || sortByTime === "UPDATE") &&
+                  (orderDir === "DESC" || orderDir === "ASC")
+                ) {
+                  setTimeSort({ sortByTime, orderDir });
+                  setPageNum(1);
+                }
+              }}
+            >
+              <SelectTrigger className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0">
+                <Clock className="mr-1.5 h-3.5 w-3.5" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {timeSortOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select
               value={selectedType}
               onValueChange={(value: string | null) => {
