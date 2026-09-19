@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
-import { Bell, BookOpen, ChevronDown, ChevronRight, Settings2 } from "lucide-react";
+import { useState } from "react";
+import { BookOpen, ChevronDown, ChevronRight, Settings2 } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 
-import { getUserOrganizations } from "@/api/user";
 import { isOrganizationAdmin } from "@/lib/session";
-import { getCurrentOrgId } from "@/lib/session";
 import { cn } from "@/lib/utils";
-import type { OrganizationSimpleInfoVO } from "@/types/user";
+import OrganizationIdentity from "./OrganizationIdentity";
 
 const navItems = [
   {
@@ -42,51 +40,11 @@ export default function AppSidebar() {
   const { pathname } = useLocation();
   const isOrgAdmin = isOrganizationAdmin();
   const [isOrganizationMenuOpen, setIsOrganizationMenuOpen] = useState(true);
-  const [organization, setOrganization] = useState<OrganizationSimpleInfoVO | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadOrganization(): Promise<void> {
-      try {
-        const organizations = await getUserOrganizations();
-        if (cancelled) return;
-
-        const currentOrgId = getCurrentOrgId();
-        setOrganization(
-          organizations.find((item) => item.id === currentOrgId) ?? organizations[0] ?? null,
-        );
-      } catch {
-        if (!cancelled) setOrganization(null);
-      }
-    }
-
-    void loadOrganization();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   return (
     <aside className="border-border bg-background flex h-full w-56 shrink-0 flex-col border-r">
       <div className="flex h-14 items-center gap-2.5 border-b border-border px-5">
-        {organization?.avatarUrl ? (
-          <img
-            src={organization.avatarUrl}
-            alt={`${organization.name}头像`}
-            className="h-7 w-7 shrink-0 rounded-lg object-cover"
-          />
-        ) : (
-          <div
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-            style={{ background: "var(--theme-accent-gradient)" }}
-          >
-            <Bell className="h-3.5 w-3.5 text-white" />
-          </div>
-        )}
-        <span className="text-foreground truncate text-sm font-semibold">
-          {organization?.name ?? "组织"}
-        </span>
+        <OrganizationIdentity />
       </div>
 
       <nav className="flex-1 space-y-0.5 px-3 py-3">

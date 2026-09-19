@@ -102,7 +102,11 @@ export default function Planning() {
             >
               <SelectTrigger className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0">
                 <Clock className="mr-1.5 h-3.5 w-3.5" />
-                <SelectValue />
+                <SelectValue>
+                  {timeSortOptions.find(
+                    (option) => option.value === `${timeSort.sortByTime}-${timeSort.orderDir}`,
+                  )?.label ?? "时间"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {timeSortOptions.map((option) => (
@@ -123,7 +127,12 @@ export default function Planning() {
             >
               <SelectTrigger className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0">
                 <Filter className="mr-1.5 h-3.5 w-3.5" />
-                <SelectValue />
+                <SelectValue>
+                  {selectedType === "all"
+                    ? "所有类型"
+                    : (projectTypes.find((type) => type.name === selectedType)?.name ??
+                      selectedType)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">所有类型</SelectItem>
