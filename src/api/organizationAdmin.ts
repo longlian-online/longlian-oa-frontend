@@ -1,4 +1,5 @@
 import { orgAdminRequest } from "@/api/request";
+import { invalidateUserOrganizationsCache } from "@/api/user";
 import type {
   InviteCodeVO,
   JoinApplicationListDTO,
@@ -44,10 +45,11 @@ export async function getOrganizationInfo(): Promise<OrganizationInfoVO> {
 }
 
 export async function updateOrganizationInfo(dto: OrganizationUpdateDTO): Promise<void> {
-  return orgAdminRequest("/orgadmin/organizations", {
+  await orgAdminRequest("/orgadmin/organizations", {
     method: "PUT",
     body: JSON.stringify(dto),
   });
+  invalidateUserOrganizationsCache();
 }
 
 export async function getOrganizationMembers(

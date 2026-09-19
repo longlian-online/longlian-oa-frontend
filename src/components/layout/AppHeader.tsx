@@ -23,6 +23,7 @@ import { useUploadFile } from "@/hooks/useUploadFile";
 import { clearSession, isOrganizationAdmin } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import type { InviteInfoVO } from "@/types/auth";
+import OrganizationIdentity from "./OrganizationIdentity";
 
 const subMenus: Record<string, { to: string; label: string }[]> = {
   "/dashboard/planning": [
@@ -70,6 +71,7 @@ export default function AppHeader() {
     : pathname.startsWith("/dashboard/workshop")
       ? "/dashboard/planning"
       : "/" + pathname.split("/").slice(1, 3).join("/");
+  const isWorkshop = pathname.startsWith("/dashboard/workshop");
   const items =
     section === "/dashboard/org-admin" && !isOrganizationAdmin() ? [] : (subMenus[section] ?? []);
 
@@ -149,7 +151,7 @@ export default function AppHeader() {
 
   return (
     <header className="border-border bg-background grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b px-4">
-      <div />
+      <div className="min-w-0">{isWorkshop && <OrganizationIdentity />}</div>
 
       <nav className="flex items-center gap-1">
         {items.map(({ to, label }) => (
