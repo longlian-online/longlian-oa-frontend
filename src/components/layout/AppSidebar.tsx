@@ -105,7 +105,7 @@ export default function AppSidebar() {
                       cn(
                         "flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
                         isNavActive || isActive
-                          ? "bg-foreground text-background font-medium"
+                          ? "bg-primary text-primary-foreground font-medium"
                           : "text-muted-foreground hover:bg-secondary hover:text-foreground",
                       )
                     }
@@ -121,7 +121,7 @@ export default function AppSidebar() {
                       className={cn(
                         "-ml-10 mr-1 flex size-7 items-center justify-center rounded-md transition-colors",
                         isActive
-                          ? "text-background/70 hover:bg-background/10 hover:text-background"
+                          ? "text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
                           : "text-muted-foreground hover:bg-secondary hover:text-foreground",
                       )}
                       onClick={() => setIsOrganizationMenuOpen((open) => !open)}
@@ -135,7 +135,7 @@ export default function AppSidebar() {
                   )}
                 </div>
                 {hasChildren && isOrganizationMenuOpen && (
-                  <div className="ml-6 border-l border-border py-1 pl-3">
+                  <div className="ml-6 flex flex-col gap-1 border-l border-border py-1 pl-3">
                     {item.children.map((child) => (
                       <NavLink
                         key={child.to}

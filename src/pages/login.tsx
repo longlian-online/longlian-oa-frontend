@@ -130,7 +130,10 @@ export default function LoginPage() {
             </TabsList>
 
             {/* Password Login */}
-            <TabsContent value="password" className={tabPanelClassName}>
+            <TabsContent
+              value="password"
+              className={activeTab === "password" ? tabPanelClassName : undefined}
+            >
               <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-xs text-muted-foreground">
@@ -194,7 +197,10 @@ export default function LoginPage() {
             </TabsContent>
 
             {/* Code Login */}
-            <TabsContent value="code" className={tabPanelClassName}>
+            <TabsContent
+              value="code"
+              className={activeTab === "code" ? tabPanelClassName : undefined}
+            >
               <form onSubmit={codeForm.handleSubmit(onCodeSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-xs text-muted-foreground">

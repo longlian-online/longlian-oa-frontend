@@ -6,15 +6,10 @@ import routes from "~react-pages";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import PageTransition from "@/components/layout/PageTransition";
 import TipProvider from "@/components/tip";
+import { applyTheme, getStoredTheme } from "@/lib/theme";
 import "./index.css";
 
-const theme = localStorage.getItem("theme");
-if (theme === "dark" || (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-  document.documentElement.classList.add("dark");
-  document.documentElement.dataset.theme = "dark";
-} else {
-  document.documentElement.dataset.theme = "light";
-}
+applyTheme(getStoredTheme());
 
 function App() {
   const location = useLocation();

@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent } from "react";
-import { Bell, LogOut, Pencil, Plus, UserRound } from "lucide-react";
+import { Bell, Check, LogOut, Pencil, Plus, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 
 import { logout } from "@/api/auth";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useTheme } from "@/hooks/useTheme";
 import { useUploadFile } from "@/hooks/useUploadFile";
 import { clearSession, isOrganizationAdmin } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,12 @@ const subMenus: Record<string, { to: string; label: string }[]> = {
   ],
 };
 
+const themeOptions = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "pink", label: "Pink" },
+] as const;
+
 function isSubMenuActive(pathname: string, targetPath: string): boolean {
   return pathname === targetPath || pathname.startsWith(`${targetPath}/`);
 }
@@ -48,6 +55,7 @@ export default function AppHeader() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, roles, refresh } = useCurrentUser();
+  const { theme, setTheme } = useTheme();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const { uploading: isUploadingAvatar, uploadFile } = useUploadFile();
   const [isJoinOpen, setIsJoinOpen] = useState(false);
@@ -220,6 +228,27 @@ export default function AppHeader() {
               </div>
             </div>
             <div className="my-1 border-t border-border" />
+            <div className="px-2 py-2">
+              <div className="mb-1.5 text-xs text-muted-foreground">主题</div>
+              <div className="grid grid-cols-3 gap-1">
+                {themeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={cn(
+                      "flex items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-xs transition-colors",
+                      theme === option.value
+                        ? "bg-secondary font-medium text-foreground"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                    )}
+                    onClick={() => setTheme(option.value)}
+                  >
+                    {theme === option.value && <Check className="h-3 w-3" />}
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <Button
               variant="ghost"
               className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"

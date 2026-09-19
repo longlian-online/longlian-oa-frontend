@@ -61,7 +61,7 @@ export default function AdminLayout({ children, title, description }: AdminLayou
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
                 location.pathname === to || location.pathname.startsWith(`${to}/`)
-                  ? "bg-foreground text-background font-medium"
+                  ? "bg-primary text-primary-foreground font-medium"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground",
               )}
             >
