@@ -704,25 +704,6 @@
         "required": ["name"],
         "type": "object"
       },
-      "ResultVoid": {
-        "description": "通用返回结果",
-        "properties": {
-          "code": {
-            "description": "状态码：0 为成功，非0即异常",
-            "format": "int32",
-            "type": "integer"
-          },
-          "data": {
-            "description": "业务数据（成功时返回，失败时为null）",
-            "type": "object"
-          },
-          "msg": {
-            "description": "操作提示信息",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "SessionContext": {
         "properties": {
           "orgId": {
@@ -1211,13 +1192,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -1460,13 +1434,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -1549,13 +1516,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -1671,13 +1631,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -1874,13 +1827,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -1896,8 +1842,8 @@
   ],
   "servers": [
     {
-      "description": "Generated server url",
-      "url": "http://sit.neo.oa.api.longlian.online"
+      "description": "Configured server URL",
+      "url": "https://sit.neo.oa.api.longlian.online/"
     }
   ],
   "tags": [

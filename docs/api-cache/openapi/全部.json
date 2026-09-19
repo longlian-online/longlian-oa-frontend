@@ -340,10 +340,6 @@
       "CreateFileReqDTO": {
         "description": "创建文件上传请求参数",
         "properties": {
-          "bizId": {
-            "description": "业务ID(用户ID/组织ID/任务ID)",
-            "type": "string"
-          },
           "bizType": {
             "description": "业务类型(avatar/cover/task_submit)",
             "pattern": "avatar|cover|task_submit",
@@ -372,7 +368,7 @@
             "type": "integer"
           }
         },
-        "required": ["bizId", "bizType", "fileExt", "fileMime", "fileName", "fileSize"],
+        "required": ["bizType", "fileExt", "fileMime", "fileName", "fileSize"],
         "type": "object"
       },
       "EmailCodeDTO": {
@@ -551,6 +547,23 @@
           }
         },
         "required": ["inviteCode"],
+        "type": "object"
+      },
+      "LocalFileReadDTO": {
+        "properties": {
+          "expires": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "key": {
+            "type": "string"
+          },
+          "signature": {
+            "pattern": "[0-9a-f]{64}",
+            "type": "string"
+          }
+        },
+        "required": ["expires", "key", "signature"],
         "type": "object"
       },
       "LoginByCodeDTO": {
@@ -1714,25 +1727,6 @@
           },
           "uploadUrl": {
             "description": "预签名上传地址",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "ResultVoid": {
-        "description": "通用返回结果",
-        "properties": {
-          "code": {
-            "description": "状态码：0 为成功，非0即异常",
-            "format": "int32",
-            "type": "integer"
-          },
-          "data": {
-            "description": "业务数据（成功时返回，失败时为null）",
-            "type": "object"
-          },
-          "msg": {
-            "description": "操作提示信息",
             "type": "string"
           }
         },
@@ -3908,22 +3902,22 @@
     },
     "/common/file/local": {
       "get": {
-        "description": "通过预签名 key 读取本地存储的文件内容，返回原始文件流",
+        "description": "通过带有效期和签名的链接读取文件，裸 key 不可读取",
         "operationId": "readLocalFile",
         "parameters": [
           {
             "in": "query",
-            "name": "key",
+            "name": "dto",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/LocalFileReadDTO"
             }
           }
         ],
         "responses": {
           "200": {
             "content": {
-              "*/*": {
+              "application/octet-stream": {
                 "schema": {
                   "format": "binary",
                   "type": "string"
@@ -3942,35 +3936,13 @@
         "parameters": [
           {
             "in": "query",
-            "name": "key",
+            "name": "dto",
             "required": true,
             "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "sessionContext",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/SessionContext"
+              "$ref": "#/components/schemas/LocalFileReadDTO"
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "items": {
-                  "format": "byte",
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "OK"
@@ -4247,13 +4219,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -4496,13 +4461,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -4585,13 +4543,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -4707,13 +4658,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -4910,13 +4854,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -4932,8 +4869,8 @@
   ],
   "servers": [
     {
-      "description": "Generated server url",
-      "url": "http://sit.neo.oa.api.longlian.online"
+      "description": "Configured server URL",
+      "url": "https://sit.neo.oa.api.longlian.online/"
     }
   ],
   "tags": [
