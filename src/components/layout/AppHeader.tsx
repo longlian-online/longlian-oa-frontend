@@ -25,10 +25,11 @@ import { cn } from "@/lib/utils";
 import type { InviteInfoVO } from "@/types/auth";
 import OrganizationIdentity from "./OrganizationIdentity";
 
-const subMenus: Record<string, { to: string; label: string }[]> = {
+const subMenus: Record<string, { to: string; label: string; adminOnly?: boolean }[]> = {
   "/dashboard/planning": [
     { to: "/dashboard/planning", label: "浏览" },
     { to: "/dashboard/workshop", label: "工坊" },
+    { to: "/dashboard/org-admin", label: "管理", adminOnly: true },
   ],
   "/dashboard/org-admin": [
     { to: "/dashboard/org-admin/projects", label: "企划" },
@@ -154,23 +155,25 @@ export default function AppHeader() {
       <div className="min-w-0">{isWorkshop && <OrganizationIdentity />}</div>
 
       <nav className="flex items-center gap-1">
-        {items.map(({ to, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end
-            className={() =>
-              cn(
-                "rounded-md px-3 py-1.5 text-sm transition-colors",
-                isSubMenuActive(pathname, to)
-                  ? "bg-secondary text-foreground font-medium"
-                  : "text-muted-foreground hover:text-foreground",
-              )
-            }
-          >
-            {label}
-          </NavLink>
-        ))}
+        {items
+          .filter((item) => !item.adminOnly || isOrganizationAdmin())
+          .map(({ to, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end
+              className={() =>
+                cn(
+                  "rounded-md px-3 py-1.5 text-sm transition-colors",
+                  isSubMenuActive(pathname, to)
+                    ? "bg-secondary text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground",
+                )
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
       </nav>
 
       <div className="flex items-center justify-end gap-1">
