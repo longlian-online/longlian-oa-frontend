@@ -10,6 +10,7 @@ import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
+import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,12 +35,6 @@ import type { AdminInviteCodeVO, AdminOrganizationVO } from "@/types/admin";
 import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
 
 const PAGE_SIZE = 10;
-
-function formatDate(value?: string): string {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("zh-CN");
-}
 
 export default function AdminOrganizationsPage() {
   const [organizations, setOrganizations] = useState<AdminOrganizationVO[]>([]);

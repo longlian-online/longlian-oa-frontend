@@ -5,16 +5,11 @@ import { createJoinInviteCode } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
+import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import type { InviteCodeVO } from "@/types/organizationAdmin";
 
 const INVITE_STORAGE_KEY = "organization-admin:join-invite";
-
-function formatDate(value?: string): string {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("zh-CN");
-}
 
 function readStoredInvite(): InviteCodeVO | null {
   const rawInvite = sessionStorage.getItem(INVITE_STORAGE_KEY);

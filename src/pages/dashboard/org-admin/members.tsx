@@ -36,6 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useConfirm } from "@/hooks/useConfirm";
+import { formatDate } from "@/lib/format";
 import type {
   MemberSubmitCountVO,
   OrganizationMemberListDTO,
@@ -43,12 +44,6 @@ import type {
 } from "@/types/organizationAdmin";
 
 const PAGE_SIZE = 10;
-
-function formatDate(value?: string): string {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("zh-CN");
-}
 
 function memberName(member: OrganizationMemberVO): string {
   return member.nickname || member.username || member.userId;

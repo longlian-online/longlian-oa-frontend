@@ -7,6 +7,7 @@ import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
+import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,12 +31,6 @@ function getStatusLabel(status: AdminProjectStatus): string {
   if (status === "已完成") return "已完成";
   if (status === "已归档") return "已归档";
   return "进行中";
-}
-
-function formatDate(value?: string): string {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("zh-CN");
 }
 
 function OrganizationAdminProjectsContent() {

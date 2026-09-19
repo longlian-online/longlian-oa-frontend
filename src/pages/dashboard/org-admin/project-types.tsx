@@ -32,15 +32,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useConfirm } from "@/hooks/useConfirm";
+import { formatDate } from "@/lib/format";
 import type { OrganizationResourceStatus, ProjectTypeVO } from "@/types/organizationAdmin";
 
 const PAGE_SIZE = 10;
-
-function formatDate(value?: string): string {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("zh-CN");
-}
 
 function OrganizationProjectTypesContent() {
   const confirm = useConfirm();
@@ -228,7 +223,7 @@ function OrganizationProjectTypesContent() {
                         {type.creatorNickname || "—"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {formatDate(type.createdAt)}
+                        {formatDate(type.createdAt, false)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={disabled ? "secondary" : "outline"}>

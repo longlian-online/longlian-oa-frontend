@@ -73,6 +73,15 @@ export default function ProjectDetail() {
     }
   }
 
+  async function handleShare(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      $tip("企划链接已复制", "success");
+    } catch {
+      $tip("复制链接失败，请手动复制当前地址", "error");
+    }
+  }
+
   if (loading) {
     return <div className="py-8 text-center text-muted-foreground">加载中...</div>;
   }
@@ -126,7 +135,12 @@ export default function ProjectDetail() {
             )}
             {project.inWorkshop ? "移出工坊" : "添加到工坊"}
           </Button>
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={() => void handleShare()}
+          >
             <Share2 className="h-4 w-4" />
             分享
           </Button>

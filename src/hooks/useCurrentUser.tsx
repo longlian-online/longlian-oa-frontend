@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 import { getCurrentUser } from "@/api/user";
 import { getSessionRoles, getToken } from "@/lib/session";
@@ -13,7 +13,9 @@ interface UseCurrentUserResult {
   refresh: () => Promise<void>;
 }
 
-export function useCurrentUser(): UseCurrentUserResult {
+const CurrentUserContext = createContext<UseCurrentUserResult | null>(null);
+
+function useCurrentUserState(): UseCurrentUserResult {
   const [user, setUser] = useState<UserInfoVO | null>(null);
   const [roles, setRoles] = useState<string[]>(getSessionRoles);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,4 +56,17 @@ export function useCurrentUser(): UseCurrentUserResult {
     error,
     refresh,
   };
+}
+
+export function CurrentUserProvider({ children }: { children: ReactNode }) {
+  const value = useCurrentUserState();
+  return <CurrentUserContext.Provider value={value}>{children}</CurrentUserContext.Provider>;
+}
+
+export function useCurrentUser(): UseCurrentUserResult {
+  const context = useContext(CurrentUserContext);
+  if (!context) {
+    throw new Error("useCurrentUser must be used within CurrentUserProvider");
+  }
+  return context;
 }
