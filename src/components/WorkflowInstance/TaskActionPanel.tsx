@@ -9,6 +9,7 @@ interface TaskActionPanelProps {
   currentUserId?: string | null;
   mutatingInstanceId?: string | null;
   canSubmit: (instance: ItemTaskInstanceVO) => boolean;
+  canManageCompletedTask: (instance: ItemTaskInstanceVO) => boolean;
   onSubmit: (instance: ItemTaskInstanceVO) => void;
   onClaim: (instanceId: string) => void;
   onAbandon: (instanceId: string) => void;
@@ -34,6 +35,7 @@ export default function TaskActionPanel({
   currentUserId,
   mutatingInstanceId,
   canSubmit,
+  canManageCompletedTask,
   onSubmit,
   onClaim,
   onAbandon,
@@ -108,22 +110,26 @@ export default function TaskActionPanel({
                       <Eye className="h-3 w-3" />
                       详情
                     </Button>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      disabled={isMutating}
-                      onClick={() => onReset(instance.id)}
-                    >
-                      重置
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="destructive"
-                      disabled={isMutating}
-                      onClick={() => onReject(instance)}
-                    >
-                      打回
-                    </Button>
+                    {canManageCompletedTask(instance) && (
+                      <>
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          disabled={isMutating}
+                          onClick={() => onReset(instance.id)}
+                        >
+                          重置
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="destructive"
+                          disabled={isMutating}
+                          onClick={() => onReject(instance)}
+                        >
+                          打回
+                        </Button>
+                      </>
+                    )}
                   </>
                 )}
               </div>

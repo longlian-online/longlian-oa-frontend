@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTheme } from "@/hooks/useTheme";
 import { useUploadFile } from "@/hooks/useUploadFile";
-import { clearSession, isOrganizationAdmin } from "@/lib/session";
+import { clearSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import type { InviteInfoVO } from "@/types/auth";
 import OrganizationIdentity from "./OrganizationIdentity";
@@ -74,7 +74,9 @@ export default function AppHeader() {
       : "/" + pathname.split("/").slice(1, 3).join("/");
   const isWorkshop = pathname.startsWith("/dashboard/workshop");
   const items =
-    section === "/dashboard/org-admin" && !isOrganizationAdmin() ? [] : (subMenus[section] ?? []);
+    section === "/dashboard/org-admin" && !roles.includes("ORG_ADMIN")
+      ? []
+      : (subMenus[section] ?? []);
 
   const handleJoinOrganization = async (): Promise<void> => {
     const normalizedInviteCode = inviteCode.trim();
@@ -156,7 +158,7 @@ export default function AppHeader() {
 
       <nav className="flex items-center gap-1">
         {items
-          .filter((item) => !item.adminOnly || isOrganizationAdmin())
+          .filter((item) => !item.adminOnly || roles.includes("ORG_ADMIN"))
           .map(({ to, label }) => (
             <NavLink
               key={to}

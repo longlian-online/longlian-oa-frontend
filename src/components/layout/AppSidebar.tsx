@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BookOpen, ChevronDown, ChevronRight, Settings2 } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 
-import { isOrganizationAdmin } from "@/lib/session";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/utils";
 import OrganizationIdentity from "./OrganizationIdentity";
 
@@ -38,7 +38,8 @@ function isPathActive(pathname: string, prefixes: readonly string[]): boolean {
 
 export default function AppSidebar() {
   const { pathname } = useLocation();
-  const isOrgAdmin = isOrganizationAdmin();
+  const { roles } = useCurrentUser();
+  const isOrgAdmin = roles.includes("ORG_ADMIN");
   const [isOrganizationMenuOpen, setIsOrganizationMenuOpen] = useState(true);
 
   return (

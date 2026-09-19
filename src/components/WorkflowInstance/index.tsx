@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getUserId } from "@/lib/session";
 import type {
   ItemTaskFlowVO,
@@ -65,6 +66,7 @@ function isNodeUnlocked(node: ItemTaskNodeVO, nodes: ItemTaskNodeVO[]): boolean 
 export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const currentUserId = getUserId();
+  const { roles } = useCurrentUser();
   const [workflowState, sendWorkflowEvent] = useMachine(workflowInstanceMachine);
   const [taskFlow, setTaskFlow] = useState<ItemTaskFlowVO | null>(null);
   const [instances, setInstances] = useState<ItemTaskInstanceVO[]>([]);
@@ -104,15 +106,17 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     instanceId: string,
     action: () => Promise<void>,
     successMessage: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       sendWorkflowEvent({ type: "MUTATE", instanceId });
       await action();
       $tip(successMessage, "success");
       await loadData(true);
+      return true;
     } catch (error) {
       $tip(error instanceof Error ? error.message : "任务操作失败", "error");
       sendWorkflowEvent({ type: "ACTION_FAILED" });
+      return false;
     }
   }
 
@@ -128,27 +132,43 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     });
   }
 
-  async function handleSubmit(metadata: Record<string, unknown>): Promise<void> {
-    if (!submitTarget) return;
+  async function handleSubmit(metadata: Record<string, unknown>): Promise<boolean> {
+    if (!submitTarget) return false;
 
-    await runInstanceAction(
+    const succeeded = await runInstanceAction(
       submitTarget.instance.id,
       () => submitTask(submitTarget.instance.id, { metadata: JSON.stringify(metadata) }),
       "任务已提交",
     );
-    setSubmitTarget(null);
+    if (succeeded) setSubmitTarget(null);
+    return succeeded;
   }
 
   async function handleReject(): Promise<void> {
     if (!rejectTarget || !rejectComment.trim()) return;
 
-    await runInstanceAction(
+    const succeeded = await runInstanceAction(
       rejectTarget.id,
       () => rejectTask(rejectTarget.id, { reviewComment: rejectComment.trim() }),
       "任务已打回",
     );
-    setRejectTarget(null);
-    setRejectComment("");
+    if (succeeded) {
+      setRejectTarget(null);
+      setRejectComment("");
+    }
+  }
+
+  function canManageCompletedTask(instance: ItemTaskInstanceVO): boolean {
+    if (roles.includes("ORG_ADMIN")) return true;
+
+    const nextStage = taskFlow?.nodes
+      .filter((node) => node.sort > instance.sort)
+      .sort((prev, next) => prev.sort - next.sort)[0]?.sort;
+    if (nextStage === undefined) return false;
+
+    return instances.some(
+      (candidate) => candidate.sort === nextStage && candidate.assigneeId === currentUserId,
+    );
   }
 
   async function handleViewDetail(instance: ItemTaskInstanceVO): Promise<void> {
@@ -235,6 +255,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
           void runInstanceAction(instanceId, () => claimTask(instanceId), "任务已接取")
         }
         onSubmit={(instance) => openSubmit(instance)}
+        canManageCompletedTask={canManageCompletedTask}
         onAbandon={(instanceId) => void handleAbandon(instanceId)}
         onReject={setRejectTarget}
         onReset={(instanceId) => void handleReset(instanceId)}
