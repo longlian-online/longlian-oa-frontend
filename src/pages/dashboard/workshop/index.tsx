@@ -7,7 +7,6 @@ import EmptyState from "@/components/EmptyState";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
 import { WorkshopProjectCard } from "@/components/Workshop";
-import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { showApiError } from "@/lib/apiError";
 import { isOrganizationAdmin } from "@/lib/session";
 import type { WorkshopProjectInfoVO } from "@/types/workshop";
 
@@ -53,7 +53,7 @@ export default function WorkshopPage() {
       setProjects(data.list);
       setTotal(data.total);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "工坊企划加载失败", "error");
+      showApiError(error, "工坊企划加载失败");
     } finally {
       setLoading(false);
     }

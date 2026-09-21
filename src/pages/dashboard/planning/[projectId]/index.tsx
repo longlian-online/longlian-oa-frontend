@@ -37,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
+import { showApiError } from "@/lib/apiError";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 import { isOrganizationAdmin } from "@/lib/session";
 import type { UploadedFileInfo } from "@/types/file";
@@ -86,7 +87,7 @@ export default function ProjectDetail() {
       const data = await getProjectDetail(projectId!);
       setProject(data);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划加载失败", "error");
+      showApiError(error, "企划加载失败");
     } finally {
       setLoading(false);
     }
@@ -120,7 +121,7 @@ export default function ProjectDetail() {
       setEditOpen(false);
       await loadProjectDetail();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划更新失败", "error");
+      showApiError(error, "企划更新失败");
     } finally {
       setSaving(false);
     }
@@ -149,7 +150,7 @@ export default function ProjectDetail() {
       }
       await loadProjectDetail();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "工坊状态更新失败", "error");
+      showApiError(error, "工坊状态更新失败");
     } finally {
       setWorkshopLoading(false);
     }
@@ -172,7 +173,7 @@ export default function ProjectDetail() {
       $tip("企划已禁用", "success");
       void navigate("/dashboard/planning", { replace: true });
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "禁用企划失败", "error");
+      showApiError(error, "禁用企划失败");
     } finally {
       setDisablingProject(false);
     }

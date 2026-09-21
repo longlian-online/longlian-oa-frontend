@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { loginByPassword, loginByCode, sendVerificationCode } from "@/api/auth";
 import { $tip } from "@/components/tip";
+import { showApiError } from "@/lib/apiError";
 import { saveSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -27,13 +28,25 @@ const codeSchema = z.object({
 type PasswordFormData = z.infer<typeof passwordSchema>;
 type CodeFormData = z.infer<typeof codeSchema>;
 
+interface LoginLocationState {
+  from?: {
+    pathname: string;
+    search?: string;
+  };
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [activeTab, setActiveTab] = useState<"password" | "code">("password");
   const [tabDirection, setTabDirection] = useState<"left" | "right">("right");
+  const fromState = location.state as LoginLocationState | null;
+  const redirectTo = fromState?.from?.pathname
+    ? `${fromState.from.pathname}${fromState.from.search ?? ""}`
+    : "/dashboard/planning";
 
   const passwordForm = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
@@ -64,9 +77,9 @@ export default function LoginPage() {
       const result = await loginByPassword(data);
       saveSession(result);
       $tip("登录成功", "success");
-      void navigate("/dashboard/planning");
+      void navigate(redirectTo, { replace: true });
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "登录失败", "error");
+      showApiError(error, "登录失败");
     } finally {
       setIsLoading(false);
     }
@@ -78,9 +91,9 @@ export default function LoginPage() {
       const result = await loginByCode(data);
       saveSession(result);
       $tip("登录成功", "success");
-      void navigate("/dashboard/planning");
+      void navigate(redirectTo, { replace: true });
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "登录失败", "error");
+      showApiError(error, "登录失败");
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +118,7 @@ export default function LoginPage() {
         });
       }, 1000);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "发送验证码失败", "error");
+      showApiError(error, "发送验证码失败");
     }
   };
 

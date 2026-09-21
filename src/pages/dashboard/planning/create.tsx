@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { showApiError } from "@/lib/apiError";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
 import type { UploadedFileInfo } from "@/types/file";
@@ -83,7 +84,7 @@ export default function CreateProject() {
       $tip("企划创建成功", "success");
       void navigate("/dashboard/planning");
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "创建失败，请重试", "error");
+      showApiError(error, "创建失败，请重试");
     } finally {
       setLoading(false);
     }

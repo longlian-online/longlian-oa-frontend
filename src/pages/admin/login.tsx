@@ -10,6 +10,7 @@ import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { showApiError } from "@/lib/apiError";
 import { saveAdminSession } from "@/lib/session";
 
 const adminLoginSchema = z.object({
@@ -40,7 +41,7 @@ export default function AdminLoginPage() {
       $tip("管理员登录成功", "success");
       void navigate("/admin", { replace: true });
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "管理员登录失败", "error");
+      showApiError(error, "管理员登录失败");
     } finally {
       setIsLoading(false);
     }

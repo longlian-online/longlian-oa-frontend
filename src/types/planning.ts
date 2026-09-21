@@ -71,9 +71,3 @@ export interface PageResult<T> {
   pageSize: number;
   hasNext: boolean;
 }
-
-export interface ApiResult<T> {
-  code: number;
-  msg?: string;
-  data?: T;
-}

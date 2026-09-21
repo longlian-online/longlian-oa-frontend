@@ -1,14 +1,26 @@
+import { useSyncExternalStore } from "react";
 import { Navigate, useNavigate } from "react-router";
 import { ShieldCheck } from "lucide-react";
 
 import { adminLogout } from "@/api/auth";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
-import { clearAdminSession, getAdminRole, getAdminToken, getAdminUsername } from "@/lib/session";
+import { showApiError } from "@/lib/apiError";
+import {
+  clearAdminSession,
+  getAdminRole,
+  getAdminToken,
+  getAdminUsername,
+  subscribeSession,
+} from "@/lib/session";
 
 export default function AdminHomePage() {
   const navigate = useNavigate();
-  const token = getAdminToken();
+  const token = useSyncExternalStore(
+    subscribeSession,
+    () => getAdminToken(),
+    () => null,
+  );
   const username = getAdminUsername();
   const role = getAdminRole();
 
@@ -21,7 +33,7 @@ export default function AdminHomePage() {
       await adminLogout();
       $tip("管理员已退出登录", "success");
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "退出登录失败", "error");
+      showApiError(error, "退出登录失败");
     } finally {
       clearAdminSession();
       void navigate("/admin/login", { replace: true });

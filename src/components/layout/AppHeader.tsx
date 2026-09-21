@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useUploadFile } from "@/hooks/useUploadFile";
+import { showApiError } from "@/lib/apiError";
 import { clearSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -62,7 +63,7 @@ export default function AppHeader() {
       setInviteCode("");
       setIsJoinOpen(false);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "加入组织失败", "error");
+      showApiError(error, "加入组织失败");
     } finally {
       setIsJoining(false);
     }
@@ -74,7 +75,7 @@ export default function AppHeader() {
       await logout();
       $tip("已退出登录", "success");
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "退出登录失败", "error");
+      showApiError(error, "退出登录失败");
     } finally {
       clearSession();
       setIsLoggingOut(false);

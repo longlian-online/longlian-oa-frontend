@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useConfirm } from "@/hooks/useConfirm";
+import { showApiError } from "@/lib/apiError";
 import { cn } from "@/lib/utils";
 import type {
   ProjectItemListVO,
@@ -152,7 +153,7 @@ export default function ProjectItemSection({
       setItems(data.list);
       setTotal(data.total);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目列表加载失败", "error");
+      showApiError(error, "项目列表加载失败");
     } finally {
       setLoading(false);
     }
@@ -164,7 +165,7 @@ export default function ProjectItemSection({
       const data = await getTaskTemplateOptions();
       setTemplates(data);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "流程模板加载失败", "error");
+      showApiError(error, "流程模板加载失败");
     } finally {
       setTemplateLoading(false);
     }
@@ -190,7 +191,7 @@ export default function ProjectItemSection({
       await loadItems();
       await onChanged?.();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目创建失败", "error");
+      showApiError(error, "项目创建失败");
     } finally {
       setSaving(false);
     }
@@ -215,7 +216,7 @@ export default function ProjectItemSection({
       }
       await onChanged?.();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目删除失败", "error");
+      showApiError(error, "项目删除失败");
     } finally {
       setMutatingItemId(null);
     }
@@ -236,7 +237,7 @@ export default function ProjectItemSection({
       await loadItems();
       await onChanged?.();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目发布失败", "error");
+      showApiError(error, "项目发布失败");
     } finally {
       setMutatingItemId(null);
     }

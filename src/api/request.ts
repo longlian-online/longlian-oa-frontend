@@ -1,13 +1,16 @@
-import {
-  clearAdminSession,
-  clearSession,
-  getAdminToken,
-  getCurrentOrgId,
-  getToken,
-} from "@/lib/session";
-import type { ApiResult } from "@/types/planning";
+import { ApiError } from "@/lib/apiError";
+import { handleUnauthorized } from "@/lib/authRedirect";
+import { getAdminToken, getCurrentOrgId, getToken } from "@/lib/session";
+import type { ApiResult, SessionScope } from "@/types/api";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const API_CODE_SUCCESS = 0;
+const API_CODE_UNAUTHORIZED = 1;
+
+export interface RequestOptions extends RequestInit {
+  auth?: SessionScope;
+  redirectOnUnauthorized?: boolean;
+}
 
 function parseApiResponse<T>(responseText: string): ApiResult<T> | T {
   // Snowflake IDs exceed JavaScript's safe integer range. Preserve matching ID fields
@@ -24,78 +27,72 @@ export function buildApiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }
 
-export async function request<T>(url: string, options?: RequestInit): Promise<T> {
+export async function request<T>(url: string, options?: RequestOptions): Promise<T> {
   return requestWithBase("/app", url, options);
 }
 
-export async function adminRequest<T>(url: string, options?: RequestInit): Promise<T> {
-  return requestWithBase("", url, options, getAdminToken(), clearAdminSession, false);
+export async function adminRequest<T>(url: string, options?: RequestOptions): Promise<T> {
+  return requestWithBase("", url, { auth: "admin", ...options });
 }
 
-export async function orgAdminRequest<T>(url: string, options?: RequestInit): Promise<T> {
+export async function orgAdminRequest<T>(url: string, options?: RequestOptions): Promise<T> {
   return requestWithBase("", url, options);
 }
 
-export async function commonRequest<T>(url: string, options?: RequestInit): Promise<T> {
+export async function commonRequest<T>(url: string, options?: RequestOptions): Promise<T> {
   return requestWithBase("/common", url, options);
 }
 
 async function requestWithBase<T>(
   basePath: string,
   url: string,
-  options?: RequestInit,
-  overrideToken?: string | null,
-  onUnauthorized: () => void = clearSession,
-  includeOrgContext = true,
+  options?: RequestOptions,
 ): Promise<T> {
-  const token = getToken();
+  const { auth = "user", redirectOnUnauthorized = true, ...init } = options ?? {};
+  const isAdminScope = auth === "admin";
+  const token = isAdminScope ? getAdminToken() : getToken();
   const currentOrgId = getCurrentOrgId();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options?.headers as Record<string, string>),
+    ...(init.headers as Record<string, string>),
   };
 
-  const authToken = overrideToken === undefined ? token : overrideToken;
-  if (authToken) {
-    headers.Authorization = `Bearer ${authToken}`;
+  if (auth !== "none" && token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
-  if (includeOrgContext && currentOrgId) {
+  if (auth === "user" && currentOrgId) {
     headers["X-Org-Id"] = currentOrgId;
   }
 
-  const response = await fetch(buildApiUrl(`${basePath}${url}`), {
-    ...options,
-    headers,
-  });
-
-  if (response.status === 401) {
-    onUnauthorized();
-    throw new Error("登录已过期，请重新登录");
-  }
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
+  const response = await fetch(buildApiUrl(`${basePath}${url}`), { ...init, headers });
 
   const responseText = await response.text();
-  if (!responseText) {
-    return undefined as T;
-  }
-
-  const result = parseApiResponse<T>(responseText);
+  const result = responseText ? parseApiResponse<T>(responseText) : undefined;
 
   if (isApiResult(result)) {
-    if (result.code !== 0) {
-      throw new Error(result.msg || `API error: ${result.code}`);
+    if (result.code === API_CODE_UNAUTHORIZED && auth !== "none" && redirectOnUnauthorized) {
+      throw handleUnauthorized(isAdminScope ? "admin" : "user");
+    }
+
+    if (result.code !== API_CODE_SUCCESS) {
+      throw new ApiError(result.msg || `API error: ${result.code}`, result.code);
     }
 
     return result.data as T;
   }
 
-  return result;
+  if (response.status === 401 && auth !== "none" && redirectOnUnauthorized) {
+    throw handleUnauthorized(isAdminScope ? "admin" : "user");
+  }
+
+  if (!response.ok) {
+    throw new ApiError(`API error: ${response.status}`, response.status);
+  }
+
+  return result as T;
 }
 
-function isApiResult<T>(result: ApiResult<T> | T): result is ApiResult<T> {
+function isApiResult<T>(result: unknown): result is ApiResult<T> {
   return typeof result === "object" && result !== null && "code" in result;
 }

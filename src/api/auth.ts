@@ -17,6 +17,7 @@ import type {
 export async function loginByPassword(dto: LoginByPwdDTO): Promise<LoginVO> {
   return request("/session/pwd", {
     method: "POST",
+    auth: "none",
     body: JSON.stringify(dto),
   });
 }
@@ -28,6 +29,7 @@ export async function loginByPassword(dto: LoginByPwdDTO): Promise<LoginVO> {
 export async function loginByCode(dto: LoginByCodeDTO): Promise<LoginVO> {
   return request("/session/email", {
     method: "POST",
+    auth: "none",
     body: JSON.stringify(dto),
   });
 }
@@ -39,6 +41,7 @@ export async function loginByCode(dto: LoginByCodeDTO): Promise<LoginVO> {
 export async function sendVerificationCode(dto: EmailCodeDTO): Promise<void> {
   return request("/session/email/code", {
     method: "POST",
+    auth: "none",
     body: JSON.stringify(dto),
   });
 }
@@ -50,6 +53,7 @@ export async function sendVerificationCode(dto: EmailCodeDTO): Promise<void> {
 export async function resetPassword(dto: ResetPasswordDTO): Promise<void> {
   return request("/user/password", {
     method: "PUT",
+    auth: "none",
     body: JSON.stringify(dto),
   });
 }
@@ -57,6 +61,7 @@ export async function resetPassword(dto: ResetPasswordDTO): Promise<void> {
 export async function registerJoinOrganization(dto: RegisterByInviteDTO): Promise<void> {
   return request("/user/register/join-organization", {
     method: "POST",
+    auth: "none",
     body: JSON.stringify(dto),
   });
 }
@@ -64,6 +69,7 @@ export async function registerJoinOrganization(dto: RegisterByInviteDTO): Promis
 export async function registerCreateOrganization(dto: RegisterByInviteDTO): Promise<void> {
   return request("/user/register/create-organization", {
     method: "POST",
+    auth: "none",
     body: JSON.stringify(dto),
   });
 }
@@ -77,6 +83,7 @@ export async function logout(): Promise<void> {
 export async function adminLogin(dto: AdminLoginDTO): Promise<AdminLoginVO> {
   return adminRequest("/admin/session", {
     method: "POST",
+    auth: "none",
     body: JSON.stringify(dto),
   });
 }

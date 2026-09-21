@@ -12,6 +12,7 @@ import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/hooks/useConfirm";
+import { showApiError } from "@/lib/apiError";
 import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 
 const PAGE_SIZE = 8;
@@ -42,7 +43,7 @@ function WorkshopWorkflowsPageContent() {
       setTemplates(data.list);
       setTotal(data.total);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "工作流模板加载失败", "error");
+      showApiError(error, "工作流模板加载失败");
     } finally {
       setLoading(false);
     }
@@ -74,7 +75,7 @@ function WorkshopWorkflowsPageContent() {
       $tip("工作流已禁用", "success");
       await loadTemplates();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "禁用工作流失败", "error");
+      showApiError(error, "禁用工作流失败");
     } finally {
       setDisablingTemplateId(null);
     }

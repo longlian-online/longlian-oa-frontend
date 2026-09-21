@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { getProjectTypes } from "@/api/planning";
-import { $tip } from "@/components/tip";
+import { showApiError } from "@/lib/apiError";
 import type { ProjectTypeInfoVO } from "@/types/planning";
 
 interface UseProjectTypesResult {
@@ -21,7 +21,7 @@ export function useProjectTypes(): UseProjectTypesResult {
       setProjectTypes(data);
     } catch (error) {
       setProjectTypes([]);
-      $tip(error instanceof Error ? error.message : "企划类型加载失败", "error");
+      showApiError(error, "企划类型加载失败");
     } finally {
       setLoading(false);
     }

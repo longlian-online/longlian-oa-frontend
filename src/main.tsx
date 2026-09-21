@@ -3,6 +3,7 @@ import "@xyflow/react/dist/style.css";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, useLocation, useRoutes } from "react-router";
 import routes from "~react-pages";
+import AuthNavigationBridge from "@/components/AuthNavigationBridge";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import PageTransition from "@/components/layout/PageTransition";
 import TipProvider from "@/components/tip";
@@ -32,6 +33,7 @@ createRoot(document.getElementById("app")!).render(
     <TipProvider />
     <ConfirmDialogProvider>
       <BrowserRouter>
+        <AuthNavigationBridge />
         <App />
       </BrowserRouter>
     </ConfirmDialogProvider>
