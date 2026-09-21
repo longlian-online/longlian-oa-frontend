@@ -13,6 +13,7 @@ export class ApiError extends Error {
 
 export function showApiError(error: unknown, fallback: string): void {
   if (error instanceof UnauthorizedError) {
+    //Request层把错误包装成UnauthorizedError时直接返回, 不重复Toast
     return;
   }
 
