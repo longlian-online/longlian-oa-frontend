@@ -26,6 +26,10 @@ function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     return items;
   }
 
+  if (segments[1] === "organization" && segments[2] === "members") {
+    return [{ label: "组织管理", to: "/dashboard/organization/members" }, { label: "用户管理" }];
+  }
+
   if (segments[1] === "workshop") {
     const items: BreadcrumbItem[] = [{ label: "工坊", to: "/dashboard/workshop" }];
     if (segments[2] === "tasks") items.push({ label: "原子任务" });

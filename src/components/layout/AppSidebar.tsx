@@ -1,7 +1,8 @@
-import { Bell, BookOpen } from "lucide-react";
+import { Bell, BookOpen, Users } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 
 import { cn } from "@/lib/utils";
+import { isOrganizationAdmin } from "@/lib/session";
 
 const navItems = [
   {
@@ -11,6 +12,13 @@ const navItems = [
     activePrefixes: ["/dashboard/planning", "/dashboard/workshop"],
   },
 ] as const;
+
+const organizationAdminNavItem = {
+  to: "/dashboard/organization/members",
+  label: "组织管理",
+  icon: Users,
+  activePrefixes: ["/dashboard/organization"],
+};
 
 function isPathActive(pathname: string, prefixes: readonly string[]): boolean {
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
@@ -32,23 +40,25 @@ export default function AppSidebar() {
       </div>
 
       <nav className="flex-1 space-y-0.5 px-3 py-3">
-        {navItems.map(({ to, label, icon: Icon, activePrefixes }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-                isActive || isPathActive(pathname, activePrefixes)
-                  ? "bg-foreground text-background font-medium"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-              )
-            }
-          >
-            <Icon className="h-4 w-4 shrink-0" />
-            {label}
-          </NavLink>
-        ))}
+        {(isOrganizationAdmin() ? [...navItems, organizationAdminNavItem] : navItems).map(
+          ({ to, label, icon: Icon, activePrefixes }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+                  isActive || isPathActive(pathname, activePrefixes)
+                    ? "bg-foreground text-background font-medium"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                )
+              }
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              {label}
+            </NavLink>
+          ),
+        )}
       </nav>
     </aside>
   );

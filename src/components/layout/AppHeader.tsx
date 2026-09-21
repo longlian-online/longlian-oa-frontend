@@ -1,9 +1,9 @@
 import { useRef, useState, type ChangeEvent } from "react";
-import { Bell, LogOut, Pencil, Plus, UserRound } from "lucide-react";
+import { Bell, KeyRound, LogOut, Pencil, Plus, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 
 import { logout } from "@/api/auth";
-import { joinOrganizationByInvite, updateMyInfo } from "@/api/user";
+import { changePassword, joinOrganizationByInvite, updateMyInfo } from "@/api/user";
 import { $tip } from "@/components/tip";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useUploadFile } from "@/hooks/useUploadFile";
 import { clearSession } from "@/lib/session";
@@ -43,6 +44,10 @@ export default function AppHeader() {
   const [inviteCode, setInviteCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const section = pathname.startsWith("/dashboard/workshop")
     ? "/dashboard/planning"
     : "/" + pathname.split("/").slice(1, 3).join("/");
@@ -65,6 +70,43 @@ export default function AppHeader() {
       $tip(error instanceof Error ? error.message : "加入组织失败", "error");
     } finally {
       setIsJoining(false);
+    }
+  };
+
+  const handleChangePassword = async (): Promise<void> => {
+    if (!oldPassword.trim() || !newPassword.trim()) {
+      $tip("请输入原密码和新密码", "error");
+      return;
+    }
+    if (
+      oldPassword.length < 6 ||
+      oldPassword.length > 20 ||
+      newPassword.length < 6 ||
+      newPassword.length > 20
+    ) {
+      $tip("密码长度必须在6-20位之间", "error");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await changePassword({ oldPassword, newPassword });
+      $tip("密码已修改", "success");
+      setOldPassword("");
+      setNewPassword("");
+      setIsChangePasswordOpen(false);
+    } catch (error) {
+      $tip(error instanceof Error ? error.message : "密码修改失败", "error");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handlePasswordDialogOpenChange = (open: boolean): void => {
+    setIsChangePasswordOpen(open);
+    if (!open) {
+      setOldPassword("");
+      setNewPassword("");
     }
   };
 
@@ -197,6 +239,14 @@ export default function AppHeader() {
             <Button
               variant="ghost"
               className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+              onClick={() => setIsChangePasswordOpen(true)}
+            >
+              <KeyRound className="h-4 w-4" />
+              修改密码
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
               disabled={isLoggingOut}
               onClick={handleLogout}
             >
@@ -225,6 +275,49 @@ export default function AppHeader() {
             </Button>
             <Button onClick={handleJoinOrganization} disabled={isJoining}>
               {isJoining ? "加入中..." : "加入"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isChangePasswordOpen} onOpenChange={handlePasswordDialogOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>修改密码</DialogTitle>
+            <DialogDescription>输入原密码后设置新的登录密码。</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="old-password">原密码</Label>
+              <Input
+                id="old-password"
+                type="password"
+                value={oldPassword}
+                autoComplete="current-password"
+                onChange={(event) => setOldPassword(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">新密码</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                autoComplete="new-password"
+                onChange={(event) => setNewPassword(event.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => handlePasswordDialogOpenChange(false)}
+              disabled={isChangingPassword}
+            >
+              取消
+            </Button>
+            <Button onClick={() => void handleChangePassword()} disabled={isChangingPassword}>
+              {isChangingPassword ? "修改中..." : "修改密码"}
             </Button>
           </DialogFooter>
         </DialogContent>

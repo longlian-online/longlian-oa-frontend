@@ -2,22 +2,31 @@
   "document": "全部",
   "method": "GET",
   "operation": {
-    "description": "通过预签名 key 读取本地存储的文件内容，返回原始文件流",
+    "description": "通过带有效期和签名的链接读取文件，裸 key 不可读取",
     "operationId": "readLocalFile",
     "parameters": [
       {
         "in": "query",
-        "name": "key",
+        "name": "dto",
         "required": true,
         "schema": {
-          "type": "string"
+          "$ref": "#/components/schemas/LocalFileReadDTO"
+        }
+      },
+      {
+        "in": "query",
+        "name": "t",
+        "required": false,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
         }
       }
     ],
     "responses": {
       "200": {
         "content": {
-          "*/*": {
+          "application/octet-stream": {
             "schema": {
               "format": "binary",
               "type": "string"

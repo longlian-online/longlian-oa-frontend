@@ -12,3 +12,8 @@ export interface UpdateMyInfoDTO {
   nickname: string;
   avatarFileId?: string;
 }
+
+export interface ChangePasswordDTO {
+  oldPassword: string;
+  newPassword: string;
+}

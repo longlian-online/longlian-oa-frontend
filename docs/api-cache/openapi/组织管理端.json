@@ -248,7 +248,7 @@
         "description": "组织管理员端更新当前组织信息请求参数",
         "properties": {
           "avatarFileId": {
-            "description": "组织头像文件ID",
+            "description": "组织头像文件ID；不传表示保持原头像，0 表示清空头像",
             "type": "string"
           },
           "description": {
@@ -264,12 +264,16 @@
             "type": "string"
           }
         },
-        "required": ["avatarFileId", "description", "name"],
+        "required": ["description", "name"],
         "type": "object"
       },
       "OrgAdmintOrganizationInfoVO": {
         "description": "组织管理员端当前组织信息",
         "properties": {
+          "avatarFileId": {
+            "description": "组织头像文件ID",
+            "type": "string"
+          },
           "avatarUrl": {
             "description": "组织头像访问地址",
             "type": "string"
@@ -552,6 +556,11 @@
             "description": "企划ID",
             "type": "string"
           },
+          "resourceStatus": {
+            "description": "资源状态：ENABLED-启用，DISABLED-禁用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          },
           "status": {
             "description": "企划状态：IN_PROGRESS-进行中，COMPLETED-已完成，ARCHIVED-已归档",
             "enum": ["进行中", "已完成", "已归档"],
@@ -702,25 +711,6 @@
           }
         },
         "required": ["name"],
-        "type": "object"
-      },
-      "ResultVoid": {
-        "description": "通用返回结果",
-        "properties": {
-          "code": {
-            "description": "状态码：0 为成功，非0即异常",
-            "format": "int32",
-            "type": "integer"
-          },
-          "data": {
-            "description": "业务数据（成功时返回，失败时为null）",
-            "type": "object"
-          },
-          "msg": {
-            "description": "操作提示信息",
-            "type": "string"
-          }
-        },
         "type": "object"
       },
       "SessionContext": {
@@ -1211,13 +1201,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -1460,13 +1443,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -1549,13 +1525,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -1671,13 +1640,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -1874,13 +1836,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -1896,8 +1851,8 @@
   ],
   "servers": [
     {
-      "description": "Generated server url",
-      "url": "http://sit.neo.oa.api.longlian.online"
+      "description": "Configured server URL",
+      "url": "https://sit.neo.oa.api.longlian.online/"
     }
   ],
   "tags": [
