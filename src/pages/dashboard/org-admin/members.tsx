@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Ban, CheckCircle2, ClipboardList, Loader2, Search, Users } from "lucide-react";
+import { Ban, CheckCircle2, ClipboardList, Loader2, Search, ShieldCheck, Users } from "lucide-react";
 
 import {
+  changeMemberRole,
   changeMemberStatus,
   getMemberSubmitCounts,
   getOrganizationMembers,
+  type OrgMemberRole,
 } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
@@ -16,10 +18,12 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -65,6 +69,9 @@ function OrganizationMembersContent() {
   const [detailMember, setDetailMember] = useState<OrganizationMemberVO | null>(null);
   const [submitCounts, setSubmitCounts] = useState<MemberSubmitCountVO[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [roleMember, setRoleMember] = useState<OrganizationMemberVO | null>(null);
+  const [selectedRole, setSelectedRole] = useState<OrgMemberRole>("ORG_USER");
+  const [savingRole, setSavingRole] = useState(false);
 
   useEffect(() => {
     void loadMembers();
@@ -133,12 +140,33 @@ function OrganizationMembersContent() {
     }
   }
 
+  function openRoleDialog(member: OrganizationMemberVO): void {
+    setRoleMember(member);
+    setSelectedRole(member.orgRole ?? "ORG_USER");
+  }
+
+  async function handleRoleChange(): Promise<void> {
+    if (!roleMember) return;
+
+    try {
+      setSavingRole(true);
+      await changeMemberRole(roleMember.id, selectedRole);
+      $tip("角色已修改", "success");
+      setRoleMember(null);
+      await loadMembers();
+    } catch (error) {
+      $tip(error instanceof Error ? error.message : "角色修改失败", "error");
+    } finally {
+      setSavingRole(false);
+    }
+  }
+
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">成员管理</h1>
-          <p className="mt-1 text-sm text-muted-foreground">查看组织成员并管理成员状态。</p>
+          <p className="mt-1 text-sm text-muted-foreground">查看组织成员，管理成员状态与组织角色。</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative w-56 max-w-full">
@@ -215,7 +243,7 @@ function OrganizationMembersContent() {
                   <TableHead>入组时间</TableHead>
                   <TableHead>原子任务提交数</TableHead>
                   <TableHead>状态</TableHead>
-                  <TableHead className="w-44 text-right">操作</TableHead>
+                  <TableHead className="w-56 text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -260,6 +288,15 @@ function OrganizationMembersContent() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openRoleDialog(member)}
+                          >
+                            <ShieldCheck className="size-4" />
+                            角色
+                          </Button>
                           <Button
                             type="button"
                             variant="ghost"
@@ -342,6 +379,49 @@ function OrganizationMembersContent() {
               ))}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={roleMember !== null} onOpenChange={(open) => !open && setRoleMember(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>调整成员角色</DialogTitle>
+            <DialogDescription>
+              {roleMember ? `为「${memberName(roleMember)}」设置当前组织内的角色。` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="member-role">组织角色</Label>
+            <Select
+              value={selectedRole}
+              onValueChange={(value) => {
+                if (!value) return;
+                setSelectedRole(value as OrgMemberRole);
+              }}
+            >
+              <SelectTrigger id="member-role" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ORG_ADMIN">组织管理员</SelectItem>
+                <SelectItem value="ORG_USER">普通用户</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setRoleMember(null)}
+              disabled={savingRole}
+            >
+              取消
+            </Button>
+            <Button type="button" onClick={() => void handleRoleChange()} disabled={savingRole}>
+              {savingRole && <Loader2 className="size-4 animate-spin" />}
+              保存
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
