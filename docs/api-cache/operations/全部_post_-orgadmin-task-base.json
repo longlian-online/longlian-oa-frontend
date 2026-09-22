@@ -30,7 +30,9 @@
       }
     },
     "summary": "创建原子任务",
-    "tags": ["原子任务管理"]
+    "tags": [
+      "原子任务管理"
+    ]
   },
   "path": "/orgadmin/task/base",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

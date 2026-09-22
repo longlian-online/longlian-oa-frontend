@@ -29,7 +29,9 @@
       }
     },
     "summary": "创建企划类型",
-    "tags": ["企划类型管理"]
+    "tags": [
+      "企划类型管理"
+    ]
   },
   "path": "/orgadmin/project-types",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

@@ -20,7 +20,9 @@
       }
     },
     "summary": "本地上传文件",
-    "tags": ["文件上传接口"]
+    "tags": [
+      "文件上传接口"
+    ]
   },
   "path": "/common/file/local",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

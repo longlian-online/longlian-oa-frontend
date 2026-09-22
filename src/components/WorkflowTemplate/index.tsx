@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Ban, ChevronRight, Plus } from "lucide-react";
+import { Ban, CheckCircle2, ChevronRight, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ interface WorkflowTemplateCardProps {
   template: WorkshopTaskTemplateVO;
   onEdit: (template: WorkshopTaskTemplateVO) => void;
   onDisable?: (template: WorkshopTaskTemplateVO) => void;
+  onStatusChange?: (template: WorkshopTaskTemplateVO) => void;
+  status?: "ENABLED" | "DISABLED";
   disabling?: boolean;
 }
 
@@ -126,9 +128,13 @@ export function WorkflowTemplateCard({
   template,
   onEdit,
   onDisable,
+  onStatusChange,
+  status,
   disabling = false,
 }: WorkflowTemplateCardProps) {
   const taskCount = template.taskCount || template.nodes.length;
+  const isDisabled = status === "DISABLED";
+  const handleStatusChange = onStatusChange ?? onDisable;
 
   return (
     <article className="flex min-h-[190px] min-w-0 flex-col rounded-xl border bg-card px-4 py-4 shadow-sm transition-colors hover:border-foreground/20">
@@ -155,16 +161,21 @@ export function WorkflowTemplateCard({
       <div className="flex items-center justify-between text-xs leading-[18px]">
         <div className="text-foreground">任务数：{taskCount}</div>
         <div className="flex items-center gap-1">
-          {onDisable && (
+          {handleStatusChange && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1 px-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className={cn(
+                "h-7 gap-1 px-1.5 text-xs",
+                isDisabled
+                  ? "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  : "text-destructive hover:bg-destructive/10 hover:text-destructive",
+              )}
               disabled={disabling}
-              onClick={() => onDisable(template)}
+              onClick={() => handleStatusChange(template)}
             >
-              <Ban className="size-3.5" />
-              禁用
+              {isDisabled ? <CheckCircle2 className="size-3.5" /> : <Ban className="size-3.5" />}
+              {isDisabled ? "启用" : "禁用"}
             </Button>
           )}
           {template.isMine ? (

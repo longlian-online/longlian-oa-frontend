@@ -1,53 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import {
-  BarChart3,
-  Ban,
-  Check,
-  CirclePlus,
-  Info,
-  Link2,
-  Loader2,
-  Pencil,
-  Share2,
-  X,
-} from "lucide-react";
+import { BarChart3, CirclePlus, Info, Link2, Loader2, Pencil, Share2, X } from "lucide-react";
 
-import {
-  addProjectToWorkshop,
-  getProjectDetail,
-  removeProjectFromWorkshop,
-  updateProject,
-} from "@/api/planning";
-import { changeProjectStatus } from "@/api/organizationAdmin";
-import FileUpload from "@/components/FileUpload";
+import { addProjectToWorkshop, getProjectDetail, removeProjectFromWorkshop } from "@/api/planning";
 import ProjectItemSection from "@/components/ProjectItem";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
-import { isOrganizationAdmin } from "@/lib/session";
-import type { UploadedFileInfo } from "@/types/file";
 import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
-
-interface ProjectEditForm {
-  title: string;
-  alias: string;
-  description: string;
-  metadata: string;
-}
 
 function getStatusLabel(status: ProjectStatus): string {
   if (status === "COMPLETED" || status === "已完成") return "已完成";
@@ -59,20 +22,9 @@ export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const isOrgAdmin = isOrganizationAdmin();
   const [project, setProject] = useState<ProjectDetailInfoVO | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [workshopLoading, setWorkshopLoading] = useState(false);
-  const [disablingProject, setDisablingProject] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(null);
-  const [editForm, setEditForm] = useState<ProjectEditForm>({
-    title: "",
-    alias: "",
-    description: "",
-    metadata: "",
-  });
 
   useEffect(() => {
     if (projectId) {
@@ -89,40 +41,6 @@ export default function ProjectDetail() {
       $tip(error instanceof Error ? error.message : "企划加载失败", "error");
     } finally {
       setLoading(false);
-    }
-  }
-
-  function openEditDialog(): void {
-    if (!project) return;
-    setEditForm({
-      title: project.title,
-      alias: project.alias ?? "",
-      description: project.description ?? "",
-      metadata: project.metadata ?? JSON.stringify({ tags: [] }),
-    });
-    setCoverFile(null);
-    setEditOpen(true);
-  }
-
-  async function handleUpdateProject(): Promise<void> {
-    if (!projectId || !editForm.title.trim()) return;
-
-    try {
-      setSaving(true);
-      await updateProject(projectId, {
-        title: editForm.title.trim(),
-        alias: editForm.alias.trim() || editForm.title.trim(),
-        description: editForm.description.trim(),
-        metadata: editForm.metadata.trim() || "{}",
-        coverFileId: coverFile?.fileId,
-      });
-      $tip("企划已更新", "success");
-      setEditOpen(false);
-      await loadProjectDetail();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划更新失败", "error");
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -155,26 +73,12 @@ export default function ProjectDetail() {
     }
   }
 
-  async function handleDisableProject(): Promise<void> {
-    if (!projectId || !project) return;
-
-    const confirmed = await confirm({
-      title: "禁用企划？",
-      description: `禁用后「${project.title}」将不再在用户端展示，已有数据会保留。`,
-      confirmText: "禁用",
-      variant: "destructive",
-    });
-    if (!confirmed) return;
-
+  async function handleShare(): Promise<void> {
     try {
-      setDisablingProject(true);
-      await changeProjectStatus(projectId, "DISABLED");
-      $tip("企划已禁用", "success");
-      void navigate("/dashboard/planning", { replace: true });
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "禁用企划失败", "error");
-    } finally {
-      setDisablingProject(false);
+      await navigator.clipboard.writeText(window.location.href);
+      $tip("企划链接已复制", "success");
+    } catch {
+      $tip("复制链接失败，请手动复制当前地址", "error");
     }
   }
 
@@ -207,25 +111,13 @@ export default function ProjectDetail() {
         </div>
         <div className="flex items-center gap-2">
           {project.isCreator && (
-            <Button variant="outline" size="sm" onClick={openEditDialog}>
-              <Pencil className="h-4 w-4" />
-              编辑
-            </Button>
-          )}
-          {isOrgAdmin && (
             <Button
               variant="outline"
               size="sm"
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              disabled={disablingProject}
-              onClick={() => void handleDisableProject()}
+              onClick={() => void navigate(`/dashboard/planning/${project.id}/edit`)}
             >
-              {disablingProject ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Ban className="h-4 w-4" />
-              )}
-              禁用
+              <Pencil className="h-4 w-4" />
+              编辑
             </Button>
           )}
           <Button
@@ -243,7 +135,12 @@ export default function ProjectDetail() {
             )}
             {project.inWorkshop ? "移出工坊" : "添加到工坊"}
           </Button>
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={() => void handleShare()}
+          >
             <Share2 className="h-4 w-4" />
             分享
           </Button>
@@ -346,83 +243,11 @@ export default function ProjectDetail() {
           <ProjectItemSection
             projectId={projectId!}
             isCreator={project.isCreator}
+            showDetailLink
             onChanged={loadProjectDetail}
           />
         </main>
       </div>
-
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>编辑企划</DialogTitle>
-            <DialogDescription>更新基础信息；如需更换封面，请重新上传图片。</DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 md:grid-cols-[180px_minmax(0,1fr)]">
-            <FileUpload
-              bizType="cover"
-              bizId={projectId ?? String(project.id)}
-              value={coverFile}
-              title="更换封面"
-              description="不上传则保留原封面"
-              imagePreview
-              accept={["jpg", "jpeg", "png", "gif"]}
-              maxSize={10 * 1024 * 1024}
-              className="[&>button]:min-h-[270px]"
-              onChange={setCoverFile}
-            />
-
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">企划名</label>
-                <Input
-                  value={editForm.title}
-                  onChange={(event) => setEditForm({ ...editForm, title: event.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">别名</label>
-                <Input
-                  value={editForm.alias}
-                  onChange={(event) => setEditForm({ ...editForm, alias: event.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">简介</label>
-                <Textarea
-                  value={editForm.description}
-                  onChange={(event) =>
-                    setEditForm({ ...editForm, description: event.target.value })
-                  }
-                  className="min-h-24 resize-none"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">元信息 JSON</label>
-                <Textarea
-                  value={editForm.metadata}
-                  onChange={(event) => setEditForm({ ...editForm, metadata: event.target.value })}
-                  className="min-h-24 resize-none font-mono text-xs"
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditOpen(false)}>
-              取消
-            </Button>
-            <Button disabled={saving || !editForm.title.trim()} onClick={handleUpdateProject}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
-              保存
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

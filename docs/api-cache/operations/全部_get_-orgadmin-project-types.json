@@ -35,7 +35,9 @@
       }
     },
     "summary": "分页查询企划类型列表",
-    "tags": ["企划类型管理"]
+    "tags": [
+      "企划类型管理"
+    ]
   },
   "path": "/orgadmin/project-types",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

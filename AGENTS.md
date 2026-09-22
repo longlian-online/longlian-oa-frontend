@@ -79,7 +79,30 @@ src/
 
 ---
 
-## Git 提交规范
+## Git 分支与提交规范
+
+### 分支规范
+
+- 新建功能分支前，必须以最新的 `main` 分支为基准：
+
+  ```bash
+  git checkout main
+  git pull --ff-only origin main
+  git checkout -b <type>/<feature>_<YYYY-MM-DD>
+  ```
+
+- 分支名必须与对应的 commit 类型保持一致，格式为：
+
+  ```text
+  <type>/<feature>_<YYYY-MM-DD>
+  ```
+
+- `<type>` 使用 commit message 中定义的类型，例如 `feat`、`fix`、`upd`、`docs`、`style`、`refactor`、`chore`、`revert`。
+- `<feature>` 使用简洁的 kebab-case 描述，日期使用 `YYYY-MM-DD` 格式。
+
+示例：`feat/add-workflow_2026-02-01`
+
+### commit message 格式
 
 ### commit message 格式
 

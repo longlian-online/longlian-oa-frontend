@@ -169,6 +169,10 @@ function SelectItem({ className, children, value, onClick, ...props }: SelectPri
   const context = React.useContext(SelectLabelContext);
   const label = getItemLabel(children);
 
+  React.useEffect(() => {
+    context?.registerLabel(value, label);
+  }, [context?.registerLabel, label, value]);
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"

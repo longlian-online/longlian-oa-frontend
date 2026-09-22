@@ -32,7 +32,13 @@
             "type": "integer"
           }
         },
-        "required": ["bizType", "fileExt", "fileMime", "fileName", "fileSize"],
+        "required": [
+          "bizType",
+          "fileExt",
+          "fileMime",
+          "fileName",
+          "fileSize"
+        ],
         "type": "object"
       },
       "LocalFileReadDTO": {
@@ -49,7 +55,11 @@
             "type": "string"
           }
         },
-        "required": ["expires", "key", "signature"],
+        "required": [
+          "expires",
+          "key",
+          "signature"
+        ],
         "type": "object"
       },
       "ResourceCreateVO": {
@@ -65,7 +75,12 @@
           },
           "storageType": {
             "description": "存储类型：1-本地存储，2-阿里云OSS，3-腾讯云COS",
-            "enum": ["NONE", "LOCAL", "OSS", "COS"],
+            "enum": [
+              "NONE",
+              "LOCAL",
+              "OSS",
+              "COS"
+            ],
             "type": "string"
           },
           "uploadUrl": {
@@ -146,7 +161,9 @@
           }
         },
         "summary": "读取本地文件",
-        "tags": ["文件上传接口"]
+        "tags": [
+          "文件上传接口"
+        ]
       },
       "put": {
         "description": "客户端使用预签名 URL 直传文件内容到本地存储，需校验上传者身份与文件大小",
@@ -167,7 +184,9 @@
           }
         },
         "summary": "本地上传文件",
-        "tags": ["文件上传接口"]
+        "tags": [
+          "文件上传接口"
+        ]
       }
     },
     "/common/file/upload": {
@@ -207,7 +226,9 @@
           }
         },
         "summary": "创建文件上传",
-        "tags": ["文件上传接口"]
+        "tags": [
+          "文件上传接口"
+        ]
       }
     }
   },

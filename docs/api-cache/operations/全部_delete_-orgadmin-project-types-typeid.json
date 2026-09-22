@@ -29,7 +29,9 @@
       }
     },
     "summary": "删除企划类型",
-    "tags": ["企划类型管理"]
+    "tags": [
+      "企划类型管理"
+    ]
   },
   "path": "/orgadmin/project-types/{typeId}",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

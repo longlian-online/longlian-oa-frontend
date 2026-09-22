@@ -39,7 +39,9 @@
       }
     },
     "summary": "启用/禁用原子任务",
-    "tags": ["原子任务管理"]
+    "tags": [
+      "原子任务管理"
+    ]
   },
   "path": "/orgadmin/task/base/{taskId}/status",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

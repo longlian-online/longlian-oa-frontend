@@ -26,7 +26,9 @@
       }
     },
     "summary": "创建管理员",
-    "tags": ["管理员接口"]
+    "tags": [
+      "管理员接口"
+    ]
   },
   "path": "/admin/admins/",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%AE%A1%E7%90%86%E7%AB%AF"

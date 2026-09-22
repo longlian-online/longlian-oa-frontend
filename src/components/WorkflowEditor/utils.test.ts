@@ -57,6 +57,22 @@ describe("workflow editor utils", () => {
     ]);
   });
 
+  test("inserts a task after a parallel stage at the requested stage index", () => {
+    const nodes: WorkflowEditorNode[] = [
+      { localId: "a", baseTaskId: "a", customName: "A", sort: 1, parallelSort: 1 },
+      { localId: "b", baseTaskId: "b", customName: "B", sort: 1, parallelSort: 2 },
+      { localId: "c", baseTaskId: "c", customName: "C", sort: 2, parallelSort: 1 },
+    ];
+
+    const result = moveNodeToStage(nodes, "c", 1);
+
+    expect(result.map(({ localId, sort }) => ({ localId, sort }))).toEqual([
+      { localId: "a", sort: 1 },
+      { localId: "b", sort: 1 },
+      { localId: "c", sort: 2 },
+    ]);
+  });
+
   test("creates the current backend payload", () => {
     expect(toCreateNodes(NODES)).toEqual([
       { baseTaskId: "translate", customName: "翻译", sort: 1, parallelSort: 1 },

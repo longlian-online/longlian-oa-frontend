@@ -2,15 +2,14 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 
-import { createWorkshopTaskTemplate, updateWorkshopTaskTemplate } from "@/api/workflowTemplate";
 import { getBaseTaskList } from "@/api/baseTask";
+import { createWorkshopTaskTemplate, updateWorkshopTaskTemplate } from "@/api/workflowTemplate";
 import WorkflowEditor, {
   buildEditorNodes,
   toCreateNodes,
   validateEditorNodes,
   type WorkflowEditorNode,
 } from "@/components/WorkflowEditor";
-import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -157,9 +156,5 @@ function CreateWorkflowPageContent() {
 }
 
 export default function CreateWorkflowPage() {
-  return (
-    <OrganizationAdminGuard>
-      <CreateWorkflowPageContent />
-    </OrganizationAdminGuard>
-  );
+  return <CreateWorkflowPageContent />;
 }

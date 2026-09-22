@@ -54,7 +54,7 @@ export default function AdminLoginPage() {
             <ShieldCheck className="h-6 w-6 text-primary-foreground" />
           </div>
           <h1 className="text-xl font-semibold text-foreground">管理员登录</h1>
-          <p className="mt-1 text-sm text-muted-foreground">进入系统管理端</p>
+          <p className="mt-1 text-sm text-muted-foreground">进入平台管理端</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
