@@ -26,10 +26,6 @@ export interface OrgMemberListResult {
   total: number;
 }
 
-export interface OrgMemberResetPasswordVO {
-  password: string;
-}
-
 export async function getOrgMemberList(dto: OrgMemberListDTO): Promise<OrgMemberListResult> {
   return orgAdminRequest("/orgadmin/members", {
     method: "POST",
@@ -41,12 +37,6 @@ export async function changeMemberRole(memberId: string, orgRole: OrgMemberRole)
   return orgAdminRequest(`/orgadmin/members/${memberId}/role`, {
     method: "PATCH",
     body: JSON.stringify({ orgRole }),
-  });
-}
-
-export async function resetMemberPassword(memberId: string): Promise<OrgMemberResetPasswordVO> {
-  return orgAdminRequest(`/orgadmin/members/${memberId}/password/reset`, {
-    method: "POST",
   });
 }
 

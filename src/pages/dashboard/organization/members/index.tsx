@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { Copy, KeyRound, Loader2, Search, ShieldCheck, Users } from "lucide-react";
+import { Loader2, Search, ShieldCheck, Users } from "lucide-react";
 
 import {
   changeMemberRole,
   getOrgMemberList,
-  resetMemberPassword,
   type OrgMemberInfoVO,
   type OrgMemberRole,
 } from "@/api/organizationAdmin";
@@ -68,8 +67,6 @@ function OrganizationMembersPageContent() {
   const [roleMember, setRoleMember] = useState<OrgMemberInfoVO | null>(null);
   const [selectedRole, setSelectedRole] = useState<OrgMemberRole>("ORG_USER");
   const [savingRole, setSavingRole] = useState(false);
-  const [resettingId, setResettingId] = useState<string | null>(null);
-  const [resetPassword, setResetPassword] = useState<string | null>(null);
 
   useEffect(() => {
     void loadMembers();
@@ -118,39 +115,12 @@ function OrganizationMembersPageContent() {
     }
   }
 
-  async function handleResetPassword(member: OrgMemberInfoVO): Promise<void> {
-    try {
-      setResettingId(member.id);
-      const data = await resetMemberPassword(member.id);
-      setResetPassword(data.password);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "密码重置失败", "error");
-    } finally {
-      setResettingId(null);
-    }
-  }
-
-  async function copyResetPassword(): Promise<void> {
-    if (!resetPassword) return;
-
-    try {
-      await navigator.clipboard.writeText(resetPassword);
-      $tip("密码已复制", "success");
-    } catch {
-      $tip("复制失败，请手动复制", "error");
-    }
-  }
-
-  function closeResetPasswordDialog(): void {
-    setResetPassword(null);
-  }
-
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">用户管理</h1>
-          <p className="mt-1 text-sm text-muted-foreground">管理当前组织成员的角色和登录密码。</p>
+          <p className="mt-1 text-sm text-muted-foreground">管理当前组织成员的角色。</p>
         </div>
         <div className="flex w-full gap-2 xl:w-auto">
           <div className="relative min-w-0 flex-1 xl:w-64 xl:flex-none">
@@ -230,19 +200,6 @@ function OrganizationMembersPageContent() {
                           <ShieldCheck data-icon="inline-start" />
                           调整角色
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={resettingId === member.id}
-                          onClick={() => void handleResetPassword(member)}
-                        >
-                          {resettingId === member.id ? (
-                            <Loader2 data-icon="inline-start" className="animate-spin" />
-                          ) : (
-                            <KeyRound data-icon="inline-start" />
-                          )}
-                          重置密码
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -298,32 +255,6 @@ function OrganizationMembersPageContent() {
               {savingRole && <Loader2 data-icon="inline-start" className="animate-spin" />}
               保存
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={resetPassword !== null} onOpenChange={() => undefined}>
-        <DialogContent showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>密码已重置</DialogTitle>
-            <DialogDescription>请立即保存，关闭后无法再次查看。</DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center gap-2 rounded-lg border bg-muted/40 p-3">
-            <code className="min-w-0 flex-1 break-all font-mono text-base font-semibold text-foreground">
-              {resetPassword}
-            </code>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label="复制密码"
-              title="复制密码"
-              onClick={() => void copyResetPassword()}
-            >
-              <Copy />
-            </Button>
-          </div>
-          <DialogFooter>
-            <Button onClick={closeResetPasswordDialog}>已保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
