@@ -82,10 +82,6 @@ async function requestWithBase<T>(
     return result.data as T;
   }
 
-  if (response.status === 401 && auth !== "none" && redirectOnUnauthorized) {
-    throw handleUnauthorized(isAdminScope ? "admin" : "user");
-  }
-
   if (!response.ok) {
     throw new ApiError(`API error: ${response.status}`, response.status);
   }
