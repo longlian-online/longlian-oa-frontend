@@ -30,7 +30,9 @@
       }
     },
     "summary": "获取企划类型列表",
-    "tags": ["企划接口"]
+    "tags": [
+      "企划接口"
+    ]
   },
   "path": "/app/projects/types",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

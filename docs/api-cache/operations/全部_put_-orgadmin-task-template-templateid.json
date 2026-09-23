@@ -40,7 +40,9 @@
       }
     },
     "summary": "更新任务模板",
-    "tags": ["任务模板管理"]
+    "tags": [
+      "任务模板管理"
+    ]
   },
   "path": "/orgadmin/task/template/{templateId}",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

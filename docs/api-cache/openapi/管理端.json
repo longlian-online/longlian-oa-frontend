@@ -17,7 +17,10 @@
             "type": "string"
           }
         },
-        "required": ["password", "username"],
+        "required": [
+          "password",
+          "username"
+        ],
         "type": "object"
       },
       "AdminListDTO": {
@@ -55,7 +58,10 @@
             "type": "string"
           }
         },
-        "required": ["password", "username"],
+        "required": [
+          "password",
+          "username"
+        ],
         "type": "object"
       },
       "AdminLoginVO": {
@@ -113,11 +119,16 @@
         "properties": {
           "status": {
             "description": "目标状态：ENABLED-启用，DISABLED-禁用",
-            "enum": ["ENABLED", "DISABLED"],
+            "enum": [
+              "ENABLED",
+              "DISABLED"
+            ],
             "type": "string"
           }
         },
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "type": "object"
       },
       "InviteCodeVO": {
@@ -156,7 +167,10 @@
           },
           "status": {
             "description": "组织状态 1-启用 0-禁用",
-            "enum": ["ENABLED", "DISABLED"],
+            "enum": [
+              "ENABLED",
+              "DISABLED"
+            ],
             "type": "string"
           }
         },
@@ -172,7 +186,10 @@
           },
           "orderDir": {
             "description": "排序方式",
-            "enum": ["DESC", "ASC"],
+            "enum": [
+              "DESC",
+              "ASC"
+            ],
             "type": "string"
           },
           "orgName": {
@@ -318,7 +335,9 @@
           }
         },
         "summary": "分页查询管理员列表",
-        "tags": ["管理员接口"]
+        "tags": [
+          "管理员接口"
+        ]
       },
       "post": {
         "operationId": "create",
@@ -345,7 +364,9 @@
           }
         },
         "summary": "创建管理员",
-        "tags": ["管理员接口"]
+        "tags": [
+          "管理员接口"
+        ]
       }
     },
     "/admin/admins/{id}": {
@@ -368,7 +389,9 @@
           }
         },
         "summary": "删除管理员",
-        "tags": ["管理员接口"]
+        "tags": [
+          "管理员接口"
+        ]
       }
     },
     "/admin/organizations/": {
@@ -397,7 +420,9 @@
           }
         },
         "summary": "分页查询组织列表",
-        "tags": ["组织接口"]
+        "tags": [
+          "组织接口"
+        ]
       }
     },
     "/admin/organizations/invite-codes/create-org": {
@@ -417,7 +442,9 @@
           }
         },
         "summary": "生成邀请码（超管）",
-        "tags": ["组织接口"]
+        "tags": [
+          "组织接口"
+        ]
       }
     },
     "/admin/organizations/{orgId}/status": {
@@ -451,7 +478,9 @@
           }
         },
         "summary": "操作组织状态",
-        "tags": ["组织接口"]
+        "tags": [
+          "组织接口"
+        ]
       }
     },
     "/admin/scheduled-tasks/": {
@@ -473,7 +502,9 @@
           }
         },
         "summary": "列出所有已注册的定时任务",
-        "tags": ["定时任务管理"]
+        "tags": [
+          "定时任务管理"
+        ]
       }
     },
     "/admin/scheduled-tasks/{taskName}/trigger": {
@@ -506,7 +537,9 @@
           }
         },
         "summary": "手动触发定时任务",
-        "tags": ["定时任务管理"]
+        "tags": [
+          "定时任务管理"
+        ]
       }
     },
     "/admin/session": {
@@ -518,7 +551,9 @@
           }
         },
         "summary": "管理员登出",
-        "tags": ["管理员会话接口"]
+        "tags": [
+          "管理员会话接口"
+        ]
       },
       "post": {
         "description": "使用用户名+密码登录",
@@ -546,7 +581,9 @@
           }
         },
         "summary": "管理员登录",
-        "tags": ["管理员会话接口"]
+        "tags": [
+          "管理员会话接口"
+        ]
       }
     }
   },

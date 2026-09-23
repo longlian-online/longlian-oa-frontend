@@ -27,7 +27,9 @@
       }
     },
     "summary": "生成加入组织邀请码（管理员）",
-    "tags": ["组织成员管理"]
+    "tags": [
+      "组织成员管理"
+    ]
   },
   "path": "/orgadmin/members/invite-codes/join-org",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"

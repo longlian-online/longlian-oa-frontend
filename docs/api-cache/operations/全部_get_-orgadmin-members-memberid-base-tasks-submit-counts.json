@@ -36,7 +36,9 @@
       }
     },
     "summary": "查询组员各原子任务提交数",
-    "tags": ["组织成员管理"]
+    "tags": [
+      "组织成员管理"
+    ]
   },
   "path": "/orgadmin/members/{memberId}/base-tasks/submit-counts",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

@@ -155,6 +155,15 @@ export async function getOrganizationProjects(
   });
 }
 
+export type OrgMemberRole = "ORG_ADMIN" | "ORG_USER";
+
+export async function changeMemberRole(memberId: string, orgRole: OrgMemberRole): Promise<void> {
+  return orgAdminRequest(`/orgadmin/members/${memberId}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ orgRole }),
+  });
+}
+
 export async function changeProjectStatus(
   projectId: string,
   status: OrganizationResourceStatus,

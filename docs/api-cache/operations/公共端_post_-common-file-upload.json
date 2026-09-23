@@ -37,7 +37,9 @@
       }
     },
     "summary": "创建文件上传",
-    "tags": ["文件上传接口"]
+    "tags": [
+      "文件上传接口"
+    ]
   },
   "path": "/common/file/upload",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E5%85%AC%E5%85%B1%E7%AB%AF"

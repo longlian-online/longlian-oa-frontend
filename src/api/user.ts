@@ -1,7 +1,7 @@
 import { request } from "@/api/request";
 import { getUserId } from "@/lib/session";
 import type { JoinByInviteCodeDTO, InviteInfoVO } from "@/types/auth";
-import type { OrganizationSimpleInfoVO, UpdateMyInfoDTO, UserInfoVO } from "@/types/user";
+import type { ChangePasswordDTO, OrganizationSimpleInfoVO, UpdateMyInfoDTO, UserInfoVO } from "@/types/user";
 
 const USER_CACHE_TTL = 5 * 60 * 1000;
 const USER_CACHE_PREFIX = "user-api-cache";
@@ -132,6 +132,13 @@ export async function updateMyInfo(dto: UpdateMyInfoDTO): Promise<void> {
     body: JSON.stringify(dto),
   });
   invalidateCurrentUserCache();
+}
+
+export async function changePassword(dto: ChangePasswordDTO): Promise<void> {
+  await request("/user/password", {
+    method: "PATCH",
+    body: JSON.stringify(dto),
+  });
 }
 
 export async function getInviteInfo(inviteCode: string): Promise<InviteInfoVO> {

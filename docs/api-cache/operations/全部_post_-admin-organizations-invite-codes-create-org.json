@@ -17,7 +17,9 @@
       }
     },
     "summary": "生成邀请码（超管）",
-    "tags": ["组织接口"]
+    "tags": [
+      "组织接口"
+    ]
   },
   "path": "/admin/organizations/invite-codes/create-org",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
