@@ -137,6 +137,9 @@ export async function updateMyInfo(dto: UpdateMyInfoDTO): Promise<void> {
 export async function getInviteInfo(inviteCode: string): Promise<InviteInfoVO> {
   return request(
     `/user/register/join-organization/invite-info?inviteCode=${encodeURIComponent(inviteCode)}`,
+    {
+      auth: "none",
+    },
   );
 }
 

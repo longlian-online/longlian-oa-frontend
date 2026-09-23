@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useConfirm } from "@/hooks/useConfirm";
+import { showApiError } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
 import type { OrganizationResourceStatus, ProjectTypeVO } from "@/types/organizationAdmin";
 
@@ -66,7 +67,7 @@ function OrganizationProjectTypesContent() {
       setTypes(result.list);
       setTotal(result.total);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划类型加载失败", "error");
+      showApiError(error, "企划类型加载失败");
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,7 @@ function OrganizationProjectTypesContent() {
       setDialogOpen(false);
       await loadTypes();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划类型保存失败", "error");
+      showApiError(error, "企划类型保存失败");
     } finally {
       setMutatingId(null);
     }
@@ -130,7 +131,7 @@ function OrganizationProjectTypesContent() {
       if (types.length === 1 && page > 1) setPage((currentPage) => currentPage - 1);
       await loadTypes();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划类型删除失败", "error");
+      showApiError(error, "企划类型删除失败");
     } finally {
       setMutatingId(null);
     }
@@ -145,7 +146,7 @@ function OrganizationProjectTypesContent() {
       $tip(nextStatus === "ENABLED" ? "企划类型已启用" : "企划类型已禁用", "success");
       await loadTypes();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划类型状态更新失败", "error");
+      showApiError(error, "企划类型状态更新失败");
     } finally {
       setMutatingId(null);
     }

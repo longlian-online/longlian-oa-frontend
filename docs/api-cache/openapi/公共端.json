@@ -121,6 +121,15 @@
             "schema": {
               "$ref": "#/components/schemas/LocalFileReadDTO"
             }
+          },
+          {
+            "in": "query",
+            "name": "t",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
           }
         ],
         "responses": {

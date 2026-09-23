@@ -23,6 +23,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { showApiError } from "@/lib/apiError";
 import { getUserId } from "@/lib/session";
 import type {
   ItemTaskFlowVO,
@@ -97,7 +98,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
       setInstances(instanceData);
       sendWorkflowEvent({ type: "LOADED" });
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务流加载失败", "error");
+      showApiError(error, "任务流加载失败");
       sendWorkflowEvent({ type: background ? "ACTION_FAILED" : "LOAD_FAILED" });
     }
   }
@@ -114,7 +115,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
       await loadData(true);
       return true;
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务操作失败", "error");
+      showApiError(error, "任务操作失败");
       sendWorkflowEvent({ type: "ACTION_FAILED" });
       return false;
     }
@@ -177,7 +178,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
       setDetail(data);
       setDetailTarget(instance);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务详情加载失败", "error");
+      showApiError(error, "任务详情加载失败");
     }
   }
 

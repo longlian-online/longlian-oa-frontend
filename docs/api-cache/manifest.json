@@ -1,14 +1,14 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-09-19T07:01:14.096Z",
+  "generatedAt": "2026-09-23T10:29:20.270Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "61ddb598d396bc6bfbf923143ad688695a19bfc9a683e68d433d62b5bdc0235f",
+      "sha256": "60ae308ebefb28f173e329d27aae58c79fbd1c04dbf50ff976aaab1fa35e74be",
       "pathCount": 61,
       "operationCount": 73
     },
@@ -17,7 +17,7 @@
       "slug": "公共端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E5%85%AC%E5%85%B1%E7%AB%AF",
       "file": "openapi/公共端.json",
-      "sha256": "631d42a06bc5303e77f7fe17099a8bdf4717b1b25ff0cae63f173dac95372715",
+      "sha256": "b4e28872f81c42abd518fb7d4ad2f817ff9f3a46dbe6304624840c86d995f949",
       "pathCount": 2,
       "operationCount": 3
     },
@@ -26,7 +26,7 @@
       "slug": "用户端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF",
       "file": "openapi/用户端.json",
-      "sha256": "d1b57396e66e94894c0102a014ab850779d458c41a84606949ed07e9f72f8419",
+      "sha256": "5ff92fa615b24143ae737ac8d62a30fce067fa447a89e32b0c8edac333a2032f",
       "pathCount": 32,
       "operationCount": 37
     },
@@ -44,7 +44,7 @@
       "slug": "组织管理端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF",
       "file": "openapi/组织管理端.json",
-      "sha256": "e6fadcbd439707398a7ce388fede19bf4742d8ca4c59c15e00b52223e8f61f65",
+      "sha256": "00414a506979aaf9c17f476d9daa15c0d6d594b0ed34a0d39f1ab175b49f8e95",
       "pathCount": 19,
       "operationCount": 23
     }
@@ -178,7 +178,7 @@
       "summary": "创建企划",
       "tags": ["企划接口"],
       "file": "operations/全部_post_-app-projects.json",
-      "sha256": "37400b7990e1d65c19cdcf1dc1d69794425332260a3fba46ba31a71becad1ec4"
+      "sha256": "c2a288cc6c79986230b1f53aba154566f4a847d441bafe222addb7b6e938a423"
     },
     {
       "id": "全部_get_-app-projects-projectid",
@@ -528,7 +528,7 @@
       "summary": "读取本地文件",
       "tags": ["文件上传接口"],
       "file": "operations/全部_get_-common-file-local.json",
-      "sha256": "b53643872ab432e5b81dcdc73794d85288b9b8e84cce2f7e5577e89d298c9115"
+      "sha256": "41b33cbafa6ffcaec9716535647197b8a3a33a7da00ed752c598b0d500bd9f09"
     },
     {
       "id": "全部_put_-common-file-local",
@@ -788,7 +788,7 @@
       "summary": "读取本地文件",
       "tags": ["文件上传接口"],
       "file": "operations/公共端_get_-common-file-local.json",
-      "sha256": "1e28d3fa5096158ad91e813644bba043c8165fc91a759d335b6ff9bd917014f8"
+      "sha256": "97716a98231166710457f44ef0d204b665b1b1c22a87313185e595f92e58805e"
     },
     {
       "id": "公共端_put_-common-file-local",
@@ -838,7 +838,7 @@
       "summary": "创建企划",
       "tags": ["企划接口"],
       "file": "operations/用户端_post_-app-projects.json",
-      "sha256": "9115b5e5d3bfc08d406ebed0fe0d67392f41af8e0c44af2d161cc868da8b9fc0"
+      "sha256": "85ab57fdc36d423c55ae909b930241cea6a3cfed5dbd0dcf6deec93ac9ca748a"
     },
     {
       "id": "用户端_get_-app-projects-projectid",

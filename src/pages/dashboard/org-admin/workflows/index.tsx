@@ -15,6 +15,7 @@ import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/hooks/useConfirm";
+import { showApiError } from "@/lib/apiError";
 import { toWorkflowTemplateNodes } from "@/lib/workflowTemplate";
 import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 import type {
@@ -80,7 +81,7 @@ function OrganizationAdminWorkflowsContent() {
       );
       setTotal(data.total);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "工作流模板加载失败", "error");
+      showApiError(error, "工作流模板加载失败");
     } finally {
       setLoading(false);
     }
@@ -114,7 +115,7 @@ function OrganizationAdminWorkflowsContent() {
       $tip(isDisabled ? "工作流已启用" : "工作流已禁用", "success");
       await loadTemplates();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "工作流状态更新失败", "error");
+      showApiError(error, "工作流状态更新失败");
     } finally {
       setMutatingTemplateId(null);
     }

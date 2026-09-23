@@ -2,6 +2,7 @@
   "document": "全部",
   "method": "POST",
   "operation": {
+    "description": "创建后自动加入当前用户的个人工坊",
     "operationId": "createProject",
     "parameters": [
       {

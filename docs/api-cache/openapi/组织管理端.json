@@ -248,7 +248,7 @@
         "description": "组织管理员端更新当前组织信息请求参数",
         "properties": {
           "avatarFileId": {
-            "description": "组织头像文件ID",
+            "description": "组织头像文件ID；不传表示保持原头像，0 表示清空头像",
             "type": "string"
           },
           "description": {
@@ -264,12 +264,16 @@
             "type": "string"
           }
         },
-        "required": ["avatarFileId", "description", "name"],
+        "required": ["description", "name"],
         "type": "object"
       },
       "OrgAdmintOrganizationInfoVO": {
         "description": "组织管理员端当前组织信息",
         "properties": {
+          "avatarFileId": {
+            "description": "组织头像文件ID",
+            "type": "string"
+          },
           "avatarUrl": {
             "description": "组织头像访问地址",
             "type": "string"
@@ -550,6 +554,11 @@
           },
           "id": {
             "description": "企划ID",
+            "type": "string"
+          },
+          "resourceStatus": {
+            "description": "资源状态：ENABLED-启用，DISABLED-禁用",
+            "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           },
           "status": {

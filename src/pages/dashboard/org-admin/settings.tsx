@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { showApiError } from "@/lib/apiError";
 import { getCurrentOrgId } from "@/lib/session";
 import type { UploadedFileInfo } from "@/types/file";
 import type { OrganizationInfoVO } from "@/types/organizationAdmin";
@@ -47,7 +48,7 @@ function OrganizationSettingsContent() {
           : null,
       );
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "组织信息加载失败", "error");
+      showApiError(error, "组织信息加载失败");
     } finally {
       setLoading(false);
     }
@@ -77,7 +78,7 @@ function OrganizationSettingsContent() {
       $tip("组织信息已保存", "success");
       await loadOrganization();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "组织信息保存失败", "error");
+      showApiError(error, "组织信息保存失败");
     } finally {
       setSaving(false);
     }

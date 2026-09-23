@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { JoinApplicationReviewDTO, JoinApplicationVO } from "@/types/organizationAdmin";
+import { showApiError } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
 
 const PAGE_SIZE = 10;
@@ -65,7 +66,7 @@ function OrganizationApplicationsContent() {
       setApplications(result.list);
       setTotal(result.total);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "入组申请加载失败", "error");
+      showApiError(error, "入组申请加载失败");
     } finally {
       setLoading(false);
     }
@@ -94,7 +95,7 @@ function OrganizationApplicationsContent() {
       setReviewing(null);
       await loadApplications();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "入组申请审核失败", "error");
+      showApiError(error, "入组申请审核失败");
     } finally {
       setReviewLoading(false);
     }

@@ -16,6 +16,7 @@ import {
 } from "@/api/auth";
 import { getInviteInfo } from "@/api/user";
 import { $tip } from "@/components/tip";
+import { showApiError } from "@/lib/apiError";
 import { cn } from "@/lib/utils";
 import type { InviteInfoVO } from "@/types/auth";
 
@@ -90,7 +91,7 @@ export default function RegisterPage() {
       $tip("注册成功，请登录", "success");
       void navigate("/login");
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "注册失败", "error");
+      showApiError(error, "注册失败");
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +108,7 @@ export default function RegisterPage() {
       $tip(`邀请码来自 ${result.orgName}`, "success");
     } catch (error) {
       setInviteInfo(null);
-      $tip(error instanceof Error ? error.message : "邀请码查询失败", "error");
+      showApiError(error, "邀请码查询失败");
     } finally {
       setIsInviteLoading(false);
     }
@@ -132,7 +133,7 @@ export default function RegisterPage() {
         });
       }, 1000);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "发送验证码失败", "error");
+      showApiError(error, "发送验证码失败");
     }
   };
 

@@ -3,6 +3,7 @@ import "@xyflow/react/dist/style.css";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import App from "@/App";
+import AuthNavigationBridge from "@/components/AuthNavigationBridge";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import TipProvider from "@/components/tip";
 import { applyTheme, getStoredTheme } from "@/lib/theme";
@@ -15,6 +16,7 @@ createRoot(document.getElementById("app")!).render(
     <TipProvider />
     <ConfirmDialogProvider>
       <BrowserRouter>
+        <AuthNavigationBridge />
         <App />
       </BrowserRouter>
     </ConfirmDialogProvider>

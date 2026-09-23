@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { showApiError } from "@/lib/apiError";
 import { cn } from "@/lib/utils";
 import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
 import type {
@@ -84,7 +85,7 @@ function BaseTaskManagementContent() {
       setTasks(data.list);
       setTotal(data.total);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "原子任务加载失败", "error");
+      showApiError(error, "原子任务加载失败");
     } finally {
       setLoading(false);
     }
@@ -196,7 +197,7 @@ function BaseTaskManagementContent() {
       setPage(1);
       await loadTasks();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "原子任务创建失败", "error");
+      showApiError(error, "原子任务创建失败");
     } finally {
       setCreating(false);
     }
@@ -210,7 +211,7 @@ function BaseTaskManagementContent() {
       $tip(nextStatus === "ENABLED" ? "原子任务已启用" : "原子任务已禁用", "success");
       await loadTasks();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务状态修改失败", "error");
+      showApiError(error, "任务状态修改失败");
     } finally {
       setMutatingId(null);
     }

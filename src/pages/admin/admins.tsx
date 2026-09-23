@@ -6,6 +6,8 @@ import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
+import { useConfirm } from "@/hooks/useConfirm";
+import { showApiError } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +34,7 @@ import type { AdminCreateDTO, AdminVO } from "@/types/admin";
 const PAGE_SIZE = 10;
 
 export default function AdminsPage() {
+  const confirm = useConfirm();
   const [admins, setAdmins] = useState<AdminVO[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -47,7 +50,7 @@ export default function AdminsPage() {
       setAdmins(result.list ?? []);
       setTotal(result.total ?? 0);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "管理员列表加载失败", "error");
+      showApiError(error, "管理员列表加载失败");
     } finally {
       setLoading(false);
     }
@@ -71,20 +74,27 @@ export default function AdminsPage() {
       setPage(1);
       await loadAdmins(1);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "管理员创建失败", "error");
+      showApiError(error, "管理员创建失败");
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(admin: AdminVO): Promise<void> {
-    if (!window.confirm(`确定删除管理员「${admin.username}」吗？`)) return;
+    const confirmed = await confirm({
+      title: "删除管理员？",
+      description: `删除后「${admin.username}」将无法再登录管理端。`,
+      confirmText: "删除",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
     try {
       await deleteAdmin(admin.id);
       $tip("管理员已删除", "success");
       await loadAdmins();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "管理员删除失败", "error");
+      showApiError(error, "管理员删除失败");
     }
   }
 

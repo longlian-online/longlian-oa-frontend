@@ -7,7 +7,7 @@ import EmptyState from "@/components/EmptyState";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
 import { WorkshopProjectCard } from "@/components/Workshop";
-import { $tip } from "@/components/tip";
+import { showApiError } from "@/lib/apiError";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,7 +51,7 @@ export default function WorkshopPage() {
       setProjects(data.list);
       setTotal(data.total);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "工坊企划加载失败", "error");
+      showApiError(error, "工坊企划加载失败");
     } finally {
       setLoading(false);
     }

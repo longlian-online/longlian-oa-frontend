@@ -5,6 +5,7 @@ import { getScheduledTasks, triggerScheduledTask } from "@/api/admin";
 import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
 import { $tip } from "@/components/tip";
+import { showApiError } from "@/lib/apiError";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,7 +40,7 @@ export default function ScheduledTasksPage() {
       setLoading(true);
       setTasks(await getScheduledTasks());
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "定时任务加载失败", "error");
+      showApiError(error, "定时任务加载失败");
     } finally {
       setLoading(false);
     }
@@ -60,7 +61,7 @@ export default function ScheduledTasksPage() {
       $tip("定时任务已触发", "success");
       setSelectedTask(null);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "定时任务触发失败", "error");
+      showApiError(error, "定时任务触发失败");
     } finally {
       setTriggering(false);
     }

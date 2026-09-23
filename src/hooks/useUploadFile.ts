@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { createFileUpload } from "@/api/file";
 import { $tip } from "@/components/tip";
+import { showApiError } from "@/lib/apiError";
 import type { FileValidationOptions, UploadedFileInfo, UploadBizType } from "@/types/file";
 
 const DEFAULT_MAX_SIZE = 50 * 1024 * 1024;
@@ -125,7 +126,7 @@ export function useUploadFile(): UseUploadFileResult {
       $tip("文件上传成功", "success");
       return uploadedFile;
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "文件上传失败", "error");
+      showApiError(error, "文件上传失败");
       throw error;
     } finally {
       setUploading(false);

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useConfirm } from "@/hooks/useConfirm";
+import { showApiError } from "@/lib/apiError";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
 
@@ -38,7 +39,7 @@ export default function ProjectDetail() {
       const data = await getProjectDetail(projectId!);
       setProject(data);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划加载失败", "error");
+      showApiError(error, "企划加载失败");
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,7 @@ export default function ProjectDetail() {
       }
       await loadProjectDetail();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "工坊状态更新失败", "error");
+      showApiError(error, "工坊状态更新失败");
     } finally {
       setWorkshopLoading(false);
     }

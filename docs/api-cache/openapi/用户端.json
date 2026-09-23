@@ -1199,6 +1199,7 @@
         "tags": ["企划接口"]
       },
       "post": {
+        "description": "创建后自动加入当前用户的个人工坊",
         "operationId": "createProject",
         "parameters": [
           {

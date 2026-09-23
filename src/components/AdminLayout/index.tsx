@@ -8,6 +8,7 @@ import ThemeToggle from "@/components/theme/ThemeToggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import PageTransition from "@/components/layout/PageTransition";
+import { showApiError } from "@/lib/apiError";
 import { clearAdminSession, getAdminRole, getAdminToken, getAdminUsername } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +38,7 @@ export default function AdminLayout({ children, title, description }: AdminLayou
       await adminLogout();
       $tip("管理员已退出登录", "success");
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "退出登录失败", "error");
+      showApiError(error, "退出登录失败");
     } finally {
       clearAdminSession();
       void navigate("/admin/login", { replace: true });

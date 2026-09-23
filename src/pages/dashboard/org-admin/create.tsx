@@ -24,6 +24,7 @@ import type {
   OrganizationBaseTaskVO,
   OrganizationTaskTemplateCreateDTO,
 } from "@/types/organizationAdmin";
+import { showApiError } from "@/lib/apiError";
 import { toWorkflowTemplateNodes } from "@/lib/workflowTemplate";
 
 interface WorkflowForm {
@@ -75,7 +76,7 @@ function OrganizationAdminCreateWorkflowContent() {
       });
       setBaseTasks(data.list.map(toEditorBaseTask));
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "原子任务加载失败", "error");
+      showApiError(error, "原子任务加载失败");
     } finally {
       setLoadingBaseTasks(false);
     }
@@ -99,7 +100,7 @@ function OrganizationAdminCreateWorkflowContent() {
         });
         setNodes(buildEditorNodes(toWorkflowTemplateNodes(detail.nodes)));
       } catch (error) {
-        $tip(error instanceof Error ? error.message : "工作流详情加载失败", "error");
+        showApiError(error, "工作流详情加载失败");
       } finally {
         setLoadingTemplate(false);
       }
@@ -146,7 +147,7 @@ function OrganizationAdminCreateWorkflowContent() {
       }
       void navigate("/dashboard/org-admin/workflows");
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "流程模板保存失败", "error");
+      showApiError(error, "流程模板保存失败");
     } finally {
       setSaving(false);
     }

@@ -1,9 +1,14 @@
+import { useSyncExternalStore } from "react";
 import { Navigate } from "react-router";
 
-import { getAdminToken } from "@/lib/session";
+import { getAdminToken, subscribeSession } from "@/lib/session";
 
 export default function AdminHomePage() {
-  const token = getAdminToken();
+  const token = useSyncExternalStore(
+    subscribeSession,
+    () => getAdminToken(),
+    () => null,
+  );
 
   if (!token) {
     return <Navigate to="/admin/login" replace />;

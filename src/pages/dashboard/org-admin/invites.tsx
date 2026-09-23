@@ -5,6 +5,7 @@ import { createJoinInviteCode } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
+import { showApiError } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import type { InviteCodeVO } from "@/types/organizationAdmin";
@@ -38,7 +39,7 @@ function OrganizationInvitesContent() {
       sessionStorage.setItem(INVITE_STORAGE_KEY, JSON.stringify(nextInvite));
       $tip("邀请码已生成", "success");
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "邀请码生成失败", "error");
+      showApiError(error, "邀请码生成失败");
     } finally {
       setLoading(false);
     }

@@ -11,6 +11,7 @@ import WorkflowEditor, {
   type WorkflowEditorNode,
 } from "@/components/WorkflowEditor";
 import { $tip } from "@/components/tip";
+import { showApiError } from "@/lib/apiError";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -64,7 +65,7 @@ function CreateWorkflowPageContent() {
       });
       setBaseTasks(data.list);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "原子任务加载失败", "error");
+      showApiError(error, "原子任务加载失败");
     } finally {
       setLoadingBaseTasks(false);
     }
@@ -104,7 +105,7 @@ function CreateWorkflowPageContent() {
       }
       void navigate("/dashboard/workshop/workflows");
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "流程模板保存失败", "error");
+      showApiError(error, "流程模板保存失败");
     } finally {
       setSaving(false);
     }

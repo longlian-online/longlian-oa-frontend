@@ -36,6 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useConfirm } from "@/hooks/useConfirm";
+import { showApiError } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
 import type {
   MemberSubmitCountVO,
@@ -84,7 +85,7 @@ function OrganizationMembersContent() {
       setMembers(result.list);
       setTotal(result.total);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "成员加载失败", "error");
+      showApiError(error, "成员加载失败");
     } finally {
       setLoading(false);
     }
@@ -113,7 +114,7 @@ function OrganizationMembersContent() {
       $tip(disabled ? "成员已启用" : "成员已禁用", "success");
       await loadMembers();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "成员状态更新失败", "error");
+      showApiError(error, "成员状态更新失败");
     } finally {
       setMutatingId(null);
     }
@@ -127,7 +128,7 @@ function OrganizationMembersContent() {
       const result = await getMemberSubmitCounts(member.id);
       setSubmitCounts(result.list);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "提交统计加载失败", "error");
+      showApiError(error, "提交统计加载失败");
     } finally {
       setDetailLoading(false);
     }

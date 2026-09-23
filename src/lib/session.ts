@@ -9,11 +9,45 @@ const ADMIN_ID_KEY = "adminId";
 const ADMIN_USERNAME_KEY = "adminUsername";
 const ADMIN_ROLE_KEY = "adminRole";
 
+const SESSION_KEYS = [
+  TOKEN_KEY,
+  USER_ID_KEY,
+  CURRENT_ORG_ID_KEY,
+  ROLES_KEY,
+  ADMIN_TOKEN_KEY,
+  ADMIN_ID_KEY,
+  ADMIN_USERNAME_KEY,
+  ADMIN_ROLE_KEY,
+];
+
+const sessionListeners = new Set<() => void>();
+
+function emitSessionChange(): void {
+  sessionListeners.forEach((listener) => listener());
+}
+
+export function subscribeSession(listener: () => void): () => void {
+  sessionListeners.add(listener);
+
+  return () => {
+    sessionListeners.delete(listener);
+  };
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key === null || SESSION_KEYS.includes(event.key)) {
+      emitSessionChange();
+    }
+  });
+}
+
 export function saveSession(session: LoginVO): void {
   localStorage.setItem(TOKEN_KEY, session.token);
   localStorage.setItem(USER_ID_KEY, session.userId);
   localStorage.setItem(CURRENT_ORG_ID_KEY, session.currentOrgId);
   localStorage.setItem(ROLES_KEY, JSON.stringify(session.roles));
+  emitSessionChange();
 }
 
 export function clearSession(): void {
@@ -21,6 +55,7 @@ export function clearSession(): void {
   localStorage.removeItem(USER_ID_KEY);
   localStorage.removeItem(CURRENT_ORG_ID_KEY);
   localStorage.removeItem(ROLES_KEY);
+  emitSessionChange();
 }
 
 export function saveAdminSession(session: AdminLoginVO): void {
@@ -28,6 +63,7 @@ export function saveAdminSession(session: AdminLoginVO): void {
   localStorage.setItem(ADMIN_ID_KEY, session.adminId);
   localStorage.setItem(ADMIN_USERNAME_KEY, session.username);
   localStorage.setItem(ADMIN_ROLE_KEY, session.role);
+  emitSessionChange();
 }
 
 export function clearAdminSession(): void {
@@ -35,6 +71,7 @@ export function clearAdminSession(): void {
   localStorage.removeItem(ADMIN_ID_KEY);
   localStorage.removeItem(ADMIN_USERNAME_KEY);
   localStorage.removeItem(ADMIN_ROLE_KEY);
+  emitSessionChange();
 }
 
 export function getToken(): string | null {

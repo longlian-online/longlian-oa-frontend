@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTheme } from "@/hooks/useTheme";
 import { useUploadFile } from "@/hooks/useUploadFile";
+import { showApiError } from "@/lib/apiError";
 import { clearSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import type { InviteInfoVO } from "@/types/auth";
@@ -92,7 +93,7 @@ export default function AppHeader() {
       setIsJoinOpen(false);
       setIsInviteConfirmOpen(true);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "邀请码查询失败", "error");
+      showApiError(error, "邀请码查询失败");
     } finally {
       setIsLoadingInviteInfo(false);
     }
@@ -109,7 +110,7 @@ export default function AppHeader() {
       setInviteInfo(null);
       setIsInviteConfirmOpen(false);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "加入组织失败", "error");
+      showApiError(error, "加入组织失败");
     } finally {
       setIsJoining(false);
     }
@@ -121,7 +122,7 @@ export default function AppHeader() {
       await logout();
       $tip("已退出登录", "success");
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "退出登录失败", "error");
+      showApiError(error, "退出登录失败");
     } finally {
       clearSession();
       setIsLoggingOut(false);

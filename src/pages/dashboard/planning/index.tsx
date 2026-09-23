@@ -7,7 +7,6 @@ import EmptyState from "@/components/EmptyState";
 import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
-import { $tip } from "@/components/tip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { showApiError } from "@/lib/apiError";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 import type { ProjectInfoVO, ProjectListDTO } from "@/types/planning";
 
@@ -64,7 +64,7 @@ export default function Planning() {
       setProjects(result.list);
       setTotal(result.total);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划加载失败", "error");
+      showApiError(error, "企划加载失败");
     } finally {
       setLoading(false);
     }

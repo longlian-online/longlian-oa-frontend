@@ -10,6 +10,7 @@ import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
+import { showApiError } from "@/lib/apiError";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,7 +59,7 @@ export default function AdminOrganizationsPage() {
       setOrganizations(result.list ?? []);
       setTotal(result.total ?? 0);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "组织列表加载失败", "error");
+      showApiError(error, "组织列表加载失败");
     } finally {
       setLoading(false);
     }
@@ -82,7 +83,7 @@ export default function AdminOrganizationsPage() {
       $tip(nextStatus === "ENABLED" ? "组织已启用" : "组织已禁用", "success");
       await loadOrganizations();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "组织状态更新失败", "error");
+      showApiError(error, "组织状态更新失败");
     } finally {
       setWorkingId(null);
     }
@@ -94,7 +95,7 @@ export default function AdminOrganizationsPage() {
       setInviteOpen(true);
       $tip("创建组织邀请码已生成", "success");
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "邀请码生成失败", "error");
+      showApiError(error, "邀请码生成失败");
     }
   }
 

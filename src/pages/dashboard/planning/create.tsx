@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { showApiError } from "@/lib/apiError";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
@@ -120,14 +121,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
         void navigate("/dashboard/planning");
       }
     } catch (error) {
-      $tip(
-        error instanceof Error
-          ? error.message
-          : isEditing
-            ? "更新失败，请重试"
-            : "创建失败，请重试",
-        "error",
-      );
+      showApiError(error, isEditing ? "更新失败，请重试" : "创建失败，请重试");
     } finally {
       setLoading(false);
     }
