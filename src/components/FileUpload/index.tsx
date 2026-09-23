@@ -143,7 +143,6 @@ export default function FileUpload({
         <div className="flex items-center justify-between gap-3 rounded-lg border bg-background/60 px-3 py-2">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-foreground">{value.fileName}</p>
-            <p className="text-xs text-muted-foreground">fileId: {value.fileId}</p>
           </div>
           <Button type="button" variant="ghost" size="icon-sm" onClick={() => onChange(null)}>
             <X className="h-4 w-4" />

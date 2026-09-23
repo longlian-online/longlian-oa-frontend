@@ -1199,6 +1199,7 @@
         "tags": ["企划接口"]
       },
       "post": {
+        "description": "创建后自动加入当前用户的个人工坊",
         "operationId": "createProject",
         "parameters": [
           {
@@ -2403,8 +2404,8 @@
   ],
   "servers": [
     {
-      "description": "Generated server url",
-      "url": "http://sit.neo.oa.api.longlian.online"
+      "description": "Configured server URL",
+      "url": "https://sit.neo.oa.api.longlian.online/"
     }
   ],
   "tags": [

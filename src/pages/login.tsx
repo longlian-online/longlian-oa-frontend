@@ -38,15 +38,15 @@ interface LoginLocationState {
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const fromState = location.state as LoginLocationState | null;
+  const redirectTo = fromState?.from?.pathname
+    ? `${fromState.from.pathname}${fromState.from.search ?? ""}`
+    : "/dashboard/planning";
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [activeTab, setActiveTab] = useState<"password" | "code">("password");
   const [tabDirection, setTabDirection] = useState<"left" | "right">("right");
-  const fromState = location.state as LoginLocationState | null;
-  const redirectTo = fromState?.from?.pathname
-    ? `${fromState.from.pathname}${fromState.from.search ?? ""}`
-    : "/dashboard/planning";
 
   const passwordForm = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
@@ -143,7 +143,10 @@ export default function LoginPage() {
             </TabsList>
 
             {/* Password Login */}
-            <TabsContent value="password" className={tabPanelClassName}>
+            <TabsContent
+              value="password"
+              className={activeTab === "password" ? tabPanelClassName : undefined}
+            >
               <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-xs text-muted-foreground">
@@ -207,7 +210,10 @@ export default function LoginPage() {
             </TabsContent>
 
             {/* Code Login */}
-            <TabsContent value="code" className={tabPanelClassName}>
+            <TabsContent
+              value="code"
+              className={activeTab === "code" ? tabPanelClassName : undefined}
+            >
               <form onSubmit={codeForm.handleSubmit(onCodeSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-xs text-muted-foreground">

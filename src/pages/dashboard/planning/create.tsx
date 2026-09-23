@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Check, ImagePlus, Info, Loader2, Plus, Tags, X } from "lucide-react";
 
-import { createProject } from "@/api/planning";
+import { createProject, updateProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,9 @@ import { useProjectTypes } from "@/hooks/useProjectTypes";
 import { showApiError } from "@/lib/apiError";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
+import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 import type { UploadedFileInfo } from "@/types/file";
+import type { ProjectDetailInfoVO } from "@/types/planning";
 
 interface TagItem {
   key: string;
@@ -23,25 +25,48 @@ interface TagItem {
 const fieldClassName =
   "border-border/70 bg-muted/20 shadow-none focus-visible:border-foreground/30 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-foreground/10";
 
-export default function CreateProject() {
+interface CreateProjectProps {
+  project?: ProjectDetailInfoVO;
+}
+
+export default function CreateProject({ project }: CreateProjectProps) {
   const navigate = useNavigate();
   const { projectTypes, loading: loadingProjectTypes } = useProjectTypes();
-  const coverBizId = getCurrentOrgId() ?? "cover";
+  const isEditing = Boolean(project);
+  const coverBizId = project ? String(project.id) : (getCurrentOrgId() ?? "cover");
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    alias: "",
+    title: project?.title ?? "",
+    alias: project?.alias ?? "",
     typeId: "",
-    description: "",
+    description: project?.description ?? "",
   });
-  const [tags, setTags] = useState<TagItem[]>([]);
+  const [tags, setTags] = useState<TagItem[]>(parseProjectMetadataTags(project?.metadata));
   const [newTagKey, setNewTagKey] = useState("");
   const [newTagValue, setNewTagValue] = useState("");
-  const [showTagInput, setShowTagInput] = useState(true);
-  const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(null);
+  const [showTagInput, setShowTagInput] = useState(!project || !project.metadata);
+  const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(
+    project?.coverUrl
+      ? {
+          fileId: "",
+          fileName: project.title,
+          fileSize: 0,
+          fileMime: "image/*",
+          previewUrl: project.coverUrl,
+        }
+      : null,
+  );
   const selectedProjectType = projectTypes.find((type) => type.id === formData.typeId);
 
-  const canSubmit = Boolean(formData.title && formData.typeId && coverFile?.fileId);
+  const canSubmit = Boolean(formData.title && formData.typeId && (isEditing || coverFile?.fileId));
+
+  useEffect(() => {
+    if (!project || formData.typeId || projectTypes.length === 0) return;
+    const matchedType = projectTypes.find((type) => type.name === project.typeName);
+    if (matchedType) {
+      setFormData((current) => ({ ...current, typeId: matchedType.id }));
+    }
+  }, [formData.typeId, project, projectTypes]);
 
   function handleAddTag(): void {
     if (newTagKey.trim() && newTagValue.trim()) {
@@ -57,7 +82,7 @@ export default function CreateProject() {
   }
 
   async function handleSubmit(): Promise<void> {
-    if (!canSubmit || !coverFile) return;
+    if (!canSubmit || (!isEditing && !coverFile)) return;
 
     const pendingTagKey = newTagKey.trim();
     const pendingTagValue = newTagValue.trim();
@@ -73,18 +98,30 @@ export default function CreateProject() {
 
     try {
       setLoading(true);
-      await createProject({
-        title: formData.title,
-        alias: formData.alias || formData.title,
-        typeId: formData.typeId,
-        description: formData.description,
-        coverFileId: coverFile.fileId,
-        metadata: JSON.stringify({ tags: submittedTags }),
-      });
-      $tip("企划创建成功", "success");
-      void navigate("/dashboard/planning");
+      if (isEditing && project) {
+        await updateProject(project.id, {
+          title: formData.title.trim(),
+          alias: formData.alias.trim() || formData.title.trim(),
+          description: formData.description.trim(),
+          metadata: JSON.stringify({ tags: submittedTags }),
+          coverFileId: coverFile?.fileId || undefined,
+        });
+        $tip("企划已更新", "success");
+        void navigate(`/dashboard/planning/${project.id}`);
+      } else if (coverFile) {
+        await createProject({
+          title: formData.title.trim(),
+          alias: formData.alias.trim() || formData.title.trim(),
+          typeId: formData.typeId,
+          description: formData.description.trim(),
+          coverFileId: coverFile.fileId,
+          metadata: JSON.stringify({ tags: submittedTags }),
+        });
+        $tip("企划创建成功", "success");
+        void navigate("/dashboard/planning");
+      }
     } catch (error) {
-      showApiError(error, "创建失败，请重试");
+      showApiError(error, isEditing ? "更新失败，请重试" : "创建失败，请重试");
     } finally {
       setLoading(false);
     }
@@ -96,9 +133,13 @@ export default function CreateProject() {
         <div className="flex items-start gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold tracking-tight text-foreground">发布新企划</h1>
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                {isEditing ? "编辑企划" : "发布新企划"}
+              </h1>
             </div>
-            <p className="mt-0.5 text-sm text-muted-foreground">填写基础信息、封面与元信息。</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {isEditing ? "更新基础信息、封面与元信息。" : "填写基础信息、封面与元信息。"}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -109,7 +150,7 @@ export default function CreateProject() {
             disabled={loading || !canSubmit}
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            创建企划
+            {isEditing ? "保存修改" : "创建企划"}
           </Button>
         </div>
       </div>
@@ -129,8 +170,8 @@ export default function CreateProject() {
               bizType="cover"
               bizId={coverBizId}
               value={coverFile}
-              title="上传企划封面"
-              description="推荐 2:3 竖版图片，最大 10MB"
+              title={isEditing ? "更换企划封面" : "上传企划封面"}
+              description={isEditing ? "不上传则保留原封面" : "推荐 2:3 竖版图片，最大 10MB"}
               imagePreview
               accept={["jpg", "jpeg", "png", "gif"]}
               maxSize={10 * 1024 * 1024}
@@ -152,7 +193,9 @@ export default function CreateProject() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">缩略图</p>
-                <p className="text-xs text-muted-foreground">创建后自动使用封面图片</p>
+                <p className="text-xs text-muted-foreground">
+                  {isEditing ? "保存后更新企划封面" : "创建后自动使用封面图片"}
+                </p>
               </div>
             </div>
           </section>

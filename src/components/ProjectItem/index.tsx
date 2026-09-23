@@ -48,6 +48,7 @@ interface ProjectItemSectionProps {
   projectId: string;
   isCreator?: boolean;
   onChanged?: () => Promise<void> | void;
+  showDetailLink?: boolean;
 }
 
 interface ProjectItemForm {
@@ -111,6 +112,7 @@ export default function ProjectItemSection({
   projectId,
   isCreator = false,
   onChanged,
+  showDetailLink = false,
 }: ProjectItemSectionProps) {
   const confirm = useConfirm();
   const navigate = useNavigate();
@@ -255,12 +257,26 @@ export default function ProjectItemSection({
             绑定流程模板后，项目会按节点生成任务流。
           </p>
         </div>
-        {isCreator && (
-          <Button size="sm" onClick={openCreateDialog}>
-            <Plus className="h-4 w-4" />
-            创建项目
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {showDetailLink && (
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="查看项目列表"
+              title="查看项目列表"
+              onClick={() => void navigate(`/dashboard/planning/${projectId}/items`)}
+            >
+              详细
+              <ChevronRight data-icon="inline-end" />
+            </Button>
+          )}
+          {isCreator && (
+            <Button size="sm" onClick={openCreateDialog}>
+              <Plus className="h-4 w-4" />
+              创建项目
+            </Button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -311,6 +327,7 @@ export default function ProjectItemSection({
                         variant="ghost"
                         size="icon-sm"
                         aria-label="发布项目"
+                        title="发布项目"
                         disabled={mutatingItemId === item.id}
                         onClick={() => void handlePublishItem(item)}
                       >
@@ -325,6 +342,7 @@ export default function ProjectItemSection({
                       variant="ghost"
                       size="icon-sm"
                       aria-label="删除项目"
+                      title="删除项目"
                       className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       disabled={mutatingItemId === item.id}
                       onClick={() => void handleDeleteItem(item)}
