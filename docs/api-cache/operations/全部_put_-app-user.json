@@ -31,6 +31,5 @@
     "summary": "更新当前用户信息",
     "tags": ["用户接口"]
   },
-  "path": "/app/user/",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "path": "/app/user/"
 }

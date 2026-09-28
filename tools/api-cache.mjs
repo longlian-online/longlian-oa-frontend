@@ -1,26 +1,36 @@
 #!/usr/bin/env node
 
-import { execFile as execFileCallback } from "node:child_process";
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import process from "node:process";
-import { promisify } from "node:util";
 
-const DEFAULT_SOURCE_URL = "https://sit.neo.oa.api.longlian.online/v3/api-docs";
-const SOURCE_URL = process.env.LONGLIAN_API_DOCS_URL || DEFAULT_SOURCE_URL;
-const CACHE_DIR = "docs/api-cache";
+if (existsSync(".env")) process.loadEnvFile(".env");
+
+const SOURCE_URL = process.env.API_CACHE_SOURCE_URL;
+const CACHE_DIR = process.env.API_CACHE_OUTPUT_DIR || "docs/api-cache";
 const OPENAPI_DIR = join(CACHE_DIR, "openapi");
 const OPERATIONS_DIR = join(CACHE_DIR, "operations");
 const MANIFEST_FILE = join(CACHE_DIR, "manifest.json");
 const SUMMARY_FILE = join(CACHE_DIR, "summary.md");
 const COMMANDS = new Set(["update", "check"]);
-const execFile = promisify(execFileCallback);
 
 const command = process.argv[2] || "check";
 
 if (!COMMANDS.has(command)) {
   console.error("用法：node tools/api-cache.mjs <update|check>");
+  process.exit(1);
+}
+
+let sourceIsValid = false;
+try {
+  sourceIsValid = !!SOURCE_URL && /^https?:$/.test(new URL(SOURCE_URL).protocol);
+} catch {
+  // Report a generic error so a URL containing credentials is never printed.
+}
+if (!sourceIsValid) {
+  console.error("请在 .env 或环境变量中配置有效的 API_CACHE_SOURCE_URL。");
   process.exit(1);
 }
 
@@ -46,8 +56,9 @@ async function updateCache() {
   const manifest = buildManifest(documents, operations);
 
   await mkdir(OPENAPI_DIR, { recursive: true });
-  await mkdir(OPERATIONS_DIR, { recursive: true });
+  await rm(OPENAPI_DIR, { recursive: true, force: true });
   await rm(OPERATIONS_DIR, { recursive: true, force: true });
+  await mkdir(OPENAPI_DIR, { recursive: true });
   await mkdir(OPERATIONS_DIR, { recursive: true });
 
   for (const document of documents) {
@@ -60,30 +71,8 @@ async function updateCache() {
 
   await writeJson(MANIFEST_FILE, manifest);
   await writeFile(SUMMARY_FILE, buildSummary(manifest), "utf8");
-  await formatCache();
 
   console.log(`API 缓存已更新：${documents.length} 组文档，${operations.length} 个接口。`);
-}
-
-async function formatCache() {
-  const binary = join(
-    process.cwd(),
-    "node_modules",
-    ".bin",
-    process.platform === "win32" ? "vp.cmd" : "vp",
-  );
-
-  if (process.platform === "win32") {
-    await execFile(process.env.ComSpec || "cmd.exe", [
-      "/d",
-      "/s",
-      "/c",
-      `"${binary}" fmt "${CACHE_DIR}" --write`,
-    ]);
-    return;
-  }
-
-  await execFile(binary, ["fmt", CACHE_DIR, "--write"]);
 }
 
 async function checkCache() {
@@ -139,6 +128,8 @@ async function fetchDocuments() {
     seen.add(slug);
 
     const openapi = sortValue(await fetchJson(entry.url));
+    // Server origins are deployment details, not part of the API contract used by the frontend.
+    delete openapi.servers;
     const json = JSON.stringify(openapi);
     const paths = openapi.paths && typeof openapi.paths === "object" ? openapi.paths : {};
     const operations = listOperations(openapi);
@@ -162,11 +153,14 @@ async function fetchJson(url) {
   const response = await fetch(url, {
     headers: {
       Accept: "application/json",
+      ...(process.env.API_CACHE_TOKEN
+        ? { Authorization: `Bearer ${process.env.API_CACHE_TOKEN}` }
+        : {}),
     },
   });
 
   if (!response.ok) {
-    throw new Error(`拉取 API 文档失败：${response.status} ${url}`);
+    throw new Error(`拉取 API 文档失败：HTTP ${response.status}`);
   }
 
   return response.json();
@@ -180,7 +174,6 @@ function collectOperations(documents) {
       const id = `${document.slug}_${slugify(`${operation.method}_${operation.path}`)}`;
       const cache = sortValue({
         document: document.name,
-        sourceUrl: document.url,
         path: operation.path,
         method: operation.method,
         operation: operation.operation,
@@ -231,13 +224,11 @@ function listOperations(openapi) {
 
 function buildManifest(documents, operations) {
   return {
-    version: 1,
-    sourceUrl: SOURCE_URL,
+    version: 2,
     generatedAt: new Date().toISOString(),
-    documents: documents.map(({ name, slug, url, file, sha256, pathCount, operationCount }) => ({
+    documents: documents.map(({ name, slug, file, sha256, pathCount, operationCount }) => ({
       name,
       slug,
-      url,
       file,
       sha256,
       pathCount,
@@ -258,6 +249,7 @@ function buildManifest(documents, operations) {
 
 function compareManifest(cached, latest) {
   const problems = [];
+  if (cached.version !== latest.version) problems.push("缓存格式变更");
   const cachedDocuments = new Map((cached.documents || []).map((item) => [item.slug, item]));
   const latestDocuments = new Map((latest.documents || []).map((item) => [item.slug, item]));
   const cachedOperations = new Map((cached.operations || []).map((item) => [item.id, item]));
@@ -292,7 +284,6 @@ function buildSummary(manifest) {
   const lines = [
     "# API 缓存摘要",
     "",
-    `来源：${manifest.sourceUrl}`,
     `更新时间：${manifest.generatedAt}`,
     "",
     "## 文档分组",

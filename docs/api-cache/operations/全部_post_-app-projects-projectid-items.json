@@ -42,6 +42,5 @@
     "summary": "创建项目",
     "tags": ["项目相关接口"]
   },
-  "path": "/app/projects/{projectId}/items",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "path": "/app/projects/{projectId}/items"
 }

@@ -60,6 +60,14 @@ docker run --rm -it -p 5173:5173 \
 
 ## 常用命令
 
+### API 文档缓存
+
+工具入口是 `tools/api-cache.mjs`，只依赖 Node.js 22 或更新版本。复制 `.env.example` 为 `.env`，设置后端 OpenAPI 地址，再运行 `vp run api:update` 生成按分组和接口拆分的缓存；运行 `vp run api:check` 检查后端接口是否变化。受保护的文档可通过 `API_CACHE_TOKEN` 提供 Bearer token。也可以直接设置同名环境变量，环境变量优先于 `.env`。
+
+在其他项目中复制脚本和 `.env.example`，按需要修改 `API_CACHE_OUTPUT_DIR`，用 `node tools/api-cache.mjs update` 或 `check` 运行。脚本不依赖 Vite Plus；是否把 `check` 接入 Git hook 或 CI 由项目决定。`API_CACHE_SOURCE_URL`、`API_CACHE_TOKEN` 不会写进工具生成的清单、接口文件和摘要，但上游 OpenAPI 文档本身可能含内部地址、示例值等内容，提交缓存前仍需检查。
+
+`.env` 已被 Git 忽略。不要把密钥放进 `VITE_` 环境变量；这类变量可能进入浏览器构建产物。
+
 | 命令                                   | 说明                                         |
 | -------------------------------------- | -------------------------------------------- |
 | `vp dev`                               | 启动开发服务器                               |

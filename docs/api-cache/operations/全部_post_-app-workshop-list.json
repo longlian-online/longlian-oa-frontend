@@ -39,6 +39,5 @@
     "summary": "分页查询工坊企划列表",
     "tags": ["工坊接口"]
   },
-  "path": "/app/workshop/list",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "path": "/app/workshop/list"
 }

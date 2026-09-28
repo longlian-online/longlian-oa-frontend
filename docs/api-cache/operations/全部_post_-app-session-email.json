@@ -29,6 +29,5 @@
     "summary": "验证码登录",
     "tags": ["用户会话接口"]
   },
-  "path": "/app/session/email",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "path": "/app/session/email"
 }

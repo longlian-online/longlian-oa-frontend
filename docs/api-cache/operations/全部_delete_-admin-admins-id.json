@@ -22,6 +22,5 @@
     "summary": "删除管理员",
     "tags": ["管理员接口"]
   },
-  "path": "/admin/admins/{id}",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "path": "/admin/admins/{id}"
 }

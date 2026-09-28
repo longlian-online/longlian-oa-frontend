@@ -29,6 +29,5 @@
     "summary": "密码登录",
     "tags": ["用户会话接口"]
   },
-  "path": "/app/session/pwd",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "path": "/app/session/pwd"
 }

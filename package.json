@@ -6,6 +6,7 @@
   "scripts": {
     "api:check": "node tools/api-cache.mjs check",
     "api:update": "node tools/api-cache.mjs update",
+    "api:test": "node --test tools/api-cache.test.mjs",
     "dev": "vp dev",
     "build": "tsc && vp build",
     "preview": "vp preview",

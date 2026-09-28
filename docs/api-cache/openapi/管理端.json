@@ -555,12 +555,6 @@
       "Authorization": []
     }
   ],
-  "servers": [
-    {
-      "description": "Configured server URL",
-      "url": "https://sit.neo.oa.api.longlian.online/"
-    }
-  ],
   "tags": [
     {
       "description": "管理员相关接口",

@@ -32,6 +32,5 @@
     "summary": "更新组织信息",
     "tags": ["组织信息管理接口"]
   },
-  "path": "/orgadmin/organizations",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "path": "/orgadmin/organizations"
 }

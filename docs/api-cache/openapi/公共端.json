@@ -121,6 +121,15 @@
             "schema": {
               "$ref": "#/components/schemas/LocalFileReadDTO"
             }
+          },
+          {
+            "in": "query",
+            "name": "t",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -205,12 +214,6 @@
   "security": [
     {
       "Authorization": []
-    }
-  ],
-  "servers": [
-    {
-      "description": "Configured server URL",
-      "url": "https://sit.neo.oa.api.longlian.online/"
     }
   ],
   "tags": [

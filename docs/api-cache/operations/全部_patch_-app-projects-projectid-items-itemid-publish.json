@@ -41,6 +41,5 @@
     "summary": "公布项目",
     "tags": ["项目相关接口"]
   },
-  "path": "/app/projects/{projectId}/items/{itemId}/publish",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "path": "/app/projects/{projectId}/items/{itemId}/publish"
 }
