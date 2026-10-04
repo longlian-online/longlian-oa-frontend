@@ -72,7 +72,7 @@ export default function WorkshopPage() {
         <div>
           <h1 className="text-xl font-bold text-foreground">工坊</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            浏览已加入工坊的企划，并进入工作流模板管理。
+            浏览已加入的企划，并进入工作流模板管理。
           </p>
         </div>
 
@@ -99,7 +99,7 @@ export default function WorkshopPage() {
           >
             <SelectTrigger className="h-8 w-36 shrink-0">
               <Filter className="mr-1.5 h-3.5 w-3.5" />
-              <SelectValue />
+              <SelectValue>{selectedType === "all" ? "所有类型" : selectedType}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">所有类型</SelectItem>
@@ -135,7 +135,7 @@ export default function WorkshopPage() {
         <EmptyState
           icon={<Workflow className="h-5 w-5 text-muted-foreground" />}
           title="暂无工坊企划"
-          description="在企划详情中添加到工坊后，这里会展示可浏览的企划。"
+          description="在企划详情中加入企划后，这里会展示可浏览的企划。"
           action={<Button onClick={() => void navigate("/dashboard/planning")}>去企划列表</Button>}
         />
       ) : (

@@ -24,7 +24,6 @@ const navItems = [
       { to: "/dashboard/org-admin/project-types", label: "企划类型" },
       { to: "/dashboard/org-admin/members", label: "成员" },
       { to: "/dashboard/org-admin/applications", label: "入组申请" },
-      { to: "/dashboard/org-admin/invites", label: "组织邀请" },
       { to: "/dashboard/org-admin/tasks", label: "原子任务" },
       { to: "/dashboard/org-admin/workflows", label: "工作流" },
       { to: "/dashboard/org-admin/settings", label: "组织设置" },

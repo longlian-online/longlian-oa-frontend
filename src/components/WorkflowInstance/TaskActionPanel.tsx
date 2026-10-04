@@ -1,4 +1,4 @@
-import { Eye, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,13 @@ interface TaskActionPanelProps {
   currentUserId?: string | null;
   mutatingInstanceId?: string | null;
   canSubmit: (instance: ItemTaskInstanceVO) => boolean;
-  canManageCompletedTask: (instance: ItemTaskInstanceVO) => boolean;
+  canReset: (instance: ItemTaskInstanceVO) => boolean;
+  canReject: (instance: ItemTaskInstanceVO) => boolean;
   onSubmit: (instance: ItemTaskInstanceVO) => void;
   onClaim: (instanceId: string) => void;
   onAbandon: (instanceId: string) => void;
   onReject: (instance: ItemTaskInstanceVO) => void;
   onReset: (instanceId: string) => void;
-  onViewDetail: (instance: ItemTaskInstanceVO) => void;
 }
 
 const STATUS_LABELS: Record<TaskInstanceStatus, string> = {
@@ -35,13 +35,13 @@ export default function TaskActionPanel({
   currentUserId,
   mutatingInstanceId,
   canSubmit,
-  canManageCompletedTask,
+  canReset,
+  canReject,
   onSubmit,
   onClaim,
   onAbandon,
   onReject,
   onReset,
-  onViewDetail,
 }: TaskActionPanelProps) {
   if (instances.length === 0) {
     return (
@@ -53,7 +53,7 @@ export default function TaskActionPanel({
 
   return (
     <section className="rounded-xl border bg-card p-4">
-      <div className="mb-3 text-sm font-medium text-foreground">任务列表</div>
+      <div className="mb-3 text-sm font-medium text-foreground">任务操作</div>
       <div className="space-y-2">
         {instances.map((instance) => {
           const isMine = Boolean(instance.assigneeId && instance.assigneeId === currentUserId);
@@ -106,29 +106,25 @@ export default function TaskActionPanel({
                 )}
                 {instance.status === "COMPLETED" && (
                   <>
-                    <Button size="xs" variant="outline" onClick={() => onViewDetail(instance)}>
-                      <Eye className="h-3 w-3" />
-                      详情
-                    </Button>
-                    {canManageCompletedTask(instance) && (
-                      <>
-                        <Button
-                          size="xs"
-                          variant="outline"
-                          disabled={isMutating}
-                          onClick={() => onReset(instance.id)}
-                        >
-                          重置
-                        </Button>
-                        <Button
-                          size="xs"
-                          variant="destructive"
-                          disabled={isMutating}
-                          onClick={() => onReject(instance)}
-                        >
-                          打回
-                        </Button>
-                      </>
+                    {canReset(instance) && (
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        disabled={isMutating}
+                        onClick={() => onReset(instance.id)}
+                      >
+                        重置
+                      </Button>
+                    )}
+                    {canReject(instance) && (
+                      <Button
+                        size="xs"
+                        variant="destructive"
+                        disabled={isMutating}
+                        onClick={() => onReject(instance)}
+                      >
+                        打回
+                      </Button>
                     )}
                   </>
                 )}
