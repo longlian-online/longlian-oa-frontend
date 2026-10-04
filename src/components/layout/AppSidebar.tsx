@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BookOpen, ChevronDown, ChevronRight, Settings2 } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 
-import { isOrganizationAdmin } from "@/lib/session";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/utils";
 import OrganizationIdentity from "./OrganizationIdentity";
 
@@ -24,7 +24,6 @@ const navItems = [
       { to: "/dashboard/org-admin/project-types", label: "企划类型" },
       { to: "/dashboard/org-admin/members", label: "成员" },
       { to: "/dashboard/org-admin/applications", label: "入组申请" },
-      { to: "/dashboard/org-admin/invites", label: "组织邀请" },
       { to: "/dashboard/org-admin/tasks", label: "原子任务" },
       { to: "/dashboard/org-admin/workflows", label: "工作流" },
       { to: "/dashboard/org-admin/settings", label: "组织设置" },
@@ -38,7 +37,8 @@ function isPathActive(pathname: string, prefixes: readonly string[]): boolean {
 
 export default function AppSidebar() {
   const { pathname } = useLocation();
-  const isOrgAdmin = isOrganizationAdmin();
+  const { roles } = useCurrentUser();
+  const isOrgAdmin = roles.includes("ORG_ADMIN");
   const [isOrganizationMenuOpen, setIsOrganizationMenuOpen] = useState(true);
 
   return (

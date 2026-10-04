@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import FileUpload from "@/components/FileUpload";
+import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,17 +28,33 @@ interface TaskSubmitPanelProps {
   taskName?: string;
   metaSchema?: string;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (metadata: Record<string, unknown>) => Promise<void>;
+  onSubmit: (metadata: Record<string, unknown>) => Promise<boolean>;
 }
 
-interface MetaFieldSchema {
+export interface MetaFieldSchema {
   name: string;
   fieldType?: "text" | "textarea" | "file" | "number" | "select";
   required?: boolean;
   options?: string[];
 }
 
-type FieldValue = string | UploadedFileInfo | null;
+export type FieldValue = string | UploadedFileInfo | null;
+
+export function validateRequiredFields(
+  fields: MetaFieldSchema[],
+  values: Record<string, FieldValue>,
+): string[] {
+  return fields.flatMap((field) => {
+    if (!field.required) return [];
+    const value = values[field.name];
+    const isEmpty =
+      value === null ||
+      value === undefined ||
+      (typeof value === "string" && value.trim() === "") ||
+      (typeof value === "object" && value.fileId.trim() === "");
+    return isEmpty ? [`请填写${field.name}`] : [];
+  });
+}
 
 function parseMetaSchema(metaSchema?: string): MetaFieldSchema[] {
   if (!metaSchema) return [];
@@ -80,11 +97,19 @@ export default function TaskSubmitPanel({
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(): Promise<void> {
+    const validationErrors = validateRequiredFields(fields, formData);
+    if (validationErrors.length > 0) {
+      $tip(validationErrors[0], "error");
+      return;
+    }
+
     try {
       setSubmitting(true);
-      await onSubmit({ values: formData });
-      setFormData({});
-      onOpenChange(false);
+      const succeeded = await onSubmit({ values: formData });
+      if (succeeded) {
+        setFormData({});
+        onOpenChange(false);
+      }
     } finally {
       setSubmitting(false);
     }

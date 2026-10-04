@@ -30,7 +30,9 @@
       }
     },
     "summary": "获取用户加入的组织列表",
-    "tags": ["用户接口"]
+    "tags": [
+      "用户接口"
+    ]
   },
   "path": "/app/user/organizations",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

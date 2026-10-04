@@ -153,13 +153,13 @@ export function moveNodeToStage(
   const result: WorkflowEditorNode[] = [];
   groups.forEach((group, index) => {
     if (index === boundedIndex) {
-      result.push({ ...movingNode, sort: result.length + 1, parallelSort: 1 });
+      result.push({ ...movingNode, sort: index + 1, parallelSort: 1 });
     }
     result.push(...group);
   });
 
   if (boundedIndex === groups.length) {
-    result.push({ ...movingNode, sort: result.length + 1, parallelSort: 1 });
+    result.push({ ...movingNode, sort: groups.length + 1, parallelSort: 1 });
   }
 
   return normalizeNodes(result);

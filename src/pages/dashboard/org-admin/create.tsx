@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { Loader2 } from "lucide-react";
 
 import {
@@ -23,13 +23,8 @@ import type { BaseTaskVO } from "@/types/workflowTemplate";
 import type {
   OrganizationBaseTaskVO,
   OrganizationTaskTemplateCreateDTO,
-  OrganizationTaskTemplateDetailVO,
-  OrganizationTaskTemplateVO,
 } from "@/types/organizationAdmin";
-
-interface CreateWorkflowLocationState {
-  template?: OrganizationTaskTemplateVO;
-}
+import { toWorkflowTemplateNodes } from "@/lib/workflowTemplate";
 
 interface WorkflowForm {
   name: string;
@@ -50,40 +45,12 @@ function toEditorBaseTask(task: OrganizationBaseTaskVO): BaseTaskVO {
   };
 }
 
-function toEditorTemplate(detail: OrganizationTaskTemplateDetailVO) {
-  return {
-    id: detail.id,
-    name: detail.name ?? "未命名工作流",
-    description: detail.description,
-    scope: "ORGANIZATION" as const,
-    taskCount: detail.nodes.length,
-    isMine: true,
-    nodes: detail.nodes.flatMap((node) => {
-      if (!node.baseTaskId || node.sort === undefined) return [];
-      return [
-        {
-          baseTaskId: node.baseTaskId,
-          baseTaskName: node.baseTaskName,
-          baseTaskIconName: node.baseTaskIconName,
-          baseTaskIconUrl: node.baseTaskIconUrl,
-          sort: node.sort,
-          parallelSort: node.parallelSort,
-        },
-      ];
-    }),
-  };
-}
-
 function OrganizationAdminCreateWorkflowContent() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const state = location.state as CreateWorkflowLocationState | null;
-  const editingTemplate = state?.template;
-  const isEditing = Boolean(editingTemplate);
-  const [formData, setFormData] = useState<WorkflowForm>({
-    name: editingTemplate?.name ?? "",
-    description: editingTemplate?.description ?? "",
-  });
+  const [searchParams] = useSearchParams();
+  const templateId = searchParams.get("templateId");
+  const isEditing = Boolean(templateId);
+  const [formData, setFormData] = useState<WorkflowForm>({ name: "", description: "" });
   const [baseTasks, setBaseTasks] = useState<BaseTaskVO[]>([]);
   const [nodes, setNodes] = useState<WorkflowEditorNode[]>([]);
   const [loadingBaseTasks, setLoadingBaseTasks] = useState(true);
@@ -115,23 +82,22 @@ function OrganizationAdminCreateWorkflowContent() {
   }
 
   useEffect(() => {
-    if (!editingTemplate) {
+    if (!templateId) {
       setLoadingTemplate(false);
       return;
     }
 
-    const templateId = editingTemplate.id;
+    const currentTemplateId = templateId;
 
     async function loadTemplate(): Promise<void> {
       try {
         setLoadingTemplate(true);
-        const detail = await getOrganizationTaskTemplate(templateId);
-        const editorTemplate = toEditorTemplate(detail);
+        const detail = await getOrganizationTaskTemplate(currentTemplateId);
         setFormData({
-          name: editorTemplate.name,
-          description: editorTemplate.description ?? "",
+          name: detail.name ?? "未命名工作流",
+          description: detail.description ?? "",
         });
-        setNodes(buildEditorNodes(editorTemplate.nodes));
+        setNodes(buildEditorNodes(toWorkflowTemplateNodes(detail.nodes)));
       } catch (error) {
         $tip(error instanceof Error ? error.message : "工作流详情加载失败", "error");
       } finally {
@@ -140,7 +106,7 @@ function OrganizationAdminCreateWorkflowContent() {
     }
 
     void loadTemplate();
-  }, [editingTemplate]);
+  }, [templateId]);
 
   async function handleSave(): Promise<void> {
     if (!formData.name.trim()) {
@@ -171,8 +137,8 @@ function OrganizationAdminCreateWorkflowContent() {
 
     try {
       setSaving(true);
-      if (editingTemplate) {
-        await updateOrganizationTaskTemplate(String(editingTemplate.id), payload);
+      if (templateId) {
+        await updateOrganizationTaskTemplate(templateId, payload);
         $tip("流程模板已更新", "success");
       } else {
         await createOrganizationTaskTemplate(payload);

@@ -27,14 +27,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { JoinApplicationReviewDTO, JoinApplicationVO } from "@/types/organizationAdmin";
+import { formatDate } from "@/lib/format";
 
 const PAGE_SIZE = 10;
-
-function formatDate(value?: string): string {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("zh-CN");
-}
 
 function applicationName(application: JoinApplicationVO): string {
   return application.nickname || application.username || application.userId;

@@ -7,6 +7,7 @@ export interface OrganizationInfoVO {
   name: string;
   description?: string;
   avatarUrl?: string;
+  avatarFileId?: string;
 }
 
 export interface OrganizationUpdateDTO {

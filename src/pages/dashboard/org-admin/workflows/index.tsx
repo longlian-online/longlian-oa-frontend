@@ -15,9 +15,9 @@ import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/hooks/useConfirm";
+import { toWorkflowTemplateNodes } from "@/lib/workflowTemplate";
 import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 import type {
-  OrganizationTaskTemplateDetailVO,
   OrganizationTaskTemplateVO,
   OrganizationResourceStatus,
 } from "@/types/organizationAdmin";
@@ -34,24 +34,6 @@ function toWorkflowCardTemplate(template: OrganizationTaskTemplateVO): WorkshopT
     nodes: [],
     isMine: true,
   };
-}
-
-function toWorkflowCardNodes(
-  detail: OrganizationTaskTemplateDetailVO,
-): WorkshopTaskTemplateVO["nodes"] {
-  return detail.nodes.flatMap((node) => {
-    if (!node.baseTaskId || node.sort === undefined) return [];
-    return [
-      {
-        baseTaskId: node.baseTaskId,
-        baseTaskName: node.baseTaskName,
-        baseTaskIconName: node.baseTaskIconName,
-        baseTaskIconUrl: node.baseTaskIconUrl,
-        sort: node.sort,
-        parallelSort: node.parallelSort,
-      },
-    ];
-  });
 }
 
 function OrganizationAdminWorkflowsContent() {
@@ -85,7 +67,7 @@ function OrganizationAdminWorkflowsContent() {
           const cardTemplate = toWorkflowCardTemplate(template);
           try {
             const detail = await getOrganizationTaskTemplate(template.id);
-            const nodes = toWorkflowCardNodes(detail);
+            const nodes = toWorkflowTemplateNodes(detail.nodes);
             return { ...cardTemplate, nodes, taskCount: nodes.length };
           } catch {
             return cardTemplate;
@@ -110,9 +92,7 @@ function OrganizationAdminWorkflowsContent() {
   }
 
   function handleEdit(template: WorkshopTaskTemplateVO): void {
-    void navigate("/dashboard/org-admin/create", {
-      state: { template },
-    });
+    void navigate(`/dashboard/org-admin/create?templateId=${encodeURIComponent(template.id)}`);
   }
 
   async function handleStatusChange(template: WorkshopTaskTemplateVO): Promise<void> {

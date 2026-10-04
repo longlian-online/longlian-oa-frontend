@@ -30,7 +30,9 @@
       }
     },
     "summary": "手动触发定时任务",
-    "tags": ["定时任务管理"]
+    "tags": [
+      "定时任务管理"
+    ]
   },
   "path": "/admin/scheduled-tasks/{taskName}/trigger",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

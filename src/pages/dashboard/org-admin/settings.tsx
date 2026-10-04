@@ -38,7 +38,7 @@ function OrganizationSettingsContent() {
       setAvatarFile(
         data.avatarUrl
           ? {
-              fileId: "",
+              fileId: data.avatarFileId ?? "",
               fileName: "组织头像",
               fileSize: 0,
               fileMime: "image/*",
@@ -61,6 +61,11 @@ function OrganizationSettingsContent() {
     }
 
     if (!organization) return;
+
+    if (organization.avatarUrl && !avatarFile?.fileId) {
+      $tip("当前组织头像缺少文件 ID，暂时无法安全保存资料，请重新上传头像后再保存", "error");
+      return;
+    }
 
     try {
       setSaving(true);

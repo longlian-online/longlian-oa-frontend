@@ -39,7 +39,9 @@
       }
     },
     "summary": "启用/禁用企划",
-    "tags": ["企划接口"]
+    "tags": [
+      "企划接口"
+    ]
   },
   "path": "/orgadmin/projects/{projectId}/status",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

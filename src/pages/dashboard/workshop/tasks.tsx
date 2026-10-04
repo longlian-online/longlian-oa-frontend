@@ -1,15 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import {
-  ChevronDown,
-  ExternalLink,
-  Loader2,
-  Plus,
-  Search,
-  Trash2,
-  Workflow,
-  X,
-} from "lucide-react";
+import { ChevronDown, ExternalLink, Loader2, Plus, Search, Workflow, X } from "lucide-react";
 
 import {
   changeBaseTaskStatus,
@@ -17,6 +8,9 @@ import {
   getOrganizationBaseTaskList,
 } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
+import BaseTaskMetaFieldsEditor, {
+  type TaskMetaField,
+} from "@/components/BaseTaskMetaFieldsEditor";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
@@ -32,13 +26,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
@@ -56,24 +43,6 @@ interface BaseTaskForm {
   iconName?: string;
   metaFields: TaskMetaField[];
 }
-
-type TaskMetaFieldType = "text" | "textarea" | "file" | "number" | "select";
-
-interface TaskMetaField {
-  id: string;
-  name: string;
-  fieldType: TaskMetaFieldType;
-  required: boolean;
-  options: string[];
-}
-
-const FIELD_TYPE_LABELS: Record<TaskMetaFieldType, string> = {
-  text: "单行文本",
-  textarea: "多行文本",
-  file: "文件上传",
-  number: "数字",
-  select: "下拉选择",
-};
 
 const EMPTY_FORM: BaseTaskForm = { name: "", description: "", iconName: undefined, metaFields: [] };
 
@@ -499,91 +468,12 @@ function BaseTaskManagementContent() {
                 支持全部 Lucide 图标；未填写时按任务名称自动匹配。
               </span>
             </div>
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-medium text-foreground">提交字段（可选）</span>
-                <Button type="button" variant="outline" size="sm" onClick={addMetaField}>
-                  <Plus data-icon="inline-start" />
-                  新增字段
-                </Button>
-              </div>
-              {form.metaFields.length === 0 ? (
-                <div className="rounded-lg border border-dashed px-3 py-4 text-sm text-muted-foreground">
-                  没有额外提交内容，成员可直接完成任务。
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {form.metaFields.map((field, index) => (
-                    <div key={field.id} className="rounded-lg border bg-muted/20 p-3">
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto_auto] sm:items-center">
-                        <Input
-                          value={field.name}
-                          maxLength={100}
-                          placeholder={`字段 ${index + 1}，例如译文链接`}
-                          onChange={(event) =>
-                            updateMetaField(field.id, { name: event.target.value })
-                          }
-                        />
-                        <Select
-                          value={field.fieldType}
-                          onValueChange={(value: string | null) => {
-                            if (!value) return;
-                            updateMetaField(field.id, { fieldType: value as TaskMetaFieldType });
-                          }}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(FIELD_TYPE_LABELS).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <label className="flex h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap px-1 text-sm text-muted-foreground">
-                          <input
-                            type="checkbox"
-                            checked={field.required}
-                            className="size-4 accent-primary"
-                            onChange={(event) =>
-                              updateMetaField(field.id, { required: event.target.checked })
-                            }
-                          />
-                          必填
-                        </label>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`删除字段 ${index + 1}`}
-                          title="删除字段"
-                          onClick={() => removeMetaField(field.id)}
-                        >
-                          <Trash2 className="text-muted-foreground" />
-                        </Button>
-                      </div>
-                      {field.fieldType === "select" && (
-                        <Input
-                          value={field.options.join("、")}
-                          placeholder="填写选项，以顿号分隔，例如：通过、需修改"
-                          className="mt-2"
-                          onChange={(event) =>
-                            updateMetaField(field.id, {
-                              options: event.target.value
-                                .split(/[、,，]/)
-                                .map((option) => option.trim())
-                                .filter(Boolean),
-                            })
-                          }
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <BaseTaskMetaFieldsEditor
+              fields={form.metaFields}
+              onAdd={addMetaField}
+              onChange={updateMetaField}
+              onRemove={removeMetaField}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" disabled={creating} onClick={() => setCreateOpen(false)}>
