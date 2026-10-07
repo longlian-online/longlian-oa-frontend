@@ -9,7 +9,9 @@
       }
     },
     "summary": "退出登录",
-    "tags": ["用户会话接口"]
+    "tags": [
+      "用户会话接口"
+    ]
   },
   "path": "/app/session/",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"

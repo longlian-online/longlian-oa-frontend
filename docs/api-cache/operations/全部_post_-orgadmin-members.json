@@ -37,7 +37,9 @@
       }
     },
     "summary": "分页查询组员列表",
-    "tags": ["组织成员管理"]
+    "tags": [
+      "组织成员管理"
+    ]
   },
   "path": "/orgadmin/members",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

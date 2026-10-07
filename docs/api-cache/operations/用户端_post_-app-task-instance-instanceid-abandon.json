@@ -30,7 +30,9 @@
       }
     },
     "summary": "放弃任务",
-    "tags": ["任务实例接口"]
+    "tags": [
+      "任务实例接口"
+    ]
   },
   "path": "/app/task/instance/{instanceId}/abandon",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"

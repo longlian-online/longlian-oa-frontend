@@ -30,7 +30,9 @@
       }
     },
     "summary": "重置任务提交",
-    "tags": ["任务实例接口"]
+    "tags": [
+      "任务实例接口"
+    ]
   },
   "path": "/app/task/instance/{instanceId}/reset",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"

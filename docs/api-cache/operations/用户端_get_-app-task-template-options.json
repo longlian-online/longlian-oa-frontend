@@ -30,7 +30,9 @@
       }
     },
     "summary": "获取用户可选流程模板",
-    "tags": ["流程模板接口"]
+    "tags": [
+      "流程模板接口"
+    ]
   },
   "path": "/app/task-template/options",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"

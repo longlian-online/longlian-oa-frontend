@@ -39,7 +39,9 @@
       }
     },
     "summary": "编辑企划",
-    "tags": ["企划接口"]
+    "tags": [
+      "企划接口"
+    ]
   },
   "path": "/app/projects/{projectId}",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

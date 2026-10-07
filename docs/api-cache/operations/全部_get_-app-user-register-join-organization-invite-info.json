@@ -27,7 +27,9 @@
       }
     },
     "summary": "获取加入组织邀请码对应的组织信息",
-    "tags": ["用户接口"]
+    "tags": [
+      "用户接口"
+    ]
   },
   "path": "/app/user/register/join-organization/invite-info",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

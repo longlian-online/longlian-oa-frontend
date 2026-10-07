@@ -20,7 +20,9 @@
       }
     },
     "summary": "通过邀请码注册并加入组织",
-    "tags": ["用户接口"]
+    "tags": [
+      "用户接口"
+    ]
   },
   "path": "/app/user/register/join-organization",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"

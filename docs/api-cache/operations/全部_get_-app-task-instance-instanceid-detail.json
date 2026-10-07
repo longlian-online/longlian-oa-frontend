@@ -37,7 +37,9 @@
       }
     },
     "summary": "查看任务实例详情",
-    "tags": ["任务实例接口"]
+    "tags": [
+      "任务实例接口"
+    ]
   },
   "path": "/app/task/instance/{instanceId}/detail",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"

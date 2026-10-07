@@ -30,7 +30,9 @@
       }
     },
     "summary": "添加企划到工坊",
-    "tags": ["企划接口"]
+    "tags": [
+      "企划接口"
+    ]
   },
   "path": "/app/projects/{projectId}/workshop",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"

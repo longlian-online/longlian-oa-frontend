@@ -31,7 +31,9 @@
       }
     },
     "summary": "操作组织状态",
-    "tags": ["组织接口"]
+    "tags": [
+      "组织接口"
+    ]
   },
   "path": "/admin/organizations/{orgId}/status",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
