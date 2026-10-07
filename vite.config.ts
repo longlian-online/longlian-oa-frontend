@@ -51,6 +51,11 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
+  // 路由是动态 import。只扫 index.html 会在首次进入页面时再优化依赖，
+  // 浏览器拿到 504 Outdated Optimize Dep，动态模块失败后页面空白。
+  optimizeDeps: {
+    entries: ["index.html", "src/**/*.{ts,tsx}", "!src/**/*.test.{ts,tsx}"],
+  },
   server: {
     watch: {
       usePolling: process.env.CHOKIDAR_USEPOLLING === "true",
