@@ -153,8 +153,6 @@ export default function ProjectItemSection({
       });
       setItems(data.list);
       setTotal(data.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目列表加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -165,8 +163,6 @@ export default function ProjectItemSection({
       setTemplateLoading(true);
       const data = await getTaskTemplateOptions();
       setTemplates(data);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "流程模板加载失败", "error");
     } finally {
       setTemplateLoading(false);
     }
@@ -191,8 +187,6 @@ export default function ProjectItemSection({
       setPage(1);
       await loadItems();
       await onChanged?.();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目创建失败", "error");
     } finally {
       setSaving(false);
     }
@@ -216,8 +210,6 @@ export default function ProjectItemSection({
         await loadItems();
       }
       await onChanged?.();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目删除失败", "error");
     } finally {
       setMutatingItemId(null);
     }
@@ -237,8 +229,6 @@ export default function ProjectItemSection({
       $tip("项目已发布", "success");
       await loadItems();
       await onChanged?.();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目发布失败", "error");
     } finally {
       setMutatingItemId(null);
     }

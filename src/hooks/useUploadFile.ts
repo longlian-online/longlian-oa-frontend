@@ -1,7 +1,9 @@
 import { useState } from "react";
 
+import { ApiError } from "@/api/apiError";
 import { createFileUpload } from "@/api/file";
 import { $tip } from "@/components/tip";
+import { AuthExpiredError } from "@/lib/authError";
 import type { FileValidationOptions, UploadedFileInfo, UploadBizType } from "@/types/file";
 
 const DEFAULT_MAX_SIZE = 50 * 1024 * 1024;
@@ -125,7 +127,9 @@ export function useUploadFile(): UseUploadFileResult {
       $tip("文件上传成功", "success");
       return uploadedFile;
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "文件上传失败", "error");
+      if (!(error instanceof ApiError) && !(error instanceof AuthExpiredError)) {
+        $tip(error instanceof Error ? error.message : "文件上传失败", "error");
+      }
       throw error;
     } finally {
       setUploading(false);

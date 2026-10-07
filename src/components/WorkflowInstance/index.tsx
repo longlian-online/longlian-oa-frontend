@@ -10,6 +10,7 @@ import {
   resetTask,
   submitTask,
 } from "@/api/workflowInstance";
+import { ApiError } from "@/api/apiError";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
@@ -112,9 +113,11 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
       setInstances(instanceData);
       sendWorkflowEvent({ type: "LOADED" });
     } catch (error) {
-      if (!isCurrentLifecycle() || generation !== loadGeneration.current) return;
+      if (!isCurrentLifecycle() || generation !== loadGeneration.current) {
+        if (error instanceof ApiError) error.silence();
+        return;
+      }
       setLoadedItemId(itemId);
-      $tip(error instanceof Error ? error.message : "任务流加载失败", "error");
       sendWorkflowEvent({ type: background ? "ACTION_FAILED" : "LOAD_FAILED" });
     }
   }
@@ -133,8 +136,10 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
       await loadData(true);
       return isCurrentLifecycle();
     } catch (error) {
-      if (!isCurrentLifecycle()) return false;
-      $tip(error instanceof Error ? error.message : "任务操作失败", "error");
+      if (!isCurrentLifecycle()) {
+        if (error instanceof ApiError) error.silence();
+        return false;
+      }
       sendWorkflowEvent({ type: "ACTION_FAILED" });
       return false;
     }

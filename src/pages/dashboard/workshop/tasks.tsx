@@ -83,8 +83,6 @@ function BaseTaskManagementContent() {
       });
       setTasks(data.list);
       setTotal(data.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "原子任务加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -195,8 +193,6 @@ function BaseTaskManagementContent() {
       setIconKeyword("");
       setPage(1);
       await loadTasks();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "原子任务创建失败", "error");
     } finally {
       setCreating(false);
     }
@@ -209,8 +205,6 @@ function BaseTaskManagementContent() {
       await changeBaseTaskStatus(task.id, nextStatus);
       $tip(nextStatus === "ENABLED" ? "原子任务已启用" : "原子任务已禁用", "success");
       await loadTasks();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务状态修改失败", "error");
     } finally {
       setMutatingId(null);
     }

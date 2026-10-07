@@ -28,8 +28,6 @@ export default function OrganizationInviteDialog(): React.JSX.Element {
       const nextInvite = await createJoinInviteCode();
       setInvite(nextInvite);
       $tip("邀请码已生成", "success");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "邀请码生成失败", "error");
     } finally {
       setLoading(false);
     }

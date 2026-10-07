@@ -79,8 +79,6 @@ function OrganizationAdminWorkflowsContent() {
         Object.fromEntries(data.list.map((template) => [template.id, template.status])),
       );
       setTotal(data.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "工作流模板加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -113,8 +111,6 @@ function OrganizationAdminWorkflowsContent() {
       await changeTaskTemplateStatus(template.id, nextStatus);
       $tip(isDisabled ? "工作流已启用" : "工作流已禁用", "success");
       await loadTemplates();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "工作流状态更新失败", "error");
     } finally {
       setMutatingTemplateId(null);
     }

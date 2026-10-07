@@ -6,7 +6,11 @@ import {
   getToken,
 } from "@/lib/session";
 import { AUTH_EXPIRED_MESSAGE, AuthExpiredError, redirectExpiredSession } from "@/lib/authError";
+import { ApiError, GatewayError } from "@/api/apiError";
+import { GATEWAY_ERROR_MESSAGE, NETWORK_ERROR_MESSAGE } from "@/services/notification";
 import type { ApiResult } from "@/types/planning";
+
+export { ApiError, GatewayError };
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
@@ -76,14 +80,19 @@ async function requestWithBase<T>(
     headers["X-Org-Id"] = currentOrgId;
   }
 
-  const response = await fetch(buildApiUrl(`${basePath}${url}`), {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(buildApiUrl(`${basePath}${url}`), {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw new ApiError(NETWORK_ERROR_MESSAGE);
+  }
 
   function handleUnauthorized(message: string): never {
     if (!authToken) {
-      throw new Error(message === AUTH_EXPIRED_MESSAGE ? `登录失败：${message}` : message);
+      throw new ApiError(message === AUTH_EXPIRED_MESSAGE ? `登录失败：${message}` : message);
     }
     // Responses belong to the session that issued the request. Ignore older sessions.
     if (getCurrentToken() === authToken) {
@@ -93,12 +102,8 @@ async function requestWithBase<T>(
     throw new AuthExpiredError();
   }
 
-  if (response.status === 401) {
-    handleUnauthorized("登录失败，请检查登录信息后重试");
-  }
-
   if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
+    throw new GatewayError(response.status);
   }
 
   const responseText = await response.text();
@@ -106,7 +111,12 @@ async function requestWithBase<T>(
     return undefined as T;
   }
 
-  const result = parseApiResponse<T>(responseText);
+  let result: ApiResult<T> | T;
+  try {
+    result = parseApiResponse<T>(responseText);
+  } catch {
+    throw new ApiError(GATEWAY_ERROR_MESSAGE);
+  }
 
   if (isApiResult(result)) {
     if (result.code === 1) {
@@ -114,7 +124,7 @@ async function requestWithBase<T>(
     }
 
     if (result.code !== 0) {
-      throw new Error(result.msg || `API error: ${result.code}`);
+      throw new ApiError(result.msg || `API error: ${result.code}`);
     }
 
     return result.data as T;

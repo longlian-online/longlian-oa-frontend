@@ -6,7 +6,6 @@ import { getWorkshopTaskTemplateList } from "@/api/workflowTemplate";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { CreateWorkflowTemplateCard, WorkflowTemplateCard } from "@/components/WorkflowTemplate";
-import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
@@ -36,8 +35,6 @@ function WorkshopWorkflowsPageContent() {
       });
       setTemplates(data.list);
       setTotal(data.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "工作流模板加载失败", "error");
     } finally {
       setLoading(false);
     }

@@ -46,8 +46,6 @@ export default function AdminsPage() {
       const result = await getAdminList({ pageNum: nextPage, pageSize: PAGE_SIZE });
       setAdmins(result.list ?? []);
       setTotal(result.total ?? 0);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "管理员列表加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -70,8 +68,6 @@ export default function AdminsPage() {
       setForm({ username: "", password: "" });
       setPage(1);
       await loadAdmins(1);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "管理员创建失败", "error");
     } finally {
       setSaving(false);
     }
@@ -79,13 +75,9 @@ export default function AdminsPage() {
 
   async function handleDelete(admin: AdminVO): Promise<void> {
     if (!window.confirm(`确定删除管理员「${admin.username}」吗？`)) return;
-    try {
-      await deleteAdmin(admin.id);
-      $tip("管理员已删除", "success");
-      await loadAdmins();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "管理员删除失败", "error");
-    }
+    await deleteAdmin(admin.id);
+    $tip("管理员已删除", "success");
+    await loadAdmins();
   }
 
   return (

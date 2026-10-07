@@ -63,8 +63,6 @@ function CreateWorkflowPageContent() {
         orderDir: "DESC",
       });
       setBaseTasks(data.list);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "原子任务加载失败", "error");
     } finally {
       setLoadingBaseTasks(false);
     }
@@ -103,8 +101,6 @@ function CreateWorkflowPageContent() {
         $tip("流程模板已创建", "success");
       }
       void navigate("/dashboard/workshop/workflows");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "流程模板保存失败", "error");
     } finally {
       setSaving(false);
     }

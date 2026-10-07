@@ -46,8 +46,6 @@ function OrganizationSettingsContent() {
             }
           : null,
       );
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "组织信息加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -76,8 +74,6 @@ function OrganizationSettingsContent() {
       });
       $tip("组织信息已保存", "success");
       await loadOrganization();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "组织信息保存失败", "error");
     } finally {
       setSaving(false);
     }

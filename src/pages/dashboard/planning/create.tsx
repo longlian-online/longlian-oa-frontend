@@ -119,15 +119,6 @@ export default function CreateProject({ project }: CreateProjectProps) {
         $tip("企划创建成功", "success");
         void navigate("/dashboard/planning");
       }
-    } catch (error) {
-      $tip(
-        error instanceof Error
-          ? error.message
-          : isEditing
-            ? "更新失败，请重试"
-            : "创建失败，请重试",
-        "error",
-      );
     } finally {
       setLoading(false);
     }

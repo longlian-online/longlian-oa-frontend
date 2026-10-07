@@ -1,12 +1,28 @@
-import { beforeEach, expect, test, vi } from "vite-plus/test";
-import { adminRequest, commonRequest, orgAdminRequest, request } from "@/api/request";
+import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
+
+import {
+  adminRequest,
+  ApiError,
+  commonRequest,
+  GatewayError,
+  orgAdminRequest,
+  request,
+} from "@/api/request";
+import {
+  GATEWAY_ERROR_MESSAGE,
+  NETWORK_ERROR_MESSAGE,
+  notificationService,
+  resetNotificationService,
+} from "@/services/notification";
 
 const storage = new Map<string, string>();
 const replace = vi.fn();
 const dispatchEvent = vi.fn<(event: Event) => boolean>();
 
 beforeEach((): void => {
+  vi.useFakeTimers();
   storage.clear();
+  resetNotificationService();
   vi.clearAllMocks();
   vi.stubGlobal("localStorage", {
     getItem: (key: string): string | null => storage.get(key) ?? null,
@@ -21,12 +37,17 @@ beforeEach((): void => {
   vi.stubGlobal("CustomEvent", Event);
 });
 
-function respond(code: number, status = 200): void {
+afterEach((): void => {
+  vi.clearAllTimers();
+  vi.useRealTimers();
+});
+
+function respond(code: number): void {
   vi.stubGlobal(
     "fetch",
     vi.fn(
       async (): Promise<Response> =>
-        new Response(JSON.stringify({ code, msg: "错误", data: null }), { status }),
+        new Response(JSON.stringify({ code, msg: "错误", data: null })),
     ),
   );
 }
@@ -49,16 +70,6 @@ test.each([request, commonRequest, orgAdminRequest])(
     expect(replace).toHaveBeenCalledWith(null, "", "/login");
   },
 );
-
-test("HTTP 401 clears only admin session and routes to admin login", async (): Promise<void> => {
-  storage.set("token", "user");
-  storage.set("adminToken", "admin");
-  respond(0, 401);
-  await expect(adminRequest("/resource")).rejects.toThrow();
-  expect(storage.get("token")).toBe("user");
-  expect(storage.get("adminToken")).toBeUndefined();
-  expect(replace).toHaveBeenCalledWith(null, "", "/admin/login");
-});
 
 test("concurrent failures route and announce expiration once", async (): Promise<void> => {
   storage.set("token", "old");
@@ -98,7 +109,7 @@ test("late unauthorized response cannot clear a newer session", async (): Promis
   );
   const pending = request("/resource");
   storage.set("token", "new");
-  finish(new Response("", { status: 401 }));
+  finish(new Response(JSON.stringify({ code: 1, msg: "错误", data: null })));
   await expect(pending).rejects.toThrow();
   expect(storage.get("token")).toBe("new");
   expect(replace).not.toHaveBeenCalled();
@@ -126,14 +137,6 @@ test("expiration notification is shown once even when callers also show errors",
   expect($tip("ordinary message")).toBe(2);
 });
 
-test("HTTP 401 clears all ordinary session fields", async (): Promise<void> => {
-  for (const key of ["token", "userId", "currentOrgId", "roles"]) storage.set(key, "old");
-  respond(0, 401);
-  await expect(request("/resource")).rejects.toThrow();
-  expect(storage.size).toBe(0);
-  expect(replace).toHaveBeenCalledWith(null, "", "/login");
-});
-
 test("admin code 1 clears all admin fields once for concurrent requests", async (): Promise<void> => {
   for (const key of ["adminToken", "adminId", "adminUsername", "adminRole"])
     storage.set(key, "old");
@@ -156,41 +159,131 @@ test("expiration on the login page does not replace the current route", async ()
   expect(replace).not.toHaveBeenCalled();
 });
 
-test("public login code 1 can display the server business error", async (): Promise<void> => {
-  const { $tip } = await import("@/components/tip");
+test("public login code 1 reports the server business error", async (): Promise<void> => {
+  const listener = vi.fn();
+  notificationService.subscribe(listener);
   respond(1);
-  try {
-    await request("/session/pwd");
-  } catch (error) {
-    expect(error).toBeInstanceOf(Error);
-    if (error instanceof Error) expect($tip(error.message, "error")).toBeGreaterThan(0);
-  }
+  await expect(request("/session/pwd")).rejects.toThrow("错误");
+  await vi.runAllTimersAsync();
+  expect(listener).toHaveBeenCalledTimes(1);
+  expect(listener).toHaveBeenCalledWith({ type: "error", message: "错误" });
   expect(replace).not.toHaveBeenCalled();
 });
 
-test.each([
-  { code: 0, status: 401 },
-  { code: 1, status: 200 },
-])(
-  "public auth errors with expiration text remain visible",
-  async ({ code, status }): Promise<void> => {
-    const { $tip } = await import("@/components/tip");
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(
-        async (): Promise<Response> =>
-          new Response(JSON.stringify({ code, msg: "登录已过期，请重新登录", data: null }), {
-            status,
-          }),
-      ),
-    );
-    expect.assertions(3);
-    try {
-      await request("/session/pwd");
-    } catch (error) {
-      expect(error).toBeInstanceOf(Error);
-      if (error instanceof Error) expect($tip(error.message, "error")).toBeGreaterThan(0);
-    }
-    expect(replace).not.toHaveBeenCalled();
-  },
-);
+test("public auth errors with expiration text remain visible", async (): Promise<void> => {
+  const listener = vi.fn();
+  notificationService.subscribe(listener);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async (): Promise<Response> =>
+        new Response(JSON.stringify({ code: 1, msg: "登录已过期，请重新登录", data: null })),
+    ),
+  );
+  await expect(request("/session/pwd")).rejects.toThrow("登录失败：登录已过期，请重新登录");
+  await vi.runAllTimersAsync();
+  expect(listener).toHaveBeenCalledWith({
+    type: "error",
+    message: "登录失败：登录已过期，请重新登录",
+  });
+  expect(replace).not.toHaveBeenCalled();
+});
+
+test("non-200 responses notify once and keep the session", async (): Promise<void> => {
+  const listener = vi.fn();
+  notificationService.subscribe(listener);
+  storage.set("token", "user");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async (): Promise<Response> =>
+        new Response(JSON.stringify({ code: 0, msg: "bad gateway", data: null }), { status: 502 }),
+    ),
+  );
+
+  const rejection: unknown = await request("/resource").catch((error: unknown) => error);
+
+  expect(rejection).toBeInstanceOf(GatewayError);
+  if (rejection instanceof GatewayError) {
+    expect(rejection.status).toBe(502);
+    expect(rejection.message).toBe(GATEWAY_ERROR_MESSAGE);
+  }
+  expect(storage.get("token")).toBe("user");
+  expect(replace).not.toHaveBeenCalled();
+  await vi.runAllTimersAsync();
+  expect(listener).toHaveBeenCalledTimes(1);
+  expect(listener).toHaveBeenCalledWith({ type: "error", message: GATEWAY_ERROR_MESSAGE });
+});
+
+test("concurrent gateway failures notify once inside the dedupe window", async (): Promise<void> => {
+  const listener = vi.fn();
+  notificationService.subscribe(listener);
+  storage.set("token", "user");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async (): Promise<Response> =>
+        new Response(JSON.stringify({ code: 0, msg: "bad gateway", data: null }), { status: 502 }),
+    ),
+  );
+
+  await Promise.allSettled([request("/one"), request("/two")]);
+
+  await vi.runAllTimersAsync();
+  expect(listener).toHaveBeenCalledTimes(1);
+});
+
+test("callers cannot show a second gateway tip", async (): Promise<void> => {
+  const events = new EventTarget();
+  vi.stubGlobal(
+    "window",
+    Object.assign(events, {
+      location: { pathname: "/workshop" },
+      history: { replaceState: replace },
+    }),
+  );
+  const { $tip } = await import("@/components/tip");
+
+  expect($tip(GATEWAY_ERROR_MESSAGE, "error")).toBe(0);
+});
+
+test("business failures notify the server message and keep the session", async (): Promise<void> => {
+  const listener = vi.fn();
+  notificationService.subscribe(listener);
+  storage.set("token", "valid");
+  respond(3);
+  await expect(request("/resource")).rejects.toThrow("错误");
+  await vi.runAllTimersAsync();
+  expect(storage.get("token")).toBe("valid");
+  expect(replace).not.toHaveBeenCalled();
+  expect(listener).toHaveBeenCalledTimes(1);
+  expect(listener).toHaveBeenCalledWith({ type: "error", message: "错误" });
+});
+
+test("silenced api errors do not notify", async (): Promise<void> => {
+  const listener = vi.fn();
+  notificationService.subscribe(listener);
+  storage.set("token", "valid");
+  respond(3);
+  await request("/resource").catch((error: unknown) => {
+    if (error instanceof ApiError) error.silence();
+  });
+  await vi.runAllTimersAsync();
+  expect(listener).not.toHaveBeenCalled();
+  expect(storage.get("token")).toBe("valid");
+});
+
+test("network failures notify without clearing the session", async (): Promise<void> => {
+  const listener = vi.fn();
+  notificationService.subscribe(listener);
+  storage.set("token", "user");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => Promise.reject(new Error("Failed to fetch"))),
+  );
+  await expect(request("/resource")).rejects.toThrow(NETWORK_ERROR_MESSAGE);
+  await vi.runAllTimersAsync();
+  expect(listener).toHaveBeenCalledWith({ type: "error", message: NETWORK_ERROR_MESSAGE });
+  expect(storage.get("token")).toBe("user");
+  expect(replace).not.toHaveBeenCalled();
+});
