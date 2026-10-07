@@ -50,6 +50,18 @@ export async function commonRequest<T>(url: string, options?: RequestInit): Prom
   return requestWithBase("/common", url, options);
 }
 
+/** 用户资料、组织列表、会话接口不声明组织；业务、组织管理和上传才带 X-Org-Id。 */
+function declaresOrganization(basePath: string, url: string): boolean {
+  if (basePath !== "/app") return true;
+  const path = url.split("?")[0] ?? url;
+  return !(
+    path === "/user" ||
+    path.startsWith("/user/") ||
+    path === "/session" ||
+    path.startsWith("/session/")
+  );
+}
+
 async function requestWithBase<T>(
   basePath: string,
   url: string,
@@ -61,7 +73,6 @@ async function requestWithBase<T>(
   loginPath = "/login",
 ): Promise<T> {
   const token = getToken();
-  const currentOrgId = getCurrentOrgId();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options?.headers as Record<string, string>),
@@ -72,8 +83,11 @@ async function requestWithBase<T>(
     headers.Authorization = `Bearer ${authToken}`;
   }
 
-  if (includeOrgContext && currentOrgId) {
-    headers["X-Org-Id"] = currentOrgId;
+  const orgId = includeOrgContext && declaresOrganization(basePath, url) ? getCurrentOrgId() : null;
+  if (orgId) {
+    headers["X-Org-Id"] = orgId;
+  } else {
+    delete headers["X-Org-Id"];
   }
 
   const response = await fetch(buildApiUrl(`${basePath}${url}`), {

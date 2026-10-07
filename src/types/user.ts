@@ -5,7 +5,6 @@ export interface UserInfoVO {
   nickname: string;
   avatarUrl?: string;
   defaultOrgId?: string;
-  roles?: string[];
 }
 
 export interface OrganizationSimpleInfoVO {

@@ -5,6 +5,14 @@ import { getUserOrganizations } from "@/api/user";
 import { getCurrentOrgId } from "@/lib/session";
 import type { OrganizationSimpleInfoVO } from "@/types/user";
 
+export function declaredOrganization(
+  organizations: readonly OrganizationSimpleInfoVO[],
+  declaredOrgId: string | null,
+): OrganizationSimpleInfoVO | null {
+  if (!declaredOrgId) return null;
+  return organizations.find((item) => item.id === declaredOrgId) ?? null;
+}
+
 export default function OrganizationIdentity() {
   const [organization, setOrganization] = useState<OrganizationSimpleInfoVO | null>(null);
 
@@ -16,10 +24,7 @@ export default function OrganizationIdentity() {
         const organizations = await getUserOrganizations();
         if (cancelled) return;
 
-        const currentOrgId = getCurrentOrgId();
-        setOrganization(
-          organizations.find((item) => item.id === currentOrgId) ?? organizations[0] ?? null,
-        );
+        setOrganization(declaredOrganization(organizations, getCurrentOrgId()));
       } catch {
         if (!cancelled) setOrganization(null);
       }
