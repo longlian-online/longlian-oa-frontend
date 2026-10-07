@@ -64,8 +64,6 @@ function OrganizationApplicationsContent() {
       });
       setApplications(result.list);
       setTotal(result.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "入组申请加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -93,8 +91,6 @@ function OrganizationApplicationsContent() {
       $tip(reviewAction === "APPROVED" ? "已通过入组申请" : "已拒绝入组申请", "success");
       setReviewing(null);
       await loadApplications();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "入组申请审核失败", "error");
     } finally {
       setReviewLoading(false);
     }

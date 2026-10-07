@@ -74,8 +74,6 @@ function OrganizationAdminCreateWorkflowContent() {
         orderDir: "DESC",
       });
       setBaseTasks(data.list.map(toEditorBaseTask));
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "原子任务加载失败", "error");
     } finally {
       setLoadingBaseTasks(false);
     }
@@ -98,8 +96,6 @@ function OrganizationAdminCreateWorkflowContent() {
           description: detail.description ?? "",
         });
         setNodes(buildEditorNodes(toWorkflowTemplateNodes(detail.nodes)));
-      } catch (error) {
-        $tip(error instanceof Error ? error.message : "工作流详情加载失败", "error");
       } finally {
         setLoadingTemplate(false);
       }
@@ -145,8 +141,6 @@ function OrganizationAdminCreateWorkflowContent() {
         $tip("流程模板已创建", "success");
       }
       void navigate("/dashboard/org-admin/workflows");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "流程模板保存失败", "error");
     } finally {
       setSaving(false);
     }

@@ -39,8 +39,6 @@ export default function AdminLoginPage() {
       saveAdminSession(result);
       $tip("管理员登录成功", "success");
       void navigate("/admin", { replace: true });
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "管理员登录失败", "error");
     } finally {
       setIsLoading(false);
     }

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
 import { getProjectTypes } from "@/api/planning";
-import { $tip } from "@/components/tip";
 import type { ProjectTypeInfoVO } from "@/types/planning";
 
 interface UseProjectTypesResult {
@@ -19,9 +18,8 @@ export function useProjectTypes(): UseProjectTypesResult {
       setLoading(true);
       const data = await getProjectTypes();
       setProjectTypes(data);
-    } catch (error) {
+    } catch {
       setProjectTypes([]);
-      $tip(error instanceof Error ? error.message : "企划类型加载失败", "error");
     } finally {
       setLoading(false);
     }

@@ -80,8 +80,6 @@ export default function AppHeader() {
       setInviteInfo(result);
       setIsJoinOpen(false);
       setIsInviteConfirmOpen(true);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "邀请码查询失败", "error");
     } finally {
       setIsLoadingInviteInfo(false);
     }
@@ -97,8 +95,6 @@ export default function AppHeader() {
       setInviteCode("");
       setInviteInfo(null);
       setIsInviteConfirmOpen(false);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "加入组织失败", "error");
     } finally {
       setIsJoining(false);
     }
@@ -126,8 +122,6 @@ export default function AppHeader() {
       setOldPassword("");
       setNewPassword("");
       setIsChangePasswordOpen(false);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "密码修改失败", "error");
     } finally {
       setIsChangingPassword(false);
     }
@@ -146,8 +140,6 @@ export default function AppHeader() {
     try {
       await logout();
       $tip("已退出登录", "success");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "退出登录失败", "error");
     } finally {
       clearSession();
       setIsLoggingOut(false);

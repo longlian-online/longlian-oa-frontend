@@ -3,7 +3,6 @@ import { useParams } from "react-router";
 
 import { getProjectDetail } from "@/api/planning";
 import CreateProject from "@/pages/dashboard/planning/create";
-import { $tip } from "@/components/tip";
 import type { ProjectDetailInfoVO } from "@/types/planning";
 
 export default function EditProjectPage() {
@@ -17,9 +16,6 @@ export default function EditProjectPage() {
     void getProjectDetail(projectId)
       .then((data) => {
         setProject(data);
-      })
-      .catch((error: unknown) => {
-        $tip(error instanceof Error ? error.message : "企划加载失败", "error");
       })
       .finally(() => setLoading(false));
   }, [projectId]);

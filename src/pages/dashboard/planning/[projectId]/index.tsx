@@ -37,8 +37,6 @@ export default function ProjectDetail() {
       setLoading(true);
       const data = await getProjectDetail(projectId!);
       setProject(data);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -66,8 +64,6 @@ export default function ProjectDetail() {
         $tip("已加入企划", "success");
       }
       await loadProjectDetail();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划参与状态更新失败", "error");
     } finally {
       setWorkshopLoading(false);
     }

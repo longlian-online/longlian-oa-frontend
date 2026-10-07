@@ -38,8 +38,6 @@ export default function ScheduledTasksPage() {
     try {
       setLoading(true);
       setTasks(await getScheduledTasks());
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "定时任务加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -59,8 +57,6 @@ export default function ScheduledTasksPage() {
       );
       $tip("定时任务已触发", "success");
       setSelectedTask(null);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "定时任务触发失败", "error");
     } finally {
       setTriggering(false);
     }

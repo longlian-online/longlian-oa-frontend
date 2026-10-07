@@ -59,8 +59,6 @@ function OrganizationAdminProjectsContent() {
       });
       setProjects(result.list);
       setTotal(result.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -94,8 +92,6 @@ function OrganizationAdminProjectsContent() {
       });
       $tip(disabled ? "企划已启用" : "企划已禁用", "success");
       await loadProjects();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划状态更新失败", "error");
     } finally {
       setMutatingId(null);
     }

@@ -57,8 +57,6 @@ export default function AdminOrganizationsPage() {
       });
       setOrganizations(result.list ?? []);
       setTotal(result.total ?? 0);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "组织列表加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -81,21 +79,15 @@ export default function AdminOrganizationsPage() {
       await changeAdminOrganizationStatus(organization.id, nextStatus);
       $tip(nextStatus === "ENABLED" ? "组织已启用" : "组织已禁用", "success");
       await loadOrganizations();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "组织状态更新失败", "error");
     } finally {
       setWorkingId(null);
     }
   }
 
   async function handleCreateInvite(): Promise<void> {
-    try {
-      setInvite(await createOrganizationInviteCode());
-      setInviteOpen(true);
-      $tip("创建组织邀请码已生成", "success");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "邀请码生成失败", "error");
-    }
+    setInvite(await createOrganizationInviteCode());
+    setInviteOpen(true);
+    $tip("创建组织邀请码已生成", "success");
   }
 
   async function handleCopy(): Promise<void> {
