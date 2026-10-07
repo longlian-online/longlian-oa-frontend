@@ -10,6 +10,8 @@ interface TaskFlowViewerProps {
   instances: ItemTaskInstanceVO[];
   currentUserId?: string | null;
   mutatingInstanceId?: string | null;
+  selectedNodeId?: string | null;
+  onSelectNode: (nodeId: string) => void;
   onClaim: (instanceId: string) => void;
   onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
 }
@@ -152,6 +154,8 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
                         <TaskNodeCard
                           key={node.id}
                           node={node}
+                          selected={node.id === props.selectedNodeId}
+                          onSelect={() => props.onSelectNode(node.id)}
                           instance={instance}
                           currentUserId={props.currentUserId}
                           mutating={Boolean(instance && instance.id === props.mutatingInstanceId)}

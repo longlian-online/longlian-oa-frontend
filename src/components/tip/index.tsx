@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AlertCircle, CheckCircle2, Info, LoaderCircle, X, XCircle } from "lucide-react";
 
+import { AUTH_EXPIRED_EVENT, AUTH_EXPIRED_MESSAGE } from "@/lib/authError";
 import { cn } from "@/lib/utils";
 
 export type TipType = "success" | "error" | "warning" | "info" | "loading";
@@ -39,6 +40,11 @@ const defaultIcon: Record<TipType, ReactNode> = {
 };
 
 export function $tip(message: string, type: TipType = "info", icon?: TipIcon, time = 2400): number {
+  if (message === AUTH_EXPIRED_MESSAGE) return 0;
+  return showTip(message, type, icon, time);
+}
+
+function showTip(message: string, type: TipType, icon?: TipIcon, time = 2400): number {
   const tip: TipItem = {
     id: nextTipId,
     message,
@@ -65,6 +71,9 @@ declare global {
 
 if (typeof window !== "undefined") {
   window.$tip = $tip;
+  window.addEventListener(AUTH_EXPIRED_EVENT, (): void => {
+    showTip(AUTH_EXPIRED_MESSAGE, "error");
+  });
 }
 
 export default function TipProvider() {

@@ -5,6 +5,7 @@ import {
   getCurrentOrgId,
   getToken,
 } from "@/lib/session";
+import { AUTH_EXPIRED_MESSAGE, AuthExpiredError, redirectExpiredSession } from "@/lib/authError";
 import type { ApiResult } from "@/types/planning";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
@@ -29,7 +30,16 @@ export async function request<T>(url: string, options?: RequestInit): Promise<T>
 }
 
 export async function adminRequest<T>(url: string, options?: RequestInit): Promise<T> {
-  return requestWithBase("", url, options, getAdminToken(), clearAdminSession, false);
+  return requestWithBase(
+    "",
+    url,
+    options,
+    getAdminToken(),
+    clearAdminSession,
+    false,
+    getAdminToken,
+    "/admin/login",
+  );
 }
 
 export async function orgAdminRequest<T>(url: string, options?: RequestInit): Promise<T> {
@@ -47,6 +57,8 @@ async function requestWithBase<T>(
   overrideToken?: string | null,
   onUnauthorized: () => void = clearSession,
   includeOrgContext = true,
+  getCurrentToken: () => string | null = getToken,
+  loginPath = "/login",
 ): Promise<T> {
   const token = getToken();
   const currentOrgId = getCurrentOrgId();
@@ -69,9 +81,20 @@ async function requestWithBase<T>(
     headers,
   });
 
+  function handleUnauthorized(message: string): never {
+    if (!authToken) {
+      throw new Error(message === AUTH_EXPIRED_MESSAGE ? `登录失败：${message}` : message);
+    }
+    // Responses belong to the session that issued the request. Ignore older sessions.
+    if (getCurrentToken() === authToken) {
+      onUnauthorized();
+      redirectExpiredSession(loginPath);
+    }
+    throw new AuthExpiredError();
+  }
+
   if (response.status === 401) {
-    onUnauthorized();
-    throw new Error("登录已过期，请重新登录");
+    handleUnauthorized("登录失败，请检查登录信息后重试");
   }
 
   if (!response.ok) {
@@ -86,6 +109,10 @@ async function requestWithBase<T>(
   const result = parseApiResponse<T>(responseText);
 
   if (isApiResult(result)) {
+    if (result.code === 1) {
+      handleUnauthorized(result.msg || "登录已过期，请重新登录");
+    }
+
     if (result.code !== 0) {
       throw new Error(result.msg || `API error: ${result.code}`);
     }

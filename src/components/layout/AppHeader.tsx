@@ -26,22 +26,15 @@ import { cn } from "@/lib/utils";
 import type { InviteInfoVO } from "@/types/auth";
 import OrganizationIdentity from "./OrganizationIdentity";
 
-const subMenus: Record<string, { to: string; label: string; adminOnly?: boolean }[]> = {
-  "/dashboard/planning": [
-    { to: "/dashboard/planning", label: "浏览" },
-    { to: "/dashboard/workshop", label: "工坊" },
-    { to: "/dashboard/org-admin", label: "管理", adminOnly: true },
-  ],
-  "/dashboard/org-admin": [
-    { to: "/dashboard/org-admin/projects", label: "企划" },
-    { to: "/dashboard/org-admin/project-types", label: "企划类型" },
-    { to: "/dashboard/org-admin/members", label: "成员" },
-    { to: "/dashboard/org-admin/applications", label: "入组申请" },
-    { to: "/dashboard/org-admin/invites", label: "组织邀请" },
-    { to: "/dashboard/org-admin/tasks", label: "原子任务" },
-    { to: "/dashboard/org-admin/workflows", label: "工作流" },
-    { to: "/dashboard/org-admin/settings", label: "组织设置" },
-  ],
+const navigationItems = [
+  { to: "/dashboard/planning", label: "浏览" },
+  { to: "/dashboard/workshop", label: "工坊" },
+  { to: "/dashboard/org-admin", label: "管理", adminOnly: true },
+];
+
+const ROLE_LABELS: Record<string, string> = {
+  ORG_ADMIN: "组织管理",
+  ORG_USER: "平台用户",
 };
 
 const themeOptions = [
@@ -72,16 +65,7 @@ export default function AppHeader() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const section = pathname.startsWith("/dashboard/org-admin")
-    ? "/dashboard/org-admin"
-    : pathname.startsWith("/dashboard/workshop")
-      ? "/dashboard/planning"
-      : "/" + pathname.split("/").slice(1, 3).join("/");
   const isWorkshop = pathname.startsWith("/dashboard/workshop");
-  const items =
-    section === "/dashboard/org-admin" && !roles.includes("ORG_ADMIN")
-      ? []
-      : (subMenus[section] ?? []);
 
   const handleJoinOrganization = async (): Promise<void> => {
     const normalizedInviteCode = inviteCode.trim();
@@ -195,11 +179,11 @@ export default function AppHeader() {
   };
 
   return (
-    <header className="border-border bg-background grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b px-4">
+    <header className="border-border bg-background grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b px-4">
       <div className="min-w-0">{isWorkshop && <OrganizationIdentity />}</div>
 
-      <nav className="flex items-center gap-1">
-        {items
+      <nav aria-label="主导航" className="flex items-center gap-1">
+        {navigationItems
           .filter((item) => !item.adminOnly || roles.includes("ORG_ADMIN"))
           .map(({ to, label }) => (
             <NavLink
@@ -272,7 +256,8 @@ export default function AppHeader() {
                   {user?.nickname || user?.username || "用户"}
                 </div>
                 <div className="mt-0.5 truncate text-xs text-muted-foreground">
-                  {roles.join(" / ") || "MEMBER"}
+                  {roles.map((role) => ROLE_LABELS[role.toUpperCase()] ?? role).join(" / ") ||
+                    "平台用户"}
                 </div>
               </div>
             </div>
