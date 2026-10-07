@@ -50,9 +50,9 @@ export default function ProjectDetail() {
 
     if (project.inWorkshop) {
       const confirmed = await confirm({
-        title: "从工坊移除企划？",
-        description: "移除后可以在企划详情里重新添加。",
-        confirmText: "移除",
+        title: "退出企划？",
+        description: "退出后可以在企划详情里重新加入。",
+        confirmText: "退出企划",
       });
       if (!confirmed) return;
     }
@@ -61,14 +61,14 @@ export default function ProjectDetail() {
       setWorkshopLoading(true);
       if (project.inWorkshop) {
         await removeProjectFromWorkshop(projectId);
-        $tip("已从工坊移除", "success");
+        $tip("已退出企划", "success");
       } else {
         await addProjectToWorkshop(projectId);
-        $tip("已添加到工坊", "success");
+        $tip("已加入企划", "success");
       }
       await loadProjectDetail();
     } catch (error) {
-      showApiError(error, "工坊状态更新失败");
+      $tip(error instanceof Error ? error.message : "企划参与状态更新失败", "error");
     } finally {
       setWorkshopLoading(false);
     }
@@ -134,7 +134,7 @@ export default function ProjectDetail() {
             ) : (
               <CirclePlus className="h-4 w-4" />
             )}
-            {project.inWorkshop ? "移出工坊" : "添加到工坊"}
+            {project.inWorkshop ? "退出企划" : "加入企划"}
           </Button>
           <Button
             variant="ghost"

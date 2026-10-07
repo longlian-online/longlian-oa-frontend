@@ -20,6 +20,9 @@ export const workflowInstanceMachine = setup({
   id: "workflowInstance",
   initial: "loading",
   context: { mutatingInstanceId: null },
+  on: {
+    LOAD: { target: ".loading", actions: assign({ mutatingInstanceId: null }) },
+  },
   states: {
     loading: {
       on: {

@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { Ban, CheckCircle2, ClipboardList, Loader2, Search, ShieldCheck, Users } from "lucide-react";
+import {
+  Ban,
+  CheckCircle2,
+  ClipboardList,
+  Loader2,
+  Search,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 
 import {
   changeMemberRole,
@@ -9,6 +17,7 @@ import {
   type OrgMemberRole,
 } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
+import OrganizationInviteDialog from "@/components/OrganizationInviteDialog";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
@@ -167,9 +176,12 @@ function OrganizationMembersContent() {
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">成员管理</h1>
-          <p className="mt-1 text-sm text-muted-foreground">查看组织成员，管理成员状态与组织角色。</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            查看组织成员，管理成员状态与组织角色。
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <OrganizationInviteDialog />
           <div className="relative w-56 max-w-full">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -209,11 +221,11 @@ function OrganizationMembersContent() {
             }}
           >
             <SelectTrigger className="w-28" aria-label="排序方式">
-              <SelectValue />
+              <SelectValue>{orderDir === "ASC" ? "正序" : "倒序"}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="DESC">最新入组</SelectItem>
-              <SelectItem value="ASC">最早入组</SelectItem>
+              <SelectItem value="DESC">倒序</SelectItem>
+              <SelectItem value="ASC">正序</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={handleSearch}>
