@@ -843,7 +843,7 @@ sort=5: 发布
 
 - `values`：按字段 `key` 提交业务值；文本和数字使用字符串，文件只提交 `{ "fileId": "文件ID" }`，可选空值使用 `null`。
 
-任务详情返回独立的 `task` 与 `submission`。后端完成字段排序、可读文本转换和附件解析，前端只按 `text`、`multiline`、`files` 展示。有效附件返回 CDN 签名 `readUrl` 与 Unix 秒 `expiresAt`，不可用附件不返回链接。任务接口不暴露内部 JSON 存储结构，也不兼容旧协议。
+任务详情返回独立的 `task` 与 `submission`。后端完成字段排序、可读文本转换和附件解析，前端只按 `text`、`multiline`、`file` 展示。每个文件字段只有一个附件，未填写时 `file` 为 `null`。有效附件返回 CDN 签名 `readUrl` 与 Unix 秒 `expiresAt`，不可用附件不返回链接。任务接口不暴露内部 JSON 存储结构，也不兼容旧协议。
 
 任务打回字段：
 

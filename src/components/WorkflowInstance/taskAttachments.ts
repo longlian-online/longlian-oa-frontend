@@ -35,8 +35,8 @@ export async function openTaskAttachment(
       }
       options.onDetail(detail);
       const freshAttachment = detail.submission.fields
-        .flatMap((field) => (field.type === "files" ? field.files : []))
-        .find((file) => file.id === attachment.id);
+        .map((field) => (field.type === "file" ? field.file : null))
+        .find((file) => file?.id === attachment.id);
       if (!freshAttachment || freshAttachment.availability !== "available") {
         throw new AttachmentOpenError("附件已不可用，请联系任务提交人");
       }

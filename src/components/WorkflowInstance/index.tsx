@@ -32,7 +32,6 @@ import type {
 import { createItemLifecycle } from "./itemLifecycle";
 import TaskDetailPanel from "./TaskDetailPanel";
 import { canReset, canReject } from "./taskPermissions";
-import TaskActionPanel from "./TaskActionPanel";
 import TaskFlowViewer from "./TaskFlowViewer";
 import TaskSubmitPanel from "./TaskSubmitPanel";
 import { workflowInstanceMachine } from "./workflowMachine";
@@ -271,32 +270,32 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
           node={selectedNode}
           instance={selectedInstance}
           revision={detailRevision}
+          actions={
+            selectedInstance && selectedNode.taskStatus !== null
+              ? {
+                  currentUserId,
+                  mutating: mutatingInstanceId === selectedInstance.id,
+                  canSubmit: isNodeUnlocked(selectedNode, taskFlow.nodes),
+                  canReset: canReset(selectedInstance, currentUserId),
+                  canReject: canReject(selectedInstance, taskFlow.nodes, instances, currentUserId),
+                  onClaim: () =>
+                    void runInstanceAction(
+                      selectedInstance.id,
+                      () => claimTask(selectedInstance.id),
+                      "任务已接取",
+                    ),
+                  onSubmit: () => openSubmit(selectedInstance),
+                  onAbandon: () => void handleAbandon(selectedInstance.id),
+                  onReject: () => setRejectTarget(selectedInstance),
+                  onReset: () => void handleReset(selectedInstance.id),
+                }
+              : undefined
+          }
         />
       ) : (
         <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
           点击流程节点查看任务详情和操作。
         </div>
-      )}
-
-      {selectedInstance && selectedNode?.taskStatus !== null && (
-        <TaskActionPanel
-          instances={[selectedInstance]}
-          currentUserId={currentUserId}
-          mutatingInstanceId={mutatingInstanceId}
-          canSubmit={(instance) => {
-            const node = findNodeByInstance(instance, taskFlow.nodes);
-            return !node || isNodeUnlocked(node, taskFlow.nodes);
-          }}
-          onClaim={(instanceId) =>
-            void runInstanceAction(instanceId, () => claimTask(instanceId), "任务已接取")
-          }
-          onSubmit={(instance) => openSubmit(instance)}
-          canReset={(instance) => canReset(instance, currentUserId)}
-          canReject={(instance) => canReject(instance, taskFlow.nodes, instances, currentUserId)}
-          onAbandon={(instanceId) => void handleAbandon(instanceId)}
-          onReject={setRejectTarget}
-          onReset={(instanceId) => void handleReset(instanceId)}
-        />
       )}
 
       {submitTarget && (

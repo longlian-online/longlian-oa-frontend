@@ -13,17 +13,22 @@ const attachment = (id: string, expiresAt: number, readUrl: string): TaskAttachm
   expiresAt,
 });
 
-function detail(files: TaskAttachment[]): TaskInstanceDetailVO {
+function detail(file: TaskAttachment | null, other?: TaskAttachment | null): TaskInstanceDetailVO {
   return {
     task: { id: "task", name: "翻译", stage: 1, status: "COMPLETED" },
     submission: {
       state: "submitted",
-      fields: [{ key: "deliverable", label: "交付物", type: "files", files }],
+      fields: [
+        { key: "deliverable", label: "交付物", type: "file", file },
+        ...(other === undefined
+          ? []
+          : [{ key: "other", label: "其他", type: "file" as const, file: other }]),
+      ],
     },
   };
 }
 
-function setup(result: TaskInstanceDetailVO = detail([])) {
+function setup(result: TaskInstanceDetailVO = detail(null)) {
   const navigate = vi.fn<(url: string) => void>();
   const close = vi.fn<() => void>();
   const popup: AttachmentPopup = { navigate, close, isClosed: () => false };
@@ -63,10 +68,10 @@ describe("signed task attachment opening", () => {
     expect(options.loadDetail).toHaveBeenCalledTimes(1);
     expect(navigate).not.toHaveBeenCalled();
     pending.resolve(
-      detail([
-        attachment("other", 300, "https://cdn.test/other"),
+      detail(
         attachment("file", 300, "https://cdn.test/fresh"),
-      ]),
+        attachment("other", 300, "https://cdn.test/other"),
+      ),
     );
     await operation;
     expect(navigate).toHaveBeenCalledWith("https://cdn.test/fresh");
@@ -80,7 +85,7 @@ describe("signed task attachment opening", () => {
     options.loadDetail.mockReturnValue(pending.promise);
     const operation = openTaskAttachment(attachment("file", 100, "https://cdn.test/old"), options);
     current = false;
-    pending.resolve(detail([attachment("file", 300, "https://cdn.test/fresh")]));
+    pending.resolve(detail(attachment("file", 300, "https://cdn.test/fresh")));
     await operation;
     expect(options.onDetail).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
@@ -89,7 +94,7 @@ describe("signed task attachment opening", () => {
 
   test("a removed attachment never opens a different file", async () => {
     const { options, navigate, close } = setup(
-      detail([attachment("other", 300, "https://cdn.test/other")]),
+      detail(attachment("other", 300, "https://cdn.test/other")),
     );
     await expect(
       openTaskAttachment(attachment("file", 100, "https://cdn.test/old"), options),
@@ -100,7 +105,7 @@ describe("signed task attachment opening", () => {
 
   test("an unavailable refreshed attachment does not reuse the old URL", async () => {
     const { options, navigate, close } = setup(
-      detail([{ id: "file", name: "file.png", availability: "unavailable" }]),
+      detail({ id: "file", name: "file.png", availability: "unavailable" }),
     );
     await expect(
       openTaskAttachment(attachment("file", 100, "https://cdn.test/old"), options),
@@ -122,7 +127,7 @@ describe("signed task attachment opening", () => {
 
   test("an expired refreshed link fails visibly rather than looping", async () => {
     const { options, navigate, close } = setup(
-      detail([attachment("file", 100, "https://cdn.test/stale")]),
+      detail(attachment("file", 100, "https://cdn.test/stale")),
     );
     await expect(
       openTaskAttachment(attachment("file", 100, "https://cdn.test/old"), options),
@@ -133,9 +138,7 @@ describe("signed task attachment opening", () => {
   });
 
   test("a reused signed link that is still valid opens even inside the refresh margin", async () => {
-    const { options, navigate } = setup(
-      detail([attachment("file", 105, "https://cdn.test/reused")]),
-    );
+    const { options, navigate } = setup(detail(attachment("file", 105, "https://cdn.test/reused")));
     await openTaskAttachment(attachment("file", 105, "https://cdn.test/reused"), options);
     expect(options.loadDetail).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith("https://cdn.test/reused");
@@ -156,7 +159,7 @@ describe("signed task attachment opening", () => {
     options.openPopup.mockReturnValue({ navigate, close, isClosed: () => true });
     options.loadDetail.mockReturnValue(pending.promise);
     const operation = openTaskAttachment(attachment("file", 100, "https://cdn.test/old"), options);
-    pending.resolve(detail([attachment("file", 300, "https://cdn.test/fresh")]));
+    pending.resolve(detail(attachment("file", 300, "https://cdn.test/fresh")));
     await expect(operation).rejects.toThrow("附件窗口已关闭");
     expect(navigate).not.toHaveBeenCalled();
   });

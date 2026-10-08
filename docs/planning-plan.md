@@ -325,7 +325,7 @@ interface TaskInstanceDetailVO {
   submission: {
     state: "not_submitted" | "submitted";
     submittedAt?: string;
-    fields: TaskDetailField[]; // text / multiline / files 展示项
+    fields: TaskDetailField[]; // text / multiline / file 展示项
   };
 }
 

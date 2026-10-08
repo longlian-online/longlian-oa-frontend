@@ -48,7 +48,7 @@ export type TaskAttachment =
 
 export type TaskDetailField =
   | { key: string; label: string; type: "text" | "multiline"; text: string }
-  | { key: string; label: string; type: "files"; files: TaskAttachment[]; emptyText?: string };
+  | { key: string; label: string; type: "file"; file: TaskAttachment | null };
 
 export interface TaskInstanceDetailVO {
   task: {

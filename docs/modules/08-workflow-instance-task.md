@@ -51,7 +51,7 @@ src/
     └── WorkflowInstance/
         ├── TaskFlowViewer.tsx
         ├── TaskNodeCard.tsx
-        ├── TaskActionPanel.tsx
+        ├── TaskDetailPanel.tsx
         └── TaskSubmitPanel.tsx
 ```
 
@@ -73,7 +73,7 @@ src/
 - 原子任务与流程节点返回 `submitFields` 数组，每项包含 `key`、`label`、`type`、`required`、`options`。输入类型为 `text`、`textarea`、`number`、`select`、`file`。
 - 提交请求为 `{ values: { [key]: string | { fileId: string } | null } }`；数字输入提交字符串，附件只提交文件 ID，不发送临时预览地址或文件信息副本。
 - 详情返回 `task`（名称、阶段、状态、执行人）与 `submission`（状态、提交时间、有序展示字段）。无当前有效提交时，`state` 为 `not_submitted`，字段为空。
-- 展示字段由后端组装：`text`、`multiline` 使用 `text`，`files` 使用附件数组；空文本由后端返回“未填写”。前端不解析存储内容，也不匹配字段定义。
+- 展示字段由后端组装：`text`、`multiline` 使用 `text`；`file` 使用单个附件，未填写时为 `null`。空文本由后端返回“未填写”。前端不解析存储内容，也不匹配字段定义。
 - 有效附件包含 `name`、`sizeText`、`mediaType`、`readUrl`、`expiresAt`；`readUrl` 为 CDN 签名链接，`expiresAt` 为 Unix 秒。不可用附件不返回读取链接。
 - 附件点击时，剩余有效期不超过 10 秒则重新请求详情，按同一文件 ID 获取仍有效的链接后打开。签名服务可能复用仍有效的 URL，不要求刷新后 URL 一定变化。
 - 切换节点、关闭详情或任务操作刷新时，取消旧请求和待打开窗口，避免展示或打开旧任务的内容。
