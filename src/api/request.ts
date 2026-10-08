@@ -50,18 +50,6 @@ export async function commonRequest<T>(url: string, options?: RequestInit): Prom
   return requestWithBase("/common", url, options);
 }
 
-/** 用户资料、组织列表、会话接口不声明组织；业务、组织管理和上传才带 X-Org-Id。 */
-function declaresOrganization(basePath: string, url: string): boolean {
-  if (basePath !== "/app") return true;
-  const path = url.split("?")[0] ?? url;
-  return !(
-    path === "/user" ||
-    path.startsWith("/user/") ||
-    path === "/session" ||
-    path.startsWith("/session/")
-  );
-}
-
 async function requestWithBase<T>(
   basePath: string,
   url: string,
@@ -83,7 +71,7 @@ async function requestWithBase<T>(
     headers.Authorization = `Bearer ${authToken}`;
   }
 
-  const orgId = includeOrgContext && declaresOrganization(basePath, url) ? getCurrentOrgId() : null;
+  const orgId = includeOrgContext ? getCurrentOrgId() : null;
   if (orgId) {
     headers["X-Org-Id"] = orgId;
   } else {

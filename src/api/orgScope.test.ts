@@ -46,30 +46,24 @@ test("business, organization admin, and upload requests declare the saved org", 
   expect(sentOrgHeader()).toBe("42");
 });
 
-test("user and session requests omit the org header even when one is saved", async (): Promise<void> => {
+test("user and session requests declare the saved org instead of guessing from the path", async (): Promise<void> => {
   storage.set("token", "user-token");
   storage.set("currentOrgId", "42");
 
   await request("/user/");
-  expect(sentOrgHeader()).toBeNull();
+  expect(sentOrgHeader()).toBe("42");
 
   await request("/user/organizations");
-  expect(sentOrgHeader()).toBeNull();
-
-  await request("/user/password", { method: "PATCH" });
-  expect(sentOrgHeader()).toBeNull();
-
-  await request("/session/", { method: "DELETE" });
-  expect(sentOrgHeader()).toBeNull();
+  expect(sentOrgHeader()).toBe("42");
 
   await request("/session/pwd", {
     method: "POST",
-    headers: { "X-Org-Id": "42" },
+    headers: { "X-Org-Id": "other" },
   });
-  expect(sentOrgHeader()).toBeNull();
+  expect(sentOrgHeader()).toBe("42");
 
-  await request("/user/register/join-organization/invite-info?inviteCode=abc");
-  expect(sentOrgHeader()).toBeNull();
+  await request("/user/notices");
+  expect(sentOrgHeader()).toBe("42");
 });
 
 test("admin requests and an unusable saved org do not declare an organization", async (): Promise<void> => {
