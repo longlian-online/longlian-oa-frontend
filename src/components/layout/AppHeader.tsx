@@ -65,7 +65,6 @@ export default function AppHeader() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const isWorkshop = pathname.startsWith("/dashboard/workshop");
 
   const handleJoinOrganization = async (): Promise<void> => {
     const normalizedInviteCode = inviteCode.trim();
@@ -172,7 +171,9 @@ export default function AppHeader() {
 
   return (
     <header className="border-border bg-background grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b px-4">
-      <div className="min-w-0">{isWorkshop && <OrganizationIdentity />}</div>
+      <div className="min-w-0">
+        <OrganizationIdentity />
+      </div>
 
       <nav aria-label="主导航" className="flex items-center gap-1">
         {navigationItems

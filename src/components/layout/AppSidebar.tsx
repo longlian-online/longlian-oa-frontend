@@ -4,7 +4,6 @@ import { NavLink, useLocation } from "react-router";
 
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/utils";
-import OrganizationIdentity from "./OrganizationIdentity";
 
 const navItems = [
   {
@@ -42,11 +41,7 @@ export default function AppSidebar() {
   const [isOrganizationMenuOpen, setIsOrganizationMenuOpen] = useState(true);
 
   return (
-    <aside className="border-border bg-background flex h-full w-56 shrink-0 flex-col border-r">
-      <div className="flex h-14 items-center gap-2.5 border-b border-border px-5">
-        <OrganizationIdentity />
-      </div>
-
+    <aside className="border-border bg-background flex h-full w-56 shrink-0 flex-col overflow-y-auto border-r">
       <nav className="flex-1 space-y-0.5 px-3 py-3">
         {navItems
           .filter((item) => !("adminOnly" in item) || !item.adminOnly || isOrgAdmin)
