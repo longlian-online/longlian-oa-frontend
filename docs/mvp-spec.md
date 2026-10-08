@@ -766,7 +766,7 @@ sort=5: 发布
 | `GET`    | `/app/projects/{projectId}/items`                  | 分页查询项目列表 | `ProjectItemListDTO`，返回 `PageResultVOProjectItemListVO` |
 | `POST`   | `/app/projects/{projectId}/items`                  | 创建项目         | `ProjectItemCreateDTO`                                     |
 | `DELETE` | `/app/projects/{projectId}/items/{itemId}`         | 删除项目         | 删除企划内项目                                             |
-| `PATCH`  | `/app/projects/{projectId}/items/{itemId}/publish` | 公布项目         | 项目状态进入发布态                                         |
+| `PATCH`  | `/app/projects/{projectId}/items/{itemId}/publish` | 公布项目         | 项目状态进入发布态，需所有任务已完成                       |
 
 创建项目字段：
 
