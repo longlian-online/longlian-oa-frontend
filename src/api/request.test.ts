@@ -58,6 +58,7 @@ test.each([request, commonRequest, orgAdminRequest])(
     storage.set("token", "old");
     storage.set("userId", "user");
     storage.set("currentOrgId", "org");
+    storage.set("role", "ORG_ADMIN");
     storage.set("roles", '["ORG_ADMIN"]');
     storage.set("adminToken", "admin");
     respond(1);
@@ -65,6 +66,7 @@ test.each([request, commonRequest, orgAdminRequest])(
     expect(storage.get("token")).toBeUndefined();
     expect(storage.get("userId")).toBeUndefined();
     expect(storage.get("currentOrgId")).toBeUndefined();
+    expect(storage.get("role")).toBeUndefined();
     expect(storage.get("roles")).toBeUndefined();
     expect(storage.get("adminToken")).toBe("admin");
     expect(replace).toHaveBeenCalledWith(null, "", "/login");

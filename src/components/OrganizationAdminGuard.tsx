@@ -7,11 +7,11 @@ interface OrganizationAdminGuardProps {
 }
 
 export default function OrganizationAdminGuard({ children }: OrganizationAdminGuardProps) {
-  const { roles, isLoading } = useCurrentUser();
+  const { role, isLoading } = useCurrentUser();
 
   if (isLoading) return null;
 
-  if (!roles.includes("ORG_ADMIN")) {
+  if (role !== "ORG_ADMIN") {
     return <Navigate to="/dashboard/workshop" replace />;
   }
 

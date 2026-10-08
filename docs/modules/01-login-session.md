@@ -88,7 +88,7 @@ interface LoginVO {
   userId: string;
   defaultOrgId?: string | null;
   token: string;
-  roles?: string[];
+  role?: string | null;
 }
 
 interface UserInfoVO {
