@@ -1,5 +1,7 @@
 import { useRef, useState, type ChangeEvent } from "react";
-import { Bell, Check, KeyRound, LogOut, Pencil, Plus, UserRound } from "lucide-react";
+// 通知入口暂时隐藏，保留原实现以便后续恢复。
+// import { Bell } from "lucide-react";
+import { Check, KeyRound, LogOut, Pencil, Plus, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 
 import { logout } from "@/api/auth";
@@ -199,10 +201,12 @@ export default function AppHeader() {
 
       <div className="flex items-center justify-end gap-1">
         <ThemeToggle />
+        {/* 通知入口暂时隐藏，保留原实现以便后续恢复：
         <Button variant="ghost" size="icon-sm" aria-label="通知" className="relative">
           <Bell className="h-4 w-4" />
           <span className="bg-destructive absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full" />
         </Button>
+        */}
         <div className="group relative ml-1 border-l border-border pl-3">
           <input
             ref={avatarInputRef}
