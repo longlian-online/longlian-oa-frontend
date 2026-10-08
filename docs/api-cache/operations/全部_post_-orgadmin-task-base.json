@@ -2,7 +2,7 @@
   "document": "全部",
   "method": "POST",
   "operation": {
-    "description": "任务创建后不可编辑，请确认标题、图标、简介和元数据字段定义后提交",
+    "description": "任务创建后不可编辑，请确认标题、图标、简介和提交字段定义后提交",
     "operationId": "createBaseTask",
     "parameters": [
       {
@@ -30,10 +30,8 @@
       }
     },
     "summary": "创建原子任务",
-    "tags": [
-      "原子任务管理"
-    ]
+    "tags": ["原子任务管理"]
   },
   "path": "/orgadmin/task/base",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs"
 }

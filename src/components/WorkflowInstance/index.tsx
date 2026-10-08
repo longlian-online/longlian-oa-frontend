@@ -23,7 +23,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { getUserId } from "@/lib/session";
-import type { ItemTaskFlowVO, ItemTaskInstanceVO, ItemTaskNodeVO } from "@/types/workflowInstance";
+import type {
+  ItemTaskFlowVO,
+  ItemTaskInstanceVO,
+  ItemTaskNodeVO,
+  TaskSubmitDTO,
+} from "@/types/workflowInstance";
 import { createItemLifecycle } from "./itemLifecycle";
 import TaskDetailPanel from "./TaskDetailPanel";
 import { canReset, canReject } from "./taskPermissions";
@@ -72,9 +77,10 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const [workflowState, sendWorkflowEvent] = useMachine(workflowInstanceMachine);
   const [taskFlow, setTaskFlow] = useState<ItemTaskFlowVO | null>(null);
   const [instances, setInstances] = useState<ItemTaskInstanceVO[]>([]);
+  const [detailRevision, setDetailRevision] = useState(0);
   const [submitTarget, setSubmitTarget] = useState<{
     instance: ItemTaskInstanceVO;
-    node?: ItemTaskNodeVO;
+    node: ItemTaskNodeVO;
   } | null>(null);
   const [rejectTarget, setRejectTarget] = useState<ItemTaskInstanceVO | null>(null);
   const [rejectComment, setRejectComment] = useState("");
@@ -111,6 +117,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
       setLoadedItemId(itemId);
       setTaskFlow(flowData);
       setInstances(instanceData);
+      setDetailRevision((current) => current + 1);
       sendWorkflowEvent({ type: "LOADED" });
     } catch (error) {
       if (!isCurrentLifecycle() || generation !== loadGeneration.current) {
@@ -147,7 +154,11 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
 
   function openSubmit(instance: ItemTaskInstanceVO, node?: ItemTaskNodeVO): void {
     const targetNode = node ?? findNodeByInstance(instance, taskFlow?.nodes ?? []);
-    if (targetNode && !isNodeUnlocked(targetNode, taskFlow?.nodes ?? [])) {
+    if (!targetNode) {
+      $tip("任务提交表单尚未加载，请重新加载任务流", "error");
+      return;
+    }
+    if (!isNodeUnlocked(targetNode, taskFlow?.nodes ?? [])) {
       $tip("请先完成前置阶段", "error");
       return;
     }
@@ -157,12 +168,12 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     });
   }
 
-  async function handleSubmit(metadata: Record<string, unknown>): Promise<boolean> {
+  async function handleSubmit(submission: TaskSubmitDTO): Promise<boolean> {
     if (!submitTarget) return false;
 
     const succeeded = await runInstanceAction(
       submitTarget.instance.id,
-      () => submitTask(submitTarget.instance.id, { metadata: JSON.stringify(metadata) }),
+      () => submitTask(submitTarget.instance.id, submission),
       "任务已提交",
     );
     if (succeeded) setSubmitTarget(null);
@@ -259,6 +270,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
           key={`${itemId}:${selectedNode.id}`}
           node={selectedNode}
           instance={selectedInstance}
+          revision={detailRevision}
         />
       ) : (
         <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
@@ -287,16 +299,19 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
         />
       )}
 
-      <TaskSubmitPanel
-        open={Boolean(submitTarget)}
-        taskInstanceId={submitTarget?.instance.id}
-        taskName={submitTarget?.instance.name}
-        metaSchema={submitTarget?.node?.metaSchema}
-        onOpenChange={(open) => {
-          if (!open) setSubmitTarget(null);
-        }}
-        onSubmit={handleSubmit}
-      />
+      {submitTarget && (
+        <TaskSubmitPanel
+          key={submitTarget.instance.id}
+          open
+          taskInstanceId={submitTarget.instance.id}
+          taskName={submitTarget.instance.name}
+          submitFields={submitTarget.node.submitFields}
+          onOpenChange={(open) => {
+            if (!open) setSubmitTarget(null);
+          }}
+          onSubmit={handleSubmit}
+        />
+      )}
 
       <Dialog open={Boolean(rejectTarget)} onOpenChange={(open) => !open && setRejectTarget(null)}>
         <DialogContent>

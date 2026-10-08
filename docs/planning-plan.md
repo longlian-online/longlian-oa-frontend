@@ -88,32 +88,35 @@
 
 1. 左侧：原子任务库（可拖拽）
 2. 中间：垂直时间轴编辑区
-3. 右侧：节点属性面板（配置metaSchema）
+3. 右侧：节点属性面板（展示结构化提交字段）
 
 **编辑操作：**
 
 - 拖拽原子任务到时间轴 → 添加节点
 - 拖拽节点上下移动 → 调整sort顺序
 - 将节点拖入同一水平线 → 设为并行（相同sort）
-- 点击节点 → 编辑属性（metaSchema字段定义）
+- 点击节点 → 编辑属性（`submitFields` 字段定义）
 
 ### 3.3 任务提交面板
 
 ```tsx
 <TaskSubmitPanel
-  taskInstance={taskInstance}
-  metaSchema={metaSchema} // JSON字段定义
+  open={submitOpen}
+  taskInstanceId={taskInstance.id}
+  taskName={taskInstance.name}
+  submitFields={node.submitFields}
+  onOpenChange={setSubmitOpen}
   onSubmit={handleSubmit}
 />
 ```
 
-**根据metaSchema动态渲染表单：**
+**根据后端返回的 `submitFields` 数组渲染输入控件：**
 
 ```json
 [
-  { "name": "附件", "fieldType": "file", "required": true },
-  { "name": "作者", "fieldType": "text", "required": true },
-  { "name": "源链接", "fieldType": "text", "required": false }
+  { "key": "attachment", "label": "附件", "type": "file", "required": true, "options": [] },
+  { "key": "author", "label": "作者", "type": "text", "required": true, "options": [] },
+  { "key": "source", "label": "源链接", "type": "text", "required": false, "options": [] }
 ]
 ```
 
@@ -180,7 +183,7 @@ POST /app/task/instance/{instanceId}/claim
 提交任务：
 POST /app/task/instance/{instanceId}/submit
 → 上传文件（如需要）→ POST /common/file/upload 获取预签名上传地址
-→ 提交metadata → POST submit
+→ 提交结构化 values（附件仅包含 fileId）→ POST submit
 → 状态变为 COMPLETED
 → 解锁下一节点（如有）
 
@@ -195,8 +198,9 @@ POST /app/task/instance/{instanceId}/reject
 
 ```
 GET /app/task/instance/{instanceId}/detail
-→ 查看最近一次提交的 metadata
-→ 当前 Swagger 未暴露独立提交记录列表和下载接口
+→ 展示后端组装的 task、submission 和有序可读字段
+→ 附件通过 CDN 签名 readUrl 打开；expiresAt 即将到期时重新获取详情
+→ 当前未提供独立提交历史列表
 ```
 
 ---
@@ -282,7 +286,7 @@ interface ItemTaskNodeVO {
   baseTaskId: string;
   name: string;
   baseTaskIconUrl?: string;
-  metaSchema: string; // JSON字段定义快照
+  submitFields: TaskFormField[]; // 结构化输入定义快照
   sort: number;
   parallelSort: number;
   taskInstanceId?: string;
@@ -311,11 +315,22 @@ interface ItemTaskInstanceVO {
 
 ```ts
 interface TaskInstanceDetailVO {
-  metadata?: string; // 最近一次提交的元数据JSON字符串
+  task: {
+    id: string;
+    name: string;
+    stage: number;
+    status: "PENDING" | "CLAIMED" | "COMPLETED";
+    assignee?: { id: string; nickname: string; avatarUrl?: string };
+  };
+  submission: {
+    state: "not_submitted" | "submitted";
+    submittedAt?: string;
+    fields: TaskDetailField[]; // text / multiline / files 展示项
+  };
 }
 
 interface TaskSubmitDTO {
-  metadata?: string; // 示例：{"values":{"attachment":{"fileId":123},"author":"张三"}}
+  values: Record<string, string | { fileId: string } | null>;
 }
 
 interface TaskRejectDTO {
@@ -333,7 +348,7 @@ interface TaskRejectDTO {
 | ------------ | ------------------------------------------------- |
 | 任务流可视化 | 自研垂直时间轴组件（无需React Flow）              |
 | 模板编辑器   | 拖拽排序用 @dnd-kit，并行组用 CSS Grid            |
-| 动态表单     | 基于 metaSchema 动态渲染                          |
+| 动态表单     | 基于后端结构化 `submitFields` 渲染                |
 | 文件上传     | 分片上传 + 进度条                                 |
 | 状态管理     | TanStack Query（服务器状态）+ Zustand（本地状态） |
 
@@ -366,7 +381,7 @@ interface TaskRejectDTO {
 | ---------------- | ------------------------------------------------------------------------------------- |
 | **打回逻辑**     | 后端控制回退目标节点，前端展示：①"被打回"状态标签 ②打回理由 ③红色反向流转线           |
 | **并行任务分配** | **自选机制**。并行节点（如翻译A/B/C）生成多个独立任务实例，用户主动接取自己想做的任务 |
-| **文件版本**     | 通过 `metadata.attachment.fileId` 引用文件。（TODO：文件上传接口后端未提供）          |
+| **文件版本**     | 提交值仅引用 `fileId`；任务详情返回文件信息、CDN 签名读取链接与实际到期时间。         |
 | **通知机制**     | （TODO：通知接口后端未提供）                                                          |
 
 ---

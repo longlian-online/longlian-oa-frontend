@@ -1,3 +1,5 @@
+import type { TaskFormField, TaskSubmitValue } from "./task";
+
 export type TaskInstanceStatus = "PENDING" | "CLAIMED" | "COMPLETED";
 
 export interface ItemTaskFlowVO {
@@ -12,7 +14,7 @@ export interface ItemTaskNodeVO {
   name: string;
   baseTaskIconName?: string;
   baseTaskIconUrl?: string;
-  metaSchema?: string;
+  submitFields: TaskFormField[];
   sort: number;
   parallelSort: number;
   taskInstanceId?: string | null;
@@ -32,12 +34,39 @@ export interface ItemTaskInstanceVO {
   completedAt?: string | null;
 }
 
+export type TaskAttachment =
+  | {
+      id: string;
+      name: string;
+      sizeText: string;
+      mediaType: "image" | "document" | "archive" | "other";
+      availability: "available";
+      readUrl: string;
+      expiresAt: number;
+    }
+  | { id: string; name: string; availability: "unavailable" };
+
+export type TaskDetailField =
+  | { key: string; label: string; type: "text" | "multiline"; text: string }
+  | { key: string; label: string; type: "files"; files: TaskAttachment[]; emptyText?: string };
+
 export interface TaskInstanceDetailVO {
-  metadata?: string | null;
+  task: {
+    id: string;
+    name: string;
+    stage: number;
+    status: TaskInstanceStatus;
+    assignee?: { id: string; nickname: string; avatarUrl?: string };
+  };
+  submission: {
+    state: "not_submitted" | "submitted";
+    submittedAt?: string;
+    fields: TaskDetailField[];
+  };
 }
 
 export interface TaskSubmitDTO {
-  metadata?: string;
+  values: Record<string, TaskSubmitValue>;
 }
 
 export interface TaskRejectDTO {

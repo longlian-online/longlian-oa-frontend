@@ -37,10 +37,8 @@
       }
     },
     "summary": "读取本地文件",
-    "tags": [
-      "文件上传接口"
-    ]
+    "tags": ["文件上传接口"]
   },
   "path": "/common/file/local",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs"
 }
