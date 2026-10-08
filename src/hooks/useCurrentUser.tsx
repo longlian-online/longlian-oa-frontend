@@ -34,7 +34,7 @@ function useCurrentUserState(): UseCurrentUserResult {
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
-      setRoles(currentUser.roles ?? getSessionRoles());
+      setRoles(getSessionRoles());
     } catch (refreshError) {
       setUser(null);
       setRoles(getSessionRoles());

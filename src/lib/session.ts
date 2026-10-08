@@ -12,8 +12,16 @@ const ADMIN_ROLE_KEY = "adminRole";
 export function saveSession(session: LoginVO): void {
   localStorage.setItem(TOKEN_KEY, session.token);
   localStorage.setItem(USER_ID_KEY, session.userId);
-  localStorage.setItem(CURRENT_ORG_ID_KEY, session.currentOrgId);
-  localStorage.setItem(ROLES_KEY, JSON.stringify(session.roles));
+  const orgId = usableOrgId(session.defaultOrgId);
+  if (orgId) {
+    localStorage.setItem(CURRENT_ORG_ID_KEY, orgId);
+  } else {
+    localStorage.removeItem(CURRENT_ORG_ID_KEY);
+  }
+  const roles = Array.isArray(session.roles)
+    ? session.roles.filter((role): role is string => typeof role === "string")
+    : [];
+  localStorage.setItem(ROLES_KEY, JSON.stringify(roles));
 }
 
 export function clearSession(): void {
@@ -54,7 +62,7 @@ export function getAdminRole(): string | null {
 }
 
 export function getCurrentOrgId(): string | null {
-  return localStorage.getItem(CURRENT_ORG_ID_KEY);
+  return usableOrgId(localStorage.getItem(CURRENT_ORG_ID_KEY));
 }
 
 export function getUserId(): string | null {
@@ -73,6 +81,10 @@ export function getSessionRoles(): string[] {
   } catch {
     return [];
   }
+}
+
+function usableOrgId(orgId: string | null | undefined): string | null {
+  return typeof orgId === "string" && /^[1-9]\d*$/.test(orgId) ? orgId : null;
 }
 
 export function isOrganizationAdmin(): boolean {
