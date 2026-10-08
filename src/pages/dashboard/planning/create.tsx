@@ -43,7 +43,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
   const [tags, setTags] = useState<TagItem[]>(parseProjectMetadataTags(project?.metadata));
   const [newTagKey, setNewTagKey] = useState("");
   const [newTagValue, setNewTagValue] = useState("");
-  const [showTagInput, setShowTagInput] = useState(!project || !project.metadata);
+  const [showTagInput, setShowTagInput] = useState(false);
   const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(
     project?.coverUrl
       ? {
