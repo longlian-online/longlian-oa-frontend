@@ -50,7 +50,7 @@ function isSubMenuActive(pathname: string, targetPath: string): boolean {
 export default function AppHeader() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { user, roles, refresh } = useCurrentUser();
+  const { user, role, refresh } = useCurrentUser();
   const { theme, setTheme } = useTheme();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const { uploading: isUploadingAvatar, uploadFile } = useUploadFile();
@@ -176,7 +176,7 @@ export default function AppHeader() {
 
       <nav aria-label="主导航" className="flex items-center gap-1">
         {navigationItems
-          .filter((item) => !item.adminOnly || roles.includes("ORG_ADMIN"))
+          .filter((item) => !item.adminOnly || role === "ORG_ADMIN")
           .map(({ to, label }) => (
             <NavLink
               key={to}
@@ -248,8 +248,7 @@ export default function AppHeader() {
                   {user?.nickname || user?.username || "用户"}
                 </div>
                 <div className="mt-0.5 truncate text-xs text-muted-foreground">
-                  {roles.map((role) => ROLE_LABELS[role.toUpperCase()] ?? role).join(" / ") ||
-                    "平台用户"}
+                  {(role ? (ROLE_LABELS[role.toUpperCase()] ?? role) : "") || "平台用户"}
                 </div>
               </div>
             </div>

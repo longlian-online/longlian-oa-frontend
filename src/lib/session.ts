@@ -3,7 +3,7 @@ import type { AdminLoginVO, LoginVO } from "@/types/auth";
 const TOKEN_KEY = "token";
 const USER_ID_KEY = "userId";
 const CURRENT_ORG_ID_KEY = "currentOrgId";
-const ROLES_KEY = "roles";
+const ROLE_KEY = "role";
 const ADMIN_TOKEN_KEY = "adminToken";
 const ADMIN_ID_KEY = "adminId";
 const ADMIN_USERNAME_KEY = "adminUsername";
@@ -12,15 +12,27 @@ const ADMIN_ROLE_KEY = "adminRole";
 export function saveSession(session: LoginVO): void {
   localStorage.setItem(TOKEN_KEY, session.token);
   localStorage.setItem(USER_ID_KEY, session.userId);
-  localStorage.setItem(CURRENT_ORG_ID_KEY, session.currentOrgId);
-  localStorage.setItem(ROLES_KEY, JSON.stringify(session.roles));
+  const orgId = usableOrgId(session.defaultOrgId);
+  if (orgId) {
+    localStorage.setItem(CURRENT_ORG_ID_KEY, orgId);
+  } else {
+    localStorage.removeItem(CURRENT_ORG_ID_KEY);
+  }
+  localStorage.removeItem("roles");
+  const role = session.role?.trim();
+  if (role) {
+    localStorage.setItem(ROLE_KEY, role);
+  } else {
+    localStorage.removeItem(ROLE_KEY);
+  }
 }
 
 export function clearSession(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_ID_KEY);
   localStorage.removeItem(CURRENT_ORG_ID_KEY);
-  localStorage.removeItem(ROLES_KEY);
+  localStorage.removeItem(ROLE_KEY);
+  localStorage.removeItem("roles");
 }
 
 export function saveAdminSession(session: AdminLoginVO): void {
@@ -54,27 +66,22 @@ export function getAdminRole(): string | null {
 }
 
 export function getCurrentOrgId(): string | null {
-  return localStorage.getItem(CURRENT_ORG_ID_KEY);
+  return usableOrgId(localStorage.getItem(CURRENT_ORG_ID_KEY));
 }
 
 export function getUserId(): string | null {
   return localStorage.getItem(USER_ID_KEY);
 }
 
-export function getSessionRoles(): string[] {
-  const rawRoles = localStorage.getItem(ROLES_KEY);
-  if (!rawRoles) return [];
+export function getSessionRole(): string | null {
+  const role = localStorage.getItem(ROLE_KEY)?.trim();
+  return role ? role : null;
+}
 
-  try {
-    const roles = JSON.parse(rawRoles);
-    return Array.isArray(roles)
-      ? roles.filter((role): role is string => typeof role === "string")
-      : [];
-  } catch {
-    return [];
-  }
+function usableOrgId(orgId: string | null | undefined): string | null {
+  return typeof orgId === "string" && /^[1-9]\d*$/.test(orgId) ? orgId : null;
 }
 
 export function isOrganizationAdmin(): boolean {
-  return getSessionRoles().includes("ORG_ADMIN");
+  return getSessionRole() === "ORG_ADMIN";
 }

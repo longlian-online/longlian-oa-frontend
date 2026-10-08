@@ -65,7 +65,6 @@ async function requestWithBase<T>(
   loginPath = "/login",
 ): Promise<T> {
   const token = getToken();
-  const currentOrgId = getCurrentOrgId();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options?.headers as Record<string, string>),
@@ -76,8 +75,11 @@ async function requestWithBase<T>(
     headers.Authorization = `Bearer ${authToken}`;
   }
 
-  if (includeOrgContext && currentOrgId) {
-    headers["X-Org-Id"] = currentOrgId;
+  const orgId = includeOrgContext ? getCurrentOrgId() : null;
+  if (orgId) {
+    headers["X-Org-Id"] = orgId;
+  } else {
+    delete headers["X-Org-Id"];
   }
 
   let response: Response;

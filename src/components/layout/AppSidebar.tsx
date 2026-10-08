@@ -37,8 +37,8 @@ function isPathActive(pathname: string, prefixes: readonly string[]): boolean {
 
 export default function AppSidebar() {
   const { pathname } = useLocation();
-  const { roles } = useCurrentUser();
-  const isOrgAdmin = roles.includes("ORG_ADMIN");
+  const { role } = useCurrentUser();
+  const isOrgAdmin = role === "ORG_ADMIN";
   const [isOrganizationMenuOpen, setIsOrganizationMenuOpen] = useState(true);
 
   return (
