@@ -3,7 +3,7 @@ import type { AdminLoginVO, LoginVO } from "@/types/auth";
 const TOKEN_KEY = "token";
 const USER_ID_KEY = "userId";
 const CURRENT_ORG_ID_KEY = "currentOrgId";
-const ROLES_KEY = "roles";
+const ROLE_KEY = "role";
 const ADMIN_TOKEN_KEY = "adminToken";
 const ADMIN_ID_KEY = "adminId";
 const ADMIN_USERNAME_KEY = "adminUsername";
@@ -18,17 +18,21 @@ export function saveSession(session: LoginVO): void {
   } else {
     localStorage.removeItem(CURRENT_ORG_ID_KEY);
   }
-  const roles = Array.isArray(session.roles)
-    ? session.roles.filter((role): role is string => typeof role === "string")
-    : [];
-  localStorage.setItem(ROLES_KEY, JSON.stringify(roles));
+  localStorage.removeItem("roles");
+  const role = session.role?.trim();
+  if (role) {
+    localStorage.setItem(ROLE_KEY, role);
+  } else {
+    localStorage.removeItem(ROLE_KEY);
+  }
 }
 
 export function clearSession(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_ID_KEY);
   localStorage.removeItem(CURRENT_ORG_ID_KEY);
-  localStorage.removeItem(ROLES_KEY);
+  localStorage.removeItem(ROLE_KEY);
+  localStorage.removeItem("roles");
 }
 
 export function saveAdminSession(session: AdminLoginVO): void {
@@ -69,18 +73,9 @@ export function getUserId(): string | null {
   return localStorage.getItem(USER_ID_KEY);
 }
 
-export function getSessionRoles(): string[] {
-  const rawRoles = localStorage.getItem(ROLES_KEY);
-  if (!rawRoles) return [];
-
-  try {
-    const roles = JSON.parse(rawRoles);
-    return Array.isArray(roles)
-      ? roles.filter((role): role is string => typeof role === "string")
-      : [];
-  } catch {
-    return [];
-  }
+export function getSessionRole(): string | null {
+  const role = localStorage.getItem(ROLE_KEY)?.trim();
+  return role ? role : null;
 }
 
 function usableOrgId(orgId: string | null | undefined): string | null {
@@ -88,5 +83,5 @@ function usableOrgId(orgId: string | null | undefined): string | null {
 }
 
 export function isOrganizationAdmin(): boolean {
-  return getSessionRoles().includes("ORG_ADMIN");
+  return getSessionRole() === "ORG_ADMIN";
 }

@@ -16,7 +16,7 @@ export interface LoginVO {
   defaultOrgId?: string | null;
   token: string;
   /** 默认组织内的角色，仅供展示。默认组织不可用时为空。 */
-  roles?: string[];
+  role?: string | null;
 }
 
 export interface EmailCodeDTO {
