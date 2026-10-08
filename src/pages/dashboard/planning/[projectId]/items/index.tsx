@@ -3,7 +3,6 @@ import { useParams } from "react-router";
 
 import { getProjectDetail } from "@/api/planning";
 import ProjectItemSection from "@/components/ProjectItem";
-import { $tip } from "@/components/tip";
 import type { ProjectDetailInfoVO } from "@/types/planning";
 
 export default function ProjectItemListPage() {
@@ -16,9 +15,6 @@ export default function ProjectItemListPage() {
 
     void getProjectDetail(projectId)
       .then(setProject)
-      .catch((error: unknown) => {
-        $tip(error instanceof Error ? error.message : "项目加载失败", "error");
-      })
       .finally(() => setLoading(false));
   }, [projectId]);
 

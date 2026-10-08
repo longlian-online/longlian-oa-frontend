@@ -89,8 +89,6 @@ export default function RegisterPage() {
       }
       $tip("注册成功，请登录", "success");
       void navigate("/login");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "注册失败", "error");
     } finally {
       setIsLoading(false);
     }
@@ -105,9 +103,8 @@ export default function RegisterPage() {
       const result = await getInviteInfo(form.getValues("inviteCode"));
       setInviteInfo(result);
       $tip(`邀请码来自 ${result.orgName}`, "success");
-    } catch (error) {
+    } catch {
       setInviteInfo(null);
-      $tip(error instanceof Error ? error.message : "邀请码查询失败", "error");
     } finally {
       setIsInviteLoading(false);
     }
@@ -118,22 +115,18 @@ export default function RegisterPage() {
     const isValid = await form.trigger("email");
     if (!isValid) return;
 
-    try {
-      await sendVerificationCode({ email, businessType: "REGISTER" });
-      $tip("验证码已发送", "success");
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "发送验证码失败", "error");
-    }
+    await sendVerificationCode({ email, businessType: "REGISTER" });
+    $tip("验证码已发送", "success");
+    setCountdown(60);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   return (

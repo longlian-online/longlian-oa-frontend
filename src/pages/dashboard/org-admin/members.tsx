@@ -99,8 +99,6 @@ function OrganizationMembersContent() {
       });
       setMembers(result.list);
       setTotal(result.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "成员加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -128,8 +126,6 @@ function OrganizationMembersContent() {
       await changeMemberStatus(member.id, disabled ? "ENABLED" : "DISABLED");
       $tip(disabled ? "成员已启用" : "成员已禁用", "success");
       await loadMembers();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "成员状态更新失败", "error");
     } finally {
       setMutatingId(null);
     }
@@ -142,8 +138,6 @@ function OrganizationMembersContent() {
       setDetailLoading(true);
       const result = await getMemberSubmitCounts(member.id);
       setSubmitCounts(result.list);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "提交统计加载失败", "error");
     } finally {
       setDetailLoading(false);
     }
@@ -163,8 +157,6 @@ function OrganizationMembersContent() {
       $tip("角色已修改", "success");
       setRoleMember(null);
       await loadMembers();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "角色修改失败", "error");
     } finally {
       setSavingRole(false);
     }

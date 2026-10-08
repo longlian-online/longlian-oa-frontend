@@ -49,7 +49,7 @@ export default function FileUpload({
       });
       onChange(uploadedFile);
     } catch {
-      // useUploadFile already shows the global error tip.
+      // 失败提示由接口层或预签名上传逻辑显示。
     }
   };
 

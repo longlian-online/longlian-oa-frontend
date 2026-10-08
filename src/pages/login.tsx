@@ -65,8 +65,6 @@ export default function LoginPage() {
       saveSession(result);
       $tip("登录成功", "success");
       void navigate("/dashboard/planning");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "登录失败", "error");
     } finally {
       setIsLoading(false);
     }
@@ -79,8 +77,6 @@ export default function LoginPage() {
       saveSession(result);
       $tip("登录成功", "success");
       void navigate("/dashboard/planning");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "登录失败", "error");
     } finally {
       setIsLoading(false);
     }
@@ -91,22 +87,18 @@ export default function LoginPage() {
     const isValid = await codeForm.trigger("email");
     if (!isValid) return;
 
-    try {
-      await sendVerificationCode({ email, businessType: "LOGIN" });
-      $tip("验证码已发送", "success");
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "发送验证码失败", "error");
-    }
+    await sendVerificationCode({ email, businessType: "LOGIN" });
+    $tip("验证码已发送", "success");
+    setCountdown(60);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   return (

@@ -36,8 +36,6 @@ export default function AdminLayout({ children, title, description }: AdminLayou
     try {
       await adminLogout();
       $tip("管理员已退出登录", "success");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "退出登录失败", "error");
     } finally {
       clearAdminSession();
       void navigate("/admin/login", { replace: true });

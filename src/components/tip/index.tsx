@@ -3,25 +3,21 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AlertCircle, CheckCircle2, Info, LoaderCircle, X, XCircle } from "lucide-react";
 
-import { AUTH_EXPIRED_EVENT, AUTH_EXPIRED_MESSAGE } from "@/lib/authError";
+import { ApiError } from "@/api/apiError";
+import { useNotifications } from "@/hooks/useNotifications";
+import { AUTH_EXPIRED_EVENT, AUTH_EXPIRED_MESSAGE, AuthExpiredError } from "@/lib/authError";
 import { cn } from "@/lib/utils";
+import { GATEWAY_ERROR_MESSAGE, NETWORK_ERROR_MESSAGE } from "@/services/notification";
+import {
+  showTip,
+  subscribeTip,
+  type TipIcon,
+  type TipItem,
+  type TipListener,
+  type TipType,
+} from "@/components/tip/store";
 
-export type TipType = "success" | "error" | "warning" | "info" | "loading";
-export type TipIcon = ReactNode | false;
-
-interface TipItem {
-  id: number;
-  message: string;
-  type: TipType;
-  icon?: TipIcon;
-  time: number;
-}
-
-type TipListener = (tip: TipItem) => void;
-
-const listeners = new Set<TipListener>();
-const pendingTips: TipItem[] = [];
-let nextTipId = 1;
+export type { TipIcon, TipType };
 
 const typeClassName: Record<TipType, string> = {
   success: "border-emerald-200 bg-emerald-50 text-emerald-950 shadow-emerald-950/5",
@@ -40,27 +36,14 @@ const defaultIcon: Record<TipType, ReactNode> = {
 };
 
 export function $tip(message: string, type: TipType = "info", icon?: TipIcon, time = 2400): number {
-  if (message === AUTH_EXPIRED_MESSAGE) return 0;
-  return showTip(message, type, icon, time);
-}
-
-function showTip(message: string, type: TipType, icon?: TipIcon, time = 2400): number {
-  const tip: TipItem = {
-    id: nextTipId,
-    message,
-    type,
-    icon,
-    time,
-  };
-  nextTipId += 1;
-
-  if (listeners.size === 0) {
-    pendingTips.push(tip);
-    return tip.id;
+  if (
+    message === AUTH_EXPIRED_MESSAGE ||
+    message === GATEWAY_ERROR_MESSAGE ||
+    message === NETWORK_ERROR_MESSAGE
+  ) {
+    return 0;
   }
-
-  listeners.forEach((listener) => listener(tip));
-  return tip.id;
+  return showTip(message, type, icon, time);
 }
 
 declare global {
@@ -74,10 +57,16 @@ if (typeof window !== "undefined") {
   window.addEventListener(AUTH_EXPIRED_EVENT, (): void => {
     showTip(AUTH_EXPIRED_MESSAGE, "error");
   });
+  window.addEventListener("unhandledrejection", (event: PromiseRejectionEvent): void => {
+    if (event.reason instanceof ApiError || event.reason instanceof AuthExpiredError) {
+      event.preventDefault();
+    }
+  });
 }
 
 export default function TipProvider() {
   const [tips, setTips] = useState<TipItem[]>([]);
+  useNotifications();
 
   useEffect(() => {
     const addTip: TipListener = (tip) => {
@@ -90,12 +79,7 @@ export default function TipProvider() {
       }
     };
 
-    listeners.add(addTip);
-    pendingTips.splice(0).forEach(addTip);
-
-    return () => {
-      listeners.delete(addTip);
-    };
+    return subscribeTip(addTip);
   }, []);
 
   if (typeof document === "undefined") {
