@@ -107,10 +107,7 @@ export default function BaseTaskFieldsEditor({
                   className="mt-2"
                   onChange={(event) =>
                     onChange(field.key, {
-                      options: event.target.value
-                        .split(/[、,，]/)
-                        .map((option) => option.trim())
-                        .filter(Boolean),
+                      options: event.target.value.split(/[、,，]/).map((option) => option.trim()),
                     })
                   }
                 />

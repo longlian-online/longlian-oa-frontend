@@ -161,9 +161,10 @@ function BaseTaskManagementContent() {
       return;
     }
 
-    const invalidSelectField = form.submitFields.find(
-      (field) => field.type === "select" && field.options.length === 0,
-    );
+    const invalidSelectField = form.submitFields.find((field) => {
+      if (field.type !== "select") return false;
+      return field.options.every((option) => option.trim() === "");
+    });
     if (invalidSelectField) {
       $tip(`请为「${invalidSelectField.label}」填写至少一个选项`, "error");
       return;
@@ -176,7 +177,10 @@ function BaseTaskManagementContent() {
       submitFields: form.submitFields.map((field) => ({
         ...field,
         label: field.label.trim(),
-        options: field.type === "select" ? [...new Set(field.options)] : [],
+        options:
+          field.type === "select"
+            ? [...new Set(field.options.map((option) => option.trim()).filter(Boolean))]
+            : [],
       })),
     };
 
