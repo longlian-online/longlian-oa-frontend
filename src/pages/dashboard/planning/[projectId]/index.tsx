@@ -116,21 +116,23 @@ export default function ProjectDetail() {
               编辑
             </Button>
           )}
-          <Button
-            variant={project.inWorkshop ? "secondary" : "default"}
-            size="sm"
-            disabled={workshopLoading}
-            onClick={handleToggleWorkshop}
-          >
-            {workshopLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : project.inWorkshop ? (
-              <X className="h-4 w-4" />
-            ) : (
-              <CirclePlus className="h-4 w-4" />
-            )}
-            {project.inWorkshop ? "退出企划" : "加入企划"}
-          </Button>
+          {!(project.isCreator && project.inWorkshop) && (
+            <Button
+              variant={project.inWorkshop ? "secondary" : "default"}
+              size="sm"
+              disabled={workshopLoading}
+              onClick={handleToggleWorkshop}
+            >
+              {workshopLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : project.inWorkshop ? (
+                <X className="h-4 w-4" />
+              ) : (
+                <CirclePlus className="h-4 w-4" />
+              )}
+              {project.inWorkshop ? "退出企划" : "加入企划"}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
