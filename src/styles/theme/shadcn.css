@@ -2,8 +2,9 @@
 /* 多主题通过 [data-color-theme="xxx"] 覆盖 --primary 等变量即可 */
 @layer base {
   :root {
-    --background: oklch(99% 0 0);
+    --background: #f7f7f7;
     --foreground: oklch(14% 0 0);
+    --sidebar: oklch(99% 0 0);
 
     --card: oklch(100% 0 0);
     --card-foreground: oklch(14% 0 0);
@@ -36,6 +37,7 @@
   .dark {
     --background: oklch(14% 0 0);
     --foreground: oklch(95% 0 0);
+    --sidebar: var(--background);
 
     --card: oklch(18% 0 0);
     --card-foreground: oklch(95% 0 0);
