@@ -1,3 +1,5 @@
+import type { TaskFormField } from "./task";
+
 export type OrganizationResourceStatus = "ENABLED" | "DISABLED";
 
 export type OrganizationMemberRole = "ORG_ADMIN" | "ORG_USER";
@@ -138,7 +140,7 @@ export interface OrganizationBaseTaskCreateDTO {
   description?: string;
   iconFileId?: string;
   iconName?: string;
-  metaSchema?: string;
+  submitFields: TaskFormField[];
 }
 
 export interface OrganizationBaseTaskListDTO {
@@ -158,7 +160,7 @@ export interface OrganizationBaseTaskVO {
   description?: string;
   iconName?: string;
   iconUrl?: string;
-  metaSchema?: string;
+  submitFields: TaskFormField[];
   refCount: number;
   status: OrganizationResourceStatus;
   createdAt?: string;
@@ -193,7 +195,7 @@ export interface OrganizationTaskTemplateNodeVO {
   baseTaskName?: string;
   baseTaskIconName?: string;
   baseTaskIconUrl?: string;
-  metaSchema?: string;
+  submitFields: TaskFormField[];
   sort?: number;
   parallelSort?: number;
 }

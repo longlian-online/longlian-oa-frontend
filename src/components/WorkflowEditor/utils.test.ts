@@ -14,6 +14,7 @@ const BASE_TASKS: BaseTaskVO[] = [
   {
     id: "translate",
     name: "翻译",
+    submitFields: [],
     refCount: 1,
     status: "ENABLED",
     createdAt: "2026-01-01T00:00:00Z",
@@ -21,6 +22,7 @@ const BASE_TASKS: BaseTaskVO[] = [
   {
     id: "review",
     name: "审核",
+    submitFields: [],
     refCount: 1,
     status: "ENABLED",
     createdAt: "2026-01-01T00:00:00Z",

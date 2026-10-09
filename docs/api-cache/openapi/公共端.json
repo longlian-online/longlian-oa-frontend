@@ -32,13 +32,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "bizType",
-          "fileExt",
-          "fileMime",
-          "fileName",
-          "fileSize"
-        ],
+        "required": ["bizType", "fileExt", "fileMime", "fileName", "fileSize"],
         "type": "object"
       },
       "LocalFileReadDTO": {
@@ -55,11 +49,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "expires",
-          "key",
-          "signature"
-        ],
+        "required": ["expires", "key", "signature"],
         "type": "object"
       },
       "ResourceCreateVO": {
@@ -75,12 +65,7 @@
           },
           "storageType": {
             "description": "存储类型：1-本地存储，2-阿里云OSS，3-腾讯云COS",
-            "enum": [
-              "NONE",
-              "LOCAL",
-              "OSS",
-              "COS"
-            ],
+            "enum": ["NONE", "LOCAL", "OSS", "COS"],
             "type": "string"
           },
           "uploadUrl": {
@@ -99,6 +84,17 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "SystemInfoVO": {
+        "description": "系统信息",
+        "properties": {
+          "version": {
+            "description": "后端版本号",
+            "example": "1.0.13-SNAPSHOT",
+            "type": "string"
           }
         },
         "type": "object"
@@ -161,9 +157,7 @@
           }
         },
         "summary": "读取本地文件",
-        "tags": [
-          "文件上传接口"
-        ]
+        "tags": ["文件上传接口"]
       },
       "put": {
         "description": "客户端使用预签名 URL 直传文件内容到本地存储，需校验上传者身份与文件大小",
@@ -184,9 +178,7 @@
           }
         },
         "summary": "本地上传文件",
-        "tags": [
-          "文件上传接口"
-        ]
+        "tags": ["文件上传接口"]
       }
     },
     "/common/file/upload": {
@@ -226,9 +218,28 @@
           }
         },
         "summary": "创建文件上传",
-        "tags": [
-          "文件上传接口"
-        ]
+        "tags": ["文件上传接口"]
+      }
+    },
+    "/common/system/info": {
+      "get": {
+        "description": "无需登录，返回当前系统信息",
+        "operationId": "getSystemInfo",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [],
+        "summary": "获取系统信息",
+        "tags": ["系统信息接口"]
       }
     }
   },
@@ -240,7 +251,7 @@
   "servers": [
     {
       "description": "Configured server URL",
-      "url": "https://sit.neo.oa.api.longlian.online/"
+      "url": "http://127.0.0.1:64000"
     }
   ],
   "tags": [

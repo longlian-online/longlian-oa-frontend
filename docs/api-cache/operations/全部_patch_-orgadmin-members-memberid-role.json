@@ -1,0 +1,45 @@
+{
+  "document": "全部",
+  "method": "PATCH",
+  "operation": {
+    "operationId": "changeMemberRole",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "memberId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/OrgMemberChangeRoleDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "调整成员组织角色",
+    "tags": ["组织成员管理"]
+  },
+  "path": "/orgadmin/members/{memberId}/role",
+  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs"
+}

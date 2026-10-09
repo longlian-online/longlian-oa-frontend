@@ -10,17 +10,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export type TaskMetaFieldType = "text" | "textarea" | "file" | "number" | "select";
+import type { TaskFormField } from "@/types/task";
 
-export interface TaskMetaField {
-  id: string;
-  name: string;
-  fieldType: TaskMetaFieldType;
-  required: boolean;
-  options: string[];
-}
-
-const FIELD_TYPE_LABELS: Record<TaskMetaFieldType, string> = {
+const FIELD_TYPE_LABELS: Record<TaskFormField["type"], string> = {
   text: "单行文本",
   textarea: "多行文本",
   file: "文件上传",
@@ -28,19 +20,19 @@ const FIELD_TYPE_LABELS: Record<TaskMetaFieldType, string> = {
   select: "下拉选择",
 };
 
-interface BaseTaskMetaFieldsEditorProps {
-  fields: TaskMetaField[];
+interface BaseTaskFieldsEditorProps {
+  fields: TaskFormField[];
   onAdd: () => void;
-  onChange: (fieldId: string, patch: Partial<TaskMetaField>) => void;
-  onRemove: (fieldId: string) => void;
+  onChange: (fieldKey: string, patch: Partial<TaskFormField>) => void;
+  onRemove: (fieldKey: string) => void;
 }
 
-export default function BaseTaskMetaFieldsEditor({
+export default function BaseTaskFieldsEditor({
   fields,
   onAdd,
   onChange,
   onRemove,
-}: BaseTaskMetaFieldsEditorProps) {
+}: BaseTaskFieldsEditorProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
@@ -56,18 +48,25 @@ export default function BaseTaskMetaFieldsEditor({
       ) : (
         <div className="flex flex-col gap-2">
           {fields.map((field, index) => (
-            <div key={field.id} className="rounded-lg border bg-muted/20 p-3">
+            <div key={field.key} className="rounded-lg border bg-muted/20 p-3">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto_auto] sm:items-center">
                 <Input
-                  value={field.name}
+                  value={field.label}
                   maxLength={100}
                   placeholder={`字段 ${index + 1}，例如译文链接`}
-                  onChange={(event) => onChange(field.id, { name: event.target.value })}
+                  onChange={(event) => onChange(field.key, { label: event.target.value })}
                 />
                 <Select
-                  value={field.fieldType}
+                  value={field.type}
                   onValueChange={(value: string | null) => {
-                    if (value) onChange(field.id, { fieldType: value as TaskMetaFieldType });
+                    if (
+                      value === "text" ||
+                      value === "textarea" ||
+                      value === "file" ||
+                      value === "number" ||
+                      value === "select"
+                    )
+                      onChange(field.key, { type: value });
                   }}
                 >
                   <SelectTrigger className="w-full">
@@ -86,7 +85,7 @@ export default function BaseTaskMetaFieldsEditor({
                     type="checkbox"
                     checked={field.required}
                     className="size-4 accent-primary"
-                    onChange={(event) => onChange(field.id, { required: event.target.checked })}
+                    onChange={(event) => onChange(field.key, { required: event.target.checked })}
                   />
                   必填
                 </label>
@@ -96,22 +95,19 @@ export default function BaseTaskMetaFieldsEditor({
                   size="icon-sm"
                   aria-label={`删除字段 ${index + 1}`}
                   title="删除字段"
-                  onClick={() => onRemove(field.id)}
+                  onClick={() => onRemove(field.key)}
                 >
                   <Trash2 className="text-muted-foreground" />
                 </Button>
               </div>
-              {field.fieldType === "select" && (
+              {field.type === "select" && (
                 <Input
                   value={field.options.join("、")}
                   placeholder="填写选项，以顿号分隔，例如：通过、需修改"
                   className="mt-2"
                   onChange={(event) =>
-                    onChange(field.id, {
-                      options: event.target.value
-                        .split(/[、,，]/)
-                        .map((option) => option.trim())
-                        .filter(Boolean),
+                    onChange(field.key, {
+                      options: event.target.value.split(/[、,，]/).map((option) => option.trim()),
                     })
                   }
                 />

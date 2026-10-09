@@ -1,0 +1,25 @@
+{
+  "document": "公共端",
+  "method": "GET",
+  "operation": {
+    "description": "无需登录，返回当前系统信息",
+    "operationId": "getSystemInfo",
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/SystemInfoVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "security": [],
+    "summary": "获取系统信息",
+    "tags": ["系统信息接口"]
+  },
+  "path": "/common/system/info",
+  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs/%E5%85%AC%E5%85%B1%E7%AB%AF"
+}

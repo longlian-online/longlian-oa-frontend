@@ -311,22 +311,25 @@ export default function ProjectItemSection({
                 </div>
                 {isCreator && (
                   <div className="flex shrink-0 items-center gap-1">
-                    {item.status !== "PUBLISHED" && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="发布项目"
-                        title="发布项目"
-                        disabled={mutatingItemId === item.id}
-                        onClick={() => void handlePublishItem(item)}
-                      >
-                        {mutatingItemId === item.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
-                      </Button>
-                    )}
+                    {item.status !== "PUBLISHED" &&
+                      item.nodes.length > 0 &&
+                      // 节点状态由后端按该节点全部任务实例汇总，全部节点完成即所有任务已完成
+                      item.nodes.every((node) => node.state === "COMPLETED") && (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="发布项目"
+                          title="发布项目"
+                          disabled={mutatingItemId === item.id}
+                          onClick={() => void handlePublishItem(item)}
+                        >
+                          {mutatingItemId === item.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
                     <Button
                       variant="ghost"
                       size="icon-sm"

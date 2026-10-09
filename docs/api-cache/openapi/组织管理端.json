@@ -48,10 +48,7 @@
           },
           "orderDir": {
             "description": "排序方式，默认申请时间倒序",
-            "enum": [
-              "DESC",
-              "ASC"
-            ],
+            "enum": ["DESC", "ASC"],
             "type": "string"
           },
           "pageNum": {
@@ -80,11 +77,7 @@
         "properties": {
           "applicationStatus": {
             "description": "审核结果：APPROVED-通过，REJECTED-拒绝",
-            "enum": [
-              "PENDING",
-              "APPROVED",
-              "REJECTED"
-            ],
+            "enum": ["PENDING", "APPROVED", "REJECTED"],
             "type": "string"
           },
           "reviewRemark": {
@@ -94,9 +87,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "applicationStatus"
-        ],
+        "required": ["applicationStatus"],
         "type": "object"
       },
       "BaseTaskCreateDTO": {
@@ -118,20 +109,21 @@
             "minLength": 0,
             "type": "string"
           },
-          "metaSchema": {
-            "description": "元数据字段定义(JSON数组)，示例：[{\"name\":\"附件\",\"fieldType\":\"file\",\"required\":true},{\"name\":\"作者\",\"fieldType\":\"text\",\"required\":true},{\"name\":\"源链接\",\"fieldType\":\"text\",\"required\":true}]",
-            "type": "string"
-          },
           "name": {
             "description": "任务名称（如：创建/翻译/校对）",
             "maxLength": 100,
             "minLength": 0,
             "type": "string"
+          },
+          "submitFields": {
+            "description": "提交表单字段",
+            "items": {
+              "$ref": "#/components/schemas/TaskFormField"
+            },
+            "type": "array"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name", "submitFields"],
         "type": "object"
       },
       "BaseTaskListDTO": {
@@ -150,10 +142,7 @@
           },
           "orderDir": {
             "description": "排序方式，默认倒序",
-            "enum": [
-              "DESC",
-              "ASC"
-            ],
+            "enum": ["DESC", "ASC"],
             "type": "string"
           },
           "pageNum": {
@@ -171,10 +160,7 @@
           },
           "sortBy": {
             "description": "排序字段：CREATED_AT-创建时间，REF_COUNT-引用次数，默认 REF_COUNT",
-            "enum": [
-              "CREATED_AT",
-              "REF_COUNT"
-            ],
+            "enum": ["CREATED_AT", "REF_COUNT"],
             "type": "string"
           },
           "startCreatedTime": {
@@ -184,10 +170,7 @@
           },
           "status": {
             "description": "状态精确筛选：ENABLED-启用，DISABLED-禁用，默认查启用",
-            "enum": [
-              "ENABLED",
-              "DISABLED"
-            ],
+            "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           }
         },
@@ -217,10 +200,6 @@
             "description": "原子任务ID",
             "type": "string"
           },
-          "metaSchema": {
-            "description": "元数据字段定义(JSON数组)",
-            "type": "string"
-          },
           "name": {
             "description": "任务名称",
             "type": "string"
@@ -232,11 +211,15 @@
           },
           "status": {
             "description": "状态：ENABLED-启用，DISABLED-禁用",
-            "enum": [
-              "ENABLED",
-              "DISABLED"
-            ],
+            "enum": ["ENABLED", "DISABLED"],
             "type": "string"
+          },
+          "submitFields": {
+            "description": "提交表单字段",
+            "items": {
+              "$ref": "#/components/schemas/TaskFormField"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -246,16 +229,11 @@
         "properties": {
           "status": {
             "description": "目标状态：ENABLED-启用，DISABLED-禁用",
-            "enum": [
-              "ENABLED",
-              "DISABLED"
-            ],
+            "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           }
         },
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "type": "object"
       },
       "InviteCodeVO": {
@@ -292,10 +270,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "description",
-          "name"
-        ],
+        "required": ["description", "name"],
         "type": "object"
       },
       "OrgAdmintOrganizationInfoVO": {
@@ -369,6 +344,19 @@
         },
         "type": "object"
       },
+      "OrgMemberChangeRoleDTO": {
+        "description": "组织成员角色变更请求",
+        "properties": {
+          "orgRole": {
+            "description": "组织角色",
+            "enum": ["ORG_ADMIN", "ORG_USER"],
+            "pattern": "ORG_ADMIN|ORG_USER",
+            "type": "string"
+          }
+        },
+        "required": ["orgRole"],
+        "type": "object"
+      },
       "OrgMemberInfoVO": {
         "description": "组员信息",
         "properties": {
@@ -400,10 +388,7 @@
           },
           "status": {
             "description": "成员状态：ENABLED-启用，DISABLED-禁用",
-            "enum": [
-              "ENABLED",
-              "DISABLED"
-            ],
+            "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           },
           "submitCount": {
@@ -438,10 +423,7 @@
           },
           "orderDir": {
             "description": "排序方式，默认入组时间倒序",
-            "enum": [
-              "DESC",
-              "ASC"
-            ],
+            "enum": ["DESC", "ASC"],
             "type": "string"
           },
           "pageNum": {
@@ -595,19 +577,12 @@
           },
           "resourceStatus": {
             "description": "资源状态：ENABLED-启用，DISABLED-禁用",
-            "enum": [
-              "ENABLED",
-              "DISABLED"
-            ],
+            "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           },
           "status": {
             "description": "企划状态：IN_PROGRESS-进行中，COMPLETED-已完成，ARCHIVED-已归档",
-            "enum": [
-              "进行中",
-              "已完成",
-              "已归档"
-            ],
+            "enum": ["进行中", "已完成", "已归档"],
             "type": "string"
           },
           "title": {
@@ -641,10 +616,7 @@
           },
           "orderDir": {
             "description": "排序方式，默认创建时间倒序",
-            "enum": [
-              "DESC",
-              "ASC"
-            ],
+            "enum": ["DESC", "ASC"],
             "type": "string"
           },
           "pageNum": {
@@ -698,10 +670,7 @@
           },
           "status": {
             "description": "状态：ENABLED-启用，DISABLED-禁用",
-            "enum": [
-              "ENABLED",
-              "DISABLED"
-            ],
+            "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           }
         },
@@ -717,9 +686,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "type": "object"
       },
       "ProjectTypeListDTO": {
@@ -733,10 +700,7 @@
           },
           "orderDir": {
             "description": "排序方式，默认创建时间倒序",
-            "enum": [
-              "DESC",
-              "ASC"
-            ],
+            "enum": ["DESC", "ASC"],
             "type": "string"
           },
           "pageNum": {
@@ -765,9 +729,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "type": "object"
       },
       "SessionContext": {
@@ -779,6 +741,30 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "TaskFormField": {
+        "description": "提交表单字段",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "type": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -806,10 +792,7 @@
             "type": "array"
           }
         },
-        "required": [
-          "name",
-          "nodes"
-        ],
+        "required": ["name", "nodes"],
         "type": "object"
       },
       "TaskTemplateDetailVO": {
@@ -854,10 +837,7 @@
           },
           "status": {
             "description": "状态：ENABLED-启用，DISABLED-禁用",
-            "enum": [
-              "ENABLED",
-              "DISABLED"
-            ],
+            "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           }
         },
@@ -879,10 +859,7 @@
           },
           "orderDir": {
             "description": "排序方式，默认倒序",
-            "enum": [
-              "DESC",
-              "ASC"
-            ],
+            "enum": ["DESC", "ASC"],
             "type": "string"
           },
           "pageNum": {
@@ -900,10 +877,7 @@
           },
           "sortBy": {
             "description": "排序字段：CREATED_AT-创建时间，REF_COUNT-引用次数，默认 REF_COUNT",
-            "enum": [
-              "CREATED_AT",
-              "REF_COUNT"
-            ],
+            "enum": ["CREATED_AT", "REF_COUNT"],
             "type": "string"
           },
           "startCreatedTime": {
@@ -913,10 +887,7 @@
           },
           "status": {
             "description": "状态精确筛选：ENABLED-启用，DISABLED-禁用，默认查启用",
-            "enum": [
-              "ENABLED",
-              "DISABLED"
-            ],
+            "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           }
         },
@@ -957,10 +928,7 @@
           },
           "status": {
             "description": "状态：ENABLED-启用，DISABLED-禁用",
-            "enum": [
-              "ENABLED",
-              "DISABLED"
-            ],
+            "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           }
         },
@@ -985,10 +953,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "baseTaskId",
-          "sort"
-        ],
+        "required": ["baseTaskId", "sort"],
         "type": "object"
       },
       "TaskTemplateNodeVO": {
@@ -1014,10 +979,6 @@
             "description": "模板节点ID",
             "type": "string"
           },
-          "metaSchema": {
-            "description": "元数据字段定义(JSON数组)",
-            "type": "string"
-          },
           "parallelSort": {
             "description": "并行组内排序",
             "format": "int32",
@@ -1027,6 +988,13 @@
             "description": "步骤顺序（相同 sort 值表示并行节点）",
             "format": "int32",
             "type": "integer"
+          },
+          "submitFields": {
+            "description": "提交表单字段",
+            "items": {
+              "$ref": "#/components/schemas/TaskFormField"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -1089,9 +1057,7 @@
           }
         },
         "summary": "分页查询组员列表",
-        "tags": [
-          "组织成员管理"
-        ]
+        "tags": ["组织成员管理"]
       }
     },
     "/orgadmin/members/applications": {
@@ -1131,9 +1097,7 @@
           }
         },
         "summary": "分页查询待审核入组申请列表",
-        "tags": [
-          "组织成员管理"
-        ]
+        "tags": ["组织成员管理"]
       }
     },
     "/orgadmin/members/applications/{applicationId}/review": {
@@ -1176,9 +1140,7 @@
           }
         },
         "summary": "审核入组申请",
-        "tags": [
-          "组织成员管理"
-        ]
+        "tags": ["组织成员管理"]
       }
     },
     "/orgadmin/members/invite-codes/join-org": {
@@ -1208,9 +1170,7 @@
           }
         },
         "summary": "生成加入组织邀请码（管理员）",
-        "tags": [
-          "组织成员管理"
-        ]
+        "tags": ["组织成员管理"]
       }
     },
     "/orgadmin/members/{memberId}/base-tasks/submit-counts": {
@@ -1249,9 +1209,48 @@
           }
         },
         "summary": "查询组员各原子任务提交数",
-        "tags": [
-          "组织成员管理"
-        ]
+        "tags": ["组织成员管理"]
+      }
+    },
+    "/orgadmin/members/{memberId}/role": {
+      "patch": {
+        "operationId": "changeMemberRole",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgMemberChangeRoleDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "调整成员组织角色",
+        "tags": ["组织成员管理"]
       }
     },
     "/orgadmin/members/{memberId}/status": {
@@ -1293,9 +1292,7 @@
           }
         },
         "summary": "启用/禁用组员",
-        "tags": [
-          "组织成员管理"
-        ]
+        "tags": ["组织成员管理"]
       }
     },
     "/orgadmin/organizations": {
@@ -1325,9 +1322,7 @@
           }
         },
         "summary": "获取组织信息",
-        "tags": [
-          "组织信息管理接口"
-        ]
+        "tags": ["组织信息管理接口"]
       },
       "put": {
         "description": "更新组织的头像、组名和简介",
@@ -1358,9 +1353,7 @@
           }
         },
         "summary": "更新组织信息",
-        "tags": [
-          "组织信息管理接口"
-        ]
+        "tags": ["组织信息管理接口"]
       }
     },
     "/orgadmin/project-types": {
@@ -1398,9 +1391,7 @@
           }
         },
         "summary": "分页查询企划类型列表",
-        "tags": [
-          "企划类型管理"
-        ]
+        "tags": ["企划类型管理"]
       },
       "post": {
         "operationId": "createProjectType",
@@ -1430,9 +1421,7 @@
           }
         },
         "summary": "创建企划类型",
-        "tags": [
-          "企划类型管理"
-        ]
+        "tags": ["企划类型管理"]
       }
     },
     "/orgadmin/project-types/{typeId}": {
@@ -1464,9 +1453,7 @@
           }
         },
         "summary": "删除企划类型",
-        "tags": [
-          "企划类型管理"
-        ]
+        "tags": ["企划类型管理"]
       },
       "put": {
         "operationId": "updateProjectType",
@@ -1505,9 +1492,7 @@
           }
         },
         "summary": "修改企划类型名称",
-        "tags": [
-          "企划类型管理"
-        ]
+        "tags": ["企划类型管理"]
       }
     },
     "/orgadmin/project-types/{typeId}/status": {
@@ -1549,9 +1534,7 @@
           }
         },
         "summary": "启用/禁用企划类型",
-        "tags": [
-          "企划类型管理"
-        ]
+        "tags": ["企划类型管理"]
       }
     },
     "/orgadmin/projects": {
@@ -1591,9 +1574,7 @@
           }
         },
         "summary": "管理端分页查询企划列表",
-        "tags": [
-          "企划接口"
-        ]
+        "tags": ["企划接口"]
       }
     },
     "/orgadmin/projects/{projectId}/status": {
@@ -1635,14 +1616,12 @@
           }
         },
         "summary": "启用/禁用企划",
-        "tags": [
-          "企划接口"
-        ]
+        "tags": ["企划接口"]
       }
     },
     "/orgadmin/task/base": {
       "post": {
-        "description": "任务创建后不可编辑，请确认标题、图标、简介和元数据字段定义后提交",
+        "description": "任务创建后不可编辑，请确认标题、图标、简介和提交字段定义后提交",
         "operationId": "createBaseTask",
         "parameters": [
           {
@@ -1670,9 +1649,7 @@
           }
         },
         "summary": "创建原子任务",
-        "tags": [
-          "原子任务管理"
-        ]
+        "tags": ["原子任务管理"]
       }
     },
     "/orgadmin/task/base/list": {
@@ -1712,9 +1689,7 @@
           }
         },
         "summary": "分页查询原子任务列表",
-        "tags": [
-          "原子任务管理"
-        ]
+        "tags": ["原子任务管理"]
       }
     },
     "/orgadmin/task/base/{taskId}/status": {
@@ -1756,9 +1731,7 @@
           }
         },
         "summary": "启用/禁用原子任务",
-        "tags": [
-          "原子任务管理"
-        ]
+        "tags": ["原子任务管理"]
       }
     },
     "/orgadmin/task/template": {
@@ -1791,9 +1764,7 @@
           }
         },
         "summary": "创建任务模板",
-        "tags": [
-          "任务模板管理"
-        ]
+        "tags": ["任务模板管理"]
       }
     },
     "/orgadmin/task/template/list": {
@@ -1833,9 +1804,7 @@
           }
         },
         "summary": "分页查询任务模板列表",
-        "tags": [
-          "任务模板管理"
-        ]
+        "tags": ["任务模板管理"]
       }
     },
     "/orgadmin/task/template/{templateId}": {
@@ -1875,9 +1844,7 @@
           }
         },
         "summary": "获取任务模板详情",
-        "tags": [
-          "任务模板管理"
-        ]
+        "tags": ["任务模板管理"]
       },
       "put": {
         "description": "覆盖更新模板信息及节点列表",
@@ -1918,9 +1885,7 @@
           }
         },
         "summary": "更新任务模板",
-        "tags": [
-          "任务模板管理"
-        ]
+        "tags": ["任务模板管理"]
       }
     },
     "/orgadmin/task/template/{templateId}/status": {
@@ -1962,9 +1927,7 @@
           }
         },
         "summary": "启用/禁用任务模板",
-        "tags": [
-          "任务模板管理"
-        ]
+        "tags": ["任务模板管理"]
       }
     }
   },
@@ -1976,7 +1939,7 @@
   "servers": [
     {
       "description": "Configured server URL",
-      "url": "https://sit.neo.oa.api.longlian.online/"
+      "url": "http://127.0.0.1:64000"
     }
   ],
   "tags": [

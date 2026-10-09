@@ -38,7 +38,7 @@ function toEditorBaseTask(task: OrganizationBaseTaskVO): BaseTaskVO {
     description: task.description,
     iconName: task.iconName,
     iconUrl: task.iconUrl,
-    metaSchema: task.metaSchema,
+    submitFields: task.submitFields,
     refCount: task.refCount,
     status: task.status,
     createdAt: task.createdAt ?? "",

@@ -37,10 +37,8 @@
       }
     },
     "summary": "分页查询原子任务列表",
-    "tags": [
-      "原子任务管理"
-    ]
+    "tags": ["原子任务管理"]
   },
   "path": "/orgadmin/task/base/list",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs"
 }

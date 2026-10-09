@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import FileUpload from "@/components/FileUpload";
@@ -21,83 +21,49 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { UploadedFileInfo } from "@/types/file";
+import type { TaskFormField, TaskSubmitValue } from "@/types/task";
+import type { TaskSubmitDTO } from "@/types/workflowInstance";
 
 interface TaskSubmitPanelProps {
   open: boolean;
-  taskInstanceId?: string;
-  taskName?: string;
-  metaSchema?: string;
+  taskInstanceId: string;
+  taskName: string;
+  submitFields: TaskFormField[];
   onOpenChange: (open: boolean) => void;
-  onSubmit: (metadata: Record<string, unknown>) => Promise<boolean>;
+  onSubmit: (submission: TaskSubmitDTO) => Promise<boolean>;
 }
-
-export interface MetaFieldSchema {
-  name: string;
-  fieldType?: "text" | "textarea" | "file" | "number" | "select";
-  required?: boolean;
-  options?: string[];
-}
-
-export type FieldValue = string | UploadedFileInfo | null;
 
 export function validateRequiredFields(
-  fields: MetaFieldSchema[],
-  values: Record<string, FieldValue>,
+  fields: TaskFormField[],
+  values: Record<string, TaskSubmitValue>,
 ): string[] {
   return fields.flatMap((field) => {
     if (!field.required) return [];
-    const value = values[field.name];
+    const value = values[field.key];
     const isEmpty =
       value === null ||
       value === undefined ||
       (typeof value === "string" && value.trim() === "") ||
       (typeof value === "object" && value.fileId.trim() === "");
-    return isEmpty ? [`请填写${field.name}`] : [];
+    return isEmpty ? [`请填写${field.label}`] : [];
   });
-}
-
-function parseMetaSchema(metaSchema?: string): MetaFieldSchema[] {
-  if (!metaSchema) return [];
-
-  try {
-    const parsed = JSON.parse(metaSchema) as unknown;
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed
-      .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
-      .map((item) => ({
-        name: typeof item.name === "string" ? item.name : "字段",
-        fieldType:
-          item.fieldType === "textarea" ||
-          item.fieldType === "file" ||
-          item.fieldType === "number" ||
-          item.fieldType === "select"
-            ? item.fieldType
-            : "text",
-        required: item.required === true,
-        options: Array.isArray(item.options)
-          ? item.options.filter((option): option is string => typeof option === "string")
-          : [],
-      }));
-  } catch {
-    return [];
-  }
 }
 
 export default function TaskSubmitPanel({
   open,
   taskInstanceId,
-  taskName = "",
-  metaSchema,
+  taskName,
+  submitFields,
   onOpenChange,
   onSubmit,
 }: TaskSubmitPanelProps) {
-  const fields = useMemo(() => parseMetaSchema(metaSchema), [metaSchema]);
-  const [formData, setFormData] = useState<Record<string, FieldValue>>({});
+  const [values, setValues] = useState<Record<string, TaskSubmitValue>>({});
+  const [uploads, setUploads] = useState<Record<string, UploadedFileInfo | null>>({});
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(): Promise<void> {
-    const validationErrors = validateRequiredFields(fields, formData);
+    if (submitting) return;
+    const validationErrors = validateRequiredFields(submitFields, values);
     if (validationErrors.length > 0) {
       $tip(validationErrors[0], "error");
       return;
@@ -105,83 +71,95 @@ export default function TaskSubmitPanel({
 
     try {
       setSubmitting(true);
-      const succeeded = await onSubmit({ values: formData });
-      if (succeeded) {
-        setFormData({});
-        onOpenChange(false);
-      }
+      const succeeded = await onSubmit({ values });
+      if (succeeded) onOpenChange(false);
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(nextOpen) => !submitting && onOpenChange(nextOpen)}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>提交任务{taskName ? `：${taskName}` : ""}</DialogTitle>
+          <DialogTitle>提交任务：{taskName}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3">
-          {fields.length === 0 ? (
+        <fieldset disabled={submitting} className="max-h-[60vh] space-y-3 overflow-y-auto">
+          {submitFields.length === 0 ? (
             <div className="rounded-xl bg-secondary/60 p-4 text-sm text-muted-foreground">
               该任务没有额外提交字段，确认后会直接提交。
             </div>
           ) : (
-            fields.map((field) => (
-              <label key={field.name} className="flex flex-col gap-2 text-sm text-foreground">
-                <span>
-                  {field.name}
-                  {field.required && <span className="ml-1 text-destructive">*</span>}
-                </span>
-                {field.fieldType === "textarea" ? (
-                  <Textarea
-                    value={(formData[field.name] as string | undefined) ?? ""}
-                    className="min-h-24 resize-none"
-                    onChange={(event) =>
-                      setFormData({ ...formData, [field.name]: event.target.value })
-                    }
-                  />
-                ) : field.fieldType === "file" ? (
-                  <FileUpload
-                    bizType="task_submit"
-                    bizId={taskInstanceId ?? taskName}
-                    value={(formData[field.name] as UploadedFileInfo | undefined) ?? null}
-                    title={`上传${field.name}`}
-                    description="支持图片、文档或压缩包"
-                    onChange={(file) => setFormData({ ...formData, [field.name]: file })}
-                  />
-                ) : field.fieldType === "select" ? (
-                  <Select
-                    value={(formData[field.name] as string | undefined) ?? ""}
-                    onValueChange={(value: string | null) =>
-                      setFormData({ ...formData, [field.name]: value || "" })
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={`选择${field.name}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {field.options?.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    type={field.fieldType === "number" ? "number" : "text"}
-                    value={(formData[field.name] as string | undefined) ?? ""}
-                    onChange={(event) =>
-                      setFormData({ ...formData, [field.name]: event.target.value })
-                    }
-                  />
-                )}
-              </label>
-            ))
+            submitFields.map((field) => {
+              const value = values[field.key];
+              const textValue = typeof value === "string" ? value : "";
+              return (
+                <div key={field.key} className="flex flex-col gap-2 text-sm text-foreground">
+                  <label htmlFor={`task-field-${field.key}`}>
+                    {field.label}
+                    {field.required && <span className="ml-1 text-destructive">*</span>}
+                  </label>
+                  {field.type === "textarea" ? (
+                    <Textarea
+                      id={`task-field-${field.key}`}
+                      value={textValue}
+                      className="min-h-24 resize-none"
+                      onChange={(event) =>
+                        setValues((current) => ({ ...current, [field.key]: event.target.value }))
+                      }
+                    />
+                  ) : field.type === "file" ? (
+                    <FileUpload
+                      bizType="task_submit"
+                      bizId={taskInstanceId}
+                      value={uploads[field.key] ?? null}
+                      title={`上传${field.label}`}
+                      description="支持图片、文档或压缩包"
+                      onChange={(file) => {
+                        if (submitting) return;
+                        setUploads((current) => ({ ...current, [field.key]: file }));
+                        setValues((current) => ({
+                          ...current,
+                          [field.key]: file ? { fileId: file.fileId } : null,
+                        }));
+                      }}
+                    />
+                  ) : field.type === "select" ? (
+                    <Select
+                      disabled={submitting}
+                      value={textValue}
+                      onValueChange={(nextValue: string | null) =>
+                        setValues((current) => ({ ...current, [field.key]: nextValue ?? "" }))
+                      }
+                    >
+                      <SelectTrigger id={`task-field-${field.key}`} className="w-full">
+                        <SelectValue placeholder={`选择${field.label}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {field.options.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      id={`task-field-${field.key}`}
+                      type={field.type === "number" ? "number" : "text"}
+                      step={field.type === "number" ? "any" : undefined}
+                      value={textValue}
+                      onChange={(event) =>
+                        setValues((current) => ({ ...current, [field.key]: event.target.value }))
+                      }
+                    />
+                  )}
+                </div>
+              );
+            })
           )}
-        </div>
+        </fieldset>
 
         <DialogFooter>
           <Button variant="ghost" disabled={submitting} onClick={() => onOpenChange(false)}>

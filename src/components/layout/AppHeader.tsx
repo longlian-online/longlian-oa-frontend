@@ -1,5 +1,7 @@
 import { useRef, useState, type ChangeEvent } from "react";
-import { Bell, Check, KeyRound, LogOut, Pencil, Plus, UserRound } from "lucide-react";
+// 通知入口暂时隐藏，保留原实现以便后续恢复。
+// import { Bell } from "lucide-react";
+import { Check, KeyRound, LogOut, Pencil, Plus, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 
 import { logout } from "@/api/auth";
@@ -65,7 +67,6 @@ export default function AppHeader() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const isWorkshop = pathname.startsWith("/dashboard/workshop");
 
   const handleJoinOrganization = async (): Promise<void> => {
     const normalizedInviteCode = inviteCode.trim();
@@ -172,7 +173,9 @@ export default function AppHeader() {
 
   return (
     <header className="border-border bg-background grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b px-4">
-      <div className="min-w-0">{isWorkshop && <OrganizationIdentity />}</div>
+      <div className="min-w-0">
+        <OrganizationIdentity />
+      </div>
 
       <nav aria-label="主导航" className="flex items-center gap-1">
         {navigationItems
@@ -198,10 +201,12 @@ export default function AppHeader() {
 
       <div className="flex items-center justify-end gap-1">
         <ThemeToggle />
+        {/* 通知入口暂时隐藏，保留原实现以便后续恢复：
         <Button variant="ghost" size="icon-sm" aria-label="通知" className="relative">
           <Bell className="h-4 w-4" />
           <span className="bg-destructive absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full" />
         </Button>
+        */}
         <div className="group relative ml-1 border-l border-border pl-3">
           <input
             ref={avatarInputRef}
