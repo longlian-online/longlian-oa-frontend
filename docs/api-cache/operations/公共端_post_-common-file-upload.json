@@ -40,5 +40,5 @@
     "tags": ["文件上传接口"]
   },
   "path": "/common/file/upload",
-  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs/%E5%85%AC%E5%85%B1%E7%AB%AF"
+  "sourceUrl": "http://127.0.0.1:63100/v3/api-docs/%E5%85%AC%E5%85%B1%E7%AB%AF"
 }

@@ -61,7 +61,7 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
           </div>
         ) : (
           filteredTasks.map((task) => {
-            const Icon = getWorkflowTaskIcon(task.name, task.iconName);
+            const Icon = getWorkflowTaskIcon(task.name, task.icon);
             const description = getWorkflowTaskDescription(task.name, task.description);
 
             return (
@@ -77,12 +77,8 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
                 onClick={() => onAddNode(String(task.id))}
                 onDragStart={(event) => handleDragStart(event, String(task.id))}
               >
-                <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
-                  {task.iconUrl ? (
-                    <img src={task.iconUrl} alt="" className="size-full object-cover" />
-                  ) : (
-                    <Icon className="size-3.5" />
-                  )}
+                <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Icon className="size-3.5" />
                 </div>
                 <span className="truncate text-sm font-medium text-foreground">{task.name}</span>
                 <Plus className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />

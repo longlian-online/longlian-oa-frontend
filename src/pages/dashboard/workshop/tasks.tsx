@@ -1,14 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { ChevronDown, ExternalLink, Loader2, Plus, Search, Workflow, X } from "lucide-react";
+import {
+  ChevronDown,
+  ExternalLink,
+  Loader2,
+  Plus,
+  Search,
+  Trash2,
+  Workflow,
+  X,
+} from "lucide-react";
 
 import {
   changeBaseTaskStatus,
   createOrganizationBaseTask,
+  deleteOrganizationBaseTask,
   getOrganizationBaseTaskList,
 } from "@/api/organizationAdmin";
-import EmptyState from "@/components/EmptyState";
 import BaseTaskFieldsEditor from "@/components/BaseTaskFieldsEditor";
+import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
@@ -25,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useConfirm } from "@/hooks/useConfirm";
 import { cn } from "@/lib/utils";
 import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
 import type {
@@ -39,18 +50,19 @@ type LucideIconEntry = [string, LucideIcon];
 interface BaseTaskForm {
   name: string;
   description: string;
-  iconName?: string;
+  icon?: string;
   submitFields: TaskFormField[];
 }
 
 const EMPTY_FORM: BaseTaskForm = {
   name: "",
   description: "",
-  iconName: undefined,
+  icon: undefined,
   submitFields: [],
 };
 
 function BaseTaskManagementContent() {
+  const confirm = useConfirm();
   const [tasks, setTasks] = useState<OrganizationBaseTaskVO[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -69,7 +81,7 @@ function BaseTaskManagementContent() {
     const query = iconKeyword.trim().toLowerCase();
     return query ? iconEntries.filter(([name]) => name.toLowerCase().includes(query)) : iconEntries;
   }, [iconEntries, iconKeyword]);
-  const SelectedIcon = iconEntries.find(([name]) => name === form.iconName)?.[1];
+  const SelectedIcon = iconEntries.find(([name]) => name === form.icon)?.[1];
 
   useEffect(() => {
     void loadTasks();
@@ -173,7 +185,7 @@ function BaseTaskManagementContent() {
     const payload: OrganizationBaseTaskCreateDTO = {
       name,
       description: form.description.trim() || undefined,
-      iconName: form.iconName,
+      icon: form.icon,
       submitFields: form.submitFields.map((field) => ({
         ...field,
         label: field.label.trim(),
@@ -211,13 +223,37 @@ function BaseTaskManagementContent() {
     }
   }
 
+  async function handleDelete(task: OrganizationBaseTaskVO): Promise<void> {
+    const taskName = task.name ?? "未命名任务";
+    const confirmed = await confirm({
+      title: "删除原子任务？",
+      description: `删除后「${taskName}」将不可恢复。已被任务模板或项目任务节点引用的任务不能删除，请改为禁用。`,
+      confirmText: "删除",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
+    try {
+      setMutatingId(task.id);
+      await deleteOrganizationBaseTask(task.id);
+      $tip("原子任务已删除", "success");
+      if (tasks.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        await loadTasks();
+      }
+    } finally {
+      setMutatingId(null);
+    }
+  }
+
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">原子任务</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            管理工作流可使用的基础节点。创建后不可编辑，只能启用或禁用。
+            管理工作流可使用的基础节点。创建后不可编辑；未被引用的任务可以删除，已被引用的任务请禁用。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -255,18 +291,14 @@ function BaseTaskManagementContent() {
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {tasks.map((task) => {
               const taskName = task.name ?? "未命名任务";
-              const Icon = getWorkflowTaskIcon(taskName, task.iconName);
+              const Icon = getWorkflowTaskIcon(taskName, task.icon);
 
               return (
                 <article key={task.id} className="flex flex-col rounded-lg border bg-card p-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-3">
-                      <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
-                        {task.iconUrl ? (
-                          <img src={task.iconUrl} alt="" className="size-full object-cover" />
-                        ) : (
-                          <Icon className="size-4" />
-                        )}
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Icon className="size-4" />
                       </div>
                       <div className="min-w-0">
                         <h2 className="truncate text-sm font-semibold text-foreground">
@@ -285,22 +317,44 @@ function BaseTaskManagementContent() {
                     <div className="text-xs text-muted-foreground">
                       已被 {task.refCount} 个模板引用
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={
-                        task.status === "ENABLED"
-                          ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          : "text-muted-foreground"
-                      }
-                      disabled={mutatingId === task.id}
-                      onClick={() => void handleToggleStatus(task)}
-                    >
-                      {mutatingId === task.id && (
-                        <Loader2 data-icon="inline-start" className="animate-spin" />
-                      )}
-                      {task.status === "ENABLED" ? "禁用" : "启用"}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={
+                          task.status === "ENABLED"
+                            ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            : "text-muted-foreground"
+                        }
+                        disabled={mutatingId === task.id}
+                        onClick={() => void handleToggleStatus(task)}
+                      >
+                        {mutatingId === task.id && (
+                          <Loader2 data-icon="inline-start" className="animate-spin" />
+                        )}
+                        {task.status === "ENABLED" ? "禁用" : "启用"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        aria-label={`删除${taskName}`}
+                        title={
+                          task.refCount > 0
+                            ? "该任务已被任务模板或项目任务节点引用，请改为禁用"
+                            : "删除原子任务"
+                        }
+                        disabled={mutatingId === task.id || task.refCount > 0}
+                        onClick={() => void handleDelete(task)}
+                      >
+                        {mutatingId === task.id ? (
+                          <Loader2 data-icon="inline-start" className="animate-spin" />
+                        ) : (
+                          <Trash2 data-icon="inline-start" />
+                        )}
+                        删除
+                      </Button>
+                    </div>
                   </div>
                 </article>
               );
@@ -347,11 +401,9 @@ function BaseTaskManagementContent() {
               <span className="text-sm font-medium text-foreground">节点图标</span>
               <div className="flex gap-2">
                 <Input
-                  value={form.iconName || ""}
+                  value={form.icon || ""}
                   placeholder="输入或粘贴图标名，例如 Languages"
-                  onChange={(event) =>
-                    setForm({ ...form, iconName: event.target.value || undefined })
-                  }
+                  onChange={(event) => setForm({ ...form, icon: event.target.value || undefined })}
                 />
                 <a
                   href="https://lucide.dev/icons"
@@ -379,7 +431,7 @@ function BaseTaskManagementContent() {
                     )}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-left text-foreground">
-                    {form.iconName || "选择图标"}
+                    {form.icon || "选择图标"}
                   </span>
                   <ChevronDown
                     className={cn(
@@ -410,7 +462,7 @@ function BaseTaskManagementContent() {
                         <>
                           <div className="grid grid-cols-7 gap-1.5 sm:grid-cols-9">
                             {filteredIcons.map(([name, Icon]) => {
-                              const selected = form.iconName === name;
+                              const selected = form.icon === name;
                               return (
                                 <button
                                   key={name}
@@ -423,7 +475,7 @@ function BaseTaskManagementContent() {
                                     selected && "border-primary bg-primary/10 text-primary",
                                   )}
                                   onClick={() => {
-                                    setForm({ ...form, iconName: name });
+                                    setForm({ ...form, icon: name });
                                     setIconPickerOpen(false);
                                     setIconKeyword("");
                                   }}
@@ -442,12 +494,12 @@ function BaseTaskManagementContent() {
                         </>
                       )}
                     </div>
-                    {form.iconName && (
+                    {form.icon && (
                       <button
                         type="button"
                         className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                         onClick={() => {
-                          setForm({ ...form, iconName: undefined });
+                          setForm({ ...form, icon: undefined });
                           setIconPickerOpen(false);
                           setIconKeyword("");
                         }}

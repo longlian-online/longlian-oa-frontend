@@ -28,7 +28,6 @@ interface WorkflowStage {
   label: string;
   parallelCount: number;
   icon: LucideIcon;
-  iconUrl?: string;
 }
 
 const SCOPE_LABELS: Record<WorkflowTemplateScope, string> = {
@@ -62,9 +61,8 @@ function getStages(nodes: WorkshopTaskTemplateNodeVO[]): WorkflowStage[] {
         parallelCount: sortedGroup.length,
         icon: getWorkflowTaskIcon(
           sortedGroup[0].baseTaskName || label,
-          sortedGroup[0].baseTaskIconName,
+          sortedGroup[0].baseTaskIcon,
         ),
-        iconUrl: sortedGroup[0].baseTaskIconUrl,
       };
     });
 }
@@ -102,12 +100,8 @@ function WorkflowDiagram({ nodes }: { nodes: WorkshopTaskTemplateNodeVO[] }) {
         return (
           <div key={`${stage.label}-${index}`} className="flex min-w-0 flex-1 items-start">
             <div className="flex min-w-0 flex-1 flex-col items-center">
-              <div className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-foreground text-background">
-                {stage.iconUrl ? (
-                  <img src={stage.iconUrl} alt="" className="size-full object-cover" />
-                ) : (
-                  <Icon className="size-3.5" />
-                )}
+              <div className="flex size-8 items-center justify-center rounded-full bg-foreground text-background">
+                <Icon className="size-3.5" />
               </div>
               <WorkflowParallelBadge count={stage.parallelCount} />
               <div className="mt-1 max-w-12 truncate text-[11px] font-bold leading-4 text-muted-foreground">

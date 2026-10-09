@@ -1,9 +1,9 @@
 {
   "document": "全部",
-  "method": "POST",
+  "method": "DELETE",
   "operation": {
-    "description": "将指定企划加入当前用户的个人工坊，已添加则幂等返回成功",
-    "operationId": "addToWorkshop",
+    "description": "仅允许删除未被任务模板节点或项目任务节点引用的任务；已引用的任务应改为禁用",
+    "operationId": "deleteBaseTask",
     "parameters": [
       {
         "in": "query",
@@ -14,9 +14,8 @@
         }
       },
       {
-        "description": "企划ID",
         "in": "path",
-        "name": "projectId",
+        "name": "taskId",
         "required": true,
         "schema": {
           "format": "int64",
@@ -29,9 +28,9 @@
         "description": "OK"
       }
     },
-    "summary": "添加企划到工坊",
-    "tags": ["企划接口"]
+    "summary": "删除原子任务",
+    "tags": ["原子任务管理"]
   },
-  "path": "/app/projects/{projectId}/workshop",
+  "path": "/orgadmin/task/base/{taskId}",
   "sourceUrl": "http://127.0.0.1:63100/v3/api-docs"
 }

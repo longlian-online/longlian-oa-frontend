@@ -12,8 +12,7 @@ export interface ItemTaskNodeVO {
   id: string;
   baseTaskId: string;
   name: string;
-  baseTaskIconName?: string;
-  baseTaskIconUrl?: string;
+  baseTaskIcon?: string;
   submitFields: TaskFormField[];
   sort: number;
   parallelSort: number;
