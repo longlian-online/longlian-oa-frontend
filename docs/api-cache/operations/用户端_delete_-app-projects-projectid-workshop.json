@@ -2,7 +2,7 @@
   "document": "用户端",
   "method": "DELETE",
   "operation": {
-    "description": "将指定企划从当前用户的个人工坊中移除",
+    "description": "将指定企划从当前用户的个人工坊中移除。企划负责人不能退出自己的企划",
     "operationId": "removeFromWorkshop",
     "parameters": [
       {
@@ -33,5 +33,5 @@
     "tags": ["企划接口"]
   },
   "path": "/app/projects/{projectId}/workshop",
-  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+  "sourceUrl": "http://127.0.0.1:63100/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
 }

@@ -23,5 +23,5 @@
     "tags": ["用户接口"]
   },
   "path": "/app/user/register/create-organization",
-  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+  "sourceUrl": "http://127.0.0.1:63100/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
 }

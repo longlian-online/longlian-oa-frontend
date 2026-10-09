@@ -251,7 +251,7 @@
   "servers": [
     {
       "description": "Configured server URL",
-      "url": "http://127.0.0.1:64000"
+      "url": "http://localhost:63000"
     }
   ],
   "tags": [

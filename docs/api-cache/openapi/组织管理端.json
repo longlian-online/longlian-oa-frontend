@@ -99,11 +99,7 @@
             "minLength": 0,
             "type": "string"
           },
-          "iconFileId": {
-            "description": "图标文件ID",
-            "type": "string"
-          },
-          "iconName": {
+          "icon": {
             "description": "Lucide 图标组件名",
             "maxLength": 100,
             "minLength": 0,
@@ -169,7 +165,7 @@
             "type": "string"
           },
           "status": {
-            "description": "状态精确筛选：ENABLED-启用，DISABLED-禁用，默认查启用",
+            "description": "状态精确筛选：ENABLED-启用，DISABLED-禁用，不传或为 null 时查询全部状态",
             "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           }
@@ -188,12 +184,8 @@
             "description": "任务说明",
             "type": "string"
           },
-          "iconName": {
+          "icon": {
             "description": "Lucide 图标组件名",
-            "type": "string"
-          },
-          "iconUrl": {
-            "description": "图标URL",
             "type": "string"
           },
           "id": {
@@ -959,12 +951,8 @@
       "TaskTemplateNodeVO": {
         "description": "任务模板节点信息",
         "properties": {
-          "baseTaskIconName": {
+          "baseTaskIcon": {
             "description": "原子任务 Lucide 图标组件名",
-            "type": "string"
-          },
-          "baseTaskIconUrl": {
-            "description": "原子任务图标URL",
             "type": "string"
           },
           "baseTaskId": {
@@ -1692,6 +1680,38 @@
         "tags": ["原子任务管理"]
       }
     },
+    "/orgadmin/task/base/{taskId}": {
+      "delete": {
+        "description": "仅允许删除未被任务模板节点或项目任务节点引用的任务；已引用的任务应改为禁用",
+        "operationId": "deleteBaseTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "删除原子任务",
+        "tags": ["原子任务管理"]
+      }
+    },
     "/orgadmin/task/base/{taskId}/status": {
       "patch": {
         "description": "禁用后该任务无法被添加到新模板节点中，已引用的节点不受影响。status: ENABLED-启用，DISABLED-禁用",
@@ -1939,7 +1959,7 @@
   "servers": [
     {
       "description": "Configured server URL",
-      "url": "http://127.0.0.1:64000"
+      "url": "http://localhost:63000"
     }
   ],
   "tags": [
@@ -1952,12 +1972,12 @@
       "name": "组织成员管理"
     },
     {
-      "description": "原子任务（最小任务单元）管理；任务创建后不可编辑，仅支持启用/禁用",
-      "name": "原子任务管理"
-    },
-    {
       "description": "组织相关接口",
       "name": "组织信息管理接口"
+    },
+    {
+      "description": "原子任务（最小任务单元）管理；任务创建后不可编辑，仅支持启用/禁用和删除未被引用的任务",
+      "name": "原子任务管理"
     },
     {
       "description": "任务流模板的增删改查与状态管理，仅管理员可操作",

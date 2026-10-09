@@ -47,7 +47,7 @@ export default function NodeInspector({
   const description = baseTask
     ? getWorkflowTaskDescription(baseTask.name, baseTask.description)
     : undefined;
-  const Icon = getWorkflowTaskIcon(baseTask?.name || "", baseTask?.iconName);
+  const Icon = getWorkflowTaskIcon(baseTask?.name || "", baseTask?.icon);
 
   return (
     <aside className="flex min-h-[440px] w-full shrink-0 flex-col overflow-hidden rounded-xl border bg-card xl:w-72">
@@ -72,12 +72,8 @@ export default function NodeInspector({
         <div>
           <p className="text-sm font-medium text-foreground">基础任务</p>
           <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary/10 text-primary">
-              {baseTask?.iconUrl ? (
-                <img src={baseTask.iconUrl} alt="" className="size-full object-cover" />
-              ) : (
-                <Icon className="size-3.5" />
-              )}
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <Icon className="size-3.5" />
             </div>
             <span className="truncate">{baseTask?.name || "未知任务"}</span>
           </div>

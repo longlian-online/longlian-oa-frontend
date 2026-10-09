@@ -1,8 +1,9 @@
 {
   "document": "组织管理端",
-  "method": "GET",
+  "method": "DELETE",
   "operation": {
-    "operationId": "getMemberBaseTaskSubmitCounts",
+    "description": "仅允许删除未被任务模板节点或项目任务节点引用的任务；已引用的任务应改为禁用",
+    "operationId": "deleteBaseTask",
     "parameters": [
       {
         "in": "query",
@@ -13,9 +14,8 @@
         }
       },
       {
-        "description": "成员ID",
         "in": "path",
-        "name": "memberId",
+        "name": "taskId",
         "required": true,
         "schema": {
           "format": "int64",
@@ -25,19 +25,12 @@
     ],
     "responses": {
       "200": {
-        "content": {
-          "*/*": {
-            "schema": {
-              "$ref": "#/components/schemas/OrgMemberBaseTaskSubmitCountVO"
-            }
-          }
-        },
         "description": "OK"
       }
     },
-    "summary": "查询组员各原子任务提交数",
-    "tags": ["组织成员管理"]
+    "summary": "删除原子任务",
+    "tags": ["原子任务管理"]
   },
-  "path": "/orgadmin/members/{memberId}/base-tasks/submit-counts",
+  "path": "/orgadmin/task/base/{taskId}",
   "sourceUrl": "http://127.0.0.1:63100/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
 }

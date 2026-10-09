@@ -30,5 +30,5 @@
     "tags": ["组织成员管理"]
   },
   "path": "/orgadmin/members/invite-codes/join-org",
-  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
+  "sourceUrl": "http://127.0.0.1:63100/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
 }
