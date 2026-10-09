@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Clock, Filter, FolderOpen, Plus } from "lucide-react";
 
 import { getProjectList } from "@/api/planning";
@@ -150,7 +150,7 @@ export default function Planning() {
         <>
           {projects.length === 0 ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              <CreateProjectCard onClick={() => navigate("/dashboard/planning/create")} />
+              <CreateProjectCard />
               <div className="md:col-span-1 lg:col-span-2 xl:col-span-3">
                 <EmptyState
                   icon={<FolderOpen className="h-5 w-5 text-muted-foreground" />}
@@ -168,13 +168,9 @@ export default function Planning() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              <CreateProjectCard onClick={() => navigate("/dashboard/planning/create")} />
+              <CreateProjectCard />
               {projects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  onClick={() => navigate(`/dashboard/planning/${project.id}`)}
-                />
+                <ProjectCard key={project.id} project={project} />
               ))}
             </div>
           )}
@@ -192,15 +188,11 @@ export default function Planning() {
   );
 }
 
-interface CreateProjectCardProps {
-  onClick: () => void;
-}
-
-function CreateProjectCard({ onClick }: CreateProjectCardProps) {
+function CreateProjectCard() {
   return (
-    <div
-      onClick={onClick}
-      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-4 transition-colors hover:border-primary hover:bg-primary/[0.02]"
+    <Link
+      to="/dashboard/planning/create"
+      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-4 transition-colors hover:border-primary hover:bg-primary/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40 transition-colors group-hover:border-primary/40 group-hover:bg-primary/5">
         <Plus className="text-muted-foreground transition-colors group-hover:text-primary" />
@@ -211,22 +203,21 @@ function CreateProjectCard({ onClick }: CreateProjectCardProps) {
         </p>
         <p className="mt-1 text-xs text-muted-foreground/70">点击开始一个新的创作企划</p>
       </div>
-    </div>
+    </Link>
   );
 }
 
 interface ProjectCardProps {
   project: ProjectInfoVO;
-  onClick: () => void;
 }
 
-function ProjectCard({ project, onClick }: ProjectCardProps) {
+function ProjectCard({ project }: ProjectCardProps) {
   const metadataTags = parseProjectMetadataTags(project.metadata).slice(0, 2);
 
   return (
-    <article
-      onClick={onClick}
-      className="group flex aspect-[5/3] cursor-pointer overflow-hidden rounded-lg border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md"
+    <Link
+      to={`/dashboard/planning/${project.id}`}
+      className="group flex aspect-[5/3] cursor-pointer overflow-hidden rounded-lg border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="h-full w-[40%] shrink-0 overflow-hidden bg-muted">
         {project.coverUrl ? (
@@ -278,6 +269,6 @@ function ProjectCard({ project, onClick }: ProjectCardProps) {
           </span>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }

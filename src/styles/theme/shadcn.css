@@ -6,7 +6,7 @@
     --foreground: oklch(14% 0 0);
     --sidebar: oklch(99% 0 0);
 
-    --card: oklch(100% 0 0);
+    --card: oklch(99% 0 0);
     --card-foreground: oklch(14% 0 0);
 
     --popover: oklch(100% 0 0);
