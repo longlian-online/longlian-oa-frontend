@@ -138,6 +138,7 @@ src/
 
 - `src/styles/theme/shadcn.css` — shadcn 语义变量（`--background`、`--foreground`、`--primary` 等），亮/暗双套，与颜色主题无关
   - 浅色页面背景（`bg-background`）为 `#F7F7F7`；用户端与管理端的侧边栏和顶部导航共用 `bg-sidebar`，颜色为 `oklch(99% 0 0)`。深色模式保留原背景，导航背景跟随 `--background`。
+  - 默认浅色主题的次级文字（`text-muted-foreground`）使用 `oklch(30% 0 0)`，用于导航未选中项、说明和标签；深色及 Pink 主题保留各自覆盖值。
 - `src/styles/theme/index.css` — 多主题颜色系统：
   - `--theme-accent-*` — 当前颜色主题的品牌色（渐变、实色、透明版），通过 `[data-color-theme="xxx"]` 选择器覆盖
   - 背景渐变、状态色（info/success/warning/danger）、具名语义色
