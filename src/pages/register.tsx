@@ -70,6 +70,7 @@ export default function RegisterPage() {
     const nextMode = value as RegisterMode;
     setModeDirection(nextMode === "create" ? "right" : "left");
     setMode(nextMode);
+    setInviteInfo(null);
   };
 
   const modePanelClassName = cn(
@@ -95,6 +96,8 @@ export default function RegisterPage() {
   };
 
   const handleQueryInviteInfo = async (): Promise<void> => {
+    if (mode !== "join") return;
+
     const isValid = await form.trigger("inviteCode");
     if (!isValid) return;
 
@@ -170,22 +173,24 @@ export default function RegisterPage() {
                     })}
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-11 shrink-0 px-3"
-                  onClick={handleQueryInviteInfo}
-                  disabled={isInviteLoading}
-                >
-                  {isInviteLoading ? "查询中" : "查询"}
-                </Button>
+                {mode === "join" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 shrink-0 px-3"
+                    onClick={handleQueryInviteInfo}
+                    disabled={isInviteLoading}
+                  >
+                    {isInviteLoading ? "查询中" : "查询"}
+                  </Button>
+                )}
               </div>
               {form.formState.errors.inviteCode && (
                 <p className="text-xs text-destructive">
                   {form.formState.errors.inviteCode.message}
                 </p>
               )}
-              {inviteInfo && (
+              {mode === "join" && inviteInfo && (
                 <p className="text-xs text-muted-foreground">将加入：{inviteInfo.orgName}</p>
               )}
             </div>
