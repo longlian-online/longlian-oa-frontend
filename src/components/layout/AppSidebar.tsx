@@ -82,7 +82,7 @@ export default function AppSidebar() {
   if (items.length === 0) return null;
 
   return (
-    <aside className="border-border bg-background flex h-full w-56 shrink-0 flex-col overflow-y-auto border-r">
+    <aside className="border-border bg-sidebar flex h-full w-56 shrink-0 flex-col overflow-y-auto border-r">
       <nav aria-label="侧栏" className="flex-1 space-y-0.5 px-3 py-3">
         {items.map((item) => {
           const isActive = isSidebarItemActive(pathname, item);

@@ -44,7 +44,7 @@ export default function AdminLayout({ children, title, description }: AdminLayou
 
   return (
     <div className="flex h-svh overflow-hidden bg-background text-foreground">
-      <aside className="border-border bg-background flex h-full w-56 shrink-0 flex-col border-r">
+      <aside className="border-border bg-sidebar flex h-full w-56 shrink-0 flex-col border-r">
         <NavLink to="/admin" className="flex h-14 items-center gap-2.5 border-b border-border px-5">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary">
             <Network className="h-3.5 w-3.5 text-primary-foreground" />
@@ -70,7 +70,7 @@ export default function AdminLayout({ children, title, description }: AdminLayou
         </nav>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="border-border bg-background grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b px-4">
+        <header className="border-border bg-sidebar grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b px-4">
           <div />
           <span className="text-sm font-medium text-foreground">{title}</span>
           <div className="flex items-center justify-end gap-1">
