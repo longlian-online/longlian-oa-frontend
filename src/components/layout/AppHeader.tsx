@@ -172,7 +172,7 @@ export default function AppHeader() {
   };
 
   return (
-    <header className="border-border bg-background grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b px-4">
+    <header className="border-border bg-sidebar grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b px-4">
       <div className="min-w-0">
         <OrganizationIdentity />
       </div>
