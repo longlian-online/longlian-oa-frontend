@@ -15,8 +15,11 @@ export async function getItemTaskInstances(itemId: string): Promise<ItemTaskInst
   return request(`/task/instance/item/${itemId}`);
 }
 
-export async function getTaskInstanceDetail(instanceId: string): Promise<TaskInstanceDetailVO> {
-  return request(`/task/instance/${instanceId}/detail`);
+export async function getTaskInstanceDetail(
+  instanceId: string,
+  signal?: AbortSignal,
+): Promise<TaskInstanceDetailVO> {
+  return request(`/task/instance/${instanceId}/detail`, { signal });
 }
 
 export async function claimTask(instanceId: string): Promise<void> {

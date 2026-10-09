@@ -19,6 +19,7 @@ const nodes: ItemTaskNodeVO[] = [1, 3, 5].map((sort) => ({
   id: String(sort),
   baseTaskId: "base",
   name: "task",
+  submitFields: [],
   sort,
   parallelSort: 1,
 }));

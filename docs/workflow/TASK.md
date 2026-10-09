@@ -187,7 +187,7 @@ interface ItemTaskNodeVO {
   id: string;
   baseTaskId: string;
   name: string;
-  metaSchema?: string;
+  submitFields: TaskFormField[];
   sort: number;
   parallelSort: number;
   taskInstanceId?: string | null;

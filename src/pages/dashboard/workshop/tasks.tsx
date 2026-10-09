@@ -8,9 +8,7 @@ import {
   getOrganizationBaseTaskList,
 } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
-import BaseTaskMetaFieldsEditor, {
-  type TaskMetaField,
-} from "@/components/BaseTaskMetaFieldsEditor";
+import BaseTaskFieldsEditor from "@/components/BaseTaskFieldsEditor";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
@@ -33,6 +31,7 @@ import type {
   OrganizationBaseTaskCreateDTO,
   OrganizationBaseTaskVO,
 } from "@/types/organizationAdmin";
+import type { TaskFormField } from "@/types/task";
 
 const PAGE_SIZE = 12;
 type LucideIconEntry = [string, LucideIcon];
@@ -41,10 +40,15 @@ interface BaseTaskForm {
   name: string;
   description: string;
   iconName?: string;
-  metaFields: TaskMetaField[];
+  submitFields: TaskFormField[];
 }
 
-const EMPTY_FORM: BaseTaskForm = { name: "", description: "", iconName: undefined, metaFields: [] };
+const EMPTY_FORM: BaseTaskForm = {
+  name: "",
+  description: "",
+  iconName: undefined,
+  submitFields: [],
+};
 
 function BaseTaskManagementContent() {
   const [tasks, setTasks] = useState<OrganizationBaseTaskVO[]>([]);
@@ -93,15 +97,15 @@ function BaseTaskManagementContent() {
     setPage(1);
   }
 
-  function addMetaField(): void {
+  function addSubmitField(): void {
     setForm({
       ...form,
-      metaFields: [
-        ...form.metaFields,
+      submitFields: [
+        ...form.submitFields,
         {
-          id: `field-${Date.now()}`,
-          name: "",
-          fieldType: "text",
+          key: `field-${crypto.randomUUID()}`,
+          label: "",
+          type: "text",
           required: false,
           options: [],
         },
@@ -109,17 +113,17 @@ function BaseTaskManagementContent() {
     });
   }
 
-  function updateMetaField(fieldId: string, patch: Partial<TaskMetaField>): void {
+  function updateSubmitField(fieldKey: string, patch: Partial<TaskFormField>): void {
     setForm({
       ...form,
-      metaFields: form.metaFields.map((field) =>
-        field.id === fieldId ? { ...field, ...patch } : field,
+      submitFields: form.submitFields.map((field) =>
+        field.key === fieldKey ? { ...field, ...patch } : field,
       ),
     });
   }
 
-  function removeMetaField(fieldId: string): void {
-    setForm({ ...form, metaFields: form.metaFields.filter((field) => field.id !== fieldId) });
+  function removeSubmitField(fieldKey: string): void {
+    setForm({ ...form, submitFields: form.submitFields.filter((field) => field.key !== fieldKey) });
   }
 
   async function handleIconPickerToggle(): Promise<void> {
@@ -151,36 +155,33 @@ function BaseTaskManagementContent() {
       return;
     }
 
-    const invalidField = form.metaFields.find((field) => !field.name.trim());
+    const invalidField = form.submitFields.find((field) => !field.label.trim());
     if (invalidField) {
       $tip("请填写每个提交字段的名称", "error");
       return;
     }
 
-    const invalidSelectField = form.metaFields.find(
-      (field) => field.fieldType === "select" && field.options.length === 0,
-    );
+    const invalidSelectField = form.submitFields.find((field) => {
+      if (field.type !== "select") return false;
+      return field.options.every((option) => option.trim() === "");
+    });
     if (invalidSelectField) {
-      $tip(`请为「${invalidSelectField.name}」填写至少一个选项`, "error");
+      $tip(`请为「${invalidSelectField.label}」填写至少一个选项`, "error");
       return;
     }
-
-    const metaSchema = form.metaFields.length
-      ? JSON.stringify(
-          form.metaFields.map(({ name: fieldName, fieldType, required, options }) => ({
-            name: fieldName.trim(),
-            fieldType,
-            required,
-            ...(fieldType === "select" ? { options } : {}),
-          })),
-        )
-      : undefined;
 
     const payload: OrganizationBaseTaskCreateDTO = {
       name,
       description: form.description.trim() || undefined,
       iconName: form.iconName,
-      metaSchema,
+      submitFields: form.submitFields.map((field) => ({
+        ...field,
+        label: field.label.trim(),
+        options:
+          field.type === "select"
+            ? [...new Set(field.options.map((option) => option.trim()).filter(Boolean))]
+            : [],
+      })),
     };
 
     try {
@@ -462,11 +463,11 @@ function BaseTaskManagementContent() {
                 支持全部 Lucide 图标；未填写时按任务名称自动匹配。
               </span>
             </div>
-            <BaseTaskMetaFieldsEditor
-              fields={form.metaFields}
-              onAdd={addMetaField}
-              onChange={updateMetaField}
-              onRemove={removeMetaField}
+            <BaseTaskFieldsEditor
+              fields={form.submitFields}
+              onAdd={addSubmitField}
+              onChange={updateSubmitField}
+              onRemove={removeSubmitField}
             />
           </div>
           <DialogFooter>

@@ -74,7 +74,7 @@ interface ResourcCreateVO {
 ## 验收标准
 
 - 上传企划封面后能得到 `coverFileId`。
-- 上传任务附件后能写入提交 `metadata`。
+- 上传任务附件后通过提交请求 `values` 中的 `{ fileId }` 引用文件；文件信息及 CDN 签名读取链接由任务详情接口返回。
 - 上传失败有全局错误提示。
 - 文件上传组件不直接调用企划或任务接口。
 

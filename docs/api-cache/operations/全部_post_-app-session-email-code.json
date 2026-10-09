@@ -19,10 +19,8 @@
       }
     },
     "summary": "发送邮箱验证码",
-    "tags": [
-      "用户会话接口"
-    ]
+    "tags": ["用户会话接口"]
   },
   "path": "/app/session/email/code",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs"
 }

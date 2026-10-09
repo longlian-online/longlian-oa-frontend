@@ -820,7 +820,7 @@ sort=5: 发布
 | ------ | ----------------------------------------- | ------------------------------ | --------------------------- |
 | `GET`  | `/app/item/{itemId}/flow`                 | 获取项目任务流，含节点执行状态 | 返回 `ItemTaskFlowVO`       |
 | `GET`  | `/app/task/instance/item/{itemId}`        | 查询项目下任务实例列表         | 返回 `ItemTaskInstanceVO[]` |
-| `GET`  | `/app/task/instance/{instanceId}/detail`  | 查看任务实例详情               | 返回最近一次提交 metadata   |
+| `GET`  | `/app/task/instance/{instanceId}/detail`  | 查看任务实例详情               | 返回任务信息与可读提交内容  |
 | `POST` | `/app/task/instance/{instanceId}/claim`   | 接取任务                       | 状态进入 `CLAIMED`          |
 | `POST` | `/app/task/instance/{instanceId}/submit`  | 提交任务                       | `TaskSubmitDTO`             |
 | `POST` | `/app/task/instance/{instanceId}/reject`  | 打回任务                       | `TaskRejectDTO`             |
@@ -831,7 +831,7 @@ sort=5: 发布
 
 - `baseTaskId`：原子任务 ID。
 - `name`：任务名称。
-- `metaSchema`：节点元数据字段定义快照，JSON 数组字符串。
+- `submitFields`：结构化提交字段定义数组，包含 `key`、`label`、`type`、`required`、`options`。
 - `sort`：步骤顺序。
 - `parallelSort`：并行组内顺序。
 - `taskInstanceId`：任务实例 ID，未解锁时可能为空。
@@ -841,7 +841,9 @@ sort=5: 发布
 
 任务提交字段：
 
-- `metadata`：提交元数据 JSON 字符串，例如 `{"values":{"attachment":{"fileId":123},"author":"张三"}}`。
+- `values`：按字段 `key` 提交业务值；文本和数字使用字符串，文件只提交 `{ "fileId": "文件ID" }`，可选空值使用 `null`。
+
+任务详情返回独立的 `task` 与 `submission`。后端完成字段排序、可读文本转换和附件解析，前端只按 `text`、`multiline`、`file` 展示。每个文件字段只有一个附件，未填写时 `file` 为 `null`。有效附件返回 CDN 签名 `readUrl` 与 Unix 秒 `expiresAt`，不可用附件不返回链接。任务接口不暴露内部 JSON 存储结构，也不兼容旧协议。
 
 任务打回字段：
 

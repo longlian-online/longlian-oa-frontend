@@ -9,10 +9,8 @@
       }
     },
     "summary": "管理员登出",
-    "tags": [
-      "管理员会话接口"
-    ]
+    "tags": ["管理员会话接口"]
   },
   "path": "/admin/session",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs"
 }
