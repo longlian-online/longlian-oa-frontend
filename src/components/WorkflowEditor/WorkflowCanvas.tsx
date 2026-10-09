@@ -46,7 +46,10 @@ function buildFlowNodes(
   onSelectNode: (localId: string) => void,
   onRemoveNode: (localId: string) => void,
 ): WorkflowFlowNode[] {
-  return groupNodes(nodes).flatMap((group, stageIndex) =>
+  const groups = groupNodes(nodes);
+  const maxParallelCount = groups.reduce((max, group) => Math.max(max, group.length), 0);
+
+  return groups.flatMap((group, stageIndex) =>
     group.map((node, parallelIndex) => {
       const baseTask = baseTasks.find((task) => String(task.id) === node.baseTaskId);
       return {
@@ -54,7 +57,7 @@ function buildFlowNodes(
         type: "workflow",
         position: {
           x: START_X + stageIndex * STAGE_GAP,
-          y: START_Y + parallelIndex * PARALLEL_GAP,
+          y: START_Y + ((maxParallelCount - group.length) / 2 + parallelIndex) * PARALLEL_GAP,
         },
         data: {
           label: getNodeLabel(node, baseTasks),
@@ -221,6 +224,7 @@ export default function WorkflowCanvas({
         </div>
       </div>
       <ReactFlow<WorkflowFlowNode, Edge>
+        proOptions={{ hideAttribution: true }}
         nodes={flowNodes}
         edges={flowEdges}
         nodeTypes={NODE_TYPES}
