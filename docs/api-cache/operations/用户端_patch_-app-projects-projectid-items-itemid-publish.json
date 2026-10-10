@@ -2,6 +2,7 @@
   "document": "用户端",
   "method": "PATCH",
   "operation": {
+    "description": "需项目中所有任务均已完成，存在未完成任务时拒绝公布",
     "operationId": "publishProjectItem",
     "parameters": [
       {
@@ -42,5 +43,5 @@
     "tags": ["项目相关接口"]
   },
   "path": "/app/projects/{projectId}/items/{itemId}/publish",
-  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
 }
