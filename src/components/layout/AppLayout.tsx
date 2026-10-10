@@ -27,7 +27,7 @@ export default function AppLayout() {
           >
             <AppSidebar />
           </div>
-          <main className="min-w-0 flex-1 overflow-y-auto px-6 py-6">
+          <main className="min-w-0 flex-1 overflow-y-auto px-6 py-6 [scrollbar-gutter:stable]">
             <AppBreadcrumb />
             <PageTransition>
               <Outlet />
