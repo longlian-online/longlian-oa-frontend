@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ApiError } from "@/api/apiError";
 import { createFileUpload } from "@/api/file";
 import { $tip } from "@/components/tip";
+import { requestImageCrop, UploadCancelledError } from "@/lib/imageCropRequest";
 import { AuthExpiredError } from "@/lib/authError";
 import type { FileValidationOptions, UploadedFileInfo, UploadBizType } from "@/types/file";
 
@@ -51,7 +52,7 @@ function formatFileSize(size: number): string {
   return `${(size / 1024 / 1024).toFixed(1)}MB`;
 }
 
-function validateFile(file: File, options: FileValidationOptions): string | null {
+export function validateFile(file: File, options: FileValidationOptions): string | null {
   const accept = options.accept ?? DEFAULT_ACCEPT;
   const maxSize = options.maxSize ?? DEFAULT_MAX_SIZE;
   const fileExt = getFileExt(file.name);
@@ -103,6 +104,14 @@ export function useUploadFile(): UseUploadFileResult {
 
     setUploading(true);
     try {
+      if (normalizeMimeType(file, getFileExt(file.name)).startsWith("image/")) {
+        file = await requestImageCrop(
+          file,
+          options.bizType === "avatar" ? 1 : options.bizType === "cover" ? 2 / 3 : undefined,
+        );
+        const croppedValidationError = validateFile(file, options);
+        if (croppedValidationError) throw new Error(croppedValidationError);
+      }
       const fileExt = getFileExt(file.name);
       const fileMime = normalizeMimeType(file, fileExt);
       const resource = await createFileUpload({
@@ -127,7 +136,11 @@ export function useUploadFile(): UseUploadFileResult {
       $tip("文件上传成功", "success");
       return uploadedFile;
     } catch (error) {
-      if (!(error instanceof ApiError) && !(error instanceof AuthExpiredError)) {
+      if (
+        !(error instanceof UploadCancelledError) &&
+        !(error instanceof ApiError) &&
+        !(error instanceof AuthExpiredError)
+      ) {
         $tip(error instanceof Error ? error.message : "文件上传失败", "error");
       }
       throw error;

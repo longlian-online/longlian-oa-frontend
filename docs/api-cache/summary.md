@@ -1,7 +1,7 @@
 # API 缓存摘要
 
-来源：http://127.0.0.1:64000/v3/api-docs
-更新时间：2026-10-08T15:04:24.313Z
+来源：https://sit.neo.oa.api.longlian.online/v3/api-docs
+更新时间：2026-10-10T06:24:18.928Z
 
 ## 文档分组
 

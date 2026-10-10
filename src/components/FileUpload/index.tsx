@@ -13,6 +13,7 @@ interface FileUploadProps extends FileValidationOptions {
   title?: string;
   description?: string;
   imagePreview?: boolean;
+  fillHeight?: boolean;
   className?: string;
   onChange: (file: UploadedFileInfo | null) => void;
 }
@@ -28,6 +29,7 @@ export default function FileUpload({
   title = "上传文件",
   description = "点击选择文件",
   imagePreview = false,
+  fillHeight = false,
   accept,
   maxSize,
   className,
@@ -83,7 +85,12 @@ export default function FileUpload({
   };
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div
+      className={cn(
+        fillHeight ? "flex min-h-[340px] flex-1 flex-col gap-3" : "space-y-3",
+        className,
+      )}
+    >
       <input
         ref={inputRef}
         type="file"
@@ -93,11 +100,23 @@ export default function FileUpload({
       />
 
       {value && imagePreview && value.previewUrl ? (
-        <div className="group relative overflow-hidden rounded-xl border bg-muted">
+        <div
+          className={cn(
+            "group relative",
+            fillHeight && "min-h-[340px] flex-1",
+            bizType !== "avatar" && "overflow-hidden rounded-xl border bg-muted",
+          )}
+        >
           <img
             src={value.previewUrl}
             alt={value.fileName}
-            className="aspect-[2/3] w-full object-cover"
+            className={cn(
+              "w-full object-cover",
+              fillHeight && "absolute inset-0 size-full object-contain",
+              bizType === "avatar"
+                ? "aspect-square rounded-full border bg-muted"
+                : !fillHeight && "aspect-[2/3]",
+            )}
           />
           <Button
             type="button"
@@ -119,7 +138,11 @@ export default function FileUpload({
           onDrop={handleDrop}
           className={cn(
             "group flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-input bg-muted/30 p-5 text-center transition-colors hover:border-primary/50 hover:bg-primary/[0.03] disabled:pointer-events-none disabled:opacity-60",
-            imagePreview ? "h-full min-h-[220px]" : "min-h-28",
+            fillHeight
+              ? "min-h-[340px] flex-1"
+              : imagePreview
+                ? "h-full min-h-[220px]"
+                : "min-h-28",
             isDragging && "border-primary/60 bg-primary/[0.04]",
           )}
         >
