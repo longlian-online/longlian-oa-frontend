@@ -235,7 +235,10 @@ function ProjectCard({ project }: ProjectCardProps) {
 
       <div className="flex min-w-0 flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-2 text-base font-semibold leading-6 text-foreground">
+          <h3
+            title={project.title}
+            className="min-w-0 flex-1 truncate text-base font-semibold leading-6 text-foreground"
+          >
             {project.title}
           </h3>
           <Badge variant="outline" className="shrink-0 font-normal">
