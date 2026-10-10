@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import App from "@/App";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
+import ImageCropProvider from "@/components/ImageCropProvider";
 import TipProvider from "@/components/tip";
 import { applyTheme, getStoredTheme } from "@/lib/theme";
 import "./index.css";
@@ -13,6 +14,7 @@ applyTheme(getStoredTheme());
 createRoot(document.getElementById("app")!).render(
   <StrictMode>
     <TipProvider />
+    <ImageCropProvider />
     <ConfirmDialogProvider>
       <BrowserRouter>
         <App />
