@@ -29,7 +29,7 @@ import type { InviteInfoVO } from "@/types/auth";
 import OrganizationIdentity from "./OrganizationIdentity";
 
 const navigationItems = [
-  { to: "/dashboard/planning", label: "浏览" },
+  { to: "/dashboard/planning", label: "广场" },
   { to: "/dashboard/workshop", label: "工坊" },
   { to: "/dashboard/org-admin", label: "管理", adminOnly: true },
 ];
