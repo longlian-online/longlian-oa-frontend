@@ -202,6 +202,12 @@ export async function getOrganizationBaseTaskList(
   });
 }
 
+export async function deleteOrganizationBaseTask(taskId: string): Promise<void> {
+  return orgAdminRequest(`/orgadmin/task/base/${taskId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function changeBaseTaskStatus(
   taskId: string,
   status: OrganizationResourceStatus,

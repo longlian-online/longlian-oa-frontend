@@ -10,8 +10,7 @@ export interface WorkflowNodeData extends Record<string, unknown> {
   label: string;
   taskName: string;
   description?: string;
-  iconName?: string;
-  iconUrl?: string;
+  icon?: string;
   stage: number;
   parallelCount: number;
   selected: boolean;
@@ -22,7 +21,7 @@ export interface WorkflowNodeData extends Record<string, unknown> {
 export type WorkflowFlowNode = Node<WorkflowNodeData, "workflow">;
 
 function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
-  const Icon = getWorkflowTaskIcon(data.taskName, data.iconName);
+  const Icon = getWorkflowTaskIcon(data.taskName, data.icon);
   const description = getWorkflowTaskDescription(data.taskName, data.description);
 
   return (
@@ -45,12 +44,8 @@ function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
         onClick={() => data.onSelect(id)}
       >
         <div className="flex items-start gap-3 pr-6">
-          <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
-            {data.iconUrl ? (
-              <img src={data.iconUrl} alt="" className="size-full object-cover" />
-            ) : (
-              <Icon className="size-4" />
-            )}
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Icon className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-foreground">{data.label}</div>

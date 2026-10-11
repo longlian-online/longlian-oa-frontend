@@ -34,5 +34,5 @@
     "tags": ["组织接口"]
   },
   "path": "/admin/organizations/{orgId}/status",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+  "sourceUrl": "http://127.0.0.1:63100/v3/api-docs"
 }

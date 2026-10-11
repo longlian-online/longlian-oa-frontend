@@ -285,7 +285,7 @@ interface ItemTaskNodeVO {
   id: string;
   baseTaskId: string;
   name: string;
-  baseTaskIconUrl?: string;
+  baseTaskIcon?: string;
   submitFields: TaskFormField[]; // 结构化输入定义快照
   sort: number;
   parallelSort: number;

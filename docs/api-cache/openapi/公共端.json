@@ -251,7 +251,7 @@
   "servers": [
     {
       "description": "Configured server URL",
-      "url": "https://sit.neo.oa.api.longlian.online/"
+      "url": "http://localhost:63000"
     }
   ],
   "tags": [

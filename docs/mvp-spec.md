@@ -736,7 +736,7 @@ sort=5: 发布
 | `GET`    | `/app/projects/{projectId}`          | 获取企划详情     | 返回 `ProjectDetailInfoVO`                                     |
 | `PUT`    | `/app/projects/{projectId}`          | 编辑企划         | `ProjectUpdateDTO`                                             |
 | `POST`   | `/app/projects/{projectId}/workshop` | 添加企划到工坊   | 当前用户维度                                                   |
-| `DELETE` | `/app/projects/{projectId}/workshop` | 从工坊移除企划   | 当前用户维度；企划负责人不能退出                       |
+| `DELETE` | `/app/projects/{projectId}/workshop` | 从工坊移除企划   | 当前用户维度；企划负责人不能退出                               |
 
 当前 Swagger 未暴露企划删除接口。MVP 若需要“删除企划”，需要后端补接口，或前端先隐藏删除能力。
 
@@ -831,6 +831,7 @@ sort=5: 发布
 
 - `baseTaskId`：原子任务 ID。
 - `name`：任务名称。
+- `baseTaskIcon`：可选的 Lucide 图标标识。未返回或无法识别时按任务名称匹配默认图标。
 - `submitFields`：结构化提交字段定义数组，包含 `key`、`label`、`type`、`required`、`options`。
 - `sort`：步骤顺序。
 - `parallelSort`：并行组内顺序。

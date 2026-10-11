@@ -1,0 +1,36 @@
+{
+  "document": "全部",
+  "method": "DELETE",
+  "operation": {
+    "description": "仅允许删除未被任务模板节点或项目任务节点引用的任务；已引用的任务应改为禁用",
+    "operationId": "deleteBaseTask",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "taskId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "删除原子任务",
+    "tags": ["原子任务管理"]
+  },
+  "path": "/orgadmin/task/base/{taskId}",
+  "sourceUrl": "http://127.0.0.1:63100/v3/api-docs"
+}

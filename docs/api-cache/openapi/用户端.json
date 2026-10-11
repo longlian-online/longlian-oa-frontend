@@ -177,12 +177,8 @@
       "ItemTaskNodeVO": {
         "description": "任务流节点信息（含执行状态，用于流程图可视化）",
         "properties": {
-          "baseTaskIconName": {
+          "baseTaskIcon": {
             "description": "原子任务 Lucide 图标组件名",
-            "type": "string"
-          },
-          "baseTaskIconUrl": {
-            "description": "原子任务图标URL",
             "type": "string"
           },
           "baseTaskId": {
@@ -1209,12 +1205,8 @@
       "WorkshopTaskTemplateNodeVO": {
         "description": "工坊任务流模板节点信息（卡片简化版）",
         "properties": {
-          "baseTaskIconName": {
+          "baseTaskIcon": {
             "description": "原子任务 Lucide 图标组件名",
-            "type": "string"
-          },
-          "baseTaskIconUrl": {
-            "description": "原子任务图标URL",
             "type": "string"
           },
           "baseTaskId": {
@@ -2617,7 +2609,7 @@
   "servers": [
     {
       "description": "Configured server URL",
-      "url": "https://sit.neo.oa.api.longlian.online/"
+      "url": "http://localhost:63000"
     }
   ],
   "tags": [
