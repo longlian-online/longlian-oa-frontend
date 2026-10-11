@@ -1,0 +1,33 @@
+{
+  "document": "管理端",
+  "method": "GET",
+  "operation": {
+    "operationId": "list",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "dto",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/AdminListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOAdminVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询管理员列表",
+    "tags": ["管理员接口"]
+  },
+  "path": "/admin/admins/",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%AE%A1%E7%90%86%E7%AB%AF"
+}

@@ -1,0 +1,36 @@
+{
+  "document": "全部",
+  "method": "DELETE",
+  "operation": {
+    "description": "仅允许删除未被企划引用的类型",
+    "operationId": "deleteProjectType",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "typeId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "删除企划类型",
+    "tags": ["企划类型管理"]
+  },
+  "path": "/orgadmin/project-types/{typeId}",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

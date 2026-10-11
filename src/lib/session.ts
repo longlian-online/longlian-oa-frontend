@@ -1,0 +1,87 @@
+import type { AdminLoginVO, LoginVO } from "@/types/auth";
+
+const TOKEN_KEY = "token";
+const USER_ID_KEY = "userId";
+const CURRENT_ORG_ID_KEY = "currentOrgId";
+const ROLE_KEY = "role";
+const ADMIN_TOKEN_KEY = "adminToken";
+const ADMIN_ID_KEY = "adminId";
+const ADMIN_USERNAME_KEY = "adminUsername";
+const ADMIN_ROLE_KEY = "adminRole";
+
+export function saveSession(session: LoginVO): void {
+  localStorage.setItem(TOKEN_KEY, session.token);
+  localStorage.setItem(USER_ID_KEY, session.userId);
+  const orgId = usableOrgId(session.defaultOrgId);
+  if (orgId) {
+    localStorage.setItem(CURRENT_ORG_ID_KEY, orgId);
+  } else {
+    localStorage.removeItem(CURRENT_ORG_ID_KEY);
+  }
+  localStorage.removeItem("roles");
+  const role = session.role?.trim();
+  if (role) {
+    localStorage.setItem(ROLE_KEY, role);
+  } else {
+    localStorage.removeItem(ROLE_KEY);
+  }
+}
+
+export function clearSession(): void {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_ID_KEY);
+  localStorage.removeItem(CURRENT_ORG_ID_KEY);
+  localStorage.removeItem(ROLE_KEY);
+  localStorage.removeItem("roles");
+}
+
+export function saveAdminSession(session: AdminLoginVO): void {
+  localStorage.setItem(ADMIN_TOKEN_KEY, session.token);
+  localStorage.setItem(ADMIN_ID_KEY, session.adminId);
+  localStorage.setItem(ADMIN_USERNAME_KEY, session.username);
+  localStorage.setItem(ADMIN_ROLE_KEY, session.role);
+}
+
+export function clearAdminSession(): void {
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
+  localStorage.removeItem(ADMIN_ID_KEY);
+  localStorage.removeItem(ADMIN_USERNAME_KEY);
+  localStorage.removeItem(ADMIN_ROLE_KEY);
+}
+
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function getAdminToken(): string | null {
+  return localStorage.getItem(ADMIN_TOKEN_KEY);
+}
+
+export function getAdminUsername(): string | null {
+  return localStorage.getItem(ADMIN_USERNAME_KEY);
+}
+
+export function getAdminRole(): string | null {
+  return localStorage.getItem(ADMIN_ROLE_KEY);
+}
+
+export function getCurrentOrgId(): string | null {
+  return usableOrgId(localStorage.getItem(CURRENT_ORG_ID_KEY));
+}
+
+export function getUserId(): string | null {
+  return localStorage.getItem(USER_ID_KEY);
+}
+
+export function getSessionRole(): string | null {
+  const role = localStorage.getItem(ROLE_KEY)?.trim();
+  return role ? role : null;
+}
+
+function usableOrgId(orgId: string | null | undefined): string | null {
+  return typeof orgId === "string" && /^[1-9]\d*$/.test(orgId) ? orgId : null;
+}
+
+export function isOrganizationAdmin(): boolean {
+  return getSessionRole() === "ORG_ADMIN";
+}

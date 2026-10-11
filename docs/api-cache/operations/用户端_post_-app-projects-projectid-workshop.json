@@ -1,0 +1,37 @@
+{
+  "document": "用户端",
+  "method": "POST",
+  "operation": {
+    "description": "将指定企划加入当前用户的个人工坊，已添加则幂等返回成功",
+    "operationId": "addToWorkshop",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "企划ID",
+        "in": "path",
+        "name": "projectId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "添加企划到工坊",
+    "tags": ["企划接口"]
+  },
+  "path": "/app/projects/{projectId}/workshop",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

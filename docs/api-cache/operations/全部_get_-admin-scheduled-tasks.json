@@ -1,0 +1,26 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "operationId": "listTasks",
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/ScheduledTaskVO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "列出所有已注册的定时任务",
+    "tags": ["定时任务管理"]
+  },
+  "path": "/admin/scheduled-tasks/",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

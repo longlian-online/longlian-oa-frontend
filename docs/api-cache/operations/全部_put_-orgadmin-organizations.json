@@ -1,0 +1,37 @@
+{
+  "document": "全部",
+  "method": "PUT",
+  "operation": {
+    "description": "更新组织的头像、组名和简介",
+    "operationId": "updateOrganizationInfo",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/OrgAdminUpdateOrganizationInfoDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "更新组织信息",
+    "tags": ["组织信息管理接口"]
+  },
+  "path": "/orgadmin/organizations",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

@@ -1,0 +1,44 @@
+{
+  "document": "用户端",
+  "method": "GET",
+  "operation": {
+    "description": "返回企划详细信息、进度统计及当前用户权限标记。\nisCreator=true 时前端展示「编辑+分享」按钮；false 时展示「添加到工坊+分享」按钮\n",
+    "operationId": "getProjectDetail",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "企划ID",
+        "in": "path",
+        "name": "projectId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/ProjectDetailInfoVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "获取企划详情",
+    "tags": ["企划接口"]
+  },
+  "path": "/app/projects/{projectId}",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

@@ -1,0 +1,44 @@
+{
+  "document": "公共端",
+  "method": "POST",
+  "operation": {
+    "description": "获取预签名上传地址，前端拿到 uploadUrl 后直接向存储服务上传文件，上传完成后将 fileId 传给业务接口",
+    "operationId": "createFileUpload",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/CreateFileReqDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/ResourceCreateVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "创建文件上传",
+    "tags": ["文件上传接口"]
+  },
+  "path": "/common/file/upload",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E5%85%AC%E5%85%B1%E7%AB%AF"
+}

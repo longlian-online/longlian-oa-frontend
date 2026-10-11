@@ -42,6 +42,20 @@ npx skills install
 vp dev
 ```
 
+## Docker 开发
+
+容器内用 pnpm 按锁文件安装依赖，再用 `vp dev` 跑 Vite。源码 bind-mount 进 `/app`，额外挂 `/app/node_modules`，避免被源码挂载盖掉。
+
+```bash
+docker build -f Dockerfile.dev -t longlian-oa-frontend:dev .
+docker run --rm -it -p 5173:5173 \
+  -e CHOKIDAR_USEPOLLING=true \
+  -v "$PWD":/app -v /app/node_modules \
+  longlian-oa-frontend:dev
+```
+
+浏览器打开 http://localhost:5173 。改依赖后重新 `docker build` 再跑；`-v /app/node_modules` 是匿名卷，容器删掉即丢，不会残留旧依赖。
+
 ---
 
 ## 常用命令
@@ -100,16 +114,19 @@ src/
 
 禁止在 `main.tsx` 手动注册 `<Route>`。
 
+企划列表的企划卡片和「创建新企划」卡片使用路由 `Link`，保留普通点击的站内跳转，并支持右键在新标签页打开、中键、Cmd/Ctrl + 点击及键盘 Enter 导航。
+导航卡片应使用带 `href` 的链接，而不是仅用 `onClick` 调用 `navigate` 的普通元素。
+
 ---
 
 ## 主题系统
 
 ### 两个独立维度
 
-| 维度 | 切换方式 | 存储 |
-|------|----------|------|
-| 亮/暗模式 | `<html>` 加/移除 `.dark` 类 | `localStorage("theme")` |
-| 颜色主题 | `<html>` 设置 `data-color-theme="pink"` 等 | `localStorage("color-theme")` |
+| 维度      | 切换方式                                   | 存储                          |
+| --------- | ------------------------------------------ | ----------------------------- |
+| 亮/暗模式 | `<html>` 加/移除 `.dark` 类                | `localStorage("theme")`       |
+| 颜色主题  | `<html>` 设置 `data-color-theme="pink"` 等 | `localStorage("color-theme")` |
 
 两者完全独立，可以任意组合（如：暗色 + 粉色主题）。
 
@@ -120,6 +137,8 @@ src/
 ### 配色文件结构
 
 - `src/styles/theme/shadcn.css` — shadcn 语义变量（`--background`、`--foreground`、`--primary` 等），亮/暗双套，与颜色主题无关
+  - 浅色页面背景（`bg-background`）为 `#F7F7F7`；用户端与管理端的侧边栏和顶部导航共用 `bg-sidebar`，颜色为 `oklch(99% 0 0)`。深色模式保留原背景，导航背景跟随 `--background`。
+  - 默认浅色主题的次级文字（`text-muted-foreground`）使用 `oklch(30% 0 0)`，用于导航未选中项、说明和标签；深色及 Pink 主题保留各自覆盖值。
 - `src/styles/theme/index.css` — 多主题颜色系统：
   - `--theme-accent-*` — 当前颜色主题的品牌色（渐变、实色、透明版），通过 `[data-color-theme="xxx"]` 选择器覆盖
   - 背景渐变、状态色（info/success/warning/danger）、具名语义色
@@ -133,7 +152,11 @@ src/
 [data-color-theme="blue"] {
   --theme-accent-start: #3b82f6;
   --theme-accent-end: #1d4ed8;
-  --theme-accent-gradient: linear-gradient(279deg, var(--theme-accent-start) 0%, var(--theme-accent-end) 100%);
+  --theme-accent-gradient: linear-gradient(
+    279deg,
+    var(--theme-accent-start) 0%,
+    var(--theme-accent-end) 100%
+  );
   --theme-accent-solid: #2563eb;
   --theme-accent-solid-a3: rgba(37, 99, 235, 0.3);
 }

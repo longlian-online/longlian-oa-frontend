@@ -1,0 +1,37 @@
+{
+  "document": "用户端",
+  "method": "POST",
+  "operation": {
+    "description": "将已完成（COMPLETED）的任务重置为 CLAIMED 状态，允许重新提交。",
+    "operationId": "resetTask",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "任务实例ID",
+        "in": "path",
+        "name": "instanceId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "重置任务提交",
+    "tags": ["任务实例接口"]
+  },
+  "path": "/app/task/instance/{instanceId}/reset",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

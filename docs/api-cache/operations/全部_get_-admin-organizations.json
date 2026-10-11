@@ -1,0 +1,33 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "operationId": "getOrgListInfo",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "dto",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/OrgListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOOrgDetailInfoVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询组织列表",
+    "tags": ["组织接口"]
+  },
+  "path": "/admin/organizations/",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

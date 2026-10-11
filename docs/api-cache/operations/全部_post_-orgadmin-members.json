@@ -1,0 +1,44 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "description": "仅返回已通过审核的成员，默认按入组时间倒序",
+    "operationId": "listMembers",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/OrgMemberListDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOOrgMemberInfoVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询组员列表",
+    "tags": ["组织成员管理"]
+  },
+  "path": "/orgadmin/members",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

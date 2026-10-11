@@ -1,0 +1,38 @@
+{
+  "document": "全部",
+  "method": "PATCH",
+  "operation": {
+    "description": "启用或禁用指定组织。status: ENABLED-启用，DISABLED-禁用",
+    "operationId": "changeOrgStatus",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "orgId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ChangeStatusDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "操作组织状态",
+    "tags": ["组织接口"]
+  },
+  "path": "/admin/organizations/{orgId}/status",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

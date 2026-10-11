@@ -1,0 +1,47 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "返回当前项目所有已生成的任务实例",
+    "operationId": "listItemTaskInstances",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "项目ID",
+        "in": "path",
+        "name": "itemId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/ItemTaskInstanceVO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "查询项目下的任务实例列表",
+    "tags": ["任务实例接口"]
+  },
+  "path": "/app/task/instance/item/{itemId}",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

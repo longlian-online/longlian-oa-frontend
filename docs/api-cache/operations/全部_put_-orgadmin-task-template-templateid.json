@@ -1,0 +1,47 @@
+{
+  "document": "全部",
+  "method": "PUT",
+  "operation": {
+    "description": "覆盖更新模板信息及节点列表",
+    "operationId": "updateTaskTemplate",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "任务模板ID",
+        "in": "path",
+        "name": "templateId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TaskTemplateCreateDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "更新任务模板",
+    "tags": ["任务模板管理"]
+  },
+  "path": "/orgadmin/task/template/{templateId}",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}
