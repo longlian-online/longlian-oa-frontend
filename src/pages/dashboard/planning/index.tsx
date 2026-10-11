@@ -201,7 +201,7 @@ function CreateProjectCard() {
         <p className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">
           创建新企划
         </p>
-        <p className="mt-1 text-xs text-muted-foreground/70">点击开始一个新的创作企划</p>
+        <p className="mt-1 text-xs text-muted-foreground/70">一同播下百合的种子</p>
       </div>
     </Link>
   );
