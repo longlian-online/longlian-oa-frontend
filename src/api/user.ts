@@ -10,7 +10,7 @@ import type {
   UserOrgSwitchVO,
 } from "@/types/user";
 
-const USER_CACHE_TTL = 5 * 60 * 1000;
+const USER_CACHE_TTL = 60 * 1000;
 const USER_CACHE_PREFIX = "user-api-cache";
 
 interface UserCacheEntry<T> {
