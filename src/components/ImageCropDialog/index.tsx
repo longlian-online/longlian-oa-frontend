@@ -75,7 +75,6 @@ export default function ImageCropDialog({
         <DialogHeader>
           <DialogTitle>裁剪图片</DialogTitle>
           <DialogDescription>
-            拖动图片调整位置，通过滚轮、双指或下方滑块放大、缩小图片。图片始终填满裁剪框，缩小到边缘时将停止。
             {file.name.toLowerCase().endsWith(".gif")
               ? "GIF 裁剪后将保存为静态 PNG，上传原图可保留动画。"
               : "也可以直接上传原图。"}
