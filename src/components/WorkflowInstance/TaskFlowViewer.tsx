@@ -1,4 +1,21 @@
-import { Fragment, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
+import {
+  applyNodeChanges,
+  Controls,
+  Handle,
+  MarkerType,
+  Position,
+  ReactFlow,
+  useNodesInitialized,
+  useNodesState,
+  useReactFlow,
+  type Edge,
+  type Node,
+  type NodeProps,
+  type OnNodesChange,
+} from "@xyflow/react";
+
+import "@xyflow/react/dist/style.css";
 import { Check, Layers2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -104,11 +121,163 @@ function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
   );
 }
 
+type TaskFlowNode = Node<
+  {
+    node: ItemTaskNodeVO;
+    instance?: ItemTaskInstanceVO;
+    currentUserId?: string | null;
+    selected: boolean;
+    onSelect: () => void;
+    mutating: boolean;
+    canSubmit: boolean;
+    onClaim: TaskFlowViewerProps["onClaim"];
+    onSubmit: TaskFlowViewerProps["onSubmit"];
+  },
+  "task"
+>;
+
+function TaskCanvasNode({ data }: NodeProps<TaskFlowNode>) {
+  return (
+    <div className="nodrag nopan pointer-events-auto">
+      <Handle
+        type="target"
+        position={Position.Left}
+        isConnectable={false}
+        className="!size-1.5 !border-0 !bg-border"
+      />
+      <TaskNodeCard {...data} />
+      <Handle
+        type="source"
+        position={Position.Right}
+        isConnectable={false}
+        className="!size-1.5 !border-0 !bg-border"
+      />
+    </div>
+  );
+}
+
+const NODE_TYPES = { task: TaskCanvasNode };
+const STAGE_GAP = 316;
+const NODE_GAP = 12;
+const INITIAL_NODE_HEIGHT = 196;
+
+function centerStages(nodes: TaskFlowNode[]): TaskFlowNode[] {
+  const stages = new Map<number, TaskFlowNode[]>();
+  nodes.forEach((node) => {
+    const stage = stages.get(node.data.node.sort) ?? [];
+    stage.push(node);
+    stages.set(node.data.node.sort, stage);
+  });
+  const heights = Array.from(
+    stages.values(),
+    (stage) =>
+      stage.reduce((height, node) => height + (node.measured?.height ?? INITIAL_NODE_HEIGHT), 0) +
+      (stage.length - 1) * NODE_GAP,
+  );
+  const maxHeight = Math.max(0, ...heights);
+  return Array.from(stages.values()).flatMap((stage, stageIndex) => {
+    let y = (maxHeight - heights[stageIndex]) / 2;
+    return stage.map((node) => {
+      const position = { x: stageIndex * STAGE_GAP, y };
+      y += (node.measured?.height ?? INITIAL_NODE_HEIGHT) + NODE_GAP;
+      return node.position.x === position.x && node.position.y === position.y
+        ? node
+        : { ...node, position };
+    });
+  });
+}
+
+function FitInitialLayout() {
+  const initialized = useNodesInitialized();
+  const { fitView } = useReactFlow();
+  useEffect(() => {
+    if (!initialized) return;
+    const frame = requestAnimationFrame(() => void fitView({ padding: 0.18, maxZoom: 1 }));
+    return () => cancelAnimationFrame(frame);
+  }, [initialized, fitView]);
+  return null;
+}
+
 export default function TaskFlowViewer(props: TaskFlowViewerProps) {
   const groups = useMemo(() => groupNodes(props.nodes), [props.nodes]);
   const currentStageSort = groups.find((group) =>
     group.nodes.some((node) => node.taskStatus !== "COMPLETED"),
   )?.sort;
+  const initialNodes = useMemo(
+    () =>
+      centerStages(
+        groups.flatMap((group) =>
+          group.nodes.map((node) => {
+            const instance = findInstance(node, props.instances);
+            return {
+              id: node.id,
+              type: "task" as const,
+              position: { x: 0, y: 0 },
+              ariaLabel: `${node.name}，阶段 ${node.sort}`,
+              data: {
+                node,
+                instance,
+                currentUserId: props.currentUserId,
+                selected: node.id === props.selectedNodeId,
+                onSelect: () => props.onSelectNode(node.id),
+                mutating: Boolean(instance && instance.id === props.mutatingInstanceId),
+                canSubmit: props.nodes
+                  .filter((candidate) => candidate.sort < node.sort)
+                  .every((candidate) => candidate.taskStatus === "COMPLETED"),
+                onClaim: props.onClaim,
+                onSubmit: props.onSubmit,
+              },
+            };
+          }),
+        ),
+      ),
+    [
+      groups,
+      props.instances,
+      props.currentUserId,
+      props.selectedNodeId,
+      props.mutatingInstanceId,
+      props.nodes,
+      props.onSelectNode,
+      props.onClaim,
+      props.onSubmit,
+    ],
+  );
+  const [flowNodes, setFlowNodes] = useNodesState<TaskFlowNode>(initialNodes);
+  useEffect(() => {
+    setFlowNodes((previous) => {
+      const measurements = new Map(previous.map((node) => [node.id, node.measured]));
+      return centerStages(
+        initialNodes.map((node) => ({ ...node, measured: measurements.get(node.id) })),
+      );
+    });
+  }, [initialNodes, setFlowNodes]);
+  const onNodesChange: OnNodesChange<TaskFlowNode> = useCallback(
+    (changes) => setFlowNodes((nodes) => centerStages(applyNodeChanges(changes, nodes))),
+    [setFlowNodes],
+  );
+  const edges = useMemo<Edge[]>(
+    () =>
+      groups.flatMap((group, index) => {
+        const nextGroup = groups[index + 1];
+        if (!nextGroup) return [];
+        const completed = nextGroup.nodes.every((node) => node.taskStatus === "COMPLETED");
+        return group.nodes.flatMap((source) =>
+          nextGroup.nodes.map((target) => ({
+            id: `${source.id}-${target.id}`,
+            source: source.id,
+            target: target.id,
+            type: "smoothstep",
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: completed ? "var(--primary)" : "var(--muted-foreground)",
+            },
+            style: { stroke: completed ? "var(--primary)" : "var(--border)" },
+          })),
+        );
+      }),
+    [groups],
+  );
 
   if (groups.length === 0) {
     return (
@@ -127,52 +296,29 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
         </div>
         <StageTimeline groups={groups} currentStageSort={currentStageSort} />
       </div>
-      <div className="overflow-x-scroll px-5 py-6 pb-8 [scrollbar-gutter:stable]">
-        <div className="flex min-w-max items-stretch">
-          {groups.map((group, groupIndex) => {
-            const completed = group.nodes.filter((node) => node.taskStatus === "COMPLETED").length;
-            const stageCompleted = completed === group.nodes.length;
-
-            return (
-              <Fragment key={group.sort}>
-                {groupIndex > 0 && (
-                  <div className="flex w-12 shrink-0 items-center" aria-hidden="true">
-                    <div className="h-px flex-1 bg-border" />
-                    <div
-                      className={cn(
-                        "size-1.5 rotate-45 border-r border-t",
-                        stageCompleted ? "border-primary" : "border-muted-foreground",
-                      )}
-                    />
-                  </div>
-                )}
-                <section className="flex w-60 shrink-0 flex-col">
-                  <div className="flex flex-col gap-3">
-                    {group.nodes.map((node) => {
-                      const instance = findInstance(node, props.instances);
-                      return (
-                        <TaskNodeCard
-                          key={node.id}
-                          node={node}
-                          selected={node.id === props.selectedNodeId}
-                          onSelect={() => props.onSelectNode(node.id)}
-                          instance={instance}
-                          currentUserId={props.currentUserId}
-                          mutating={Boolean(instance && instance.id === props.mutatingInstanceId)}
-                          canSubmit={props.nodes
-                            .filter((candidate) => candidate.sort < node.sort)
-                            .every((candidate) => candidate.taskStatus === "COMPLETED")}
-                          onClaim={props.onClaim}
-                          onSubmit={props.onSubmit}
-                        />
-                      );
-                    })}
-                  </div>
-                </section>
-              </Fragment>
-            );
-          })}
-        </div>
+      <div className="h-[520px] bg-muted/20">
+        <ReactFlow<TaskFlowNode, Edge>
+          nodes={flowNodes}
+          edges={edges}
+          nodeTypes={NODE_TYPES}
+          onNodesChange={onNodesChange}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          edgesReconnectable={false}
+          elementsSelectable={false}
+          deleteKeyCode={null}
+          minZoom={0.25}
+          maxZoom={1.5}
+          fitView
+          fitViewOptions={{ padding: 0.18, maxZoom: 1 }}
+          proOptions={{ hideAttribution: true }}
+        >
+          <FitInitialLayout />
+          <Controls
+            showInteractive={false}
+            className="overflow-hidden rounded-lg border border-border [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground [&>button>svg]:!fill-current"
+          />
+        </ReactFlow>
       </div>
     </section>
   );
