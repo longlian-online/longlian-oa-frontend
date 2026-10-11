@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Search, Workflow } from "lucide-react";
+import { ChevronRight, Search, Workflow } from "lucide-react";
 
 import { getWorkshopList } from "@/api/workshop";
 import EmptyState from "@/components/EmptyState";
@@ -23,12 +23,32 @@ export default function WorkshopPage() {
   const [searchText, setSearchText] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [isMyCreated, setIsMyCreated] = useState(false);
+  const [scrollState, setScrollState] = useState({ atStart: true, atEnd: false });
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
     void loadWorkshopProjects();
   }, [page, keyword, selectedType, isMyCreated]);
+
+  useEffect(() => {
+    const group = document.querySelector<HTMLDivElement>('[aria-label="企划类型筛选"]');
+    if (!group) return;
+    const update = (): void => {
+      setScrollState({
+        atStart: group.scrollLeft <= 1,
+        atEnd: group.scrollLeft + group.clientWidth >= group.scrollWidth - 1,
+      });
+    };
+    update();
+    group.addEventListener("scroll", update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(group);
+    return () => {
+      group.removeEventListener("scroll", update);
+      observer.disconnect();
+    };
+  }, [projectTypes]);
 
   async function loadWorkshopProjects(): Promise<void> {
     try {
@@ -60,40 +80,60 @@ export default function WorkshopPage() {
     <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
       <h1 className="text-xl font-bold text-foreground">工坊</h1>
       <div className="flex min-w-0 items-center gap-2">
-        <div
-          role="group"
-          aria-label="企划类型筛选"
-          className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1"
-        >
-          <Button
-            type="button"
-            variant={selectedType === "all" ? "secondary" : "ghost"}
-            size="sm"
-            className="shrink-0 whitespace-nowrap"
-            aria-pressed={selectedType === "all"}
-            onClick={() => {
-              setSelectedType("all");
-              setPage(1);
-            }}
+        <div className="relative min-w-0 flex-1">
+          <div
+            role="group"
+            aria-label="企划类型筛选"
+            className="flex min-w-0 items-center gap-2 overflow-x-auto py-1"
           >
-            所有类型
-          </Button>
-          {projectTypes.map((type) => (
             <Button
-              key={type.id}
               type="button"
-              variant={selectedType === type.name ? "secondary" : "ghost"}
+              variant={selectedType === "all" ? "secondary" : "ghost"}
               size="sm"
               className="shrink-0 whitespace-nowrap"
-              aria-pressed={selectedType === type.name}
+              aria-pressed={selectedType === "all"}
               onClick={() => {
-                setSelectedType(type.name);
+                setSelectedType("all");
                 setPage(1);
               }}
             >
-              {type.name}
+              所有类型
             </Button>
-          ))}
+            {projectTypes.map((type) => (
+              <Button
+                key={type.id}
+                type="button"
+                variant={selectedType === type.name ? "secondary" : "ghost"}
+                size="sm"
+                className="shrink-0 whitespace-nowrap"
+                aria-pressed={selectedType === type.name}
+                onClick={() => {
+                  setSelectedType(type.name);
+                  setPage(1);
+                }}
+              >
+                {type.name}
+              </Button>
+            ))}
+          </div>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-background via-background/80 to-transparent transition-opacity duration-200"
+            style={{ opacity: scrollState.atEnd ? 0 : 1 }}
+          />
+          <button
+            type="button"
+            aria-label="向右滚动类型"
+            className="absolute right-0 top-1/2 z-20 flex size-6 -translate-y-1/2 items-center justify-center text-muted-foreground transition-opacity duration-200 hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent disabled:pointer-events-none"
+            disabled={scrollState.atEnd}
+            style={{ opacity: scrollState.atEnd ? 0 : 1 }}
+            onClick={() => {
+              const group = document.querySelector<HTMLDivElement>('[aria-label="企划类型筛选"]');
+              group?.scrollBy({ left: 160, behavior: "smooth" });
+            }}
+          >
+            <ChevronRight className="size-4" />
+          </button>
         </div>
         <Button
           type="button"
