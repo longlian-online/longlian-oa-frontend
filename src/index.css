@@ -31,6 +31,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
+  --color-placeholder: var(--placeholder);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
@@ -54,6 +55,7 @@
 @layer base {
   :root {
     color-scheme: light;
+    --placeholder: oklch(60% 0 0);
     --scrollbar-track: #f4f4f5;
     --scrollbar-thumb: #c4c7ce;
     --scrollbar-thumb-hover: #a1a5ae;
@@ -61,6 +63,7 @@
 
   .dark {
     color-scheme: dark;
+    --placeholder: oklch(68% 0 0);
     --scrollbar-track: #18191d;
     --scrollbar-thumb: #454952;
     --scrollbar-thumb-hover: #606672;
@@ -96,5 +99,19 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* 占位文字使用独立的中性灰，避免与已填写内容或辅助描述混淆。 */
+@layer utilities {
+  input[placeholder]::placeholder,
+  textarea[placeholder]::placeholder {
+    color: var(--placeholder);
+    opacity: 1;
+  }
+
+  [data-slot="select-trigger"][data-placeholder],
+  [data-slot="select-value"][data-placeholder] {
+    color: var(--placeholder);
   }
 }

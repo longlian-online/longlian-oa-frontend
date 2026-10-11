@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Check, ImagePlus, Info, Loader2, Plus, Tags, X } from "lucide-react";
+import { Check, Info, Loader2, Plus, Tags, X } from "lucide-react";
 
 import { createProject, updateProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
@@ -152,15 +152,13 @@ export default function CreateProject({ project }: CreateProjectProps) {
         </div>
       </div>
 
-      <div className="grid items-start justify-center gap-4 lg:grid-cols-[280px_minmax(0,720px)]">
-        <aside>
-          <section className="rounded-xl border bg-card p-4 shadow-sm">
+      <div className="grid items-start justify-center gap-4 lg:items-stretch lg:grid-cols-[280px_minmax(0,720px)]">
+        <aside className="lg:flex">
+          <section className="flex w-full flex-col rounded-xl border bg-card p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-medium text-foreground">视觉资产</h2>
-                <p className="text-xs text-muted-foreground">封面会显示在企划列表中</p>
+                <h2 className="text-sm font-medium text-foreground">封面</h2>
               </div>
-              <ImagePlus className="h-4 w-4 text-muted-foreground" />
             </div>
 
             <FileUpload
@@ -172,33 +170,13 @@ export default function CreateProject({ project }: CreateProjectProps) {
               imagePreview
               accept={["jpg", "jpeg", "png", "gif"]}
               maxSize={10 * 1024 * 1024}
-              className="[&>button]:h-[340px]"
+              fillHeight
               onChange={setCoverFile}
             />
-
-            <div className="mt-3 flex items-center gap-3 rounded-lg border bg-background/60 p-2.5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted">
-                {coverFile?.previewUrl ? (
-                  <img
-                    src={coverFile.previewUrl}
-                    alt="封面缩略图"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <ImagePlus className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">缩略图</p>
-                <p className="text-xs text-muted-foreground">
-                  {isEditing ? "保存后更新企划封面" : "创建后自动使用封面图片"}
-                </p>
-              </div>
-            </div>
           </section>
         </aside>
 
-        <main className="h-fit rounded-xl border bg-card p-5 shadow-sm">
+        <main className="rounded-xl border bg-card p-5 shadow-sm">
           <section className="border-b pb-4">
             <div className="mb-4 flex items-center gap-2">
               <Info className="h-4 w-4 text-muted-foreground" />

@@ -55,7 +55,7 @@
       "Field": {
         "discriminator": {
           "mapping": {
-            "files": "#/components/schemas/FilesField",
+            "file": "#/components/schemas/FileField",
             "multiline": "#/components/schemas/TextField",
             "text": "#/components/schemas/TextField"
           },
@@ -66,21 +66,15 @@
             "$ref": "#/components/schemas/TextField"
           },
           {
-            "$ref": "#/components/schemas/FilesField"
+            "$ref": "#/components/schemas/FileField"
           }
         ],
         "type": "object"
       },
-      "FilesField": {
+      "FileField": {
         "properties": {
-          "emptyText": {
-            "type": "string"
-          },
-          "files": {
-            "items": {
-              "$ref": "#/components/schemas/TaskAttachmentVO"
-            },
-            "type": "array"
+          "file": {
+            "$ref": "#/components/schemas/TaskAttachmentVO"
           },
           "key": {
             "type": "string"
@@ -1662,6 +1656,7 @@
     },
     "/app/projects/{projectId}/items/{itemId}/publish": {
       "patch": {
+        "description": "需项目中所有任务均已完成，存在未完成任务时拒绝公布",
         "operationId": "publishProjectItem",
         "parameters": [
           {
@@ -1704,7 +1699,7 @@
     },
     "/app/projects/{projectId}/workshop": {
       "delete": {
-        "description": "将指定企划从当前用户的个人工坊中移除",
+        "description": "将指定企划从当前用户的个人工坊中移除。企划负责人不能退出自己的企划",
         "operationId": "removeFromWorkshop",
         "parameters": [
           {
@@ -2622,7 +2617,7 @@
   "servers": [
     {
       "description": "Configured server URL",
-      "url": "http://127.0.0.1:64000"
+      "url": "https://sit.neo.oa.api.longlian.online/"
     }
   ],
   "tags": [

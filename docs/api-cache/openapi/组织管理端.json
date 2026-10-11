@@ -169,7 +169,7 @@
             "type": "string"
           },
           "status": {
-            "description": "状态精确筛选：ENABLED-启用，DISABLED-禁用，默认查启用",
+            "description": "状态精确筛选：ENABLED-启用，DISABLED-禁用，不传或为 null 时查询全部状态",
             "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           }
@@ -1939,7 +1939,7 @@
   "servers": [
     {
       "description": "Configured server URL",
-      "url": "http://127.0.0.1:64000"
+      "url": "https://sit.neo.oa.api.longlian.online/"
     }
   ],
   "tags": [

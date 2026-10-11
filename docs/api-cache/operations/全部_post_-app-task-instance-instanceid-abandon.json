@@ -33,5 +33,5 @@
     "tags": ["任务实例接口"]
   },
   "path": "/app/task/instance/{instanceId}/abandon",
-  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs"
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
 }

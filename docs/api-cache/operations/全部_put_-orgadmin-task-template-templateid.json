@@ -43,5 +43,5 @@
     "tags": ["任务模板管理"]
   },
   "path": "/orgadmin/task/template/{templateId}",
-  "sourceUrl": "http://127.0.0.1:64000/v3/api-docs"
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
 }
