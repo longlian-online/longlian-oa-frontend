@@ -1,6 +1,12 @@
 import { beforeEach, expect, test, vi } from "vite-plus/test";
 
-import { clearSession, getCurrentOrgId, getSessionRole, saveSession } from "@/lib/session";
+import {
+  clearSession,
+  getCurrentOrgId,
+  getSessionRole,
+  saveCurrentOrganization,
+  saveSession,
+} from "@/lib/session";
 
 const storage = new Map<string, string>();
 
@@ -53,4 +59,27 @@ test("clearing the session removes the declared org", (): void => {
   expect(storage.get("token")).toBeUndefined();
   expect(getCurrentOrgId()).toBeNull();
   expect(getSessionRole()).toBeNull();
+});
+
+test("switching organization preserves user and admin sessions", (): void => {
+  saveSession({ token: "user-token", userId: "1", defaultOrgId: "11", role: "ORG_ADMIN" });
+  storage.set("adminToken", "admin-token");
+  storage.set("adminRole", "SUPER_ADMIN");
+  saveCurrentOrganization("22", " ORG_USER ");
+
+  expect(getCurrentOrgId()).toBe("22");
+  expect(getSessionRole()).toBe("ORG_USER");
+  expect(storage.get("token")).toBe("user-token");
+  expect(storage.get("userId")).toBe("1");
+  expect(storage.get("adminToken")).toBe("admin-token");
+  expect(storage.get("adminRole")).toBe("SUPER_ADMIN");
+});
+
+test("switching without a role removes previous administrator privileges", (): void => {
+  for (const role of [undefined, null, "", "  "]) {
+    saveSession({ token: "user-token", userId: "1", defaultOrgId: "11", role: "ORG_ADMIN" });
+    saveCurrentOrganization("22", role);
+    expect(getSessionRole()).toBeNull();
+    expect(storage.has("role")).toBe(false);
+  }
 });

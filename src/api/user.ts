@@ -1,9 +1,16 @@
 import { request } from "@/api/request";
 import { getUserId } from "@/lib/session";
 import type { JoinByInviteCodeDTO, InviteInfoVO } from "@/types/auth";
-import type { ChangePasswordDTO, OrganizationSimpleInfoVO, UpdateMyInfoDTO, UserInfoVO } from "@/types/user";
+import type {
+  ChangePasswordDTO,
+  OrganizationSimpleInfoVO,
+  OrgIdDTO,
+  UpdateMyInfoDTO,
+  UserInfoVO,
+  UserOrgSwitchVO,
+} from "@/types/user";
 
-const USER_CACHE_TTL = 5 * 60 * 1000;
+const USER_CACHE_TTL = 60 * 1000;
 const USER_CACHE_PREFIX = "user-api-cache";
 
 interface UserCacheEntry<T> {
@@ -124,6 +131,15 @@ export async function getUserOrganizations(): Promise<OrganizationSimpleInfoVO[]
   } finally {
     userOrganizationRequests.delete(requestKey);
   }
+}
+
+export async function switchOrganization(dto: OrgIdDTO): Promise<UserOrgSwitchVO> {
+  const organization = await request<UserOrgSwitchVO>("/user/switch", {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+  invalidateCurrentUserCache();
+  return organization;
 }
 
 export async function updateMyInfo(dto: UpdateMyInfoDTO): Promise<void> {

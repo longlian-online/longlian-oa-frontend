@@ -12,16 +12,20 @@ const ADMIN_ROLE_KEY = "adminRole";
 export function saveSession(session: LoginVO): void {
   localStorage.setItem(TOKEN_KEY, session.token);
   localStorage.setItem(USER_ID_KEY, session.userId);
-  const orgId = usableOrgId(session.defaultOrgId);
-  if (orgId) {
-    localStorage.setItem(CURRENT_ORG_ID_KEY, orgId);
+  saveCurrentOrganization(session.defaultOrgId ?? "", session.role);
+  localStorage.removeItem("roles");
+}
+
+export function saveCurrentOrganization(orgId: string, role?: string | null): void {
+  const currentOrgId = usableOrgId(orgId);
+  if (currentOrgId) {
+    localStorage.setItem(CURRENT_ORG_ID_KEY, currentOrgId);
   } else {
     localStorage.removeItem(CURRENT_ORG_ID_KEY);
   }
-  localStorage.removeItem("roles");
-  const role = session.role?.trim();
-  if (role) {
-    localStorage.setItem(ROLE_KEY, role);
+  const normalizedRole = role?.trim();
+  if (normalizedRole) {
+    localStorage.setItem(ROLE_KEY, normalizedRole);
   } else {
     localStorage.removeItem(ROLE_KEY);
   }

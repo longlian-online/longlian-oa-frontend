@@ -220,11 +220,7 @@
             "minLength": 0,
             "type": "string"
           },
-          "iconFileId": {
-            "description": "图标文件ID",
-            "type": "string"
-          },
-          "iconName": {
+          "icon": {
             "description": "Lucide 图标组件名",
             "maxLength": 100,
             "minLength": 0,
@@ -309,12 +305,8 @@
             "description": "任务说明",
             "type": "string"
           },
-          "iconName": {
+          "icon": {
             "description": "Lucide 图标组件名",
-            "type": "string"
-          },
-          "iconUrl": {
-            "description": "图标URL",
             "type": "string"
           },
           "id": {
@@ -567,12 +559,8 @@
       "ItemTaskNodeVO": {
         "description": "任务流节点信息（含执行状态，用于流程图可视化）",
         "properties": {
-          "baseTaskIconName": {
+          "baseTaskIcon": {
             "description": "原子任务 Lucide 图标组件名",
-            "type": "string"
-          },
-          "baseTaskIconUrl": {
-            "description": "原子任务图标URL",
             "type": "string"
           },
           "baseTaskId": {
@@ -882,8 +870,7 @@
         "properties": {
           "orgRole": {
             "description": "组织角色",
-            "enum": ["ORG_ADMIN", "ORG_USER"],
-            "pattern": "ORG_ADMIN|ORG_USER",
+            "enum": ["ORG_ADMIN", "ORG_USER", "ORG_ADMIN", "ORG_USER"],
             "type": "string"
           }
         },
@@ -1319,7 +1306,8 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅含 key、value，key 为非空白字符串且可重复，value 为字符串且可为空",
+            "example": "{\"tags\":[{\"key\":\"作者\",\"value\":\"smile_snow\"}]}",
             "type": "string"
           },
           "title": {
@@ -1367,7 +1355,7 @@
             "type": "boolean"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串，包含 tags 数组，每项仅含 key、value)",
             "type": "string"
           },
           "pendingTaskCount": {
@@ -1399,6 +1387,10 @@
       "ProjectInfoVO": {
         "description": "企划信息",
         "properties": {
+          "alias": {
+            "description": "企划别名",
+            "type": "string"
+          },
           "coverUrl": {
             "description": "封面图片URL",
             "type": "string"
@@ -1416,7 +1408,7 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串，包含 tags 数组；搜索结果中命中 value 的 tags 稳定前置)",
             "type": "string"
           },
           "projectStatus": {
@@ -1569,7 +1561,7 @@
         "description": "企划查询请求参数",
         "properties": {
           "keyword": {
-            "description": "搜索关键词（标题）",
+            "description": "搜索关键词（标题、别名、元数据），按加权相关性优先排序",
             "maxLength": 50,
             "minLength": 0,
             "type": "string"
@@ -1716,7 +1708,7 @@
             "type": "string"
           },
           "coverFileId": {
-            "description": "封面文件ID",
+            "description": "封面文件ID；省略时保留原封面",
             "type": "string"
           },
           "description": {
@@ -1724,7 +1716,8 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅含 key、value，key 为非空白字符串且可重复，value 为字符串且可为空",
+            "example": "{\"tags\":[{\"key\":\"作者\",\"value\":\"smile_snow\"}]}",
             "type": "string"
           },
           "title": {
@@ -1732,7 +1725,7 @@
             "type": "string"
           }
         },
-        "required": ["alias", "coverFileId", "description", "metadata", "title"],
+        "required": ["alias", "description", "metadata", "title"],
         "type": "object"
       },
       "RegisterByInviteDTO": {
@@ -2207,12 +2200,8 @@
       "TaskTemplateNodeVO": {
         "description": "任务模板节点信息",
         "properties": {
-          "baseTaskIconName": {
+          "baseTaskIcon": {
             "description": "原子任务 Lucide 图标组件名",
-            "type": "string"
-          },
-          "baseTaskIconUrl": {
-            "description": "原子任务图标URL",
             "type": "string"
           },
           "baseTaskId": {
@@ -2403,7 +2392,7 @@
             "type": "string"
           },
           "lastSubmitterUsername": {
-            "description": "最近一次提交的用户名",
+            "description": "最近一次提交的昵称",
             "type": "string"
           },
           "title": {
@@ -2499,12 +2488,8 @@
       "WorkshopTaskTemplateNodeVO": {
         "description": "工坊任务流模板节点信息（卡片简化版）",
         "properties": {
-          "baseTaskIconName": {
+          "baseTaskIcon": {
             "description": "原子任务 Lucide 图标组件名",
-            "type": "string"
-          },
-          "baseTaskIconUrl": {
-            "description": "原子任务图标URL",
             "type": "string"
           },
           "baseTaskId": {
@@ -3908,7 +3893,7 @@
     },
     "/app/user/register/join-organization": {
       "post": {
-        "description": "使用组织管理员生成的邀请码完成注册，并加入指定组织",
+        "description": "使用邀请码提交注册入组申请，审批通过后创建账号并加入组织",
         "operationId": "registerAndJoinOrganizationByInvite",
         "requestBody": {
           "content": {
@@ -4512,7 +4497,7 @@
     },
     "/orgadmin/members/{memberId}/status": {
       "patch": {
-        "description": "禁用后用户无法登录；超管身份不可被禁用。status: ENABLED-启用，DISABLED-禁用",
+        "description": "仅限制成员访问当前组织，不改变用户全局账号状态。status: ENABLED-启用，DISABLED-禁用",
         "operationId": "changeMemberStatus",
         "parameters": [
           {
@@ -4949,6 +4934,38 @@
         "tags": ["原子任务管理"]
       }
     },
+    "/orgadmin/task/base/{taskId}": {
+      "delete": {
+        "description": "仅允许删除未被任务模板节点或项目任务节点引用的任务；已引用的任务应改为禁用",
+        "operationId": "deleteBaseTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "删除原子任务",
+        "tags": ["原子任务管理"]
+      }
+    },
     "/orgadmin/task/base/{taskId}/status": {
       "patch": {
         "description": "禁用后该任务无法被添加到新模板节点中，已引用的节点不受影响。status: ENABLED-启用，DISABLED-禁用",
@@ -5225,6 +5242,10 @@
       "name": "管理员会话接口"
     },
     {
+      "description": "原子任务（最小任务单元）管理；任务创建后不可编辑，仅支持启用/禁用和删除未被引用的任务",
+      "name": "原子任务管理"
+    },
+    {
       "description": "用户相关的基础操作接口",
       "name": "用户接口"
     },
@@ -5255,10 +5276,6 @@
     {
       "description": "组织成员管理：入组申请审核、组员列表、邀请",
       "name": "组织成员管理"
-    },
-    {
-      "description": "原子任务（最小任务单元）管理；任务创建后不可编辑，仅支持启用/禁用",
-      "name": "原子任务管理"
     },
     {
       "description": "任务流模板的增删改查与状态管理，仅管理员可操作",

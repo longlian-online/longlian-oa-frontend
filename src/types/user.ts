@@ -13,6 +13,14 @@ export interface OrganizationSimpleInfoVO {
   avatarUrl?: string;
 }
 
+export interface OrgIdDTO {
+  orgId: string;
+}
+
+export interface UserOrgSwitchVO extends OrganizationSimpleInfoVO {
+  role?: string;
+}
+
 export interface UpdateMyInfoDTO {
   nickname: string;
   avatarFileId?: string;
