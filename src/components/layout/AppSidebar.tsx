@@ -1,4 +1,4 @@
-import { BookOpen, type LucideIcon } from "lucide-react";
+import { BookOpen, type LucideIcon, Magnet } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -9,6 +9,8 @@ interface SidebarItem {
   label: string;
   icon?: LucideIcon;
   activePrefixes: readonly string[];
+  /** 命中 activePrefixes 但同时命中这里的前缀时，视为未激活（用于更具体的兄弟页） */
+  excludedPrefixes?: readonly string[];
 }
 
 const planningItems: readonly SidebarItem[] = [
@@ -17,6 +19,13 @@ const planningItems: readonly SidebarItem[] = [
     label: "企划",
     icon: BookOpen,
     activePrefixes: ["/dashboard/planning"],
+    excludedPrefixes: ["/dashboard/planning/shortage"],
+  },
+  {
+    to: "/dashboard/planning/shortage",
+    label: "缺人任务",
+    icon: Magnet,
+    activePrefixes: ["/dashboard/planning/shortage"],
   },
 ];
 
@@ -59,9 +68,15 @@ const orgAdminItems: readonly SidebarItem[] = [
 ];
 
 function isSidebarItemActive(pathname: string, item: SidebarItem): boolean {
-  if (
-    item.activePrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
-  ) {
+  const matched = item.activePrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+  if (matched && item.excludedPrefixes) {
+    return !item.excludedPrefixes.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+    );
+  }
+  if (matched) {
     return true;
   }
   if (pathname === "/dashboard" && item.to === "/dashboard/planning") return true;
