@@ -1,16 +1,16 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-10-10T06:24:18.928Z",
+  "generatedAt": "2026-10-11T14:40:53.035Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "34666df5417f960cc75a13937b67ca6e2d37b93e45b9d171f4765265ddd4527e",
-      "pathCount": 63,
-      "operationCount": 76
+      "sha256": "4056815dc0bb80134eb35951b6f054d156640732819aaed7553186960896a73b",
+      "pathCount": 64,
+      "operationCount": 77
     },
     {
       "name": "公共端",
@@ -26,7 +26,7 @@
       "slug": "用户端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF",
       "file": "openapi/用户端.json",
-      "sha256": "c2d71bea9cd5828bc3a2692066961f7ae380aac29587d044865c1eff4db179da",
+      "sha256": "a755a2a1509b57ee9d23539f2fabe260aeb1a41256e0204ba3d4ccb9a58f8020",
       "pathCount": 32,
       "operationCount": 38
     },
@@ -44,9 +44,9 @@
       "slug": "组织管理端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF",
       "file": "openapi/组织管理端.json",
-      "sha256": "42b82bf42fd0aa2d6238452cd174b48ddb6137ce0bb76fcfb5dc8747ea2bcf52",
-      "pathCount": 20,
-      "operationCount": 24
+      "sha256": "1ca0dbfcead82a2158b1e7efaac6e92b3176e67178af0381b9fadca4a6e7c54e",
+      "pathCount": 21,
+      "operationCount": 25
     }
   ],
   "operations": [
@@ -468,7 +468,7 @@
       "summary": "通过邀请码注册并加入组织",
       "tags": ["用户接口"],
       "file": "operations/全部_post_-app-user-register-join-organization.json",
-      "sha256": "740b747a4ab7ddb7187abb3606cb50137771101ed25790636cb3e61b96a33c88"
+      "sha256": "d353a1225282bcf0e917f7c9224f01fe537389b3adbf0059a4d73ac43691699b"
     },
     {
       "id": "全部_get_-app-user-register-join-organization-invite-info",
@@ -608,7 +608,7 @@
       "summary": "启用/禁用组员",
       "tags": ["组织成员管理"],
       "file": "operations/全部_patch_-orgadmin-members-memberid-status.json",
-      "sha256": "ee76eda951d333a2ee104b85b8b8091b8332ad374061f811ceba24594faea06c"
+      "sha256": "e33d6628ae31b7be0769219679aa61216cc88365fc60d35601d4ed07dc7869fd"
     },
     {
       "id": "全部_post_-orgadmin-members-applications",
@@ -739,6 +739,16 @@
       "tags": ["原子任务管理"],
       "file": "operations/全部_post_-orgadmin-task-base.json",
       "sha256": "e3cb4243781d9485ccb4794859b11c7124b4dddb7f14548987c49f5cae975435"
+    },
+    {
+      "id": "全部_delete_-orgadmin-task-base-taskid",
+      "document": "全部",
+      "method": "DELETE",
+      "path": "/orgadmin/task/base/{taskId}",
+      "summary": "删除原子任务",
+      "tags": ["原子任务管理"],
+      "file": "operations/全部_delete_-orgadmin-task-base-taskid.json",
+      "sha256": "fd86b05b7f6dec632a6d3b742b45576938ed97dd3c7d9d3c6a4f6cf154fa31cc"
     },
     {
       "id": "全部_patch_-orgadmin-task-base-taskid-status",
@@ -1168,7 +1178,7 @@
       "summary": "通过邀请码注册并加入组织",
       "tags": ["用户接口"],
       "file": "operations/用户端_post_-app-user-register-join-organization.json",
-      "sha256": "16f4ce0ddb3dad245367c6f1555a3d035b54bedff7906ed01c5de237e6610622"
+      "sha256": "4bee6acceb8f2705ab38f13993706ec1302c33c0024f8ef5c8d30f807c7c57f2"
     },
     {
       "id": "用户端_get_-app-user-register-join-organization-invite-info",
@@ -1368,7 +1378,7 @@
       "summary": "启用/禁用组员",
       "tags": ["组织成员管理"],
       "file": "operations/组织管理端_patch_-orgadmin-members-memberid-status.json",
-      "sha256": "bfbe17f69d62083e739cb7c004e9eced0e04de6469e5334cb7e700321f8868e8"
+      "sha256": "ce733e6402e11e051595af576d1dc39d27179064d5e79a57a8c56afa39cd2a7e"
     },
     {
       "id": "组织管理端_post_-orgadmin-members-applications",
@@ -1499,6 +1509,16 @@
       "tags": ["原子任务管理"],
       "file": "operations/组织管理端_post_-orgadmin-task-base.json",
       "sha256": "c81cdac433941f035755a3b98e5fff01664d26a246bb2f18cd4417ebeca254e0"
+    },
+    {
+      "id": "组织管理端_delete_-orgadmin-task-base-taskid",
+      "document": "组织管理端",
+      "method": "DELETE",
+      "path": "/orgadmin/task/base/{taskId}",
+      "summary": "删除原子任务",
+      "tags": ["原子任务管理"],
+      "file": "operations/组织管理端_delete_-orgadmin-task-base-taskid.json",
+      "sha256": "1a881c80b1afa83088418f95d237750bf10240cb2ab3aad435f8ce70741648de"
     },
     {
       "id": "组织管理端_patch_-orgadmin-task-base-taskid-status",

@@ -177,12 +177,8 @@
       "ItemTaskNodeVO": {
         "description": "任务流节点信息（含执行状态，用于流程图可视化）",
         "properties": {
-          "baseTaskIconName": {
+          "baseTaskIcon": {
             "description": "原子任务 Lucide 图标组件名",
-            "type": "string"
-          },
-          "baseTaskIconUrl": {
-            "description": "原子任务图标URL",
             "type": "string"
           },
           "baseTaskId": {
@@ -414,7 +410,8 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅含 key、value，key 为非空白字符串且可重复，value 为字符串且可为空",
+            "example": "{\"tags\":[{\"key\":\"作者\",\"value\":\"smile_snow\"}]}",
             "type": "string"
           },
           "title": {
@@ -462,7 +459,7 @@
             "type": "boolean"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串，包含 tags 数组，每项仅含 key、value)",
             "type": "string"
           },
           "pendingTaskCount": {
@@ -494,6 +491,10 @@
       "ProjectInfoVO": {
         "description": "企划信息",
         "properties": {
+          "alias": {
+            "description": "企划别名",
+            "type": "string"
+          },
           "coverUrl": {
             "description": "封面图片URL",
             "type": "string"
@@ -511,7 +512,7 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串，包含 tags 数组；搜索结果中命中 value 的 tags 稳定前置)",
             "type": "string"
           },
           "projectStatus": {
@@ -664,7 +665,7 @@
         "description": "企划查询请求参数",
         "properties": {
           "keyword": {
-            "description": "搜索关键词（标题）",
+            "description": "搜索关键词（标题、别名、元数据），按加权相关性优先排序",
             "maxLength": 50,
             "minLength": 0,
             "type": "string"
@@ -723,7 +724,7 @@
             "type": "string"
           },
           "coverFileId": {
-            "description": "封面文件ID",
+            "description": "封面文件ID；省略时保留原封面",
             "type": "string"
           },
           "description": {
@@ -731,7 +732,8 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅含 key、value，key 为非空白字符串且可重复，value 为字符串且可为空",
+            "example": "{\"tags\":[{\"key\":\"作者\",\"value\":\"smile_snow\"}]}",
             "type": "string"
           },
           "title": {
@@ -739,7 +741,7 @@
             "type": "string"
           }
         },
-        "required": ["alias", "coverFileId", "description", "metadata", "title"],
+        "required": ["alias", "description", "metadata", "title"],
         "type": "object"
       },
       "RegisterByInviteDTO": {
@@ -1113,7 +1115,7 @@
             "type": "string"
           },
           "lastSubmitterUsername": {
-            "description": "最近一次提交的用户名",
+            "description": "最近一次提交的昵称",
             "type": "string"
           },
           "title": {
@@ -1209,12 +1211,8 @@
       "WorkshopTaskTemplateNodeVO": {
         "description": "工坊任务流模板节点信息（卡片简化版）",
         "properties": {
-          "baseTaskIconName": {
+          "baseTaskIcon": {
             "description": "原子任务 Lucide 图标组件名",
-            "type": "string"
-          },
-          "baseTaskIconUrl": {
-            "description": "原子任务图标URL",
             "type": "string"
           },
           "baseTaskId": {
@@ -2361,7 +2359,7 @@
     },
     "/app/user/register/join-organization": {
       "post": {
-        "description": "使用组织管理员生成的邀请码完成注册，并加入指定组织",
+        "description": "使用邀请码提交注册入组申请，审批通过后创建账号并加入组织",
         "operationId": "registerAndJoinOrganizationByInvite",
         "requestBody": {
           "content": {

@@ -1,7 +1,7 @@
-import { useRef, useState, type ChangeEvent } from "react";
+import { useRef, useState, type ChangeEvent, type ReactElement } from "react";
 // 通知入口暂时隐藏，保留原实现以便后续恢复。
 // import { Bell } from "lucide-react";
-import { Check, KeyRound, LogOut, Pencil, Plus, UserRound } from "lucide-react";
+import { Check, KeyRound, LogOut, Pencil, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 
 import { logout } from "@/api/auth";
@@ -26,6 +26,7 @@ import { useUploadFile } from "@/hooks/useUploadFile";
 import { clearSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import type { InviteInfoVO } from "@/types/auth";
+import type { UseOrganizationSwitcherResult } from "@/hooks/useOrganizationSwitcher";
 import OrganizationIdentity from "./OrganizationIdentity";
 
 const navigationItems = [
@@ -49,7 +50,12 @@ function isSubMenuActive(pathname: string, targetPath: string): boolean {
   return pathname === targetPath || pathname.startsWith(`${targetPath}/`);
 }
 
-export default function AppHeader() {
+interface AppHeaderProps {
+  switcher: UseOrganizationSwitcherResult;
+  onMore: () => void;
+}
+
+export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactElement {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, role, refresh } = useCurrentUser();
@@ -96,6 +102,7 @@ export default function AppHeader() {
       setInviteCode("");
       setInviteInfo(null);
       setIsInviteConfirmOpen(false);
+      await switcher.refreshOrganizations();
     } finally {
       setIsJoining(false);
     }
@@ -174,7 +181,11 @@ export default function AppHeader() {
   return (
     <header className="border-border bg-sidebar grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b px-4">
       <div className="min-w-0">
-        <OrganizationIdentity />
+        <OrganizationIdentity
+          switcher={switcher}
+          onMore={onMore}
+          onJoin={() => setIsJoinOpen(true)}
+        />
       </div>
 
       <nav aria-label="主导航" className="flex items-center gap-1">
@@ -279,14 +290,6 @@ export default function AppHeader() {
                 ))}
               </div>
             </div>
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-              onClick={() => setIsJoinOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              加入组织
-            </Button>
             <Button
               variant="ghost"
               className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
