@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Filter, Search, Workflow } from "lucide-react";
+import { Search, Workflow } from "lucide-react";
 
 import { getWorkshopList } from "@/api/workshop";
 import EmptyState from "@/components/EmptyState";
@@ -9,13 +9,6 @@ import PaginationBar from "@/components/PaginationBar";
 import { WorkshopProjectCard } from "@/components/Workshop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 import type { WorkshopProjectInfoVO } from "@/types/workshop";
 
@@ -65,65 +58,79 @@ export default function WorkshopPage() {
 
   return (
     <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
-      <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">工坊</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            浏览已加入的企划，并进入工作流模板管理。
-          </p>
-        </div>
-
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
+      <h1 className="text-xl font-bold text-foreground">工坊</h1>
+      <div className="flex min-w-0 items-center gap-2">
+        <div
+          role="group"
+          aria-label="企划类型筛选"
+          className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1"
+        >
           <Button
             type="button"
-            variant={isMyCreated ? "secondary" : "ghost"}
+            variant={selectedType === "all" ? "secondary" : "ghost"}
             size="sm"
+            className="shrink-0 whitespace-nowrap"
+            aria-pressed={selectedType === "all"}
             onClick={() => {
-              setIsMyCreated(!isMyCreated);
+              setSelectedType("all");
               setPage(1);
             }}
           >
-            我创建的
+            所有类型
           </Button>
-
-          <Select
-            value={selectedType}
-            onValueChange={(value: string | null) => {
-              if (!value) return;
-              setSelectedType(value);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="h-8 w-36 shrink-0">
-              <Filter className="mr-1.5 h-3.5 w-3.5" />
-              <SelectValue>{selectedType === "all" ? "所有类型" : selectedType}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">所有类型</SelectItem>
-              {projectTypes.map((type) => (
-                <SelectItem key={type.id} value={type.name}>
-                  {type.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="relative w-64 max-w-full">
-            <Search className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleSearch();
+          {projectTypes.map((type) => (
+            <Button
+              key={type.id}
+              type="button"
+              variant={selectedType === type.name ? "secondary" : "ghost"}
+              size="sm"
+              className="shrink-0 whitespace-nowrap"
+              aria-pressed={selectedType === type.name}
+              onClick={() => {
+                setSelectedType(type.name);
+                setPage(1);
               }}
-              placeholder="搜索企划"
-              className="h-8 rounded-lg bg-secondary pl-9 text-sm"
-            />
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={handleSearch}>
-            搜索
-          </Button>
+            >
+              {type.name}
+            </Button>
+          ))}
         </div>
+        <Button
+          type="button"
+          variant={isMyCreated ? "secondary" : "ghost"}
+          size="sm"
+          className="shrink-0 whitespace-nowrap"
+          aria-pressed={isMyCreated}
+          onClick={() => {
+            setIsMyCreated(!isMyCreated);
+            setPage(1);
+          }}
+        >
+          我创建的
+        </Button>
+
+        <div className="relative w-28 shrink-0 sm:w-48 lg:w-64">
+          <Search className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") handleSearch();
+            }}
+            placeholder="搜索企划"
+            aria-label="搜索企划"
+            className="h-8 rounded-lg bg-secondary pl-9 text-sm"
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={handleSearch}
+        >
+          搜索
+        </Button>
       </div>
 
       {loading ? (
