@@ -49,6 +49,7 @@ function OrganizationProjectTypesContent() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState<ProjectTypeVO | null>(null);
   const [name, setName] = useState("");
+  const [priority, setPriority] = useState("0");
 
   useEffect(() => {
     void loadTypes();
@@ -78,12 +79,14 @@ function OrganizationProjectTypesContent() {
   function openCreateDialog(): void {
     setEditingType(null);
     setName("");
+    setPriority("0");
     setDialogOpen(true);
   }
 
   function openEditDialog(type: ProjectTypeVO): void {
     setEditingType(type);
     setName(type.name);
+    setPriority(String(type.priority));
     setDialogOpen(true);
   }
 
@@ -93,14 +96,27 @@ function OrganizationProjectTypesContent() {
       $tip("请输入企划类型名称", "error");
       return;
     }
+    const normalizedPriority = Number(priority);
+    if (
+      !priority.trim() ||
+      !Number.isInteger(normalizedPriority) ||
+      normalizedPriority < -2147483648 ||
+      normalizedPriority > 2147483647
+    ) {
+      $tip("优先级必须为 32 位整数", "error");
+      return;
+    }
 
     try {
       setMutatingId(editingType?.id ?? "new");
       if (editingType) {
-        await updateOrganizationProjectType(editingType.id, { name: normalizedName });
-        $tip("企划类型已重命名", "success");
+        await updateOrganizationProjectType(editingType.id, {
+          name: normalizedName,
+          priority: normalizedPriority,
+        });
+        $tip("企划类型已更新", "success");
       } else {
-        await createOrganizationProjectType({ name: normalizedName });
+        await createOrganizationProjectType({ name: normalizedName, priority: normalizedPriority });
         $tip("企划类型已创建", "success");
       }
       setDialogOpen(false);
@@ -198,6 +214,7 @@ function OrganizationProjectTypesContent() {
               <TableHeader>
                 <TableRow>
                   <TableHead>类型名称</TableHead>
+                  <TableHead>优先级</TableHead>
                   <TableHead>创建人</TableHead>
                   <TableHead>创建时间</TableHead>
                   <TableHead>状态</TableHead>
@@ -211,6 +228,7 @@ function OrganizationProjectTypesContent() {
                   return (
                     <TableRow key={type.id}>
                       <TableCell className="font-medium text-foreground">{type.name}</TableCell>
+                      <TableCell>{type.priority}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {type.creatorNickname || "—"}
                       </TableCell>
@@ -228,13 +246,13 @@ function OrganizationProjectTypesContent() {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            aria-label="重命名企划类型"
-                            title="重命名企划类型"
+                            aria-label="编辑企划类型"
+                            title="编辑企划类型"
                             disabled={isMutating}
                             onClick={() => openEditDialog(type)}
                           >
                             <Edit3 className="size-4" />
-                            <span>重命名</span>
+                            <span>编辑</span>
                           </Button>
                           <Button
                             type="button"
@@ -295,9 +313,9 @@ function OrganizationProjectTypesContent() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingType ? "重命名企划类型" : "新增企划类型"}</DialogTitle>
+            <DialogTitle>{editingType ? "编辑企划类型" : "新增企划类型"}</DialogTitle>
             <DialogDescription>
-              {editingType ? "修改类型名称后会立即在组织内生效。" : "新增一个组织可用的企划类型。"}
+              {editingType ? "修改类型名称与优先级。" : "新增一个组织可用的企划类型。"}
             </DialogDescription>
           </DialogHeader>
           <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
@@ -312,6 +330,23 @@ function OrganizationProjectTypesContent() {
                 if (event.key === "Enter") void handleSaveType();
               }}
             />
+          </label>
+          <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+            优先级
+            <Input
+              type="number"
+              step={1}
+              min={-2147483648}
+              max={2147483647}
+              value={priority}
+              onChange={(event) => setPriority(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void handleSaveType();
+              }}
+            />
+            <span className="text-xs font-normal text-muted-foreground">
+              仅影响用户端企划类型的展示顺序，数值越大越靠前，默认 0。
+            </span>
           </label>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>

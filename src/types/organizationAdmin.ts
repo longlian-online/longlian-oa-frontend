@@ -97,15 +97,18 @@ export interface ProjectTypeListDTO {
 
 export interface ProjectTypeCreateDTO {
   name: string;
+  priority?: number;
 }
 
 export interface ProjectTypeUpdateDTO {
   name: string;
+  priority?: number;
 }
 
 export interface ProjectTypeVO {
   id: string;
   name: string;
+  priority: number;
   status: OrganizationResourceStatus;
   creatorId?: string;
   creatorNickname?: string;
