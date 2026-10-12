@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { ArrowUpDown, Filter, Sparkles } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Sparkles } from "lucide-react";
 
 import { claimTask } from "@/api/workflowInstance";
 import { getTaskPlaza } from "@/api/plaza";
@@ -23,6 +23,9 @@ import type { PlazaProjectGroup, PlazaSortBy, PlazaTask } from "@/types/plaza";
 
 const PAGE_SIZE = 8;
 const DEFAULT_SORT: PlazaSortBy = "WAIT";
+
+/** 分组默认展示的任务数，超出需手动展开 */
+const COLLAPSED_TASK_LIMIT = 6;
 
 const sortOptions = [
   { value: "WAIT", label: "等待最久" },
@@ -216,6 +219,10 @@ interface ProjectGroupSectionProps {
 }
 
 function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionProps) {
+  const [expanded, setExpanded] = useState(false);
+  const hasMore = group.tasks.length > COLLAPSED_TASK_LIMIT;
+  const visibleTasks = expanded ? group.tasks : group.tasks.slice(0, COLLAPSED_TASK_LIMIT);
+
   return (
     <section>
       <div className="flex items-center gap-3">
@@ -250,7 +257,7 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {group.tasks.map((task) => (
+        {visibleTasks.map((task) => (
           <PlazaTaskCard
             key={task.instanceId}
             group={group}
@@ -260,6 +267,27 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
           />
         ))}
       </div>
+
+      {hasMore && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground -ml-1 mt-2 hover:text-foreground"
+          onClick={() => setExpanded((prev) => !prev)}
+        >
+          {expanded ? (
+            <>
+              <ChevronUp className="size-4" />
+              收起
+            </>
+          ) : (
+            <>
+              <ChevronDown className="size-4" />
+              展开全部 {group.tasks.length} 项
+            </>
+          )}
+        </Button>
+      )}
     </section>
   );
 }
