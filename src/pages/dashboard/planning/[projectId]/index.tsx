@@ -9,14 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useConfirm } from "@/hooks/useConfirm";
+import { getStatusLabel } from "@/lib/projectStatus";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
-import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
-
-function getStatusLabel(status: ProjectStatus): string {
-  if (status === "COMPLETED" || status === "已完成") return "已完成";
-  if (status === "ARCHIVED" || status === "已归档") return "已归档";
-  return "进行中";
-}
+import type { ProjectDetailInfoVO } from "@/types/planning";
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();

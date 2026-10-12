@@ -10,11 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { getStatusLabel } from "@/lib/projectStatus";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 import type { UploadedFileInfo } from "@/types/file";
-import type { ProjectDetailInfoVO } from "@/types/planning";
+import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
 
 interface TagItem {
   key: string;
@@ -39,6 +40,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
     alias: project?.alias ?? "",
     typeId: "",
     description: project?.description ?? "",
+    status: project ? getStatusLabel(project.status) : "",
   });
   const [tags, setTags] = useState<TagItem[]>(parseProjectMetadataTags(project?.metadata));
   const [newTagKey, setNewTagKey] = useState("");
@@ -104,6 +106,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
           description: formData.description.trim(),
           metadata: JSON.stringify({ tags: submittedTags }),
           coverFileId: coverFile?.fileId || undefined,
+          status:
+            formData.status === "进行中" || formData.status === "已完成"
+              ? formData.status
+              : undefined,
         });
         $tip("企划已更新", "success");
         void navigate(`/dashboard/planning/${project.id}`);
@@ -240,6 +246,38 @@ export default function CreateProject({ project }: CreateProjectProps) {
                   </SelectContent>
                 </Select>
               </div>
+
+              {isEditing && (
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium text-foreground">状态</label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value: string | null) =>
+                      setFormData({ ...formData, status: (value ?? "") as ProjectStatus | "" })
+                    }
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        fieldClassName,
+                        "h-10 w-full justify-between px-3 text-sm font-medium",
+                      )}
+                    >
+                      <span className={cn("truncate", !formData.status && "text-muted-foreground")}>
+                        {formData.status || "选择状态"}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {formData.status === "已归档" && (
+                        <SelectItem value="已归档" disabled>
+                          已归档
+                        </SelectItem>
+                      )}
+                      <SelectItem value="进行中">进行中</SelectItem>
+                      <SelectItem value="已完成">已完成</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </section>
 

@@ -62,6 +62,7 @@ export interface ProjectUpdateDTO {
   metadata: string;
   description: string;
   coverFileId?: string;
+  status?: ProjectStatus;
 }
 
 export interface PageResult<T> {
