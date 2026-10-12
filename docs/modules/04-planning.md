@@ -102,3 +102,14 @@ interface ProjectInfoVO {
 - 依赖文件上传模块。
 - 依赖公共 UI 与反馈模块。
 - 后续项目模块会挂在企划详情下。
+
+## 任务大厅
+
+- 入口：`/dashboard/planning/shortage`，侧栏保留一个任务大厅入口。
+- 页签“所有待接取”默认选中，显式请求 `stageScope=ALL`；“当前阶段”请求 `CURRENT`。
+- URL 查询参数 `stageScope` 保留刷新、分享及浏览器前进后退时的视图。
+- 切换视图重置到第一页并收起分组，保留搜索、企划类型和排序。
+- 每个企划默认展示 6 项，超出可展开/收起；按企划分页，每页 8 个。
+- 任务卡通过 `isCurrentStage` 标注当前阶段或后续阶段，两者均可接取；后续阶段支持提前认领，不代表前置工作已完成。
+- 接口：`GET /app/task/instance/plaza`，未传 `stageScope` 时后端默认 `CURRENT`。
+
