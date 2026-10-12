@@ -61,7 +61,7 @@ export default function TaskPlaza() {
       setGroups(result.list);
       setTotal(result.total);
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "加载缺人任务失败", "error");
+      $tip(error instanceof Error ? error.message : "加载任务大厅失败", "error");
     } finally {
       setLoading(false);
     }
@@ -105,7 +105,7 @@ export default function TaskPlaza() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-foreground">缺人任务</h1>
+        <h1 className="text-lg font-semibold text-foreground">任务大厅</h1>
         {!loading && (
           <p className="mt-1 text-sm text-muted-foreground">
             {total > 0 ? `共 ${total} 个企划正在缺人` : "暂无企划缺人"}
@@ -175,7 +175,7 @@ export default function TaskPlaza() {
       />
 
       {loading ? (
-        <PageLoading message="正在加载缺人任务..." />
+        <PageLoading message="正在加载任务大厅..." />
       ) : groups.length === 0 ? (
         <EmptyState
           icon={<Sparkles className="h-5 w-5 text-muted-foreground" />}

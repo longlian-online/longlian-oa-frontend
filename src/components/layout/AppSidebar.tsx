@@ -23,7 +23,7 @@ const planningItems: readonly SidebarItem[] = [
   },
   {
     to: "/dashboard/planning/shortage",
-    label: "缺人任务",
+    label: "任务大厅",
     icon: Magnet,
     activePrefixes: ["/dashboard/planning/shortage"],
   },

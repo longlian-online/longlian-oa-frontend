@@ -1,6 +1,6 @@
 export type PlazaSortBy = "WAIT" | "LATEST" | "MOST";
 
-/** 缺人任务（任务广场）单条任务 */
+/** 任务大厅单条缺人任务 */
 export interface PlazaTask {
   instanceId: string;
   itemId: string;
@@ -20,7 +20,7 @@ export interface PlazaTask {
   createdAt: string;
 }
 
-/** 缺人任务按企划分组 */
+/** 任务大厅按企划分组 */
 export interface PlazaProjectGroup {
   projectId: string;
   title: string;
