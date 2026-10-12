@@ -1,4 +1,5 @@
 export type PlazaSortBy = "WAIT" | "LATEST" | "MOST";
+export type PlazaStageScope = "ALL" | "CURRENT";
 
 /** 任务大厅单条缺人任务 */
 export interface PlazaTask {
@@ -6,11 +7,12 @@ export interface PlazaTask {
   itemId: string;
   itemTitle: string;
   nodeName: string;
-  /** 当前阶段序号（1 开始） */
+  isCurrentStage: boolean;
+  /** 任务所属阶段序号（1 开始） */
   stageIndex: number;
   /** 任务流总阶段数 */
   stageTotal: number;
-  /** 当前阶段并行槽总数 */
+  /** 任务所属阶段并行槽总数 */
   parallelTotal: number;
   /** 已被占用的并行槽数（已接取或已完成） */
   filledSlots: number;
@@ -37,6 +39,7 @@ export interface PlazaListDTO {
   keyword?: string;
   projectType?: string;
   sortBy?: PlazaSortBy;
+  stageScope?: PlazaStageScope;
   pageNum?: number;
   pageSize?: number;
 }

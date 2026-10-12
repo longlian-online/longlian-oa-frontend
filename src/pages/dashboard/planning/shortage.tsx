@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Sparkles } from "lucide-react";
 
 import { claimTask } from "@/api/workflowInstance";
@@ -37,6 +37,10 @@ const DAY_MS = 86_400_000;
 
 export default function TaskPlaza() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const stageScope = searchParams.get("stageScope") === "CURRENT" ? "CURRENT" : "ALL";
+  const [previousScope, setPreviousScope] = useState(stageScope);
+  const requestVersion = useRef(0);
   const { projectTypes } = useProjectTypes();
   const [groups, setGroups] = useState<PlazaProjectGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,12 +50,18 @@ export default function TaskPlaza() {
   const [pageNum, setPageNum] = useState(1);
   const [total, setTotal] = useState(0);
   const [claiming, setClaiming] = useState<Set<string>>(new Set());
+  if (previousScope !== stageScope) {
+    setPreviousScope(stageScope);
+    setPageNum(1);
+    setGroups([]);
+  }
 
   useEffect(() => {
     void loadPlaza();
-  }, [pageNum, selectedType, sortBy]);
+  }, [pageNum, selectedType, sortBy, stageScope]);
 
   async function loadPlaza(targetPage = pageNum): Promise<void> {
+    const version = ++requestVersion.current;
     try {
       setLoading(true);
       const result = await getTaskPlaza({
@@ -60,13 +70,15 @@ export default function TaskPlaza() {
         keyword: keyword || undefined,
         projectType: selectedType === "all" ? undefined : selectedType,
         sortBy,
+        stageScope,
       });
+      if (version !== requestVersion.current) return;
       setGroups(result.list);
       setTotal(result.total);
     } catch (error) {
       $tip(error instanceof Error ? error.message : "加载任务大厅失败", "error");
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   }
 
@@ -111,9 +123,27 @@ export default function TaskPlaza() {
         <h1 className="text-lg font-semibold text-foreground">任务大厅</h1>
         {!loading && (
           <p className="mt-1 text-sm text-muted-foreground">
-            {total > 0 ? `共 ${total} 个企划正在缺人` : "暂无企划缺人"}
+            {total > 0 ? `共 ${total} 个企划有待接取任务` : "暂无待接取任务"}
           </p>
         )}
+      </div>
+
+      <div role="tablist" aria-label="任务阶段范围" className="flex gap-2 border-b pb-2">
+        {(["ALL", "CURRENT"] as const).map((scope) => (
+          <Button
+            key={scope}
+            role="tab"
+            aria-selected={stageScope === scope}
+            variant={stageScope === scope ? "secondary" : "ghost"}
+            onClick={() => {
+              const next = new URLSearchParams(searchParams);
+              next.set("stageScope", scope);
+              setSearchParams(next);
+            }}
+          >
+            {scope === "ALL" ? "所有待接取" : "当前阶段"}
+          </Button>
+        ))}
       </div>
 
       <FilterToolbar
@@ -182,8 +212,8 @@ export default function TaskPlaza() {
       ) : groups.length === 0 ? (
         <EmptyState
           icon={<Sparkles className="h-5 w-5 text-muted-foreground" />}
-          title="当前没有缺人的任务"
-          description="所有进行中的企划都满员运转中"
+          title="当前没有待接取任务"
+          description="此视图下没有匹配的待接取任务，可以切换视图或调整筛选。"
           action={<Button onClick={() => navigate("/dashboard/planning")}>去广场看看企划</Button>}
         />
       ) : (
@@ -191,7 +221,7 @@ export default function TaskPlaza() {
           <div className="space-y-6">
             {groups.map((group) => (
               <ProjectGroupSection
-                key={group.projectId}
+                key={`${stageScope}-${group.projectId}`}
                 group={group}
                 claiming={claiming}
                 onClaim={handleClaim}
@@ -312,6 +342,9 @@ function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
           第 {task.stageIndex}/{task.stageTotal} 步
         </span>
       </div>
+      <Badge variant="outline" className="mt-1 text-xs font-normal">
+        {task.isCurrentStage ? "当前阶段" : "后续阶段"}
+      </Badge>
 
       <div className="mt-1.5 flex items-center justify-between gap-2">
         <button
