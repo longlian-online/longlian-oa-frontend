@@ -1,4 +1,4 @@
-import type { TaskAttachment, TaskInstanceDetailVO } from "@/types/workflowInstance";
+import type { TaskAttachment, TaskDetailField } from "@/types/workflowInstance";
 
 export class AttachmentOpenError extends Error {}
 
@@ -11,9 +11,8 @@ export interface AttachmentPopup {
 interface OpenTaskAttachmentOptions {
   now: () => number;
   openPopup: () => AttachmentPopup | null;
-  loadDetail: () => Promise<TaskInstanceDetailVO>;
+  loadFields: () => Promise<TaskDetailField[]>;
   isCurrent: () => boolean;
-  onDetail: (detail: TaskInstanceDetailVO) => void;
 }
 
 /** Reserve the browser tab in the click handler, before any signed-link refresh. */
@@ -28,13 +27,12 @@ export async function openTaskAttachment(
   try {
     let currentAttachment = attachment;
     if (attachment.expiresAt <= options.now() + 10) {
-      const detail = await options.loadDetail();
+      const freshFields = await options.loadFields();
       if (!options.isCurrent()) {
         popup.close();
         return;
       }
-      options.onDetail(detail);
-      const freshAttachment = detail.submission.fields
+      const freshAttachment = freshFields
         .map((field) => (field.type === "file" ? field.file : null))
         .find((file) => file?.id === attachment.id);
       if (!freshAttachment || freshAttachment.availability !== "available") {
