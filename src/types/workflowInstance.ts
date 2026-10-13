@@ -3,6 +3,7 @@ import type { TaskFormField, TaskSubmitValue } from "./task";
 export type TaskInstanceStatus = "PENDING" | "CLAIMED" | "COMPLETED";
 
 export interface ItemTaskFlowVO {
+  itemTitle: string;
   name: string;
   description?: string;
   nodes: ItemTaskNodeVO[];
