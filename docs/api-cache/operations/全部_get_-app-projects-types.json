@@ -2,7 +2,7 @@
   "document": "全部",
   "method": "GET",
   "operation": {
-    "description": "仅返回启用状态的类型",
+    "description": "仅返回启用状态的类型，按优先级降序，同优先级按 ID 升序；优先级不影响其他列表排序",
     "operationId": "getProjectTypes",
     "parameters": [
       {

@@ -1,0 +1,42 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "分页返回当前组织内可接取的缺人任务，按企划分组。stageScope=ALL 返回所有阶段，CURRENT（默认）仅返回首个未完成阶段",
+    "operationId": "getTaskPlaza",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "query",
+        "name": "listDTO",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/TaskPlazaListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOPlazaProjectGroupVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "任务广场（缺人任务）",
+    "tags": ["任务实例接口"]
+  },
+  "path": "/app/task/instance/plaza",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

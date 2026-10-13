@@ -558,7 +558,7 @@
   "servers": [
     {
       "description": "Configured server URL",
-      "url": "https://sit.neo.oa.api.longlian.online/"
+      "url": "https://api.test.longlian.online"
     }
   ],
   "tags": [

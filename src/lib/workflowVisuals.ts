@@ -1,34 +1,9 @@
 import type { LucideIcon } from "lucide-react";
-import {
-  BadgeCheck,
-  BookOpen,
-  Clapperboard,
-  Image,
-  Languages,
-  Megaphone,
-  PenLine,
-  SquarePen,
-  Star,
-} from "lucide-react";
-
-export const WORKFLOW_ICON_OPTIONS = [
-  { name: "BadgeCheck", label: "创建", icon: BadgeCheck },
-  { name: "Languages", label: "翻译", icon: Languages },
-  { name: "SquarePen", label: "审核", icon: SquarePen },
-  { name: "PenLine", label: "嵌字", icon: PenLine },
-  { name: "Megaphone", label: "发布", icon: Megaphone },
-  { name: "BookOpen", label: "文本", icon: BookOpen },
-  { name: "Image", label: "美术", icon: Image },
-  { name: "Clapperboard", label: "视频", icon: Clapperboard },
-  { name: "Star", label: "通用", icon: Star },
-] as const;
-
-const WORKFLOW_ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
-  WORKFLOW_ICON_OPTIONS.map(({ name, icon }) => [name, icon]),
-);
+import { BadgeCheck, Languages, Megaphone, SquarePen, Star, icons } from "lucide-react";
 
 export function getWorkflowTaskIcon(taskName: string, iconName?: string): LucideIcon {
-  const selectedIcon = iconName && WORKFLOW_ICON_MAP[iconName];
+  const selectedIcon =
+    iconName && Object.hasOwn(icons, iconName) ? icons[iconName as keyof typeof icons] : undefined;
   if (selectedIcon) return selectedIcon;
 
   if (taskName.includes("翻译") || taskName.includes("校对")) return Languages;
