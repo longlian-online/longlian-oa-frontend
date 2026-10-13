@@ -72,7 +72,7 @@ export default function NodeInspector({
         <div>
           <p className="text-sm font-medium text-foreground">基础任务</p>
           <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <div className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary/10 text-primary">
               <Icon className="size-3.5" />
             </div>
             <span className="truncate">{baseTask?.name || "未知任务"}</span>

@@ -100,7 +100,7 @@ function WorkflowDiagram({ nodes }: { nodes: WorkshopTaskTemplateNodeVO[] }) {
         return (
           <div key={`${stage.label}-${index}`} className="flex min-w-0 flex-1 items-start">
             <div className="flex min-w-0 flex-1 flex-col items-center">
-              <div className="flex size-8 items-center justify-center rounded-full bg-foreground text-background">
+              <div className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-foreground text-background">
                 <Icon className="size-3.5" />
               </div>
               <WorkflowParallelBadge count={stage.parallelCount} />

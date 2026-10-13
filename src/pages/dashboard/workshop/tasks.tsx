@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ExternalLink,
   Loader2,
+  Pencil,
   Plus,
   Search,
   Trash2,
@@ -16,6 +17,7 @@ import {
   createOrganizationBaseTask,
   deleteOrganizationBaseTask,
   getOrganizationBaseTaskList,
+  updateOrganizationBaseTask,
 } from "@/api/organizationAdmin";
 import BaseTaskFieldsEditor from "@/components/BaseTaskFieldsEditor";
 import EmptyState from "@/components/EmptyState";
@@ -69,8 +71,9 @@ function BaseTaskManagementContent() {
   const [total, setTotal] = useState(0);
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editingTask, setEditingTask] = useState<OrganizationBaseTaskVO | null>(null);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
   const [form, setForm] = useState<BaseTaskForm>(EMPTY_FORM);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
@@ -107,6 +110,27 @@ function BaseTaskManagementContent() {
   function handleSearch(): void {
     setKeyword(searchText.trim());
     setPage(1);
+  }
+
+  function openCreate(): void {
+    setEditingTask(null);
+    setForm(EMPTY_FORM);
+    setIconPickerOpen(false);
+    setIconKeyword("");
+    setFormOpen(true);
+  }
+
+  function openEdit(task: OrganizationBaseTaskVO): void {
+    setEditingTask(task);
+    setForm({
+      name: task.name ?? "",
+      description: task.description ?? "",
+      icon: task.icon,
+      submitFields: task.submitFields.map((field) => ({ ...field, options: [...field.options] })),
+    });
+    setIconPickerOpen(false);
+    setIconKeyword("");
+    setFormOpen(true);
   }
 
   function addSubmitField(): void {
@@ -160,7 +184,7 @@ function BaseTaskManagementContent() {
     }
   }
 
-  async function handleCreate(): Promise<void> {
+  async function handleSave(): Promise<void> {
     const name = form.name.trim();
     if (!name) {
       $tip("请输入任务名称", "error");
@@ -185,7 +209,7 @@ function BaseTaskManagementContent() {
     const payload: OrganizationBaseTaskCreateDTO = {
       name,
       description: form.description.trim() || undefined,
-      icon: form.icon,
+      icon: form.icon?.trim() || undefined,
       submitFields: form.submitFields.map((field) => ({
         ...field,
         label: field.label.trim(),
@@ -197,17 +221,25 @@ function BaseTaskManagementContent() {
     };
 
     try {
-      setCreating(true);
-      await createOrganizationBaseTask(payload);
-      $tip("原子任务已创建", "success");
-      setCreateOpen(false);
+      setSaving(true);
+      if (editingTask) {
+        await updateOrganizationBaseTask(editingTask.id, payload);
+      } else {
+        await createOrganizationBaseTask(payload);
+      }
+      $tip(editingTask ? "原子任务已修改" : "原子任务已创建", "success");
+      setFormOpen(false);
       setForm(EMPTY_FORM);
+      setEditingTask(null);
       setIconPickerOpen(false);
       setIconKeyword("");
-      setPage(1);
-      await loadTasks();
+      if (!editingTask && page !== 1) {
+        setPage(1);
+      } else {
+        await loadTasks();
+      }
     } finally {
-      setCreating(false);
+      setSaving(false);
     }
   }
 
@@ -253,7 +285,7 @@ function BaseTaskManagementContent() {
         <div>
           <h1 className="text-xl font-bold text-foreground">原子任务</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            管理工作流可使用的基础节点。创建后不可编辑；未被引用的任务可以删除，已被引用的任务请禁用。
+            管理工作流可使用的基础节点，支持创建、编辑和启用或禁用；未被引用的任务可以删除，已被引用的任务请禁用。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -270,7 +302,7 @@ function BaseTaskManagementContent() {
           <Button variant="outline" onClick={handleSearch}>
             搜索
           </Button>
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={openCreate}>
             <Plus data-icon="inline-start" />
             创建任务
           </Button>
@@ -284,7 +316,7 @@ function BaseTaskManagementContent() {
           icon={<Workflow className="size-5 text-muted-foreground" />}
           title="暂无原子任务"
           description="先创建翻译、审核、嵌字等任务，再去编排工作流。"
-          action={<Button onClick={() => setCreateOpen(true)}>创建第一个任务</Button>}
+          action={<Button onClick={openCreate}>创建第一个任务</Button>}
         />
       ) : (
         <>
@@ -297,7 +329,7 @@ function BaseTaskManagementContent() {
                 <article key={task.id} className="flex flex-col rounded-lg border bg-card p-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-3">
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
                         <Icon className="size-4" />
                       </div>
                       <div className="min-w-0">
@@ -318,6 +350,15 @@ function BaseTaskManagementContent() {
                       已被 {task.refCount} 个模板引用
                     </div>
                     <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={mutatingId === task.id}
+                        onClick={() => openEdit(task)}
+                      >
+                        <Pencil data-icon="inline-start" />
+                        编辑
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -370,12 +411,19 @@ function BaseTaskManagementContent() {
         </>
       )}
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog
+        open={formOpen}
+        onOpenChange={(open) => {
+          if (!saving) setFormOpen(open);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>创建原子任务</DialogTitle>
+            <DialogTitle>{editingTask ? "编辑原子任务" : "创建原子任务"}</DialogTitle>
             <DialogDescription>
-              创建后名称、说明和字段定义不可修改，请确认无误后提交。
+              {editingTask
+                ? "修改会影响所有引用模板及后续新建工作流；已有工作流保留名称和提交字段，图标同步更新。"
+                : "定义任务名称、图标和提交字段，创建后可继续编辑。"}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
@@ -523,12 +571,12 @@ function BaseTaskManagementContent() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" disabled={creating} onClick={() => setCreateOpen(false)}>
+            <Button variant="outline" disabled={saving} onClick={() => setFormOpen(false)}>
               取消
             </Button>
-            <Button disabled={creating || !form.name.trim()} onClick={() => void handleCreate()}>
-              {creating && <Loader2 data-icon="inline-start" className="animate-spin" />}
-              创建
+            <Button disabled={saving || !form.name.trim()} onClick={() => void handleSave()}>
+              {saving && <Loader2 data-icon="inline-start" className="animate-spin" />}
+              {editingTask ? "保存修改" : "创建"}
             </Button>
           </DialogFooter>
         </DialogContent>

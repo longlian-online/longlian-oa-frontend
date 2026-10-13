@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { ChevronRight, Search, Workflow } from "lucide-react";
+import { ArrowDownUp, ChevronRight, Search, Workflow } from "lucide-react";
 
 import { getWorkshopList } from "@/api/workshop";
 import EmptyState from "@/components/EmptyState";
@@ -9,10 +9,22 @@ import PaginationBar from "@/components/PaginationBar";
 import { WorkshopProjectCard } from "@/components/Workshop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
-import type { WorkshopProjectInfoVO } from "@/types/workshop";
+import type { WorkshopProjectInfoVO, WorkshopSortBy } from "@/types/workshop";
 
 const PAGE_SIZE = 8;
+const SORT_LABELS: Record<WorkshopSortBy, string> = {
+  RECENT_SUBMISSION: "最近提交",
+  CREATED_DESC: "最新创建",
+  CREATED_ASC: "最早创建",
+};
 
 export default function WorkshopPage() {
   const navigate = useNavigate();
@@ -23,13 +35,36 @@ export default function WorkshopPage() {
   const [searchText, setSearchText] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [isMyCreated, setIsMyCreated] = useState(false);
+  const [sortBy, setSortBy] = useState<WorkshopSortBy>("RECENT_SUBMISSION");
   const [scrollState, setScrollState] = useState({ atStart: true, atEnd: false });
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
+    let active = true;
+    async function loadWorkshopProjects(): Promise<void> {
+      try {
+        setLoading(true);
+        const data = await getWorkshopList({
+          pageNum: page,
+          pageSize: PAGE_SIZE,
+          keyword: keyword || undefined,
+          projectType: selectedType === "all" ? undefined : selectedType,
+          isMyCreated,
+          sortBy,
+        });
+        if (!active) return;
+        setProjects(data.list);
+        setTotal(data.total);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
     void loadWorkshopProjects();
-  }, [page, keyword, selectedType, isMyCreated]);
+    return () => {
+      active = false;
+    };
+  }, [page, keyword, selectedType, isMyCreated, sortBy]);
 
   useEffect(() => {
     const group = document.querySelector<HTMLDivElement>('[aria-label="企划类型筛选"]');
@@ -50,23 +85,6 @@ export default function WorkshopPage() {
     };
   }, [projectTypes]);
 
-  async function loadWorkshopProjects(): Promise<void> {
-    try {
-      setLoading(true);
-      const data = await getWorkshopList({
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-        keyword: keyword || undefined,
-        projectType: selectedType === "all" ? undefined : selectedType,
-        isMyCreated,
-      });
-      setProjects(data.list);
-      setTotal(data.total);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   function handleSearch(): void {
     setKeyword(searchText.trim());
     setPage(1);
@@ -78,7 +96,34 @@ export default function WorkshopPage() {
 
   return (
     <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
-      <h1 className="text-xl font-bold text-foreground">工坊</h1>
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <h1 className="text-xl font-bold text-foreground">工坊</h1>
+        <Select
+          value={sortBy}
+          onValueChange={(value: string | null) => {
+            if (
+              value !== "RECENT_SUBMISSION" &&
+              value !== "CREATED_DESC" &&
+              value !== "CREATED_ASC"
+            )
+              return;
+            setSortBy(value);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger aria-label="企划排序" className="h-8 w-36 shrink-0">
+            <ArrowDownUp className="mr-1.5 h-3.5 w-3.5" />
+            <SelectValue>{SORT_LABELS[sortBy]}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(SORT_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div className="flex min-w-0 items-center gap-2">
         <div className="relative min-w-0 flex-1">
           <div

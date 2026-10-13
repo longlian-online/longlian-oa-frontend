@@ -193,6 +193,16 @@ export async function createOrganizationBaseTask(
   });
 }
 
+export async function updateOrganizationBaseTask(
+  taskId: string,
+  dto: OrganizationBaseTaskCreateDTO,
+): Promise<void> {
+  return orgAdminRequest(`/orgadmin/task/base/${taskId}`, {
+    method: "PUT",
+    body: JSON.stringify(dto),
+  });
+}
+
 export async function getOrganizationBaseTaskList(
   dto: OrganizationBaseTaskListDTO,
 ): Promise<OrganizationPageResult<OrganizationBaseTaskVO>> {

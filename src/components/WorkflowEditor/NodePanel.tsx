@@ -77,7 +77,7 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
                 onClick={() => onAddNode(String(task.id))}
                 onDragStart={(event) => handleDragStart(event, String(task.id))}
               >
-                <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
                   <Icon className="size-3.5" />
                 </div>
                 <span className="truncate text-sm font-medium text-foreground">{task.name}</span>

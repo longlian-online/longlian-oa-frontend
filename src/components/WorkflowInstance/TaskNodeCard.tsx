@@ -89,7 +89,7 @@ export default function TaskNodeCard({
       </div>
 
       <div className="mt-3 flex min-w-0 items-center gap-2">
-        <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary/10 text-primary">
           <TaskIcon className="size-3.5" />
         </div>
         <h3 className="truncate text-sm font-semibold text-foreground">{node.name}</h3>

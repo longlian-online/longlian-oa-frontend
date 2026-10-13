@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,24 +19,41 @@ import { $tip } from "@/components/tip";
 import { cn } from "@/lib/utils";
 import type { InviteInfoVO } from "@/types/auth";
 
-const registerSchema = z
-  .object({
-    inviteCode: z.string().min(1, "邀请码不能为空"),
-    orgName: z.string().optional(),
-    nickname: z.string().max(20, "昵称最多20个字符"),
-    username: z.string().min(4, "用户名至少4个字符").max(20, "用户名最多20个字符"),
-    email: z.string().email("请输入有效的邮箱地址"),
-    code: z.string().length(6, "验证码为6位数字"),
-    password: z.string().min(6, "密码至少6个字符").max(20, "密码最多20个字符"),
-    confirmPassword: z.string().min(6, "请确认密码"),
-  })
+type RegisterMode = "join" | "create";
+
+/** 创建组织时邀请码由平台下发，文案与加入组织区分。 */
+const INVITE_CODE_LABELS: Record<RegisterMode, string> = {
+  join: "邀请码",
+  create: "组织邀请码",
+};
+
+const registerObjectSchema = z.object({
+  inviteCode: z.string().min(1, `${INVITE_CODE_LABELS.join}不能为空`),
+  orgName: z.string().optional(),
+  nickname: z.string().max(20, "昵称最多20个字符"),
+  username: z.string().min(4, "用户名至少4个字符").max(20, "用户名最多20个字符"),
+  email: z.string().email("请输入有效的邮箱地址"),
+  code: z.string().length(6, "验证码为6位数字"),
+  password: z.string().min(6, "密码至少6个字符").max(20, "密码最多20个字符"),
+  confirmPassword: z.string().min(6, "请确认密码"),
+});
+
+const joinOrganizationSchema = registerObjectSchema.refine(
+  (data) => data.password === data.confirmPassword,
+  { message: "两次输入的密码不一致", path: ["confirmPassword"] },
+);
+
+const createOrganizationSchema = registerObjectSchema
+  .extend({ inviteCode: z.string().min(1, `${INVITE_CODE_LABELS.create}不能为空`) })
   .refine((data) => data.password === data.confirmPassword, {
     message: "两次输入的密码不一致",
     path: ["confirmPassword"],
   });
 
-type RegisterFormData = z.infer<typeof registerSchema>;
-type RegisterMode = "join" | "create";
+const joinOrganizationResolver = zodResolver(joinOrganizationSchema);
+const createOrganizationResolver = zodResolver(createOrganizationSchema);
+
+type RegisterFormData = z.infer<typeof registerObjectSchema>;
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -46,6 +63,9 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [mode, setMode] = useState<RegisterMode>("join");
+  // react-hook-form 只在首次渲染捕获 resolver，校验时通过 ref 判断当前模式。
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
   const [modeDirection, setModeDirection] = useState<"left" | "right">("right");
   const [inviteInfo, setInviteInfo] = useState<InviteInfoVO | null>(null);
   const [isInviteLoading, setIsInviteLoading] = useState(false);
@@ -53,7 +73,11 @@ export default function RegisterPage() {
   const defaultInviteCode = searchParams.get("invite") || searchParams.get("inviteCode") || "";
 
   const form = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: async (values, context, options) => {
+      const resolver =
+        modeRef.current === "create" ? createOrganizationResolver : joinOrganizationResolver;
+      return resolver(values, context, options);
+    },
     defaultValues: {
       inviteCode: defaultInviteCode,
       orgName: "",
@@ -71,6 +95,7 @@ export default function RegisterPage() {
     setModeDirection(nextMode === "create" ? "right" : "left");
     setMode(nextMode);
     setInviteInfo(null);
+    form.clearErrors("inviteCode");
   };
 
   const modePanelClassName = cn(
@@ -159,14 +184,14 @@ export default function RegisterPage() {
             {/* 邀请码 */}
             <div className="space-y-2">
               <Label htmlFor="inviteCode" className="text-xs text-muted-foreground">
-                邀请码
+                {INVITE_CODE_LABELS[mode]}
               </Label>
               <div className="flex gap-2">
                 <div className="relative min-w-0 flex-1">
                   <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="inviteCode"
-                    placeholder="请输入邀请码"
+                    placeholder={`请输入${INVITE_CODE_LABELS[mode]}`}
                     className="h-11 pl-10"
                     {...form.register("inviteCode", {
                       onChange: () => setInviteInfo(null),

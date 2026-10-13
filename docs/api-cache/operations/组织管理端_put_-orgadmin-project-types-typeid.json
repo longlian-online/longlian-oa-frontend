@@ -37,7 +37,7 @@
         "description": "OK"
       }
     },
-    "summary": "修改企划类型名称",
+    "summary": "修改企划类型名称与优先级",
     "tags": ["企划类型管理"]
   },
   "path": "/orgadmin/project-types/{typeId}",

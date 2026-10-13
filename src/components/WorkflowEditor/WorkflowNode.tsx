@@ -44,7 +44,7 @@ function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
         onClick={() => data.onSelect(id)}
       >
         <div className="flex items-start gap-3 pr-6">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
             <Icon className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
