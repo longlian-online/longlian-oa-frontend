@@ -133,6 +133,7 @@ export interface OrganizationProjectVO {
   typeId?: string;
   typeName?: string;
   status?: OrganizationProjectStatus;
+  resourceStatus?: OrganizationResourceStatus;
   creatorId?: string;
   creatorNickname?: string;
   createdAt?: string;
