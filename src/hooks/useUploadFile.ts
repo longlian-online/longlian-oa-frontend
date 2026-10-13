@@ -101,16 +101,20 @@ export function validateFile(file: File, options: FileValidationOptions): string
   return null;
 }
 
-async function uploadToPresignedUrl(uploadUrl: string, file: File): Promise<void> {
+async function uploadToPresignedUrl(
+  uploadUrl: string,
+  file: File,
+  contentDisposition?: string,
+): Promise<void> {
   if (!uploadUrl) return;
 
   const fileExt = getFileExt(file.name);
   const fileMime = normalizeMimeType(file, fileExt);
   const response = await fetch(uploadUrl, {
     method: "PUT",
-    headers: {
-      "Content-Type": fileMime,
-    },
+    headers: contentDisposition
+      ? { "Content-Type": fileMime, "Content-Disposition": contentDisposition }
+      : { "Content-Type": fileMime },
     body: file,
   });
 
@@ -150,7 +154,7 @@ export function useUploadFile(): UseUploadFileResult {
         bizId: options.bizId,
       });
 
-      await uploadToPresignedUrl(resource.uploadUrl, file);
+      await uploadToPresignedUrl(resource.uploadUrl, file, resource.contentDisposition);
 
       const uploadedFile: UploadedFileInfo = {
         fileId: resource.fileId,
