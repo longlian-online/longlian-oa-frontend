@@ -13,7 +13,6 @@ import type {
   TaskInstanceDetailVO,
   TaskInstanceStatus,
   TaskSubmissionStatus,
-  TaskSubmissionVersionVO,
 } from "@/types/workflowInstance";
 import { createItemLifecycle } from "./itemLifecycle";
 import { AttachmentOpenError, openTaskAttachment, type AttachmentPopup } from "./taskAttachments";
@@ -77,9 +76,6 @@ function currentVersionOf(
   if (state === "submitted") {
     return versions.find((version) => version.status === "SUBMITTED") ?? null;
   }
-  if (state === "rejected") {
-    return versions.find((version) => version.status === "REJECTED") ?? null;
-  }
   return versions.find((version) => version.status === "RESET") ?? null;
 }
 
@@ -88,10 +84,9 @@ function versionFromDetail(detail: TaskInstanceDetailVO): VersionView[] {
   return [
     {
       versionNo: 1,
-      status: detail.submission.state === "submitted" ? "SUBMITTED" : "REJECTED",
+      status: "SUBMITTED",
       submittedAt: detail.submission.submittedAt,
       submittedBy: detail.task.assignee,
-      reviewComment: detail.submission.reviewComment,
       fields: detail.submission.fields,
       unreadable: false,
     },
@@ -298,10 +293,7 @@ export default function TaskDetailPanel({
         .then((result) => {
           if (active && isCurrent()) {
             setVersions({ key: contextKey, data: result });
-            const current = currentVersionOf(
-              detail?.submission.state ?? "not_submitted",
-              result,
-            );
+            const current = currentVersionOf(detail?.submission.state ?? "not_submitted", result);
             setExpandedVersion(current?.versionNo ?? null);
           }
         })
@@ -476,9 +468,7 @@ export default function TaskDetailPanel({
                             type="button"
                             className="flex w-full flex-wrap items-center gap-2 p-3 text-left"
                             aria-expanded={expanded}
-                            onClick={() =>
-                              setExpandedVersion(expanded ? null : version.versionNo)
-                            }
+                            onClick={() => setExpandedVersion(expanded ? null : version.versionNo)}
                           >
                             <span className="font-mono text-sm font-semibold">
                               v{version.versionNo}
