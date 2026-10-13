@@ -4,6 +4,7 @@ import { BarChart3, CirclePlus, Info, Link2, Loader2, Pencil, Share2, X } from "
 
 import { addProjectToWorkshop, getProjectDetail, removeProjectFromWorkshop } from "@/api/planning";
 import ProjectItemSection from "@/components/ProjectItem";
+import ProjectMetadataTag from "@/components/ProjectMetadataTag";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -222,10 +223,7 @@ export default function ProjectDetail() {
             {tags.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag, index) => (
-                  <Badge key={`${tag.key}-${index}`} variant="outline" className="font-normal">
-                    <span className="text-muted-foreground">{tag.key}</span>
-                    <span className="ml-1 text-foreground">{tag.value}</span>
-                  </Badge>
+                  <ProjectMetadataTag key={index} tag={tag} />
                 ))}
               </div>
             ) : (

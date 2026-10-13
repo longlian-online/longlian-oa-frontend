@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Check, Info, Loader2, Plus, Tags, X } from "lucide-react";
+import { Check, Info, Loader2 } from "lucide-react";
 
 import { createProject, updateProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
+import ProjectMetadataEditor from "@/components/ProjectMetadataEditor";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,11 +17,8 @@ import { getCurrentOrgId } from "@/lib/session";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 import type { UploadedFileInfo } from "@/types/file";
 import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
-
-interface TagItem {
-  key: string;
-  value: string;
-}
+import type { EditableProjectMetadataTag } from "@/components/ProjectMetadataEditor";
+import type { ProjectMetadataTag } from "@/lib/projectMetadata";
 
 const fieldClassName =
   "border-border/70 bg-muted/20 shadow-none focus-visible:border-foreground/30 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-foreground/10";
@@ -42,10 +40,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
     description: project?.description ?? "",
     status: project ? getStatusLabel(project.status) : "",
   });
-  const [tags, setTags] = useState<TagItem[]>(parseProjectMetadataTags(project?.metadata));
-  const [newTagKey, setNewTagKey] = useState("");
-  const [newTagValue, setNewTagValue] = useState("");
-  const [showTagInput, setShowTagInput] = useState(false);
+  const [tags, setTags] = useState<EditableProjectMetadataTag[]>(() =>
+    parseProjectMetadataTags(project?.metadata).map((tag) => ({ ...tag, id: crypto.randomUUID() })),
+  );
+  const [tagDraft, setTagDraft] = useState<ProjectMetadataTag>({ key: "", value: "" });
   const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(
     project?.coverUrl
       ? {
@@ -69,33 +67,24 @@ export default function CreateProject({ project }: CreateProjectProps) {
     }
   }, [formData.typeId, project, projectTypes]);
 
-  function handleAddTag(): void {
-    if (newTagKey.trim() && newTagValue.trim()) {
-      setTags([...tags, { key: newTagKey.trim(), value: newTagValue.trim() }]);
-      setNewTagKey("");
-      setNewTagValue("");
-      setShowTagInput(false);
-    }
-  }
-
-  function handleRemoveTag(index: number): void {
-    setTags(tags.filter((_, i) => i !== index));
-  }
-
   async function handleSubmit(): Promise<void> {
     if (!canSubmit || (!isEditing && !coverFile)) return;
 
-    const pendingTagKey = newTagKey.trim();
-    const pendingTagValue = newTagValue.trim();
-    if ((pendingTagKey && !pendingTagValue) || (!pendingTagKey && pendingTagValue)) {
-      $tip("请补全元信息的标签名和值", "error");
+    const pendingTagKey = tagDraft.key.trim();
+    const pendingTagValue = tagDraft.value.trim();
+    if (!pendingTagKey && pendingTagValue) {
+      $tip("请填写元信息的标签名", "error");
       return;
     }
 
-    const submittedTags =
-      pendingTagKey && pendingTagValue
-        ? [...tags, { key: pendingTagKey, value: pendingTagValue }]
-        : tags;
+    const submittedTags: ProjectMetadataTag[] = tags.map(({ key, value, color }) => ({
+      key,
+      value,
+      color,
+    }));
+    if (pendingTagKey) {
+      submittedTags.push({ key: pendingTagKey, value: pendingTagValue, color: tagDraft.color });
+    }
 
     try {
       setLoading(true);
@@ -281,72 +270,13 @@ export default function CreateProject({ project }: CreateProjectProps) {
             </div>
           </section>
 
-          <section className="border-b py-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Tags className="h-4 w-4 text-muted-foreground" />
-                <h2 className="text-base font-medium text-foreground">元信息</h2>
-              </div>
-              {!showTagInput && (
-                <Button variant="outline" size="sm" onClick={() => setShowTagInput(true)}>
-                  <Plus className="h-4 w-4" />
-                  添加信息
-                </Button>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {tags.map((tag, index) => (
-                  <div
-                    key={`${tag.key}-${tag.value}-${index}`}
-                    className="inline-flex items-center gap-2 rounded-full border bg-muted/40 py-1 pl-3 pr-1 text-xs"
-                  >
-                    <span className="text-muted-foreground">{tag.key}</span>
-                    <span className="text-foreground">{tag.value}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(index)}
-                      className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-background hover:text-foreground"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-
-                {showTagInput ? (
-                  <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-2">
-                    <Input
-                      placeholder="标签名"
-                      value={newTagKey}
-                      onChange={(e) => setNewTagKey(e.target.value)}
-                      className="h-8 w-28 border-border/70 bg-background text-xs focus-visible:border-foreground/30 focus-visible:ring-1 focus-visible:ring-foreground/10"
-                    />
-                    <Input
-                      placeholder="值"
-                      value={newTagValue}
-                      onChange={(e) => setNewTagValue(e.target.value)}
-                      className="h-8 w-36 border-border/70 bg-background text-xs focus-visible:border-foreground/30 focus-visible:ring-1 focus-visible:ring-foreground/10"
-                    />
-                    <Button size="sm" variant="secondary" className="h-8" onClick={handleAddTag}>
-                      添加
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setShowTagInput(false);
-                        setNewTagKey("");
-                        setNewTagValue("");
-                      }}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </section>
+          <ProjectMetadataEditor
+            tags={tags}
+            draft={tagDraft}
+            onTagsChange={setTags}
+            onDraftChange={setTagDraft}
+            disabled={loading}
+          />
 
           <section className="pt-4">
             <div className="space-y-2">

@@ -7,6 +7,7 @@ import EmptyState from "@/components/EmptyState";
 import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
+import ProjectMetadataTag from "@/components/ProjectMetadataTag";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -252,13 +253,7 @@ function ProjectCard({ project }: ProjectCardProps) {
 
         <div className="mt-3 flex min-h-5 flex-wrap gap-1.5 overflow-hidden">
           {metadataTags.map((tag, index) => (
-            <span
-              key={`${tag.key}-${tag.value}-${index}`}
-              className="inline-flex max-w-full items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] leading-4"
-            >
-              <span className="shrink-0 text-muted-foreground">{tag.key}</span>
-              <span className="truncate text-foreground">{tag.value}</span>
-            </span>
+            <ProjectMetadataTag key={index} tag={tag} compact />
           ))}
         </div>
 
