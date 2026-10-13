@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMachine } from "@xstate/react";
+import { Copy } from "lucide-react";
 
 import {
   abandonTask,
@@ -30,6 +31,7 @@ import type {
   TaskSubmitDTO,
 } from "@/types/workflowInstance";
 import { createItemLifecycle } from "./itemLifecycle";
+import { buildParticipantRoster } from "./participantRoster";
 import TaskDetailPanel from "./TaskDetailPanel";
 import { canReset, canReject } from "./taskPermissions";
 import TaskFlowViewer from "./TaskFlowViewer";
@@ -84,6 +86,10 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const [rejectTarget, setRejectTarget] = useState<ItemTaskInstanceVO | null>(null);
   const [rejectComment, setRejectComment] = useState("");
   const sortedInstances = useMemo(() => getSortedInstances(instances), [instances]);
+  const participantRoster = useMemo(
+    () => (taskFlow ? buildParticipantRoster(taskFlow.itemTitle, instances) : ""),
+    [instances, taskFlow],
+  );
   const selectedNode = taskFlow?.nodes.find((node) => node.id === selectedNodeId);
   const selectedInstance = selectedNode
     ? sortedInstances.find((instance) =>
@@ -220,6 +226,16 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     await runInstanceAction(instanceId, () => resetTask(instanceId), "任务已重置");
   }
 
+  async function handleCopyParticipantRoster(): Promise<void> {
+    if (!participantRoster || !taskFlow) return;
+    try {
+      await navigator.clipboard.writeText(participantRoster);
+      $tip(`${taskFlow.itemTitle} · 参与名单已复制`, "success");
+    } catch {
+      $tip("复制失败，请手动复制", "error");
+    }
+  }
+
   const mutatingInstanceId = workflowState.context.mutatingInstanceId;
 
   if (loadedItemId !== itemId || workflowState.matches("loading")) {
@@ -249,6 +265,17 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
             <p className="mt-0.5 truncate text-sm text-muted-foreground">{taskFlow.description}</p>
           )}
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto shrink-0"
+          disabled={!participantRoster}
+          title={participantRoster ? "复制参与名单" : "暂无参与人"}
+          onClick={() => void handleCopyParticipantRoster()}
+        >
+          <Copy data-icon="inline-start" />
+          复制参与名单
+        </Button>
       </header>
 
       <TaskFlowViewer
