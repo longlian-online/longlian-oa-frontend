@@ -88,7 +88,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
     const pendingTagKey = newTagKey.trim();
     const pendingTagValue = newTagValue.trim();
     if ((pendingTagKey && !pendingTagValue) || (!pendingTagKey && pendingTagValue)) {
-      $tip("请补全元信息的标签名和值", "error");
+      $tip("请补全标签名和值", "error");
       return;
     }
 
@@ -141,7 +141,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
               </h1>
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {isEditing ? "更新基础信息、封面与元信息。" : "填写基础信息、封面与元信息。"}
+              {isEditing ? "更新基础信息、封面与标签。" : "填写基础信息、封面与标签。"}
             </p>
           </div>
         </div>
@@ -285,12 +285,12 @@ export default function CreateProject({ project }: CreateProjectProps) {
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Tags className="h-4 w-4 text-muted-foreground" />
-                <h2 className="text-base font-medium text-foreground">元信息</h2>
+                <h2 className="text-base font-medium text-foreground">标签</h2>
               </div>
               {!showTagInput && (
                 <Button variant="outline" size="sm" onClick={() => setShowTagInput(true)}>
                   <Plus className="h-4 w-4" />
-                  添加信息
+                  添加标签
                 </Button>
               )}
             </div>
