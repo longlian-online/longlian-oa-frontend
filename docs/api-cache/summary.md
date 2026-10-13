@@ -1,17 +1,17 @@
 # API 缓存摘要
 
 来源：https://sit.neo.oa.api.longlian.online/v3/api-docs
-更新时间：2026-10-13T13:52:08.272Z
+更新时间：2026-10-13T17:30:17.699Z
 
 ## 文档分组
 
 | 分组       | 路径数 | 接口数 | 缓存文件                  |
 | ---------- | ------ | ------ | ------------------------- |
-| 全部       | 65     | 79     | `openapi/全部.json`       |
+| 全部       | 65     | 78     | `openapi/全部.json`       |
 | 公共端     | 3      | 4      | `openapi/公共端.json`     |
 | 用户端     | 33     | 39     | `openapi/用户端.json`     |
 | 管理端     | 8      | 10     | `openapi/管理端.json`     |
-| 组织管理端 | 21     | 26     | `openapi/组织管理端.json` |
+| 组织管理端 | 21     | 25     | `openapi/组织管理端.json` |
 
 ## 接口索引
 
@@ -88,7 +88,6 @@
 | 全部       | PATCH  | `/orgadmin/projects/{projectId}/status`                 | 启用/禁用企划                    | `operations/全部_patch_-orgadmin-projects-projectid-status.json`                     |
 | 全部       | POST   | `/orgadmin/task/base`                                   | 创建原子任务                     | `operations/全部_post_-orgadmin-task-base.json`                                      |
 | 全部       | DELETE | `/orgadmin/task/base/{taskId}`                          | 删除原子任务                     | `operations/全部_delete_-orgadmin-task-base-taskid.json`                             |
-| 全部       | PUT    | `/orgadmin/task/base/{taskId}`                          | 编辑原子任务                     | `operations/全部_put_-orgadmin-task-base-taskid.json`                                |
 | 全部       | PATCH  | `/orgadmin/task/base/{taskId}/status`                   | 启用/禁用原子任务                | `operations/全部_patch_-orgadmin-task-base-taskid-status.json`                       |
 | 全部       | POST   | `/orgadmin/task/base/list`                              | 分页查询原子任务列表             | `operations/全部_post_-orgadmin-task-base-list.json`                                 |
 | 全部       | POST   | `/orgadmin/task/template`                               | 创建任务模板                     | `operations/全部_post_-orgadmin-task-template.json`                                  |
@@ -167,7 +166,6 @@
 | 组织管理端 | PATCH  | `/orgadmin/projects/{projectId}/status`                 | 启用/禁用企划                    | `operations/组织管理端_patch_-orgadmin-projects-projectid-status.json`               |
 | 组织管理端 | POST   | `/orgadmin/task/base`                                   | 创建原子任务                     | `operations/组织管理端_post_-orgadmin-task-base.json`                                |
 | 组织管理端 | DELETE | `/orgadmin/task/base/{taskId}`                          | 删除原子任务                     | `operations/组织管理端_delete_-orgadmin-task-base-taskid.json`                       |
-| 组织管理端 | PUT    | `/orgadmin/task/base/{taskId}`                          | 编辑原子任务                     | `operations/组织管理端_put_-orgadmin-task-base-taskid.json`                          |
 | 组织管理端 | PATCH  | `/orgadmin/task/base/{taskId}/status`                   | 启用/禁用原子任务                | `operations/组织管理端_patch_-orgadmin-task-base-taskid-status.json`                 |
 | 组织管理端 | POST   | `/orgadmin/task/base/list`                              | 分页查询原子任务列表             | `operations/组织管理端_post_-orgadmin-task-base-list.json`                           |
 | 组织管理端 | POST   | `/orgadmin/task/template`                               | 创建任务模板                     | `operations/组织管理端_post_-orgadmin-task-template.json`                            |
