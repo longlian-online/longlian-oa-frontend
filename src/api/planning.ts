@@ -48,6 +48,7 @@ export async function getProjectList(dto: ProjectListDTO): Promise<PageResult<Pr
       projectType: dto.projectType,
       pageNum: dto.pageNum,
       pageSize: dto.pageSize,
+      offset: dto.offset,
       sortByTime: dto.sortByTime,
       orderDir: dto.orderDir,
     })}`,
