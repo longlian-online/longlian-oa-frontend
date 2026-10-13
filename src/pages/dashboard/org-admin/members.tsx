@@ -245,6 +245,7 @@ function OrganizationMembersContent() {
                   <TableHead>成员</TableHead>
                   <TableHead>角色</TableHead>
                   <TableHead>入组时间</TableHead>
+                  <TableHead>最近活跃</TableHead>
                   <TableHead>原子任务提交数</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead className="w-56 text-right">操作</TableHead>
@@ -283,6 +284,9 @@ function OrganizationMembersContent() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {formatDate(member.joinedAt)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatDate(member.lastSubmittedAt)}
                       </TableCell>
                       <TableCell>{member.submitCount}</TableCell>
                       <TableCell>
