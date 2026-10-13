@@ -322,6 +322,24 @@
         },
         "type": "object"
       },
+      "PageResultVOPlazaProjectGroupVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/PlazaProjectGroupVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "PageResultVOProjectInfoVO": {
         "description": "通用分页返回结果",
         "properties": {
@@ -389,6 +407,101 @@
           "total": {
             "description": "总条数",
             "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PlazaProjectGroupVO": {
+        "description": "缺人任务企划分组",
+        "properties": {
+          "coverUrl": {
+            "description": "封面图URL",
+            "type": "string"
+          },
+          "itemCount": {
+            "description": "涉及条目数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "pendingCount": {
+            "description": "缺人任务总数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "projectId": {
+            "description": "企划ID",
+            "type": "string"
+          },
+          "tasks": {
+            "description": "缺人任务列表",
+            "items": {
+              "$ref": "#/components/schemas/PlazaTaskVO"
+            },
+            "type": "array"
+          },
+          "title": {
+            "description": "企划标题",
+            "type": "string"
+          },
+          "typeName": {
+            "description": "企划类型名称",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PlazaTaskVO": {
+        "description": "缺人任务（任务广场）",
+        "properties": {
+          "createdAt": {
+            "description": "任务创建时间（等待起始时间）",
+            "format": "date-time",
+            "type": "string"
+          },
+          "filledSlots": {
+            "description": "已被占用的并行槽数（已接取或已完成）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "instanceId": {
+            "description": "任务实例ID",
+            "type": "string"
+          },
+          "isCurrentStage": {
+            "description": "是否属于条目首个未完成阶段",
+            "type": "boolean"
+          },
+          "itemId": {
+            "description": "所属条目ID",
+            "type": "string"
+          },
+          "itemTitle": {
+            "description": "所属条目标题",
+            "type": "string"
+          },
+          "nodeName": {
+            "description": "任务名称（节点名）",
+            "type": "string"
+          },
+          "parallelTotal": {
+            "description": "任务所属阶段并行槽总数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "pendingSlots": {
+            "description": "待接取并行槽数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "stageIndex": {
+            "description": "任务所属阶段序号（1 开始）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "stageTotal": {
+            "description": "任务流总阶段数",
+            "format": "int32",
             "type": "integer"
           }
         },
@@ -736,6 +849,11 @@
             "example": "{\"tags\":[{\"key\":\"作者\",\"value\":\"smile_snow\"}]}",
             "type": "string"
           },
+          "status": {
+            "description": "目标状态：进行中/已完成；已归档不允许选择，不传则保持原状态",
+            "enum": ["进行中", "已完成", "已归档"],
+            "type": "string"
+          },
           "title": {
             "description": "企划名",
             "type": "string"
@@ -927,6 +1045,47 @@
           },
           "task": {
             "$ref": "#/components/schemas/Task"
+          }
+        },
+        "type": "object"
+      },
+      "TaskPlazaListDTO": {
+        "description": "任务广场（缺人任务）查询参数",
+        "properties": {
+          "keyword": {
+            "description": "搜索关键词（匹配企划名、条目名、任务名）",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "projectType": {
+            "description": "企划类型名称",
+            "maxLength": 20,
+            "minLength": 0,
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "排序方式",
+            "enum": ["WAIT", "LATEST", "MOST"],
+            "type": "string"
+          },
+          "stageScope": {
+            "description": "阶段范围，默认 CURRENT；ALL 包含后续阶段",
+            "enum": ["ALL", "CURRENT"],
+            "type": "string"
           }
         },
         "type": "object"
@@ -1410,7 +1569,7 @@
     },
     "/app/projects/types": {
       "get": {
-        "description": "仅返回启用状态的类型",
+        "description": "仅返回启用状态的类型，按优先级降序，同优先级按 ID 升序；优先级不影响其他列表排序",
         "operationId": "getProjectTypes",
         "parameters": [
           {
@@ -1926,6 +2085,44 @@
           }
         },
         "summary": "查询项目下的任务实例列表",
+        "tags": ["任务实例接口"]
+      }
+    },
+    "/app/task/instance/plaza": {
+      "get": {
+        "description": "分页返回当前组织内可接取的缺人任务，按企划分组。stageScope=ALL 返回所有阶段，CURRENT（默认）仅返回首个未完成阶段",
+        "operationId": "getTaskPlaza",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "query",
+            "name": "listDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TaskPlazaListDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOPlazaProjectGroupVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "任务广场（缺人任务）",
         "tags": ["任务实例接口"]
       }
     },
@@ -2615,7 +2812,7 @@
   "servers": [
     {
       "description": "Configured server URL",
-      "url": "https://sit.neo.oa.api.longlian.online/"
+      "url": "https://api.test.longlian.online"
     }
   ],
   "tags": [

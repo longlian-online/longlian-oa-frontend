@@ -2,7 +2,7 @@
   "document": "全部",
   "method": "POST",
   "operation": {
-    "description": "任务创建后不可编辑，请确认标题、图标、简介和提交字段定义后提交",
+    "description": "创建任务标题、图标、简介和提交字段定义；创建后支持编辑",
     "operationId": "createBaseTask",
     "parameters": [
       {
