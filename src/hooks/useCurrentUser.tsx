@@ -1,28 +1,30 @@
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 import { getCurrentUser } from "@/api/user";
-import { getSessionRoles, getToken } from "@/lib/session";
+import { getSessionRole, getToken } from "@/lib/session";
 import type { UserInfoVO } from "@/types/user";
 
 interface UseCurrentUserResult {
   user: UserInfoVO | null;
-  roles: string[];
+  role: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
   refresh: () => Promise<void>;
 }
 
-export function useCurrentUser(): UseCurrentUserResult {
+const CurrentUserContext = createContext<UseCurrentUserResult | null>(null);
+
+function useCurrentUserState(): UseCurrentUserResult {
   const [user, setUser] = useState<UserInfoVO | null>(null);
-  const [roles, setRoles] = useState<string[]>(getSessionRoles);
+  const [role, setRole] = useState<string | null>(getSessionRole);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async (): Promise<void> => {
     if (!getToken()) {
       setUser(null);
-      setRoles([]);
+      setRole(null);
       setIsLoading(false);
       return;
     }
@@ -32,10 +34,10 @@ export function useCurrentUser(): UseCurrentUserResult {
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
-      setRoles(currentUser.roles ?? getSessionRoles());
+      setRole(getSessionRole());
     } catch (refreshError) {
       setUser(null);
-      setRoles(getSessionRoles());
+      setRole(getSessionRole());
       setError(refreshError instanceof Error ? refreshError.message : "获取用户信息失败");
     } finally {
       setIsLoading(false);
@@ -48,10 +50,23 @@ export function useCurrentUser(): UseCurrentUserResult {
 
   return {
     user,
-    roles,
+    role,
     isLoading,
     isAuthenticated: !!getToken(),
     error,
     refresh,
   };
+}
+
+export function CurrentUserProvider({ children }: { children: ReactNode }) {
+  const value = useCurrentUserState();
+  return <CurrentUserContext.Provider value={value}>{children}</CurrentUserContext.Provider>;
+}
+
+export function useCurrentUser(): UseCurrentUserResult {
+  const context = useContext(CurrentUserContext);
+  if (!context) {
+    throw new Error("useCurrentUser must be used within CurrentUserProvider");
+  }
+  return context;
 }

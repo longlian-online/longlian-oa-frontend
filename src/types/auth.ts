@@ -12,9 +12,11 @@ export interface LoginByCodeDTO {
 
 export interface LoginVO {
   userId: string;
-  currentOrgId: string;
+  /** 已保存的默认组织。不参与鉴权，只作为客户端下次声明的组织。 */
+  defaultOrgId?: string | null;
   token: string;
-  roles: string[];
+  /** 默认组织内的角色，仅供展示。默认组织不可用时为空。 */
+  role?: string | null;
 }
 
 export interface EmailCodeDTO {

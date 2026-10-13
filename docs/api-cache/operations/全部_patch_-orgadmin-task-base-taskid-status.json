@@ -35,13 +35,6 @@
     },
     "responses": {
       "200": {
-        "content": {
-          "*/*": {
-            "schema": {
-              "$ref": "#/components/schemas/ResultVoid"
-            }
-          }
-        },
         "description": "OK"
       }
     },

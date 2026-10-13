@@ -2,7 +2,7 @@
   "document": "用户端",
   "method": "POST",
   "operation": {
-    "description": "提交待提交（CLAIMED）的任务，提交后任务状态变为 COMPLETED。提交内容通过 metadata(JSON对象) 传递",
+    "description": "提交待提交（CLAIMED）的任务，提交后任务状态变为 COMPLETED。提交内容通过 values 传递",
     "operationId": "submitTask",
     "parameters": [
       {

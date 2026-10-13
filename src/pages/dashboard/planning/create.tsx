@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Check, ImagePlus, Info, Loader2, Plus, Tags, X } from "lucide-react";
+import { Check, Info, Loader2, Plus, Tags, X } from "lucide-react";
 
-import { createProject } from "@/api/planning";
+import { createProject, updateProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { getStatusLabel } from "@/lib/projectStatus";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
+import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 import type { UploadedFileInfo } from "@/types/file";
+import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
 
 interface TagItem {
   key: string;
@@ -22,25 +25,49 @@ interface TagItem {
 const fieldClassName =
   "border-border/70 bg-muted/20 shadow-none focus-visible:border-foreground/30 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-foreground/10";
 
-export default function CreateProject() {
+interface CreateProjectProps {
+  project?: ProjectDetailInfoVO;
+}
+
+export default function CreateProject({ project }: CreateProjectProps) {
   const navigate = useNavigate();
   const { projectTypes, loading: loadingProjectTypes } = useProjectTypes();
-  const coverBizId = getCurrentOrgId() ?? "cover";
+  const isEditing = Boolean(project);
+  const coverBizId = project ? String(project.id) : (getCurrentOrgId() ?? "cover");
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    alias: "",
+    title: project?.title ?? "",
+    alias: project?.alias ?? "",
     typeId: "",
-    description: "",
+    description: project?.description ?? "",
+    status: project ? getStatusLabel(project.status) : "",
   });
-  const [tags, setTags] = useState<TagItem[]>([]);
+  const [tags, setTags] = useState<TagItem[]>(parseProjectMetadataTags(project?.metadata));
   const [newTagKey, setNewTagKey] = useState("");
   const [newTagValue, setNewTagValue] = useState("");
-  const [showTagInput, setShowTagInput] = useState(true);
-  const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(null);
+  const [showTagInput, setShowTagInput] = useState(false);
+  const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(
+    project?.coverUrl
+      ? {
+          fileId: "",
+          fileName: project.title,
+          fileSize: 0,
+          fileMime: "image/*",
+          previewUrl: project.coverUrl,
+        }
+      : null,
+  );
   const selectedProjectType = projectTypes.find((type) => type.id === formData.typeId);
 
-  const canSubmit = Boolean(formData.title && formData.typeId && coverFile?.fileId);
+  const canSubmit = Boolean(formData.title && formData.typeId && (isEditing || coverFile?.fileId));
+
+  useEffect(() => {
+    if (!project || formData.typeId || projectTypes.length === 0) return;
+    const matchedType = projectTypes.find((type) => type.name === project.typeName);
+    if (matchedType) {
+      setFormData((current) => ({ ...current, typeId: matchedType.id }));
+    }
+  }, [formData.typeId, project, projectTypes]);
 
   function handleAddTag(): void {
     if (newTagKey.trim() && newTagValue.trim()) {
@@ -56,12 +83,12 @@ export default function CreateProject() {
   }
 
   async function handleSubmit(): Promise<void> {
-    if (!canSubmit || !coverFile) return;
+    if (!canSubmit || (!isEditing && !coverFile)) return;
 
     const pendingTagKey = newTagKey.trim();
     const pendingTagValue = newTagValue.trim();
     if ((pendingTagKey && !pendingTagValue) || (!pendingTagKey && pendingTagValue)) {
-      $tip("请补全元信息的标签名和值", "error");
+      $tip("请补全标签名和值", "error");
       return;
     }
 
@@ -72,18 +99,32 @@ export default function CreateProject() {
 
     try {
       setLoading(true);
-      await createProject({
-        title: formData.title,
-        alias: formData.alias || formData.title,
-        typeId: formData.typeId,
-        description: formData.description,
-        coverFileId: coverFile.fileId,
-        metadata: JSON.stringify({ tags: submittedTags }),
-      });
-      $tip("企划创建成功", "success");
-      void navigate("/dashboard/planning");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "创建失败，请重试", "error");
+      if (isEditing && project) {
+        await updateProject(project.id, {
+          title: formData.title.trim(),
+          alias: formData.alias.trim() || formData.title.trim(),
+          description: formData.description.trim(),
+          metadata: JSON.stringify({ tags: submittedTags }),
+          coverFileId: coverFile?.fileId || undefined,
+          status:
+            formData.status === "进行中" || formData.status === "已完成"
+              ? formData.status
+              : undefined,
+        });
+        $tip("企划已更新", "success");
+        void navigate(`/dashboard/planning/${project.id}`);
+      } else if (coverFile) {
+        await createProject({
+          title: formData.title.trim(),
+          alias: formData.alias.trim() || formData.title.trim(),
+          typeId: formData.typeId,
+          description: formData.description.trim(),
+          coverFileId: coverFile.fileId,
+          metadata: JSON.stringify({ tags: submittedTags }),
+        });
+        $tip("企划创建成功", "success");
+        void navigate("/dashboard/planning");
+      }
     } finally {
       setLoading(false);
     }
@@ -95,9 +136,13 @@ export default function CreateProject() {
         <div className="flex items-start gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold tracking-tight text-foreground">发布新企划</h1>
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                {isEditing ? "编辑企划" : "发布新企划"}
+              </h1>
             </div>
-            <p className="mt-0.5 text-sm text-muted-foreground">填写基础信息、封面与元信息。</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {isEditing ? "更新基础信息、封面与标签。" : "填写基础信息、封面与标签。"}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -108,56 +153,36 @@ export default function CreateProject() {
             disabled={loading || !canSubmit}
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            创建企划
+            {isEditing ? "保存修改" : "创建企划"}
           </Button>
         </div>
       </div>
 
-      <div className="grid items-start justify-center gap-4 lg:grid-cols-[280px_minmax(0,720px)]">
-        <aside>
-          <section className="rounded-xl border bg-card p-4 shadow-sm">
+      <div className="grid items-start justify-center gap-4 lg:items-stretch lg:grid-cols-[280px_minmax(0,720px)]">
+        <aside className="lg:flex">
+          <section className="flex w-full flex-col rounded-xl border bg-card p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-medium text-foreground">视觉资产</h2>
-                <p className="text-xs text-muted-foreground">封面会显示在企划列表中</p>
+                <h2 className="text-sm font-medium text-foreground">封面</h2>
               </div>
-              <ImagePlus className="h-4 w-4 text-muted-foreground" />
             </div>
 
             <FileUpload
               bizType="cover"
               bizId={coverBizId}
               value={coverFile}
-              title="上传企划封面"
-              description="推荐 2:3 竖版图片，最大 10MB"
+              title={isEditing ? "更换企划封面" : "上传企划封面"}
+              description={isEditing ? "不上传则保留原封面" : "推荐 2:3 竖版图片，最大 10MB"}
               imagePreview
               accept={["jpg", "jpeg", "png", "gif"]}
               maxSize={10 * 1024 * 1024}
-              className="[&>button]:h-[340px]"
+              fillHeight
               onChange={setCoverFile}
             />
-
-            <div className="mt-3 flex items-center gap-3 rounded-lg border bg-background/60 p-2.5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted">
-                {coverFile?.previewUrl ? (
-                  <img
-                    src={coverFile.previewUrl}
-                    alt="封面缩略图"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <ImagePlus className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">缩略图</p>
-                <p className="text-xs text-muted-foreground">创建后自动使用封面图片</p>
-              </div>
-            </div>
           </section>
         </aside>
 
-        <main className="h-fit rounded-xl border bg-card p-5 shadow-sm">
+        <main className="rounded-xl border bg-card p-5 shadow-sm">
           <section className="border-b pb-4">
             <div className="mb-4 flex items-center gap-2">
               <Info className="h-4 w-4 text-muted-foreground" />
@@ -221,6 +246,38 @@ export default function CreateProject() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {isEditing && (
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium text-foreground">状态</label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value: string | null) =>
+                      setFormData({ ...formData, status: (value ?? "") as ProjectStatus | "" })
+                    }
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        fieldClassName,
+                        "h-10 w-full justify-between px-3 text-sm font-medium",
+                      )}
+                    >
+                      <span className={cn("truncate", !formData.status && "text-muted-foreground")}>
+                        {formData.status || "选择状态"}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {formData.status === "已归档" && (
+                        <SelectItem value="已归档" disabled>
+                          已归档
+                        </SelectItem>
+                      )}
+                      <SelectItem value="进行中">进行中</SelectItem>
+                      <SelectItem value="已完成">已完成</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </section>
 
@@ -228,12 +285,12 @@ export default function CreateProject() {
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Tags className="h-4 w-4 text-muted-foreground" />
-                <h2 className="text-base font-medium text-foreground">元信息</h2>
+                <h2 className="text-base font-medium text-foreground">标签</h2>
               </div>
               {!showTagInput && (
                 <Button variant="outline" size="sm" onClick={() => setShowTagInput(true)}>
                   <Plus className="h-4 w-4" />
-                  添加信息
+                  添加标签
                 </Button>
               )}
             </div>

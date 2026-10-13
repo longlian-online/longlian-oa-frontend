@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMachine } from "@xstate/react";
 
 import {
@@ -6,11 +6,11 @@ import {
   claimTask,
   getItemTaskFlow,
   getItemTaskInstances,
-  getTaskInstanceDetail,
   rejectTask,
   resetTask,
   submitTask,
 } from "@/api/workflowInstance";
+import { ApiError } from "@/api/apiError";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,9 +27,11 @@ import type {
   ItemTaskFlowVO,
   ItemTaskInstanceVO,
   ItemTaskNodeVO,
-  TaskInstanceDetailVO,
+  TaskSubmitDTO,
 } from "@/types/workflowInstance";
-import TaskActionPanel from "./TaskActionPanel";
+import { createItemLifecycle } from "./itemLifecycle";
+import TaskDetailPanel from "./TaskDetailPanel";
+import { canReset, canReject } from "./taskPermissions";
 import TaskFlowViewer from "./TaskFlowViewer";
 import TaskSubmitPanel from "./TaskSubmitPanel";
 import { workflowInstanceMachine } from "./workflowMachine";
@@ -65,37 +67,63 @@ function isNodeUnlocked(node: ItemTaskNodeVO, nodes: ItemTaskNodeVO[]): boolean 
 export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const currentUserId = getUserId();
+  const lifecycle = useRef(createItemLifecycle(itemId));
+  lifecycle.current.switchTo(itemId);
+  const isCurrentLifecycle = lifecycle.current.capture();
+  const loadGeneration = useRef(0);
+  const [loadedItemId, setLoadedItemId] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [workflowState, sendWorkflowEvent] = useMachine(workflowInstanceMachine);
   const [taskFlow, setTaskFlow] = useState<ItemTaskFlowVO | null>(null);
   const [instances, setInstances] = useState<ItemTaskInstanceVO[]>([]);
+  const [detailRevision, setDetailRevision] = useState(0);
   const [submitTarget, setSubmitTarget] = useState<{
     instance: ItemTaskInstanceVO;
-    node?: ItemTaskNodeVO;
+    node: ItemTaskNodeVO;
   } | null>(null);
   const [rejectTarget, setRejectTarget] = useState<ItemTaskInstanceVO | null>(null);
   const [rejectComment, setRejectComment] = useState("");
-  const [detailTarget, setDetailTarget] = useState<ItemTaskInstanceVO | null>(null);
-  const [detail, setDetail] = useState<TaskInstanceDetailVO | null>(null);
-
   const sortedInstances = useMemo(() => getSortedInstances(instances), [instances]);
-  const visibleInstances = sortedInstances;
+  const selectedNode = taskFlow?.nodes.find((node) => node.id === selectedNodeId);
+  const selectedInstance = selectedNode
+    ? sortedInstances.find((instance) =>
+        selectedNode.taskInstanceId
+          ? instance.id === selectedNode.taskInstanceId
+          : instance.sort === selectedNode.sort &&
+            instance.parallelSort === selectedNode.parallelSort,
+      )
+    : undefined;
 
   useEffect(() => {
+    setSelectedNodeId(null);
+    setTaskFlow(null);
+    setInstances([]);
+    setSubmitTarget(null);
+    setRejectTarget(null);
+    setRejectComment("");
     void loadData();
   }, [itemId]);
 
   async function loadData(background = false): Promise<void> {
+    const generation = ++loadGeneration.current;
     try {
       if (!background) sendWorkflowEvent({ type: "LOAD" });
       const [flowData, instanceData] = await Promise.all([
         getItemTaskFlow(itemId),
         getItemTaskInstances(itemId),
       ]);
+      if (!isCurrentLifecycle() || generation !== loadGeneration.current) return;
+      setLoadedItemId(itemId);
       setTaskFlow(flowData);
       setInstances(instanceData);
+      setDetailRevision((current) => current + 1);
       sendWorkflowEvent({ type: "LOADED" });
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务流加载失败", "error");
+      if (!isCurrentLifecycle() || generation !== loadGeneration.current) {
+        if (error instanceof ApiError) error.silence();
+        return;
+      }
+      setLoadedItemId(itemId);
       sendWorkflowEvent({ type: background ? "ACTION_FAILED" : "LOAD_FAILED" });
     }
   }
@@ -104,21 +132,32 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     instanceId: string,
     action: () => Promise<void>,
     successMessage: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
+    if (!isCurrentLifecycle() || workflowState.matches("mutating")) return false;
     try {
       sendWorkflowEvent({ type: "MUTATE", instanceId });
       await action();
+      if (!isCurrentLifecycle()) return false;
       $tip(successMessage, "success");
       await loadData(true);
+      return isCurrentLifecycle();
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务操作失败", "error");
+      if (!isCurrentLifecycle()) {
+        if (error instanceof ApiError) error.silence();
+        return false;
+      }
       sendWorkflowEvent({ type: "ACTION_FAILED" });
+      return false;
     }
   }
 
   function openSubmit(instance: ItemTaskInstanceVO, node?: ItemTaskNodeVO): void {
     const targetNode = node ?? findNodeByInstance(instance, taskFlow?.nodes ?? []);
-    if (targetNode && !isNodeUnlocked(targetNode, taskFlow?.nodes ?? [])) {
+    if (!targetNode) {
+      $tip("任务提交表单尚未加载，请重新加载任务流", "error");
+      return;
+    }
+    if (!isNodeUnlocked(targetNode, taskFlow?.nodes ?? [])) {
       $tip("请先完成前置阶段", "error");
       return;
     }
@@ -128,36 +167,34 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     });
   }
 
-  async function handleSubmit(metadata: Record<string, unknown>): Promise<void> {
-    if (!submitTarget) return;
+  async function handleSubmit(submission: TaskSubmitDTO): Promise<boolean> {
+    if (!submitTarget) return false;
 
-    await runInstanceAction(
+    const succeeded = await runInstanceAction(
       submitTarget.instance.id,
-      () => submitTask(submitTarget.instance.id, { metadata: JSON.stringify(metadata) }),
+      () => submitTask(submitTarget.instance.id, submission),
       "任务已提交",
     );
-    setSubmitTarget(null);
+    if (succeeded) setSubmitTarget(null);
+    return succeeded;
   }
 
   async function handleReject(): Promise<void> {
-    if (!rejectTarget || !rejectComment.trim()) return;
+    if (
+      !rejectTarget ||
+      !rejectComment.trim() ||
+      !canReject(rejectTarget, taskFlow?.nodes ?? [], instances, currentUserId)
+    )
+      return;
 
-    await runInstanceAction(
+    const succeeded = await runInstanceAction(
       rejectTarget.id,
       () => rejectTask(rejectTarget.id, { reviewComment: rejectComment.trim() }),
       "任务已打回",
     );
-    setRejectTarget(null);
-    setRejectComment("");
-  }
-
-  async function handleViewDetail(instance: ItemTaskInstanceVO): Promise<void> {
-    try {
-      const data = await getTaskInstanceDetail(instance.id);
-      setDetail(data);
-      setDetailTarget(instance);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务详情加载失败", "error");
+    if (succeeded) {
+      setRejectTarget(null);
+      setRejectComment("");
     }
   }
 
@@ -172,6 +209,8 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   }
 
   async function handleReset(instanceId: string): Promise<void> {
+    const instance = instances.find((candidate) => candidate.id === instanceId);
+    if (!instance || !canReset(instance, currentUserId)) return;
     const confirmed = await confirm({
       title: "重置提交？",
       description: "重置后任务会回到待提交状态，需要重新提交。",
@@ -183,7 +222,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
 
   const mutatingInstanceId = workflowState.context.mutatingInstanceId;
 
-  if (workflowState.matches("loading")) {
+  if (loadedItemId !== itemId || workflowState.matches("loading")) {
     return <div className="py-8 text-center text-sm text-muted-foreground">正在加载任务流...</div>;
   }
 
@@ -213,6 +252,8 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
       </header>
 
       <TaskFlowViewer
+        selectedNodeId={selectedNodeId}
+        onSelectNode={setSelectedNodeId}
         nodes={taskFlow.nodes}
         instances={sortedInstances}
         currentUserId={currentUserId}
@@ -223,34 +264,53 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
         onSubmit={(instance, node) => openSubmit(instance, node)}
       />
 
-      <TaskActionPanel
-        instances={visibleInstances}
-        currentUserId={currentUserId}
-        mutatingInstanceId={mutatingInstanceId}
-        canSubmit={(instance) => {
-          const node = findNodeByInstance(instance, taskFlow.nodes);
-          return !node || isNodeUnlocked(node, taskFlow.nodes);
-        }}
-        onClaim={(instanceId) =>
-          void runInstanceAction(instanceId, () => claimTask(instanceId), "任务已接取")
-        }
-        onSubmit={(instance) => openSubmit(instance)}
-        onAbandon={(instanceId) => void handleAbandon(instanceId)}
-        onReject={setRejectTarget}
-        onReset={(instanceId) => void handleReset(instanceId)}
-        onViewDetail={(instance) => void handleViewDetail(instance)}
-      />
+      {selectedNode ? (
+        <TaskDetailPanel
+          key={`${itemId}:${selectedNode.id}`}
+          node={selectedNode}
+          instance={selectedInstance}
+          revision={detailRevision}
+          actions={
+            selectedInstance && selectedNode.taskStatus !== null
+              ? {
+                  currentUserId,
+                  mutating: mutatingInstanceId === selectedInstance.id,
+                  canSubmit: isNodeUnlocked(selectedNode, taskFlow.nodes),
+                  canReset: canReset(selectedInstance, currentUserId),
+                  canReject: canReject(selectedInstance, taskFlow.nodes, instances, currentUserId),
+                  onClaim: () =>
+                    void runInstanceAction(
+                      selectedInstance.id,
+                      () => claimTask(selectedInstance.id),
+                      "任务已接取",
+                    ),
+                  onSubmit: () => openSubmit(selectedInstance),
+                  onAbandon: () => void handleAbandon(selectedInstance.id),
+                  onReject: () => setRejectTarget(selectedInstance),
+                  onReset: () => void handleReset(selectedInstance.id),
+                }
+              : undefined
+          }
+        />
+      ) : (
+        <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
+          点击流程节点查看任务详情和操作。
+        </div>
+      )}
 
-      <TaskSubmitPanel
-        open={Boolean(submitTarget)}
-        taskInstanceId={submitTarget?.instance.id}
-        taskName={submitTarget?.instance.name}
-        metaSchema={submitTarget?.node?.metaSchema}
-        onOpenChange={(open) => {
-          if (!open) setSubmitTarget(null);
-        }}
-        onSubmit={handleSubmit}
-      />
+      {submitTarget && (
+        <TaskSubmitPanel
+          key={submitTarget.instance.id}
+          open
+          taskInstanceId={submitTarget.instance.id}
+          taskName={submitTarget.instance.name}
+          submitFields={submitTarget.node.submitFields}
+          onOpenChange={(open) => {
+            if (!open) setSubmitTarget(null);
+          }}
+          onSubmit={handleSubmit}
+        />
+      )}
 
       <Dialog open={Boolean(rejectTarget)} onOpenChange={(open) => !open && setRejectTarget(null)}>
         <DialogContent>
@@ -275,25 +335,6 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
               打回
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={Boolean(detailTarget)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDetailTarget(null);
-            setDetail(null);
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>提交详情{detailTarget ? `：${detailTarget.name}` : ""}</DialogTitle>
-          </DialogHeader>
-          <pre className="max-h-80 overflow-auto rounded-xl bg-secondary/60 p-3 text-xs text-foreground">
-            {detail?.metadata || "暂无提交元数据"}
-          </pre>
         </DialogContent>
       </Dialog>
     </div>

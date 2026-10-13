@@ -2,6 +2,7 @@
   "document": "用户端",
   "method": "PATCH",
   "operation": {
+    "description": "需项目中所有任务均已完成，存在未完成任务时拒绝公布",
     "operationId": "publishProjectItem",
     "parameters": [
       {

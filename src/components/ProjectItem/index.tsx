@@ -47,6 +47,7 @@ interface ProjectItemSectionProps {
   projectId: string;
   isCreator?: boolean;
   onChanged?: () => Promise<void> | void;
+  showDetailLink?: boolean;
 }
 
 interface ProjectItemForm {
@@ -110,6 +111,7 @@ export default function ProjectItemSection({
   projectId,
   isCreator = false,
   onChanged,
+  showDetailLink = false,
 }: ProjectItemSectionProps) {
   const confirm = useConfirm();
   const navigate = useNavigate();
@@ -151,8 +153,6 @@ export default function ProjectItemSection({
       });
       setItems(data.list);
       setTotal(data.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目列表加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -163,8 +163,6 @@ export default function ProjectItemSection({
       setTemplateLoading(true);
       const data = await getTaskTemplateOptions();
       setTemplates(data);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "流程模板加载失败", "error");
     } finally {
       setTemplateLoading(false);
     }
@@ -189,8 +187,6 @@ export default function ProjectItemSection({
       setPage(1);
       await loadItems();
       await onChanged?.();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目创建失败", "error");
     } finally {
       setSaving(false);
     }
@@ -214,8 +210,6 @@ export default function ProjectItemSection({
         await loadItems();
       }
       await onChanged?.();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目删除失败", "error");
     } finally {
       setMutatingItemId(null);
     }
@@ -235,8 +229,6 @@ export default function ProjectItemSection({
       $tip("项目已发布", "success");
       await loadItems();
       await onChanged?.();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "项目发布失败", "error");
     } finally {
       setMutatingItemId(null);
     }
@@ -254,12 +246,26 @@ export default function ProjectItemSection({
             绑定流程模板后，项目会按节点生成任务流。
           </p>
         </div>
-        {isCreator && (
-          <Button size="sm" onClick={openCreateDialog}>
-            <Plus className="h-4 w-4" />
-            创建项目
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {showDetailLink && (
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="查看项目列表"
+              title="查看项目列表"
+              onClick={() => void navigate(`/dashboard/planning/${projectId}/items`)}
+            >
+              详细
+              <ChevronRight data-icon="inline-end" />
+            </Button>
+          )}
+          {isCreator && (
+            <Button size="sm" onClick={openCreateDialog}>
+              <Plus className="h-4 w-4" />
+              创建项目
+            </Button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -305,25 +311,30 @@ export default function ProjectItemSection({
                 </div>
                 {isCreator && (
                   <div className="flex shrink-0 items-center gap-1">
-                    {item.status !== "PUBLISHED" && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="发布项目"
-                        disabled={mutatingItemId === item.id}
-                        onClick={() => void handlePublishItem(item)}
-                      >
-                        {mutatingItemId === item.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
-                      </Button>
-                    )}
+                    {item.status !== "PUBLISHED" &&
+                      item.nodes.length > 0 &&
+                      // 节点状态由后端按该节点全部任务实例汇总，全部节点完成即所有任务已完成
+                      item.nodes.every((node) => node.state === "COMPLETED") && (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="发布项目"
+                          title="发布项目"
+                          disabled={mutatingItemId === item.id}
+                          onClick={() => void handlePublishItem(item)}
+                        >
+                          {mutatingItemId === item.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
                     <Button
                       variant="ghost"
                       size="icon-sm"
                       aria-label="删除项目"
+                      title="删除项目"
                       className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       disabled={mutatingItemId === item.id}
                       onClick={() => void handleDeleteItem(item)}

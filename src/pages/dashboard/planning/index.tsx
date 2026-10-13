@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
-import { ChevronDown, Clock, Filter, FolderOpen, Plus } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { Clock, Filter, FolderOpen, Plus } from "lucide-react";
 
 import { getProjectList } from "@/api/planning";
 import EmptyState from "@/components/EmptyState";
 import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
-import { $tip } from "@/components/tip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,9 +19,20 @@ import {
 } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
-import type { ProjectInfoVO } from "@/types/planning";
+import type { ProjectInfoVO, ProjectListDTO } from "@/types/planning";
 
 const PAGE_SIZE = 8;
+const DEFAULT_TIME_SORT: Required<Pick<ProjectListDTO, "sortByTime" | "orderDir">> = {
+  sortByTime: "CREATE",
+  orderDir: "DESC",
+};
+
+const timeSortOptions = [
+  { value: "CREATE-DESC", label: "最新创建" },
+  { value: "CREATE-ASC", label: "最早创建" },
+  { value: "UPDATE-DESC", label: "最近更新" },
+  { value: "UPDATE-ASC", label: "最早更新" },
+] as const;
 
 export default function Planning() {
   const navigate = useNavigate();
@@ -31,12 +41,13 @@ export default function Planning() {
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
   const [selectedType, setSelectedType] = useState("all");
+  const [timeSort, setTimeSort] = useState(DEFAULT_TIME_SORT);
   const [pageNum, setPageNum] = useState(1);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
     void loadProjects();
-  }, [pageNum, selectedType]);
+  }, [pageNum, selectedType, timeSort]);
 
   async function loadProjects(targetPage = pageNum): Promise<void> {
     try {
@@ -46,11 +57,11 @@ export default function Planning() {
         pageSize: PAGE_SIZE,
         keyword: keyword || undefined,
         projectType: selectedType === "all" ? undefined : selectedType,
+        sortByTime: timeSort.sortByTime,
+        orderDir: timeSort.orderDir,
       });
       setProjects(result.list);
       setTotal(result.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划加载失败", "error");
     } finally {
       setLoading(false);
     }
@@ -73,11 +84,35 @@ export default function Planning() {
         onSearchSubmit={handleSearch}
         actions={
           <>
-            <Button variant="ghost" size="sm" className="h-9 gap-1 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              时间
-              <ChevronDown className="h-3 w-3" />
-            </Button>
+            <Select
+              value={`${timeSort.sortByTime}-${timeSort.orderDir}`}
+              onValueChange={(value: string | null) => {
+                const [sortByTime, orderDir] = value?.split("-") ?? [];
+                if (
+                  (sortByTime === "CREATE" || sortByTime === "UPDATE") &&
+                  (orderDir === "DESC" || orderDir === "ASC")
+                ) {
+                  setTimeSort({ sortByTime, orderDir });
+                  setPageNum(1);
+                }
+              }}
+            >
+              <SelectTrigger className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0">
+                <Clock className="mr-1.5 h-3.5 w-3.5" />
+                <SelectValue>
+                  {timeSortOptions.find(
+                    (option) => option.value === `${timeSort.sortByTime}-${timeSort.orderDir}`,
+                  )?.label ?? "时间"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {timeSortOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select
               value={selectedType}
               onValueChange={(value: string | null) => {
@@ -89,7 +124,12 @@ export default function Planning() {
             >
               <SelectTrigger className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0">
                 <Filter className="mr-1.5 h-3.5 w-3.5" />
-                <SelectValue />
+                <SelectValue>
+                  {selectedType === "all"
+                    ? "所有类型"
+                    : (projectTypes.find((type) => type.name === selectedType)?.name ??
+                      selectedType)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">所有类型</SelectItem>
@@ -110,7 +150,7 @@ export default function Planning() {
         <>
           {projects.length === 0 ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              <CreateProjectCard onClick={() => navigate("/dashboard/planning/create")} />
+              <CreateProjectCard />
               <div className="md:col-span-1 lg:col-span-2 xl:col-span-3">
                 <EmptyState
                   icon={<FolderOpen className="h-5 w-5 text-muted-foreground" />}
@@ -128,13 +168,9 @@ export default function Planning() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              <CreateProjectCard onClick={() => navigate("/dashboard/planning/create")} />
+              <CreateProjectCard />
               {projects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  onClick={() => navigate(`/dashboard/planning/${project.id}`)}
-                />
+                <ProjectCard key={project.id} project={project} />
               ))}
             </div>
           )}
@@ -152,15 +188,11 @@ export default function Planning() {
   );
 }
 
-interface CreateProjectCardProps {
-  onClick: () => void;
-}
-
-function CreateProjectCard({ onClick }: CreateProjectCardProps) {
+function CreateProjectCard() {
   return (
-    <div
-      onClick={onClick}
-      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-4 transition-colors hover:border-primary hover:bg-primary/[0.02]"
+    <Link
+      to="/dashboard/planning/create"
+      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-4 transition-colors hover:border-primary hover:bg-primary/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40 transition-colors group-hover:border-primary/40 group-hover:bg-primary/5">
         <Plus className="text-muted-foreground transition-colors group-hover:text-primary" />
@@ -169,24 +201,23 @@ function CreateProjectCard({ onClick }: CreateProjectCardProps) {
         <p className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">
           创建新企划
         </p>
-        <p className="mt-1 text-xs text-muted-foreground/70">点击开始一个新的创作企划</p>
+        <p className="mt-1 text-xs text-muted-foreground/70">一同播下百合的种子</p>
       </div>
-    </div>
+    </Link>
   );
 }
 
 interface ProjectCardProps {
   project: ProjectInfoVO;
-  onClick: () => void;
 }
 
-function ProjectCard({ project, onClick }: ProjectCardProps) {
+function ProjectCard({ project }: ProjectCardProps) {
   const metadataTags = parseProjectMetadataTags(project.metadata).slice(0, 2);
 
   return (
-    <article
-      onClick={onClick}
-      className="group flex aspect-[5/3] cursor-pointer overflow-hidden rounded-lg border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md"
+    <Link
+      to={`/dashboard/planning/${project.id}`}
+      className="group flex aspect-[5/3] cursor-pointer overflow-hidden rounded-lg border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="h-full w-[40%] shrink-0 overflow-hidden bg-muted">
         {project.coverUrl ? (
@@ -204,7 +235,10 @@ function ProjectCard({ project, onClick }: ProjectCardProps) {
 
       <div className="flex min-w-0 flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-2 text-base font-semibold leading-6 text-foreground">
+          <h3
+            title={project.title}
+            className="min-w-0 flex-1 truncate text-base font-semibold leading-6 text-foreground"
+          >
             {project.title}
           </h3>
           <Badge variant="outline" className="shrink-0 font-normal">
@@ -238,6 +272,6 @@ function ProjectCard({ project, onClick }: ProjectCardProps) {
           </span>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }

@@ -197,6 +197,20 @@
         "required": ["applicationStatus"],
         "type": "object"
       },
+      "Assignee": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "BaseTaskCreateDTO": {
         "description": "创建/更新原子任务请求参数",
         "properties": {
@@ -206,18 +220,10 @@
             "minLength": 0,
             "type": "string"
           },
-          "iconFileId": {
-            "description": "图标文件ID",
-            "type": "string"
-          },
-          "iconName": {
+          "icon": {
             "description": "Lucide 图标组件名",
             "maxLength": 100,
             "minLength": 0,
-            "type": "string"
-          },
-          "metaSchema": {
-            "description": "元数据字段定义(JSON数组)，示例：[{\"name\":\"附件\",\"fieldType\":\"file\",\"required\":true},{\"name\":\"作者\",\"fieldType\":\"text\",\"required\":true},{\"name\":\"源链接\",\"fieldType\":\"text\",\"required\":true}]",
             "type": "string"
           },
           "name": {
@@ -225,9 +231,16 @@
             "maxLength": 100,
             "minLength": 0,
             "type": "string"
+          },
+          "submitFields": {
+            "description": "提交表单字段",
+            "items": {
+              "$ref": "#/components/schemas/TaskFormField"
+            },
+            "type": "array"
           }
         },
-        "required": ["name"],
+        "required": ["name", "submitFields"],
         "type": "object"
       },
       "BaseTaskListDTO": {
@@ -273,7 +286,7 @@
             "type": "string"
           },
           "status": {
-            "description": "状态精确筛选：ENABLED-启用，DISABLED-禁用，默认查启用",
+            "description": "状态精确筛选：ENABLED-启用，DISABLED-禁用，不传或为 null 时查询全部状态",
             "enum": ["ENABLED", "DISABLED"],
             "type": "string"
           }
@@ -292,20 +305,12 @@
             "description": "任务说明",
             "type": "string"
           },
-          "iconName": {
+          "icon": {
             "description": "Lucide 图标组件名",
-            "type": "string"
-          },
-          "iconUrl": {
-            "description": "图标URL",
             "type": "string"
           },
           "id": {
             "description": "原子任务ID",
-            "type": "string"
-          },
-          "metaSchema": {
-            "description": "元数据字段定义(JSON数组)",
             "type": "string"
           },
           "name": {
@@ -321,8 +326,34 @@
             "description": "状态：ENABLED-启用，DISABLED-禁用",
             "enum": ["ENABLED", "DISABLED"],
             "type": "string"
+          },
+          "submitFields": {
+            "description": "提交表单字段",
+            "items": {
+              "$ref": "#/components/schemas/TaskFormField"
+            },
+            "type": "array"
           }
         },
+        "type": "object"
+      },
+      "ChangePasswordDTO": {
+        "description": "修改密码请求参数",
+        "properties": {
+          "newPassword": {
+            "description": "新密码",
+            "maxLength": 20,
+            "minLength": 6,
+            "type": "string"
+          },
+          "oldPassword": {
+            "description": "原密码",
+            "maxLength": 20,
+            "minLength": 6,
+            "type": "string"
+          }
+        },
+        "required": ["newPassword", "oldPassword"],
         "type": "object"
       },
       "ChangeStatusDTO": {
@@ -340,10 +371,6 @@
       "CreateFileReqDTO": {
         "description": "创建文件上传请求参数",
         "properties": {
-          "bizId": {
-            "description": "业务ID(用户ID/组织ID/任务ID)",
-            "type": "string"
-          },
           "bizType": {
             "description": "业务类型(avatar/cover/task_submit)",
             "pattern": "avatar|cover|task_submit",
@@ -372,7 +399,7 @@
             "type": "integer"
           }
         },
-        "required": ["bizId", "bizType", "fileExt", "fileMime", "fileName", "fileSize"],
+        "required": ["bizType", "fileExt", "fileMime", "fileName", "fileSize"],
         "type": "object"
       },
       "EmailCodeDTO": {
@@ -391,6 +418,42 @@
           }
         },
         "required": ["businessType", "email"],
+        "type": "object"
+      },
+      "Field": {
+        "discriminator": {
+          "mapping": {
+            "file": "#/components/schemas/FileField",
+            "multiline": "#/components/schemas/TextField",
+            "text": "#/components/schemas/TextField"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TextField"
+          },
+          {
+            "$ref": "#/components/schemas/FileField"
+          }
+        ],
+        "type": "object"
+      },
+      "FileField": {
+        "properties": {
+          "file": {
+            "$ref": "#/components/schemas/TaskAttachmentVO"
+          },
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "InviteCodeVO": {
@@ -496,12 +559,8 @@
       "ItemTaskNodeVO": {
         "description": "任务流节点信息（含执行状态，用于流程图可视化）",
         "properties": {
-          "baseTaskIconName": {
+          "baseTaskIcon": {
             "description": "原子任务 Lucide 图标组件名",
-            "type": "string"
-          },
-          "baseTaskIconUrl": {
-            "description": "原子任务图标URL",
             "type": "string"
           },
           "baseTaskId": {
@@ -510,10 +569,6 @@
           },
           "id": {
             "description": "任务节点ID",
-            "type": "string"
-          },
-          "metaSchema": {
-            "description": "节点元数据字段定义快照(JSON数组)",
             "type": "string"
           },
           "name": {
@@ -529,6 +584,13 @@
             "description": "步骤顺序（相同 sort 值为并行节点）",
             "format": "int32",
             "type": "integer"
+          },
+          "submitFields": {
+            "description": "节点提交表单字段快照",
+            "items": {
+              "$ref": "#/components/schemas/TaskFormField"
+            },
+            "type": "array"
           },
           "taskInstanceId": {
             "description": "任务实例ID，null 表示该节点尚未生成实例（前序未完成）",
@@ -551,6 +613,23 @@
           }
         },
         "required": ["inviteCode"],
+        "type": "object"
+      },
+      "LocalFileReadDTO": {
+        "properties": {
+          "expires": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "key": {
+            "type": "string"
+          },
+          "signature": {
+            "pattern": "[0-9a-f]{64}",
+            "type": "string"
+          }
+        },
+        "required": ["expires", "key", "signature"],
         "type": "object"
       },
       "LoginByCodeDTO": {
@@ -594,17 +673,13 @@
       "LoginVO": {
         "description": "登录返回信息",
         "properties": {
-          "currentOrgId": {
-            "description": "当前组织ID",
+          "defaultOrgId": {
+            "description": "默认组织ID，不参与后续鉴权",
             "type": "string"
           },
-          "roles": {
-            "description": "当前组织内用户角色列表",
-            "items": {
-              "description": "当前组织内用户角色列表",
-              "type": "string"
-            },
-            "type": "array"
+          "role": {
+            "description": "默认组织内的角色，仅供展示。没有可用默认组织时为空",
+            "type": "string"
           },
           "token": {
             "description": "用户认证token",
@@ -621,7 +696,7 @@
         "description": "组织管理员端更新当前组织信息请求参数",
         "properties": {
           "avatarFileId": {
-            "description": "组织头像文件ID",
+            "description": "组织头像文件ID；不传表示保持原头像，0 表示清空头像",
             "type": "string"
           },
           "description": {
@@ -637,12 +712,16 @@
             "type": "string"
           }
         },
-        "required": ["avatarFileId", "description", "name"],
+        "required": ["description", "name"],
         "type": "object"
       },
       "OrgAdmintOrganizationInfoVO": {
         "description": "组织管理员端当前组织信息",
         "properties": {
+          "avatarFileId": {
+            "description": "组织头像文件ID",
+            "type": "string"
+          },
           "avatarUrl": {
             "description": "组织头像访问地址",
             "type": "string"
@@ -784,6 +863,18 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "OrgMemberChangeRoleDTO": {
+        "description": "组织成员角色变更请求",
+        "properties": {
+          "orgRole": {
+            "description": "组织角色",
+            "enum": ["ORG_ADMIN", "ORG_USER", "ORG_ADMIN", "ORG_USER"],
+            "type": "string"
+          }
+        },
+        "required": ["orgRole"],
         "type": "object"
       },
       "OrgMemberInfoVO": {
@@ -1130,6 +1221,11 @@
             "description": "企划ID",
             "type": "string"
           },
+          "resourceStatus": {
+            "description": "资源状态：ENABLED-启用，DISABLED-禁用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          },
           "status": {
             "description": "企划状态：IN_PROGRESS-进行中，COMPLETED-已完成，ARCHIVED-已归档",
             "enum": ["进行中", "已完成", "已归档"],
@@ -1210,7 +1306,8 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅含 key、value，key 为非空白字符串且可重复，value 为字符串且可为空",
+            "example": "{\"tags\":[{\"key\":\"作者\",\"value\":\"smile_snow\"}]}",
             "type": "string"
           },
           "title": {
@@ -1258,7 +1355,7 @@
             "type": "boolean"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串，包含 tags 数组，每项仅含 key、value)",
             "type": "string"
           },
           "pendingTaskCount": {
@@ -1290,6 +1387,10 @@
       "ProjectInfoVO": {
         "description": "企划信息",
         "properties": {
+          "alias": {
+            "description": "企划别名",
+            "type": "string"
+          },
           "coverUrl": {
             "description": "封面图片URL",
             "type": "string"
@@ -1307,7 +1408,7 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串，包含 tags 数组；搜索结果中命中 value 的 tags 稳定前置)",
             "type": "string"
           },
           "projectStatus": {
@@ -1460,7 +1561,7 @@
         "description": "企划查询请求参数",
         "properties": {
           "keyword": {
-            "description": "搜索关键词（标题）",
+            "description": "搜索关键词（标题、别名、元数据），按加权相关性优先排序",
             "maxLength": 50,
             "minLength": 0,
             "type": "string"
@@ -1607,7 +1708,7 @@
             "type": "string"
           },
           "coverFileId": {
-            "description": "封面文件ID",
+            "description": "封面文件ID；省略时保留原封面",
             "type": "string"
           },
           "description": {
@@ -1615,7 +1716,8 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON字符串)",
+            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅含 key、value，key 为非空白字符串且可重复，value 为字符串且可为空",
+            "example": "{\"tags\":[{\"key\":\"作者\",\"value\":\"smile_snow\"}]}",
             "type": "string"
           },
           "title": {
@@ -1623,7 +1725,7 @@
             "type": "string"
           }
         },
-        "required": ["alias", "coverFileId", "description", "metadata", "title"],
+        "required": ["alias", "description", "metadata", "title"],
         "type": "object"
       },
       "RegisterByInviteDTO": {
@@ -1719,25 +1821,6 @@
         },
         "type": "object"
       },
-      "ResultVoid": {
-        "description": "通用返回结果",
-        "properties": {
-          "code": {
-            "description": "状态码：0 为成功，非0即异常",
-            "format": "int32",
-            "type": "integer"
-          },
-          "data": {
-            "description": "业务数据（成功时返回，失败时为null）",
-            "type": "object"
-          },
-          "msg": {
-            "description": "操作提示信息",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "ScheduleTriggerDTO": {
         "description": "手动触发定时任务请求",
         "properties": {
@@ -1784,12 +1867,117 @@
         },
         "type": "object"
       },
+      "Submission": {
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/Field"
+            },
+            "type": "array"
+          },
+          "state": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SystemInfoVO": {
+        "description": "系统信息",
+        "properties": {
+          "version": {
+            "description": "后端版本号",
+            "example": "1.0.13-SNAPSHOT",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Task": {
+        "properties": {
+          "assignee": {
+            "$ref": "#/components/schemas/Assignee"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "stage": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TaskAttachmentVO": {
+        "description": "任务提交附件；不可用附件不包含读取链接和有效期",
+        "properties": {
+          "availability": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "签名链接到期时间，Unix 秒",
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "readUrl": {
+            "type": "string"
+          },
+          "sizeText": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TaskFormField": {
+        "description": "提交表单字段",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "TaskInstanceDetailVO": {
         "description": "任务实例详情",
         "properties": {
-          "metadata": {
-            "description": "最近一次提交的元数据(JSON字符串)，无提交记录时为 null",
-            "type": "string"
+          "submission": {
+            "$ref": "#/components/schemas/Submission"
+          },
+          "task": {
+            "$ref": "#/components/schemas/Task"
           }
         },
         "type": "object"
@@ -1810,11 +1998,16 @@
       "TaskSubmitDTO": {
         "description": "提交任务请求参数",
         "properties": {
-          "metadata": {
-            "description": "提交元数据(JSON对象)。示例：{\"values\":{\"attachment\":{\"fileId\":123},\"author\":\"张三\"}}",
-            "type": "string"
+          "values": {
+            "additionalProperties": {
+              "description": "按服务器提交字段定义填写的值；文件仅传 fileId",
+              "type": "object"
+            },
+            "description": "按服务器提交字段定义填写的值；文件仅传 fileId",
+            "type": "object"
           }
         },
+        "required": ["values"],
         "type": "object"
       },
       "TaskTemplateCreateDTO": {
@@ -2007,12 +2200,8 @@
       "TaskTemplateNodeVO": {
         "description": "任务模板节点信息",
         "properties": {
-          "baseTaskIconName": {
+          "baseTaskIcon": {
             "description": "原子任务 Lucide 图标组件名",
-            "type": "string"
-          },
-          "baseTaskIconUrl": {
-            "description": "原子任务图标URL",
             "type": "string"
           },
           "baseTaskId": {
@@ -2027,10 +2216,6 @@
             "description": "模板节点ID",
             "type": "string"
           },
-          "metaSchema": {
-            "description": "元数据字段定义(JSON数组)",
-            "type": "string"
-          },
           "parallelSort": {
             "description": "并行组内排序",
             "format": "int32",
@@ -2040,6 +2225,13 @@
             "description": "步骤顺序（相同 sort 值表示并行节点）",
             "format": "int32",
             "type": "integer"
+          },
+          "submitFields": {
+            "description": "提交表单字段",
+            "items": {
+              "$ref": "#/components/schemas/TaskFormField"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -2053,6 +2245,23 @@
           },
           "name": {
             "description": "流程模板名称",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TextField": {
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "type": {
             "type": "string"
           }
         },
@@ -2120,13 +2329,9 @@
             "description": "组织名称",
             "type": "string"
           },
-          "roles": {
-            "description": "在组织内的角色列表",
-            "items": {
-              "description": "在组织内的角色列表",
-              "type": "string"
-            },
-            "type": "array"
+          "role": {
+            "description": "在组织内的角色",
+            "type": "string"
           }
         },
         "type": "object"
@@ -2187,7 +2392,7 @@
             "type": "string"
           },
           "lastSubmitterUsername": {
-            "description": "最近一次提交的用户名",
+            "description": "最近一次提交的昵称",
             "type": "string"
           },
           "title": {
@@ -2281,14 +2486,10 @@
         "type": "object"
       },
       "WorkshopTaskTemplateNodeVO": {
-        "description": "工坊任务流模板节点信息（卡片简化版，不含 metaSchema）",
+        "description": "工坊任务流模板节点信息（卡片简化版）",
         "properties": {
-          "baseTaskIconName": {
+          "baseTaskIcon": {
             "description": "原子任务 Lucide 图标组件名",
-            "type": "string"
-          },
-          "baseTaskIconUrl": {
-            "description": "原子任务图标URL",
             "type": "string"
           },
           "baseTaskId": {
@@ -2710,6 +2911,7 @@
         "tags": ["企划接口"]
       },
       "post": {
+        "description": "创建后自动加入当前用户的个人工坊",
         "operationId": "createProject",
         "parameters": [
           {
@@ -2986,6 +3188,7 @@
     },
     "/app/projects/{projectId}/items/{itemId}/publish": {
       "patch": {
+        "description": "需项目中所有任务均已完成，存在未完成任务时拒绝公布",
         "operationId": "publishProjectItem",
         "parameters": [
           {
@@ -3028,7 +3231,7 @@
     },
     "/app/projects/{projectId}/workshop": {
       "delete": {
-        "description": "将指定企划从当前用户的个人工坊中移除",
+        "description": "将指定企划从当前用户的个人工坊中移除。企划负责人不能退出自己的企划",
         "operationId": "removeFromWorkshop",
         "parameters": [
           {
@@ -3328,7 +3531,7 @@
     },
     "/app/task/instance/{instanceId}/detail": {
       "get": {
-        "description": "返回任务实例信息及最近一次提交的元数据详情",
+        "description": "返回任务信息及服务器组装的提交字段和附件",
         "operationId": "getTaskInstanceDetail",
         "parameters": [
           {
@@ -3444,7 +3647,7 @@
     },
     "/app/task/instance/{instanceId}/submit": {
       "post": {
-        "description": "提交待提交（CLAIMED）的任务，提交后任务状态变为 COMPLETED。提交内容通过 metadata(JSON对象) 传递",
+        "description": "提交待提交（CLAIMED）的任务，提交后任务状态变为 COMPLETED。提交内容通过 values 传递",
         "operationId": "submitTask",
         "parameters": [
           {
@@ -3612,6 +3815,37 @@
       }
     },
     "/app/user/password": {
+      "patch": {
+        "description": "使用原密码修改当前登录用户密码",
+        "operationId": "changePassword",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "修改密码",
+        "tags": ["用户接口"]
+      },
       "put": {
         "description": "使用邮箱验证码重置密码",
         "operationId": "resetPassword",
@@ -3659,7 +3893,7 @@
     },
     "/app/user/register/join-organization": {
       "post": {
-        "description": "使用组织管理员生成的邀请码完成注册，并加入指定组织",
+        "description": "使用邀请码提交注册入组申请，审批通过后创建账号并加入组织",
         "operationId": "registerAndJoinOrganizationByInvite",
         "requestBody": {
           "content": {
@@ -3712,7 +3946,7 @@
     },
     "/app/user/switch": {
       "post": {
-        "description": "切换用户当前所在组织",
+        "description": "更新用户默认组织，不改变其他请求的组织作用域",
         "operationId": "switchOrg",
         "parameters": [
           {
@@ -3746,7 +3980,7 @@
             "description": "OK"
           }
         },
-        "summary": "切换组织",
+        "summary": "设置默认组织",
         "tags": ["用户接口"]
       }
     },
@@ -3908,22 +4142,31 @@
     },
     "/common/file/local": {
       "get": {
-        "description": "通过预签名 key 读取本地存储的文件内容，返回原始文件流",
+        "description": "通过带有效期和签名的链接读取文件，裸 key 不可读取",
         "operationId": "readLocalFile",
         "parameters": [
           {
             "in": "query",
-            "name": "key",
+            "name": "dto",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/LocalFileReadDTO"
+            }
+          },
+          {
+            "in": "query",
+            "name": "t",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
             }
           }
         ],
         "responses": {
           "200": {
             "content": {
-              "*/*": {
+              "application/octet-stream": {
                 "schema": {
                   "format": "binary",
                   "type": "string"
@@ -3942,35 +4185,13 @@
         "parameters": [
           {
             "in": "query",
-            "name": "key",
+            "name": "dto",
             "required": true,
             "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "sessionContext",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/SessionContext"
+              "$ref": "#/components/schemas/LocalFileReadDTO"
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "items": {
-                  "format": "byte",
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "OK"
@@ -4018,6 +4239,27 @@
         },
         "summary": "创建文件上传",
         "tags": ["文件上传接口"]
+      }
+    },
+    "/common/system/info": {
+      "get": {
+        "description": "无需登录，返回当前系统信息",
+        "operationId": "getSystemInfo",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [],
+        "summary": "获取系统信息",
+        "tags": ["系统信息接口"]
       }
     },
     "/orgadmin/members": {
@@ -4212,9 +4454,50 @@
         "tags": ["组织成员管理"]
       }
     },
+    "/orgadmin/members/{memberId}/role": {
+      "patch": {
+        "operationId": "changeMemberRole",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrgMemberChangeRoleDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "调整成员组织角色",
+        "tags": ["组织成员管理"]
+      }
+    },
     "/orgadmin/members/{memberId}/status": {
       "patch": {
-        "description": "禁用后用户无法登录；超管身份不可被禁用。status: ENABLED-启用，DISABLED-禁用",
+        "description": "仅限制成员访问当前组织，不改变用户全局账号状态。status: ENABLED-启用，DISABLED-禁用",
         "operationId": "changeMemberStatus",
         "parameters": [
           {
@@ -4247,13 +4530,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -4496,13 +4772,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -4585,13 +4854,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -4601,7 +4863,7 @@
     },
     "/orgadmin/task/base": {
       "post": {
-        "description": "任务创建后不可编辑，请确认标题、图标、简介和元数据字段定义后提交",
+        "description": "任务创建后不可编辑，请确认标题、图标、简介和提交字段定义后提交",
         "operationId": "createBaseTask",
         "parameters": [
           {
@@ -4672,6 +4934,38 @@
         "tags": ["原子任务管理"]
       }
     },
+    "/orgadmin/task/base/{taskId}": {
+      "delete": {
+        "description": "仅允许删除未被任务模板节点或项目任务节点引用的任务；已引用的任务应改为禁用",
+        "operationId": "deleteBaseTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "删除原子任务",
+        "tags": ["原子任务管理"]
+      }
+    },
     "/orgadmin/task/base/{taskId}/status": {
       "patch": {
         "description": "禁用后该任务无法被添加到新模板节点中，已引用的节点不受影响。status: ENABLED-启用，DISABLED-禁用",
@@ -4707,13 +5001,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -4910,13 +5197,6 @@
         },
         "responses": {
           "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResultVoid"
-                }
-              }
-            },
             "description": "OK"
           }
         },
@@ -4932,8 +5212,8 @@
   ],
   "servers": [
     {
-      "description": "Generated server url",
-      "url": "http://sit.neo.oa.api.longlian.online"
+      "description": "Configured server URL",
+      "url": "https://sit.neo.oa.api.longlian.online/"
     }
   ],
   "tags": [
@@ -4960,6 +5240,10 @@
     {
       "description": "管理员会话相关接口",
       "name": "管理员会话接口"
+    },
+    {
+      "description": "原子任务（最小任务单元）管理；任务创建后不可编辑，仅支持启用/禁用和删除未被引用的任务",
+      "name": "原子任务管理"
     },
     {
       "description": "用户相关的基础操作接口",
@@ -4992,10 +5276,6 @@
     {
       "description": "组织成员管理：入组申请审核、组员列表、邀请",
       "name": "组织成员管理"
-    },
-    {
-      "description": "原子任务（最小任务单元）管理；任务创建后不可编辑，仅支持启用/禁用",
-      "name": "原子任务管理"
     },
     {
       "description": "任务流模板的增删改查与状态管理，仅管理员可操作",

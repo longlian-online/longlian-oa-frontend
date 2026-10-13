@@ -1,78 +1,25 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import {
-  BarChart3,
-  Ban,
-  Check,
-  CirclePlus,
-  Info,
-  Link2,
-  Loader2,
-  Pencil,
-  Share2,
-  X,
-} from "lucide-react";
+import { BarChart3, CirclePlus, Info, Link2, Loader2, Pencil, Share2, X } from "lucide-react";
 
-import {
-  addProjectToWorkshop,
-  getProjectDetail,
-  removeProjectFromWorkshop,
-  updateProject,
-} from "@/api/planning";
-import { changeProjectStatus } from "@/api/organizationAdmin";
-import FileUpload from "@/components/FileUpload";
+import { addProjectToWorkshop, getProjectDetail, removeProjectFromWorkshop } from "@/api/planning";
 import ProjectItemSection from "@/components/ProjectItem";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
+import { getStatusLabel } from "@/lib/projectStatus";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
-import { isOrganizationAdmin } from "@/lib/session";
-import type { UploadedFileInfo } from "@/types/file";
-import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
-
-interface ProjectEditForm {
-  title: string;
-  alias: string;
-  description: string;
-  metadata: string;
-}
-
-function getStatusLabel(status: ProjectStatus): string {
-  if (status === "COMPLETED" || status === "已完成") return "已完成";
-  if (status === "ARCHIVED" || status === "已归档") return "已归档";
-  return "进行中";
-}
+import type { ProjectDetailInfoVO } from "@/types/planning";
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const isOrgAdmin = isOrganizationAdmin();
   const [project, setProject] = useState<ProjectDetailInfoVO | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [workshopLoading, setWorkshopLoading] = useState(false);
-  const [disablingProject, setDisablingProject] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(null);
-  const [editForm, setEditForm] = useState<ProjectEditForm>({
-    title: "",
-    alias: "",
-    description: "",
-    metadata: "",
-  });
 
   useEffect(() => {
     if (projectId) {
@@ -85,44 +32,8 @@ export default function ProjectDetail() {
       setLoading(true);
       const data = await getProjectDetail(projectId!);
       setProject(data);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划加载失败", "error");
     } finally {
       setLoading(false);
-    }
-  }
-
-  function openEditDialog(): void {
-    if (!project) return;
-    setEditForm({
-      title: project.title,
-      alias: project.alias ?? "",
-      description: project.description ?? "",
-      metadata: project.metadata ?? JSON.stringify({ tags: [] }),
-    });
-    setCoverFile(null);
-    setEditOpen(true);
-  }
-
-  async function handleUpdateProject(): Promise<void> {
-    if (!projectId || !editForm.title.trim()) return;
-
-    try {
-      setSaving(true);
-      await updateProject(projectId, {
-        title: editForm.title.trim(),
-        alias: editForm.alias.trim() || editForm.title.trim(),
-        description: editForm.description.trim(),
-        metadata: editForm.metadata.trim() || "{}",
-        coverFileId: coverFile?.fileId,
-      });
-      $tip("企划已更新", "success");
-      setEditOpen(false);
-      await loadProjectDetail();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "企划更新失败", "error");
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -131,9 +42,9 @@ export default function ProjectDetail() {
 
     if (project.inWorkshop) {
       const confirmed = await confirm({
-        title: "从工坊移除企划？",
-        description: "移除后可以在企划详情里重新添加。",
-        confirmText: "移除",
+        title: "退出企划？",
+        description: "退出后可以在企划详情里重新加入。",
+        confirmText: "退出企划",
       });
       if (!confirmed) return;
     }
@@ -142,39 +53,23 @@ export default function ProjectDetail() {
       setWorkshopLoading(true);
       if (project.inWorkshop) {
         await removeProjectFromWorkshop(projectId);
-        $tip("已从工坊移除", "success");
+        $tip("已退出企划", "success");
       } else {
         await addProjectToWorkshop(projectId);
-        $tip("已添加到工坊", "success");
+        $tip("已加入企划", "success");
       }
       await loadProjectDetail();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "工坊状态更新失败", "error");
     } finally {
       setWorkshopLoading(false);
     }
   }
 
-  async function handleDisableProject(): Promise<void> {
-    if (!projectId || !project) return;
-
-    const confirmed = await confirm({
-      title: "禁用企划？",
-      description: `禁用后「${project.title}」将不再在用户端展示，已有数据会保留。`,
-      confirmText: "禁用",
-      variant: "destructive",
-    });
-    if (!confirmed) return;
-
+  async function handleShare(): Promise<void> {
     try {
-      setDisablingProject(true);
-      await changeProjectStatus(projectId, "DISABLED");
-      $tip("企划已禁用", "success");
-      void navigate("/dashboard/planning", { replace: true });
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "禁用企划失败", "error");
-    } finally {
-      setDisablingProject(false);
+      await navigator.clipboard.writeText(window.location.href);
+      $tip("企划链接已复制", "success");
+    } catch {
+      $tip("复制链接失败，请手动复制当前地址", "error");
     }
   }
 
@@ -207,43 +102,38 @@ export default function ProjectDetail() {
         </div>
         <div className="flex items-center gap-2">
           {project.isCreator && (
-            <Button variant="outline" size="sm" onClick={openEditDialog}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void navigate(`/dashboard/planning/${project.id}/edit`)}
+            >
               <Pencil className="h-4 w-4" />
               编辑
             </Button>
           )}
-          {isOrgAdmin && (
+          {!(project.isCreator && project.inWorkshop) && (
             <Button
-              variant="outline"
+              variant={project.inWorkshop ? "secondary" : "default"}
               size="sm"
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              disabled={disablingProject}
-              onClick={() => void handleDisableProject()}
+              disabled={workshopLoading}
+              onClick={handleToggleWorkshop}
             >
-              {disablingProject ? (
+              {workshopLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
+              ) : project.inWorkshop ? (
+                <X className="h-4 w-4" />
               ) : (
-                <Ban className="h-4 w-4" />
+                <CirclePlus className="h-4 w-4" />
               )}
-              禁用
+              {project.inWorkshop ? "退出企划" : "加入企划"}
             </Button>
           )}
           <Button
-            variant={project.inWorkshop ? "secondary" : "default"}
+            variant="ghost"
             size="sm"
-            disabled={workshopLoading}
-            onClick={handleToggleWorkshop}
+            className="text-muted-foreground"
+            onClick={() => void handleShare()}
           >
-            {workshopLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : project.inWorkshop ? (
-              <X className="h-4 w-4" />
-            ) : (
-              <CirclePlus className="h-4 w-4" />
-            )}
-            {project.inWorkshop ? "移出工坊" : "添加到工坊"}
-          </Button>
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
             <Share2 className="h-4 w-4" />
             分享
           </Button>
@@ -327,7 +217,7 @@ export default function ProjectDetail() {
           <section className="rounded-xl border bg-card p-5 shadow-sm">
             <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
               <Info className="h-4 w-4 text-muted-foreground" />
-              元信息
+              标签
             </div>
             {tags.length > 0 ? (
               <div className="flex flex-wrap gap-2">
@@ -339,90 +229,18 @@ export default function ProjectDetail() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">暂无元信息</p>
+              <p className="text-sm text-muted-foreground">暂无标签</p>
             )}
           </section>
 
           <ProjectItemSection
             projectId={projectId!}
             isCreator={project.isCreator}
+            showDetailLink
             onChanged={loadProjectDetail}
           />
         </main>
       </div>
-
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>编辑企划</DialogTitle>
-            <DialogDescription>更新基础信息；如需更换封面，请重新上传图片。</DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 md:grid-cols-[180px_minmax(0,1fr)]">
-            <FileUpload
-              bizType="cover"
-              bizId={projectId ?? String(project.id)}
-              value={coverFile}
-              title="更换封面"
-              description="不上传则保留原封面"
-              imagePreview
-              accept={["jpg", "jpeg", "png", "gif"]}
-              maxSize={10 * 1024 * 1024}
-              className="[&>button]:min-h-[270px]"
-              onChange={setCoverFile}
-            />
-
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">企划名</label>
-                <Input
-                  value={editForm.title}
-                  onChange={(event) => setEditForm({ ...editForm, title: event.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">别名</label>
-                <Input
-                  value={editForm.alias}
-                  onChange={(event) => setEditForm({ ...editForm, alias: event.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">简介</label>
-                <Textarea
-                  value={editForm.description}
-                  onChange={(event) =>
-                    setEditForm({ ...editForm, description: event.target.value })
-                  }
-                  className="min-h-24 resize-none"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">元信息 JSON</label>
-                <Textarea
-                  value={editForm.metadata}
-                  onChange={(event) => setEditForm({ ...editForm, metadata: event.target.value })}
-                  className="min-h-24 resize-none font-mono text-xs"
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditOpen(false)}>
-              取消
-            </Button>
-            <Button disabled={saving || !editForm.title.trim()} onClick={handleUpdateProject}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
-              保存
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

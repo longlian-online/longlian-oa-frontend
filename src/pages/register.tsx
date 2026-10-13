@@ -70,6 +70,7 @@ export default function RegisterPage() {
     const nextMode = value as RegisterMode;
     setModeDirection(nextMode === "create" ? "right" : "left");
     setMode(nextMode);
+    setInviteInfo(null);
   };
 
   const modePanelClassName = cn(
@@ -89,14 +90,14 @@ export default function RegisterPage() {
       }
       $tip("注册成功，请登录", "success");
       void navigate("/login");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "注册失败", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleQueryInviteInfo = async (): Promise<void> => {
+    if (mode !== "join") return;
+
     const isValid = await form.trigger("inviteCode");
     if (!isValid) return;
 
@@ -105,9 +106,8 @@ export default function RegisterPage() {
       const result = await getInviteInfo(form.getValues("inviteCode"));
       setInviteInfo(result);
       $tip(`邀请码来自 ${result.orgName}`, "success");
-    } catch (error) {
+    } catch {
       setInviteInfo(null);
-      $tip(error instanceof Error ? error.message : "邀请码查询失败", "error");
     } finally {
       setIsInviteLoading(false);
     }
@@ -118,22 +118,18 @@ export default function RegisterPage() {
     const isValid = await form.trigger("email");
     if (!isValid) return;
 
-    try {
-      await sendVerificationCode({ email, businessType: "REGISTER" });
-      $tip("验证码已发送", "success");
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "发送验证码失败", "error");
-    }
+    await sendVerificationCode({ email, businessType: "REGISTER" });
+    $tip("验证码已发送", "success");
+    setCountdown(60);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   return (
@@ -177,22 +173,24 @@ export default function RegisterPage() {
                     })}
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-11 shrink-0 px-3"
-                  onClick={handleQueryInviteInfo}
-                  disabled={isInviteLoading}
-                >
-                  {isInviteLoading ? "查询中" : "查询"}
-                </Button>
+                {mode === "join" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 shrink-0 px-3"
+                    onClick={handleQueryInviteInfo}
+                    disabled={isInviteLoading}
+                  >
+                    {isInviteLoading ? "查询中" : "查询"}
+                  </Button>
+                )}
               </div>
               {form.formState.errors.inviteCode && (
                 <p className="text-xs text-destructive">
                   {form.formState.errors.inviteCode.message}
                 </p>
               )}
-              {inviteInfo && (
+              {mode === "join" && inviteInfo && (
                 <p className="text-xs text-muted-foreground">将加入：{inviteInfo.orgName}</p>
               )}
             </div>

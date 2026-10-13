@@ -53,8 +53,6 @@ export default function ForgotPasswordPage() {
       });
       setHasSent(true);
       $tip("验证码已发送", "success");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "发送验证码失败", "error");
     } finally {
       setIsSending(false);
     }
@@ -70,8 +68,6 @@ export default function ForgotPasswordPage() {
       });
       $tip("密码已重置，请使用新密码登录", "success");
       void navigate("/login", { replace: true });
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "重置密码失败", "error");
     } finally {
       setIsResetting(false);
     }

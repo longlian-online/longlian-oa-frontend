@@ -77,7 +77,7 @@ export default function PaginationBar({
                 onClick={() => onPageChange(item)}
                 className={
                   item === normalizedPage
-                    ? "h-8 min-w-8 rounded-lg bg-foreground px-3 py-2 text-base font-normal text-background hover:bg-foreground hover:text-background"
+                    ? "h-8 min-w-8 rounded-lg bg-primary px-3 py-2 text-base font-normal text-primary-foreground hover:bg-primary hover:text-primary-foreground"
                     : "h-8 min-w-8 rounded-lg px-3 py-2 text-base font-normal text-foreground hover:bg-secondary"
                 }
               >

@@ -14,6 +14,7 @@ const BASE_TASKS: BaseTaskVO[] = [
   {
     id: "translate",
     name: "翻译",
+    submitFields: [],
     refCount: 1,
     status: "ENABLED",
     createdAt: "2026-01-01T00:00:00Z",
@@ -21,6 +22,7 @@ const BASE_TASKS: BaseTaskVO[] = [
   {
     id: "review",
     name: "审核",
+    submitFields: [],
     refCount: 1,
     status: "ENABLED",
     createdAt: "2026-01-01T00:00:00Z",
@@ -54,6 +56,22 @@ describe("workflow editor utils", () => {
     expect(result.map(({ localId, sort }) => ({ localId, sort }))).toEqual([
       { localId: "translate", sort: 1 },
       { localId: "review", sort: 2 },
+    ]);
+  });
+
+  test("inserts a task after a parallel stage at the requested stage index", () => {
+    const nodes: WorkflowEditorNode[] = [
+      { localId: "a", baseTaskId: "a", customName: "A", sort: 1, parallelSort: 1 },
+      { localId: "b", baseTaskId: "b", customName: "B", sort: 1, parallelSort: 2 },
+      { localId: "c", baseTaskId: "c", customName: "C", sort: 2, parallelSort: 1 },
+    ];
+
+    const result = moveNodeToStage(nodes, "c", 1);
+
+    expect(result.map(({ localId, sort }) => ({ localId, sort }))).toEqual([
+      { localId: "a", sort: 1 },
+      { localId: "b", sort: 1 },
+      { localId: "c", sort: 2 },
     ]);
   });
 
