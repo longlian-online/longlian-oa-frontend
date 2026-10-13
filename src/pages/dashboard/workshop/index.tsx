@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Boxes, Filter, Search, Workflow } from "lucide-react";
+import { ArrowDownUp, Boxes, Filter, Search, Workflow } from "lucide-react";
 
 import { getWorkshopList } from "@/api/workshop";
 import EmptyState from "@/components/EmptyState";
@@ -19,9 +19,14 @@ import {
 } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 import { isOrganizationAdmin } from "@/lib/session";
-import type { WorkshopProjectInfoVO } from "@/types/workshop";
+import type { WorkshopProjectInfoVO, WorkshopSortBy } from "@/types/workshop";
 
 const PAGE_SIZE = 8;
+const SORT_LABELS: Record<WorkshopSortBy, string> = {
+  RECENT_SUBMISSION: "最近提交",
+  CREATED_DESC: "最新创建",
+  CREATED_ASC: "最早创建",
+};
 
 export default function WorkshopPage() {
   const navigate = useNavigate();
@@ -33,31 +38,39 @@ export default function WorkshopPage() {
   const [searchText, setSearchText] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [isMyCreated, setIsMyCreated] = useState(false);
+  const [sortBy, setSortBy] = useState<WorkshopSortBy>("RECENT_SUBMISSION");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    void loadWorkshopProjects();
-  }, [page, keyword, selectedType, isMyCreated]);
-
-  async function loadWorkshopProjects(): Promise<void> {
-    try {
-      setLoading(true);
-      const data = await getWorkshopList({
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-        keyword: keyword || undefined,
-        projectType: selectedType === "all" ? undefined : selectedType,
-        isMyCreated,
-      });
-      setProjects(data.list);
-      setTotal(data.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "工坊企划加载失败", "error");
-    } finally {
-      setLoading(false);
+    let active = true;
+    async function loadWorkshopProjects(): Promise<void> {
+      try {
+        setLoading(true);
+        const data = await getWorkshopList({
+          pageNum: page,
+          pageSize: PAGE_SIZE,
+          keyword: keyword || undefined,
+          projectType: selectedType === "all" ? undefined : selectedType,
+          isMyCreated,
+          sortBy,
+        });
+        if (!active) return;
+        setProjects(data.list);
+        setTotal(data.total);
+      } catch (error) {
+        if (active) {
+          $tip(error instanceof Error ? error.message : "工坊企划加载失败", "error");
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
     }
-  }
+    void loadWorkshopProjects();
+    return () => {
+      active = false;
+    };
+  }, [page, keyword, selectedType, isMyCreated, sortBy]);
 
   function handleSearch(): void {
     setKeyword(searchText.trim());
@@ -151,6 +164,31 @@ export default function WorkshopPage() {
           <Button type="button" variant="outline" size="sm" onClick={handleSearch}>
             搜索
           </Button>
+          <Select
+            value={sortBy}
+            onValueChange={(value: string | null) => {
+              if (
+                value !== "RECENT_SUBMISSION" &&
+                value !== "CREATED_DESC" &&
+                value !== "CREATED_ASC"
+              )
+                return;
+              setSortBy(value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger aria-label="企划排序" className="h-8 w-36 shrink-0">
+              <ArrowDownUp className="mr-1.5 h-3.5 w-3.5" />
+              <SelectValue>{SORT_LABELS[sortBy]}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(SORT_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

@@ -296,7 +296,7 @@
       "post": {
         "tags": ["工坊接口"],
         "summary": "分页查询工坊企划列表",
-        "description": "查询当前用户工坊中的企划列表，支持标题模糊搜索、类型筛选、仅看我创建，默认按添加时间倒序。",
+        "description": "查询当前用户工坊中的企划列表，支持标题模糊搜索、类型筛选、仅看我创建，以及最近提交、最新创建、最早创建排序，默认最近提交。",
         "operationId": "getMyWorkshopList",
         "requestBody": {
           "content": {
@@ -2009,6 +2009,12 @@
       "WorkshopListDTO": {
         "type": "object",
         "properties": {
+          "sortBy": {
+            "type": "string",
+            "enum": ["RECENT_SUBMISSION", "CREATED_DESC", "CREATED_ASC"],
+            "default": "RECENT_SUBMISSION",
+            "description": "最近提交、最新创建、最早创建；无提交的企划排在最后"
+          },
           "keyword": {
             "maxLength": 50,
             "minLength": 0,
