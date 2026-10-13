@@ -84,6 +84,10 @@ export default function Planning() {
         onSearchSubmit={handleSearch}
         actions={
           <>
+            <Button type="button" onClick={() => navigate("/dashboard/planning/create")}>
+              <Plus className="size-4" />
+              创建企划
+            </Button>
             <Select
               value={`${timeSort.sortByTime}-${timeSort.orderDir}`}
               onValueChange={(value: string | null) => {
@@ -168,7 +172,6 @@ export default function Planning() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              <CreateProjectCard />
               {projects.map((project) => (
                 <ProjectCard key={project.id} project={project} />
               ))}
