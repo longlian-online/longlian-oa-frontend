@@ -8,7 +8,26 @@ import { AuthExpiredError } from "@/lib/authError";
 import type { FileValidationOptions, UploadedFileInfo, UploadBizType } from "@/types/file";
 
 const DEFAULT_MAX_SIZE = 50 * 1024 * 1024;
-const DEFAULT_ACCEPT = ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx", "zip"];
+const DEFAULT_ACCEPT = [
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "webp",
+  "bmp",
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "ppt",
+  "pptx",
+  "txt",
+  "csv",
+  "zip",
+  "rar",
+  "7z",
+];
 
 const MIME_BY_EXT: Record<string, string[]> = {
   jpg: ["image/jpeg", "image/jpg"],
@@ -20,7 +39,15 @@ const MIME_BY_EXT: Record<string, string[]> = {
   docx: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
   xls: ["application/vnd.ms-excel"],
   xlsx: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+  ppt: ["application/vnd.ms-powerpoint"],
+  pptx: ["application/vnd.openxmlformats-officedocument.presentationml.presentation"],
+  txt: ["text/plain"],
+  csv: ["text/csv", "application/vnd.ms-excel"],
+  webp: ["image/webp"],
+  bmp: ["image/bmp"],
   zip: ["application/zip", "application/x-zip-compressed"],
+  rar: ["application/vnd.rar", "application/x-rar-compressed"],
+  "7z": ["application/x-7z-compressed"],
 };
 
 interface UploadFileOptions extends FileValidationOptions {
@@ -28,7 +55,7 @@ interface UploadFileOptions extends FileValidationOptions {
   bizId: string;
 }
 
-interface UseUploadFileResult {
+export interface UseUploadFileResult {
   uploading: boolean;
   uploadFile: (file: File, options: UploadFileOptions) => Promise<UploadedFileInfo>;
 }
