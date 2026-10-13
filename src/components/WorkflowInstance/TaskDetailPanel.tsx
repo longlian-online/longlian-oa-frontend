@@ -110,11 +110,13 @@ function TaskActions({
           接取
         </Button>
       )}
-      {instance.status === "CLAIMED" && isMine && actions.canSubmit && (
+      {instance.status === "CLAIMED" && isMine && (
         <>
-          <Button size="sm" disabled={actions.mutating} onClick={actions.onSubmit}>
-            提交
-          </Button>
+          {actions.canSubmit && (
+            <Button size="sm" disabled={actions.mutating} onClick={actions.onSubmit}>
+              提交
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"
