@@ -293,8 +293,9 @@ export default function TaskDetailPanel({
         .then((result) => {
           if (active && isCurrent()) {
             setVersions({ key: contextKey, data: result });
-            const current = currentVersionOf(detail?.submission.state ?? "not_submitted", result);
-            setExpandedVersion(current?.versionNo ?? null);
+            const submitted = result.find((version) => version.status === "SUBMITTED");
+            const fallback = result.length > 0 ? result[0] : null;
+            setExpandedVersion((submitted ?? fallback)?.versionNo ?? null);
           }
         })
         .catch((reason: unknown) => {
