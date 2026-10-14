@@ -15,7 +15,6 @@ import { getStatusLabel } from "@/lib/projectStatus";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
-import { projectCreateMissingLabel } from "./createRequirements";
 import type { UploadedFileInfo } from "@/types/file";
 import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
 import type { EditableProjectMetadataTag } from "@/components/ProjectMetadataEditor";
@@ -34,6 +33,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
   const isEditing = Boolean(project);
   const coverBizId = project ? String(project.id) : (getCurrentOrgId() ?? "cover");
   const [loading, setLoading] = useState(false);
+  const [showInvalid, setShowInvalid] = useState(false);
   const [formData, setFormData] = useState({
     title: project?.title ?? "",
     alias: project?.alias ?? "",
@@ -58,13 +58,9 @@ export default function CreateProject({ project }: CreateProjectProps) {
   );
   const selectedProjectType = projectTypes.find((type) => type.id === formData.typeId);
 
-  const missingLabel = projectCreateMissingLabel({
-    title: formData.title,
-    typeId: formData.typeId,
-    hasCover: Boolean(coverFile?.fileId),
-    isEditing,
-  });
-  const canSubmit = missingLabel === null;
+  const titleMissing = !formData.title.trim();
+  const typeMissing = !formData.typeId;
+  const coverMissing = !isEditing && !coverFile?.fileId;
 
   useEffect(() => {
     if (!project || formData.typeId || projectTypes.length === 0) return;
@@ -75,7 +71,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
   }, [formData.typeId, project, projectTypes]);
 
   async function handleSubmit(): Promise<void> {
-    if (!canSubmit || (!isEditing && !coverFile)) return;
+    if (titleMissing || typeMissing || coverMissing) {
+      setShowInvalid(true);
+      return;
+    }
 
     const pendingTagKey = tagDraft.key.trim();
     const pendingTagValue = tagDraft.value.trim();
@@ -141,21 +140,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
             </p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <Button
-            size="sm"
-            className="min-w-24"
-            onClick={handleSubmit}
-            disabled={loading || !canSubmit}
-            title={missingLabel ?? undefined}
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            {isEditing ? "保存修改" : "创建企划"}
-          </Button>
-          {missingLabel ? (
-            <p className="max-w-56 text-right text-xs text-muted-foreground">{missingLabel}</p>
-          ) : null}
-        </div>
+        <Button size="sm" className="min-w-24" onClick={handleSubmit} disabled={loading}>
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+          {isEditing ? "保存修改" : "创建企划"}
+        </Button>
       </div>
 
       <div className="grid items-start justify-center gap-4 lg:items-stretch lg:grid-cols-[280px_minmax(0,720px)]">
@@ -163,7 +151,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
           <section className="flex w-full flex-col rounded-xl border bg-card p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-medium text-foreground">封面</h2>
+                <h2 className="text-sm font-medium text-foreground">
+                  封面
+                  {!isEditing && <span className="text-destructive"> *</span>}
+                </h2>
               </div>
             </div>
 
@@ -177,6 +168,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
               accept={["jpg", "jpeg", "png", "gif"]}
               maxSize={10 * 1024 * 1024}
               fillHeight
+              invalid={showInvalid && coverMissing}
               onChange={setCoverFile}
             />
           </section>
@@ -191,10 +183,13 @@ export default function CreateProject({ project }: CreateProjectProps) {
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-foreground">企划名</label>
+                <label className="text-sm font-medium text-foreground">
+                  企划名<span className="text-destructive"> *</span>
+                </label>
                 <Input
                   placeholder="例如：春季漫画汉化企划"
                   value={formData.title}
+                  aria-invalid={showInvalid && titleMissing}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
@@ -215,7 +210,9 @@ export default function CreateProject({ project }: CreateProjectProps) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">企划类型</label>
+                <label className="text-sm font-medium text-foreground">
+                  企划类型<span className="text-destructive"> *</span>
+                </label>
                 <Select
                   value={formData.typeId}
                   onValueChange={(value: string | null) =>
@@ -228,6 +225,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
                       "h-10 w-full justify-between px-3 text-sm font-medium",
                     )}
                     disabled={loadingProjectTypes}
+                    aria-invalid={showInvalid && typeMissing}
                   >
                     <span
                       className={cn("truncate", !selectedProjectType && "text-muted-foreground")}
