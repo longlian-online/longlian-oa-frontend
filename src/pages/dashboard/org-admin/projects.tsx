@@ -68,11 +68,11 @@ function OrganizationAdminProjectsContent() {
   async function handleChangeStatus(project: OrganizationProjectVO): Promise<void> {
     const disabled = project.resourceStatus === "DISABLED";
     const confirmed = await confirm({
-      title: disabled ? "启用企划？" : "禁用企划？",
+      title: disabled ? "重新上架？" : "从工坊下架？",
       description: disabled
-        ? `启用后「${project.title}」会重新出现在用户端。`
-        : `禁用后「${project.title}」将不再在用户端展示，已有数据会保留。`,
-      confirmText: disabled ? "启用" : "禁用",
+        ? `上架后「${project.title}」会重新出现在用户端。`
+        : `下架后「${project.title}」将不再在用户端展示，已有数据会保留。`,
+      confirmText: disabled ? "重新上架" : "下架",
       variant: disabled ? "default" : "destructive",
     });
     if (!confirmed) return;
@@ -80,7 +80,7 @@ function OrganizationAdminProjectsContent() {
     try {
       setMutatingId(project.id);
       await changeProjectStatus(String(project.id), disabled ? "ENABLED" : "DISABLED");
-      $tip(disabled ? "企划已启用" : "企划已禁用", "success");
+      $tip(disabled ? "企划已重新上架" : "企划已从工坊下架", "success");
       await loadProjects();
     } finally {
       setMutatingId(null);
@@ -135,7 +135,7 @@ function OrganizationAdminProjectsContent() {
                   <TableHead>创建人</TableHead>
                   <TableHead>创建时间</TableHead>
                   <TableHead>状态</TableHead>
-                  <TableHead className="w-24 text-right">操作</TableHead>
+                  <TableHead className="w-36 text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -165,7 +165,7 @@ function OrganizationAdminProjectsContent() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={disabled ? "secondary" : "outline"}>
-                          {disabled ? "已禁用" : getStatusLabel(project.status ?? "进行中")}
+                          {disabled ? "已下架" : getStatusLabel(project.status ?? "进行中")}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -173,8 +173,8 @@ function OrganizationAdminProjectsContent() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          aria-label={disabled ? "启用企划" : "禁用企划"}
-                          title={disabled ? "启用企划" : "禁用企划"}
+                          aria-label={disabled ? "重新上架" : "从工坊下架"}
+                          title={disabled ? "重新上架" : "从工坊下架"}
                           disabled={mutatingId === project.id}
                           className={
                             disabled
@@ -190,7 +190,7 @@ function OrganizationAdminProjectsContent() {
                           ) : (
                             <Ban className="size-4" />
                           )}
-                          <span>{disabled ? "启用" : "禁用"}</span>
+                          <span>{disabled ? "重新上架" : "从工坊下架"}</span>
                         </Button>
                       </TableCell>
                     </TableRow>
