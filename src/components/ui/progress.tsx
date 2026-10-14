@@ -7,7 +7,13 @@ function Progress({ className, children, value, ...props }: ProgressPrimitive.Ro
     <ProgressPrimitive.Root
       value={value}
       data-slot="progress"
-      className={cn("flex flex-wrap gap-3", className)}
+      className={cn(
+        // Base UI ProgressRoot injects a presentation "x" for NVDA with inline
+        // visuallyHidden styles; reinforce with !sr-only so it cannot leak into
+        // the visible layout when those styles are ineffective.
+        "relative flex flex-wrap gap-3 [&>span[role=presentation]]:!sr-only",
+        className,
+      )}
       {...props}
     >
       {children}
