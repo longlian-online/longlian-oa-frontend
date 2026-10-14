@@ -214,13 +214,13 @@ export interface OrganizationTaskTemplateVO {
   refCount: number;
   status: OrganizationResourceStatus;
   createdAt?: string;
-  taskCount?: number;
-  nodes?: OrganizationTaskTemplatePreviewNodeVO[];
+  taskCount: number;
+  nodes: OrganizationTaskTemplatePreviewNodeVO[];
 }
 
 export interface OrganizationTaskTemplateDetailVO extends Omit<
   OrganizationTaskTemplateVO,
-  "nodes"
+  "nodes" | "taskCount"
 > {
   nodes: OrganizationTaskTemplateNodeVO[];
 }

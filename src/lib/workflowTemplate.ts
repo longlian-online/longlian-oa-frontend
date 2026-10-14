@@ -24,13 +24,13 @@ export function toWorkflowTemplateNodes(
 export function toOrganizationWorkflowCard(
   template: OrganizationTaskTemplateVO,
 ): WorkshopTaskTemplateVO {
-  const nodes = toWorkflowTemplateNodes(template.nodes ?? []);
+  const nodes = toWorkflowTemplateNodes(template.nodes);
   return {
     id: template.id,
     name: template.name ?? "未命名工作流",
     description: template.description,
     scope: "ORGANIZATION",
-    taskCount: template.taskCount ?? nodes.length,
+    taskCount: template.taskCount,
     nodes,
     isMine: true,
   };

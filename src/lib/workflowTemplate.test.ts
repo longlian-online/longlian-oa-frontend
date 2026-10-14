@@ -55,18 +55,3 @@ test("uses list stage preview and keeps a zero task count", (): void => {
     }).taskCount,
   ).toBe(0);
 });
-
-test("falls back to node length when an older list omits task count", (): void => {
-  expect(
-    toOrganizationWorkflowCard({
-      id: "9",
-      refCount: 0,
-      status: "ENABLED",
-      nodes: [{ baseTaskId: "1", baseTaskName: "翻译", sort: 1 }],
-    }),
-  ).toMatchObject({
-    name: "未命名工作流",
-    taskCount: 1,
-    nodes: [{ baseTaskId: "1", baseTaskName: "翻译", sort: 1, parallelSort: undefined }],
-  });
-});
