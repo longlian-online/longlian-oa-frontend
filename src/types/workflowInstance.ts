@@ -3,6 +3,7 @@ import type { TaskFormField, TaskSubmitValue } from "./task";
 export type TaskInstanceStatus = "PENDING" | "CLAIMED" | "COMPLETED";
 
 export interface ItemTaskFlowVO {
+  itemTitle: string;
   name: string;
   description?: string;
   nodes: ItemTaskNodeVO[];
@@ -12,8 +13,7 @@ export interface ItemTaskNodeVO {
   id: string;
   baseTaskId: string;
   name: string;
-  baseTaskIconName?: string;
-  baseTaskIconUrl?: string;
+  baseTaskIcon?: string;
   submitFields: TaskFormField[];
   sort: number;
   parallelSort: number;
@@ -67,6 +67,26 @@ export interface TaskInstanceDetailVO {
 
 export interface TaskSubmitDTO {
   values: Record<string, TaskSubmitValue>;
+}
+
+export type TaskSubmissionStatus = "SUBMITTED" | "REJECTED" | "RESET";
+
+export interface TaskSubmissionPerson {
+  id: string;
+  nickname?: string | null;
+  avatarUrl?: string | null;
+}
+
+export interface TaskSubmissionVersionVO {
+  versionNo: number;
+  status: TaskSubmissionStatus;
+  submittedAt?: string | null;
+  submitter?: TaskSubmissionPerson | null;
+  reviewedAt?: string | null;
+  reviewer?: TaskSubmissionPerson | null;
+  reviewComment?: string | null;
+  fields: TaskDetailField[];
+  unreadable: boolean;
 }
 
 export interface TaskRejectDTO {

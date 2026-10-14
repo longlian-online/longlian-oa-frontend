@@ -24,10 +24,7 @@ import type { OrganizationProjectStatus, OrganizationProjectVO } from "@/types/o
 
 const PAGE_SIZE = 8;
 
-type AdminProjectStatus = OrganizationProjectStatus | "DISABLED";
-
-function getStatusLabel(status: AdminProjectStatus): string {
-  if (status === "DISABLED") return "已禁用";
+function getStatusLabel(status: OrganizationProjectStatus): string {
   if (status === "已完成") return "已完成";
   if (status === "已归档") return "已归档";
   return "进行中";
@@ -37,7 +34,6 @@ function OrganizationAdminProjectsContent() {
   const navigate = useNavigate();
   const confirm = useConfirm();
   const [projects, setProjects] = useState<OrganizationProjectVO[]>([]);
-  const [disabledProjectIds, setDisabledProjectIds] = useState<Set<string>>(new Set());
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
   const [page, setPage] = useState(1);
@@ -70,7 +66,7 @@ function OrganizationAdminProjectsContent() {
   }
 
   async function handleChangeStatus(project: OrganizationProjectVO): Promise<void> {
-    const disabled = disabledProjectIds.has(project.id);
+    const disabled = project.resourceStatus === "DISABLED";
     const confirmed = await confirm({
       title: disabled ? "启用企划？" : "禁用企划？",
       description: disabled
@@ -84,12 +80,6 @@ function OrganizationAdminProjectsContent() {
     try {
       setMutatingId(project.id);
       await changeProjectStatus(String(project.id), disabled ? "ENABLED" : "DISABLED");
-      setDisabledProjectIds((current) => {
-        const next = new Set(current);
-        if (disabled) next.delete(project.id);
-        else next.add(project.id);
-        return next;
-      });
       $tip(disabled ? "企划已启用" : "企划已禁用", "success");
       await loadProjects();
     } finally {
@@ -150,7 +140,7 @@ function OrganizationAdminProjectsContent() {
               </TableHeader>
               <TableBody>
                 {projects.map((project) => {
-                  const disabled = disabledProjectIds.has(project.id);
+                  const disabled = project.resourceStatus === "DISABLED";
                   return (
                     <TableRow key={project.id}>
                       <TableCell>
@@ -175,7 +165,7 @@ function OrganizationAdminProjectsContent() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={disabled ? "secondary" : "outline"}>
-                          {getStatusLabel(project.status ?? "进行中")}
+                          {disabled ? "已禁用" : getStatusLabel(project.status ?? "进行中")}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">

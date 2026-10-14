@@ -101,7 +101,7 @@ export default function ProjectMetadataEditor({
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Tags className="size-4 text-muted-foreground" />
-          <h2 className="text-base font-medium text-foreground">元信息</h2>
+          <h2 className="text-base font-medium text-foreground">标签</h2>
         </div>
         {!showInput && (
           <Button
@@ -112,7 +112,7 @@ export default function ProjectMetadataEditor({
             onClick={() => setShowInput(true)}
           >
             <Plus data-icon="inline-start" />
-            添加信息
+            添加标签
           </Button>
         )}
       </div>
@@ -120,7 +120,7 @@ export default function ProjectMetadataEditor({
         值可留空作为纯标签。列表展示前两个标签，可通过上下移动调整优先顺序。
       </p>
       {tags.length > 0 && (
-        <ol className="flex min-w-0 flex-col gap-2" aria-label="元信息标签">
+        <ol className="flex min-w-0 flex-col gap-2" aria-label="标签列表">
           {tags.map((tag, index) => (
             <li
               key={tag.id}
@@ -210,7 +210,7 @@ export default function ProjectMetadataEditor({
           </div>
           {missingKey && (
             <p id={`${inputId}-error`} className="text-xs text-destructive" role="alert">
-              请填写元信息的标签名
+              请填写标签名
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2">

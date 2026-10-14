@@ -133,6 +133,7 @@ export interface OrganizationProjectVO {
   typeId?: string;
   typeName?: string;
   status?: OrganizationProjectStatus;
+  resourceStatus?: OrganizationResourceStatus;
   creatorId?: string;
   creatorNickname?: string;
   createdAt?: string;
@@ -141,8 +142,7 @@ export interface OrganizationProjectVO {
 export interface OrganizationBaseTaskCreateDTO {
   name: string;
   description?: string;
-  iconFileId?: string;
-  iconName?: string;
+  icon?: string;
   submitFields: TaskFormField[];
 }
 
@@ -161,8 +161,7 @@ export interface OrganizationBaseTaskVO {
   id: string;
   name?: string;
   description?: string;
-  iconName?: string;
-  iconUrl?: string;
+  icon?: string;
   submitFields: TaskFormField[];
   refCount: number;
   status: OrganizationResourceStatus;
@@ -196,8 +195,7 @@ export interface OrganizationTaskTemplateNodeVO {
   id?: string;
   baseTaskId?: string;
   baseTaskName?: string;
-  baseTaskIconName?: string;
-  baseTaskIconUrl?: string;
+  baseTaskIcon?: string;
   submitFields: TaskFormField[];
   sort?: number;
   parallelSort?: number;

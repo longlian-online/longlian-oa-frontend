@@ -73,7 +73,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
     const pendingTagKey = tagDraft.key.trim();
     const pendingTagValue = tagDraft.value.trim();
     if (!pendingTagKey && pendingTagValue) {
-      $tip("请填写元信息的标签名", "error");
+      $tip("请填写标签名", "error");
       return;
     }
 
@@ -130,7 +130,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
               </h1>
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {isEditing ? "更新基础信息、封面与元信息。" : "填写基础信息、封面与元信息。"}
+              {isEditing ? "更新基础信息、封面与标签。" : "填写基础信息、封面与标签。"}
             </p>
           </div>
         </div>

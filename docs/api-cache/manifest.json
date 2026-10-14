@@ -1,16 +1,16 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-10-11T14:40:53.035Z",
+  "generatedAt": "2026-10-13T16:39:59.510Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "4056815dc0bb80134eb35951b6f054d156640732819aaed7553186960896a73b",
-      "pathCount": 64,
-      "operationCount": 77
+      "sha256": "69fe3419414085e9537a1b5821a8e4269d2eeb5f0238f8d0894292ad09cb7e7f",
+      "pathCount": 65,
+      "operationCount": 78
     },
     {
       "name": "公共端",
@@ -26,9 +26,9 @@
       "slug": "用户端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF",
       "file": "openapi/用户端.json",
-      "sha256": "a755a2a1509b57ee9d23539f2fabe260aeb1a41256e0204ba3d4ccb9a58f8020",
-      "pathCount": 32,
-      "operationCount": 38
+      "sha256": "8889213ad5857bb9d848a76019f12519e3724c776ee0230bfbe1623a370d8bbd",
+      "pathCount": 33,
+      "operationCount": 39
     },
     {
       "name": "管理端",
@@ -44,7 +44,7 @@
       "slug": "组织管理端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF",
       "file": "openapi/组织管理端.json",
-      "sha256": "1ca0dbfcead82a2158b1e7efaac6e92b3176e67178af0381b9fadca4a6e7c54e",
+      "sha256": "014ad79a7a48fe521361c8ccecf0c68ef48f9cac9d165c75a37029a4b77ef4ca",
       "pathCount": 21,
       "operationCount": 25
     }
@@ -268,7 +268,7 @@
       "summary": "获取企划类型列表",
       "tags": ["企划接口"],
       "file": "operations/全部_get_-app-projects-types.json",
-      "sha256": "3c63c79f31b9ebd7318eb6e895a6e8319dd0dac4a5689dcd6b494c3720987f43"
+      "sha256": "831485fe988df99a4ca8721048013dfc67d8e46dccb0d08e81a265caf46ee77c"
     },
     {
       "id": "全部_delete_-app-session",
@@ -389,6 +389,16 @@
       "tags": ["任务实例接口"],
       "file": "operations/全部_get_-app-task-instance-item-itemid.json",
       "sha256": "405f774b19371617356cd4f47cd1310a2ccb428c1ba15d675648be99bb0e9ce1"
+    },
+    {
+      "id": "全部_get_-app-task-instance-plaza",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/task/instance/plaza",
+      "summary": "任务广场（缺人任务）",
+      "tags": ["任务实例接口"],
+      "file": "operations/全部_get_-app-task-instance-plaza.json",
+      "sha256": "16485772213c40b6838ce3f0ddec033177ed3aa4f1a88d2271815b198ef6be6f"
     },
     {
       "id": "全部_get_-app-user",
@@ -695,10 +705,10 @@
       "document": "全部",
       "method": "PUT",
       "path": "/orgadmin/project-types/{typeId}",
-      "summary": "修改企划类型名称",
+      "summary": "修改企划类型名称与优先级",
       "tags": ["企划类型管理"],
       "file": "operations/全部_put_-orgadmin-project-types-typeid.json",
-      "sha256": "b5f34631c35f4c97010f0a43d0b5d17191446c9fd8e603eb557778db6144bb4c"
+      "sha256": "b7291db3bab541897248a7972a81200972328a0911992c553b73442272c89510"
     },
     {
       "id": "全部_patch_-orgadmin-project-types-typeid-status",
@@ -978,7 +988,7 @@
       "summary": "获取企划类型列表",
       "tags": ["企划接口"],
       "file": "operations/用户端_get_-app-projects-types.json",
-      "sha256": "d3a38768bbb6c91c9a07b38c16c458dc7b3145e51d0e342064f173a6fd2e7043"
+      "sha256": "09a41e8bb8390777bb41a9858f964eca7155f0c4814c397cebbdf0e8b213cd1a"
     },
     {
       "id": "用户端_delete_-app-session",
@@ -1099,6 +1109,16 @@
       "tags": ["任务实例接口"],
       "file": "operations/用户端_get_-app-task-instance-item-itemid.json",
       "sha256": "d0da285e8f64558c54d0298c5aa4fd63abe983b0be4bafb6c336205193a235fa"
+    },
+    {
+      "id": "用户端_get_-app-task-instance-plaza",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/task/instance/plaza",
+      "summary": "任务广场（缺人任务）",
+      "tags": ["任务实例接口"],
+      "file": "operations/用户端_get_-app-task-instance-plaza.json",
+      "sha256": "c4496b56c803d02825c22e25a81e7d5bb8a5009b591e67b5dd8fb99ad72867b0"
     },
     {
       "id": "用户端_get_-app-user",
@@ -1465,10 +1485,10 @@
       "document": "组织管理端",
       "method": "PUT",
       "path": "/orgadmin/project-types/{typeId}",
-      "summary": "修改企划类型名称",
+      "summary": "修改企划类型名称与优先级",
       "tags": ["企划类型管理"],
       "file": "operations/组织管理端_put_-orgadmin-project-types-typeid.json",
-      "sha256": "c5253f416d2787dbe3b07b64ce181c57f366b5bfb43b7bb16dc0ad8aef1918af"
+      "sha256": "013c0f1025180782080390d518fb05a881233768ba606e89490575f48518a524"
     },
     {
       "id": "组织管理端_patch_-orgadmin-project-types-typeid-status",

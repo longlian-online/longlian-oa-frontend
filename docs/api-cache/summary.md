@@ -1,15 +1,15 @@
 # API 缓存摘要
 
 来源：https://sit.neo.oa.api.longlian.online/v3/api-docs
-更新时间：2026-10-11T14:40:53.035Z
+更新时间：2026-10-13T16:39:59.510Z
 
 ## 文档分组
 
 | 分组       | 路径数 | 接口数 | 缓存文件                  |
 | ---------- | ------ | ------ | ------------------------- |
-| 全部       | 64     | 77     | `openapi/全部.json`       |
+| 全部       | 65     | 78     | `openapi/全部.json`       |
 | 公共端     | 3      | 4      | `openapi/公共端.json`     |
-| 用户端     | 32     | 38     | `openapi/用户端.json`     |
+| 用户端     | 33     | 39     | `openapi/用户端.json`     |
 | 管理端     | 8      | 10     | `openapi/管理端.json`     |
 | 组织管理端 | 21     | 25     | `openapi/组织管理端.json` |
 
@@ -51,6 +51,7 @@
 | 全部       | POST   | `/app/task/instance/{instanceId}/reset`                 | 重置任务提交                     | `operations/全部_post_-app-task-instance-instanceid-reset.json`                      |
 | 全部       | POST   | `/app/task/instance/{instanceId}/submit`                | 提交任务                         | `operations/全部_post_-app-task-instance-instanceid-submit.json`                     |
 | 全部       | GET    | `/app/task/instance/item/{itemId}`                      | 查询项目下的任务实例列表         | `operations/全部_get_-app-task-instance-item-itemid.json`                            |
+| 全部       | GET    | `/app/task/instance/plaza`                              | 任务广场（缺人任务）             | `operations/全部_get_-app-task-instance-plaza.json`                                  |
 | 全部       | GET    | `/app/user/`                                            | 获取当前登录用户信息             | `operations/全部_get_-app-user.json`                                                 |
 | 全部       | PUT    | `/app/user/`                                            | 更新当前用户信息                 | `operations/全部_put_-app-user.json`                                                 |
 | 全部       | GET    | `/app/user/organizations`                               | 获取用户加入的组织列表           | `operations/全部_get_-app-user-organizations.json`                                   |
@@ -81,7 +82,7 @@
 | 全部       | GET    | `/orgadmin/project-types`                               | 分页查询企划类型列表             | `operations/全部_get_-orgadmin-project-types.json`                                   |
 | 全部       | POST   | `/orgadmin/project-types`                               | 创建企划类型                     | `operations/全部_post_-orgadmin-project-types.json`                                  |
 | 全部       | DELETE | `/orgadmin/project-types/{typeId}`                      | 删除企划类型                     | `operations/全部_delete_-orgadmin-project-types-typeid.json`                         |
-| 全部       | PUT    | `/orgadmin/project-types/{typeId}`                      | 修改企划类型名称                 | `operations/全部_put_-orgadmin-project-types-typeid.json`                            |
+| 全部       | PUT    | `/orgadmin/project-types/{typeId}`                      | 修改企划类型名称与优先级         | `operations/全部_put_-orgadmin-project-types-typeid.json`                            |
 | 全部       | PATCH  | `/orgadmin/project-types/{typeId}/status`               | 启用/禁用企划类型                | `operations/全部_patch_-orgadmin-project-types-typeid-status.json`                   |
 | 全部       | POST   | `/orgadmin/projects`                                    | 管理端分页查询企划列表           | `operations/全部_post_-orgadmin-projects.json`                                       |
 | 全部       | PATCH  | `/orgadmin/projects/{projectId}/status`                 | 启用/禁用企划                    | `operations/全部_patch_-orgadmin-projects-projectid-status.json`                     |
@@ -122,6 +123,7 @@
 | 用户端     | POST   | `/app/task/instance/{instanceId}/reset`                 | 重置任务提交                     | `operations/用户端_post_-app-task-instance-instanceid-reset.json`                    |
 | 用户端     | POST   | `/app/task/instance/{instanceId}/submit`                | 提交任务                         | `operations/用户端_post_-app-task-instance-instanceid-submit.json`                   |
 | 用户端     | GET    | `/app/task/instance/item/{itemId}`                      | 查询项目下的任务实例列表         | `operations/用户端_get_-app-task-instance-item-itemid.json`                          |
+| 用户端     | GET    | `/app/task/instance/plaza`                              | 任务广场（缺人任务）             | `operations/用户端_get_-app-task-instance-plaza.json`                                |
 | 用户端     | GET    | `/app/user/`                                            | 获取当前登录用户信息             | `operations/用户端_get_-app-user.json`                                               |
 | 用户端     | PUT    | `/app/user/`                                            | 更新当前用户信息                 | `operations/用户端_put_-app-user.json`                                               |
 | 用户端     | GET    | `/app/user/organizations`                               | 获取用户加入的组织列表           | `operations/用户端_get_-app-user-organizations.json`                                 |
@@ -158,7 +160,7 @@
 | 组织管理端 | GET    | `/orgadmin/project-types`                               | 分页查询企划类型列表             | `operations/组织管理端_get_-orgadmin-project-types.json`                             |
 | 组织管理端 | POST   | `/orgadmin/project-types`                               | 创建企划类型                     | `operations/组织管理端_post_-orgadmin-project-types.json`                            |
 | 组织管理端 | DELETE | `/orgadmin/project-types/{typeId}`                      | 删除企划类型                     | `operations/组织管理端_delete_-orgadmin-project-types-typeid.json`                   |
-| 组织管理端 | PUT    | `/orgadmin/project-types/{typeId}`                      | 修改企划类型名称                 | `operations/组织管理端_put_-orgadmin-project-types-typeid.json`                      |
+| 组织管理端 | PUT    | `/orgadmin/project-types/{typeId}`                      | 修改企划类型名称与优先级         | `operations/组织管理端_put_-orgadmin-project-types-typeid.json`                      |
 | 组织管理端 | PATCH  | `/orgadmin/project-types/{typeId}/status`               | 启用/禁用企划类型                | `operations/组织管理端_patch_-orgadmin-project-types-typeid-status.json`             |
 | 组织管理端 | POST   | `/orgadmin/projects`                                    | 管理端分页查询企划列表           | `operations/组织管理端_post_-orgadmin-projects.json`                                 |
 | 组织管理端 | PATCH  | `/orgadmin/projects/{projectId}/status`                 | 启用/禁用企划                    | `operations/组织管理端_patch_-orgadmin-projects-projectid-status.json`               |

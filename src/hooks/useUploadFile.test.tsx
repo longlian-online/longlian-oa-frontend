@@ -2,7 +2,7 @@ import { renderToString } from "react-dom/server";
 import { expect, test, vi } from "vite-plus/test";
 import { $tip } from "@/components/tip";
 import { UploadCancelledError } from "@/lib/imageCropRequest";
-import { useUploadFile } from "@/hooks/useUploadFile";
+import { useUploadFile, type UseUploadFileResult } from "@/hooks/useUploadFile";
 
 const { crop, create } = vi.hoisted(() => ({ crop: vi.fn(), create: vi.fn() }));
 vi.mock("@/lib/imageCropRequest", () => ({
@@ -48,6 +48,52 @@ test("非图片附件直接上传，不打开裁剪框", async () => {
   });
   expect(crop).not.toHaveBeenCalled();
   expect(create).toHaveBeenCalledTimes(1);
+});
+
+test("默认白名单接受 ppt/pptx/txt/csv/webp/rar/7z 等新增格式", async () => {
+  create.mockClear();
+  create.mockResolvedValue({ fileId: "id", uploadUrl: "" });
+  let upload: UseUploadFileResult["uploadFile"] | undefined;
+  function Probe(): null {
+    upload = useUploadFile().uploadFile;
+    return null;
+  }
+  renderToString(<Probe />);
+  const cases: Array<[string, string]> = [
+    ["report.pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"],
+    ["deck.ppt", "application/vnd.ms-powerpoint"],
+    ["notes.txt", "text/plain"],
+    ["data.csv", "text/csv"],
+    ["photo.webp", "image/webp"],
+    ["scan.bmp", "image/bmp"],
+    ["backup.rar", "application/vnd.rar"],
+    ["archive.7z", "application/x-7z-compressed"],
+  ];
+  for (const [name, mime] of cases) {
+    await upload!(new File(["x"], name, { type: mime }), {
+      bizType: "task_submit",
+      bizId: "task",
+    });
+  }
+  expect(create).toHaveBeenCalledTimes(cases.length);
+});
+
+test("默认白名单拒绝未收录的扩展名", async () => {
+  create.mockClear();
+  vi.mocked($tip).mockClear();
+  let upload: UseUploadFileResult["uploadFile"] | undefined;
+  function Probe(): null {
+    upload = useUploadFile().uploadFile;
+    return null;
+  }
+  renderToString(<Probe />);
+  await expect(
+    upload!(new File(["x"], "evil.exe", { type: "application/x-msdownload" }), {
+      bizType: "task_submit",
+      bizId: "task",
+    }),
+  ).rejects.toThrow("仅支持");
+  expect(create).not.toHaveBeenCalled();
 });
 
 test("裁剪后文件超过大小限制时不创建上传资源", async () => {

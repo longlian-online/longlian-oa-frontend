@@ -45,6 +45,10 @@ export default function Planning() {
   const [timeSort, setTimeSort] = useState(DEFAULT_TIME_SORT);
   const [pageNum, setPageNum] = useState(1);
   const [total, setTotal] = useState(0);
+  // 首页第 1 格渲染“创建企划”占位卡，取的企划数比其余页少 1；
+  // 其余页通过显式 offset 对齐取数窗口，否则固定 pageNum 分页会跳过一条。
+  const totalPages =
+    total <= PAGE_SIZE - 1 ? 1 : 1 + Math.ceil((total - (PAGE_SIZE - 1)) / PAGE_SIZE);
 
   useEffect(() => {
     void loadProjects();
@@ -55,7 +59,8 @@ export default function Planning() {
       setLoading(true);
       const result = await getProjectList({
         pageNum: targetPage,
-        pageSize: PAGE_SIZE,
+        pageSize: targetPage === 1 ? PAGE_SIZE - 1 : PAGE_SIZE,
+        offset: targetPage === 1 ? undefined : PAGE_SIZE - 1 + (targetPage - 2) * PAGE_SIZE,
         keyword: keyword || undefined,
         projectType: selectedType === "all" ? undefined : selectedType,
         sortByTime: timeSort.sortByTime,
@@ -169,7 +174,7 @@ export default function Planning() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              <CreateProjectCard />
+              {pageNum === 1 && <CreateProjectCard />}
               {projects.map((project) => (
                 <ProjectCard key={project.id} project={project} />
               ))}
@@ -180,6 +185,7 @@ export default function Planning() {
             page={pageNum}
             pageSize={PAGE_SIZE}
             total={total}
+            totalPages={totalPages}
             disabled={loading}
             onPageChange={setPageNum}
           />

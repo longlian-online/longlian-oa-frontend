@@ -10,8 +10,7 @@ export function toWorkflowTemplateNodes(
       {
         baseTaskId: node.baseTaskId,
         baseTaskName: node.baseTaskName,
-        baseTaskIconName: node.baseTaskIconName,
-        baseTaskIconUrl: node.baseTaskIconUrl,
+        baseTaskIcon: node.baseTaskIcon,
         sort: node.sort,
         parallelSort: node.parallelSort,
       },
