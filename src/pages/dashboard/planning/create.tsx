@@ -15,6 +15,7 @@ import { getStatusLabel } from "@/lib/projectStatus";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
+import { projectCreateMissingLabel } from "./createRequirements";
 import type { UploadedFileInfo } from "@/types/file";
 import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
 import type { EditableProjectMetadataTag } from "@/components/ProjectMetadataEditor";
@@ -57,7 +58,13 @@ export default function CreateProject({ project }: CreateProjectProps) {
   );
   const selectedProjectType = projectTypes.find((type) => type.id === formData.typeId);
 
-  const canSubmit = Boolean(formData.title && formData.typeId && (isEditing || coverFile?.fileId));
+  const missingLabel = projectCreateMissingLabel({
+    title: formData.title,
+    typeId: formData.typeId,
+    hasCover: Boolean(coverFile?.fileId),
+    isEditing,
+  });
+  const canSubmit = missingLabel === null;
 
   useEffect(() => {
     if (!project || formData.typeId || projectTypes.length === 0) return;
@@ -134,16 +141,20 @@ export default function CreateProject({ project }: CreateProjectProps) {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-end gap-1">
           <Button
             size="sm"
             className="min-w-24"
             onClick={handleSubmit}
             disabled={loading || !canSubmit}
+            title={missingLabel ?? undefined}
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {isEditing ? "保存修改" : "创建企划"}
           </Button>
+          {missingLabel ? (
+            <p className="max-w-56 text-right text-xs text-muted-foreground">{missingLabel}</p>
+          ) : null}
         </div>
       </div>
 
