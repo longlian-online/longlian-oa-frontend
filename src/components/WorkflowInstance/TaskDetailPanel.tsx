@@ -13,6 +13,7 @@ import type {
   TaskInstanceDetailVO,
   TaskInstanceStatus,
   TaskSubmissionStatus,
+  TaskSubmissionVersionVO,
 } from "@/types/workflowInstance";
 import { createItemLifecycle } from "./itemLifecycle";
 import { AttachmentOpenError, openTaskAttachment, type AttachmentPopup } from "./taskAttachments";
@@ -56,22 +57,16 @@ const VERSION_STATUS_VARIANTS: Record<TaskSubmissionStatus, "default" | "destruc
     RESET: "outline",
   };
 
-interface VersionView {
-  versionNo: number;
-  status: TaskSubmissionStatus;
-  submittedAt?: string | null;
-  submittedBy?: { id: string; nickname?: string | null; avatarUrl?: string | null } | null;
-  reviewComment?: string | null;
-  reviewedAt?: string | null;
-  reviewer?: { id: string; nickname?: string | null; avatarUrl?: string | null } | null;
-  fields: TaskDetailField[];
-  unreadable: boolean;
+export function submissionVersionAuthorLine(
+  version: Pick<TaskSubmissionVersionVO, "submitter" | "submittedAt">,
+): string {
+  return `${version.submitter?.nickname ?? "未知"} · ${version.submittedAt ?? "时间未知"}`;
 }
 
 function currentVersionOf(
   state: TaskInstanceDetailVO["submission"]["state"],
-  versions: VersionView[],
-): VersionView | null {
+  versions: TaskSubmissionVersionVO[],
+): TaskSubmissionVersionVO | null {
   if (versions.length === 0) return null;
   if (state === "submitted") {
     return versions.find((version) => version.status === "SUBMITTED") ?? null;
@@ -79,14 +74,14 @@ function currentVersionOf(
   return versions.find((version) => version.status === "RESET") ?? null;
 }
 
-function versionFromDetail(detail: TaskInstanceDetailVO): VersionView[] {
+export function versionFromDetail(detail: TaskInstanceDetailVO): TaskSubmissionVersionVO[] {
   if (detail.submission.state === "not_submitted") return [];
   return [
     {
       versionNo: 1,
       status: "SUBMITTED",
       submittedAt: detail.submission.submittedAt,
-      submittedBy: detail.task.assignee,
+      submitter: detail.task.assignee,
       fields: detail.submission.fields,
       unreadable: false,
     },
@@ -255,7 +250,9 @@ export default function TaskDetailPanel({
   lifecycle.current.switchTo(contextKey);
   const isCurrent = lifecycle.current.capture();
   const [loaded, setLoaded] = useState<{ key: string; detail: TaskInstanceDetailVO } | null>(null);
-  const [versions, setVersions] = useState<{ key: string; data: VersionView[] } | null>(null);
+  const [versions, setVersions] = useState<{ key: string; data: TaskSubmissionVersionVO[] } | null>(
+    null,
+  );
   const [error, setError] = useState("");
   const [versionError, setVersionError] = useState("");
   const [attachmentError, setAttachmentError] = useState("");
@@ -487,8 +484,7 @@ export default function TaskDetailPanel({
                               <Badge variant="secondary">当前</Badge>
                             )}
                             <span className="min-w-0 flex-1 text-xs text-muted-foreground">
-                              {version.submittedBy?.nickname ?? "未知"} ·{" "}
-                              {version.submittedAt ?? "时间未知"}
+                              {submissionVersionAuthorLine(version)}
                             </span>
                             {expanded ? (
                               <ChevronUp className="size-4 shrink-0 text-muted-foreground" />
