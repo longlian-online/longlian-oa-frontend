@@ -1,5 +1,5 @@
 import { orgAdminRequest } from "@/api/request";
-import { invalidateUserOrganizationsCache } from "@/api/user";
+
 import type {
   InviteCodeVO,
   JoinApplicationListDTO,
@@ -49,7 +49,6 @@ export async function updateOrganizationInfo(dto: OrganizationUpdateDTO): Promis
     method: "PUT",
     body: JSON.stringify(dto),
   });
-  invalidateUserOrganizationsCache();
 }
 
 export async function getOrganizationMembers(

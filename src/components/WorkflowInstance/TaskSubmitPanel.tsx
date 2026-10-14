@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import FileUpload from "@/components/FileUpload";
@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+
 import type { UploadedFileInfo } from "@/types/file";
 import type { TaskFormField, TaskSubmitValue } from "@/types/task";
 import type { TaskSubmitDTO } from "@/types/workflowInstance";
@@ -31,6 +32,7 @@ interface TaskSubmitPanelProps {
   submitFields: TaskFormField[];
   onOpenChange: (open: boolean) => void;
   onSubmit: (submission: TaskSubmitDTO) => Promise<boolean>;
+  submitting: boolean;
 }
 
 export function validateRequiredFields(
@@ -56,25 +58,26 @@ export default function TaskSubmitPanel({
   submitFields,
   onOpenChange,
   onSubmit,
+  submitting,
 }: TaskSubmitPanelProps) {
   const [values, setValues] = useState<Record<string, TaskSubmitValue>>({});
   const [uploads, setUploads] = useState<Record<string, UploadedFileInfo | null>>({});
-  const [submitting, setSubmitting] = useState(false);
+  const submittingLock = useRef(false);
 
   async function handleSubmit(): Promise<void> {
-    if (submitting) return;
+    if (submittingLock.current) return;
     const validationErrors = validateRequiredFields(submitFields, values);
     if (validationErrors.length > 0) {
       $tip(validationErrors[0], "error");
       return;
     }
 
+    submittingLock.current = true;
     try {
-      setSubmitting(true);
       const succeeded = await onSubmit({ values });
       if (succeeded) onOpenChange(false);
     } finally {
-      setSubmitting(false);
+      submittingLock.current = false;
     }
   }
 
@@ -117,7 +120,7 @@ export default function TaskSubmitPanel({
                       title={`上传${field.label}`}
                       description="支持图片、文档或压缩包"
                       onChange={(file) => {
-                        if (submitting) return;
+                        if (submittingLock.current) return;
                         setUploads((current) => ({ ...current, [field.key]: file }));
                         setValues((current) => ({
                           ...current,

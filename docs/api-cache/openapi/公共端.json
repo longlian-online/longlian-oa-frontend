@@ -11,12 +11,12 @@
           },
           "fileExt": {
             "description": "文件扩展名",
-            "pattern": "(?i)jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx|zip",
+            "pattern": "(?i)jpg|jpeg|png|gif|webp|bmp|pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv|zip|rar|7z",
             "type": "string"
           },
           "fileMime": {
             "description": "文件MIME类型",
-            "pattern": "(?i)image/(jpeg|png|gif)|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/zip|application/x-zip-compressed",
+            "pattern": "(?i)image/(jpeg|png|gif|webp|bmp)|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.ms-powerpoint|application/vnd.openxmlformats-officedocument.presentationml.presentation|text/plain|text/csv|application/zip|application/x-zip-compressed|application/vnd.rar|application/x-rar-compressed|application/x-7z-compressed",
             "type": "string"
           },
           "fileName": {
@@ -55,6 +55,10 @@
       "ResourceCreateVO": {
         "description": "创建文件上传响应",
         "properties": {
+          "contentDisposition": {
+            "description": "上传需携带的 Content-Disposition 头值；null 表示无需携带",
+            "type": "string"
+          },
           "fileId": {
             "description": "文件ID",
             "type": "string"

@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { ChevronRight } from "lucide-react";
 
+import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { getMyTasks } from "@/api/myTask";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { MyTaskBucket, MyTaskInstanceVO, MyTaskSortDirection } from "@/types/myTask";
+import type { MyTaskBucket, MyTaskSortDirection } from "@/types/myTask";
 
 const PAGE_SIZE = 5;
 
@@ -24,36 +25,17 @@ interface MyTaskColumnProps {
 
 export function MyTaskColumn({ bucket, title, dotClassName, sortDirection }: MyTaskColumnProps) {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState<MyTaskInstanceVO[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setPage(1);
   }, [sortDirection]);
 
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    getMyTasks({ bucket, pageNum: page, pageSize: PAGE_SIZE, sortDirection })
-      .then((data) => {
-        if (!active) return;
-        setTasks(data.list);
-        setTotal(data.total);
-      })
-      .catch(() => {
-        if (!active) return;
-        setTasks([]);
-        setTotal(0);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [bucket, page, sortDirection]);
+  const params = { bucket, pageNum: page, pageSize: PAGE_SIZE, sortDirection };
+  const tasksQuery = useApiQuery({ key: ["myTasks", params], queryFn: () => getMyTasks(params) });
+  const tasks = tasksQuery.data?.list ?? [];
+  const total = tasksQuery.data?.total ?? 0;
+  const loading = tasksQuery.isLoading;
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const start = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
@@ -69,7 +51,11 @@ export function MyTaskColumn({ bucket, title, dotClassName, sortDirection }: MyT
       </h3>
 
       <div className="flex flex-1 flex-col">
-        {loading ? (
+        {tasksQuery.isError && !tasksQuery.data ? (
+          <Button variant="ghost" size="sm" onClick={() => void tasksQuery.refetch()}>
+            加载失败，重试
+          </Button>
+        ) : loading ? (
           <p className="py-6 text-center text-xs text-muted-foreground">加载中...</p>
         ) : tasks.length === 0 ? (
           <p className="py-6 text-center text-xs text-muted-foreground">暂无任务</p>

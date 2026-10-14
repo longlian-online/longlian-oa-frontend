@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Building2, ImagePlus, Loader2, Save } from "lucide-react";
 
+import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { getOrganizationInfo, updateOrganizationInfo } from "@/api/organizationAdmin";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import FileUpload from "@/components/FileUpload";
@@ -10,8 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getCurrentOrgId } from "@/lib/session";
+
 import type { UploadedFileInfo } from "@/types/file";
-import type { OrganizationInfoVO } from "@/types/organizationAdmin";
 
 interface OrganizationForm {
   name: string;
@@ -19,65 +20,68 @@ interface OrganizationForm {
 }
 
 function OrganizationSettingsContent() {
-  const [organization, setOrganization] = useState<OrganizationInfoVO | null>(null);
+  const session = useSessionSnapshot();
+  const organizationQuery = useApiQuery({
+    key: ["organizationInfo"],
+    queryFn: getOrganizationInfo,
+  });
+  const organization = organizationQuery.data;
+  const saveMutation = useApiMutation({
+    mutationFn: updateOrganizationInfo,
+    invalidate: [["organizationInfo"], ["organizations"]],
+  });
+  const initialized = useRef("");
   const [form, setForm] = useState<OrganizationForm>({ name: "", description: "" });
   const [avatarFile, setAvatarFile] = useState<UploadedFileInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const loading = organizationQuery.isLoading;
+  const saving = saveMutation.isPending;
 
-  useEffect(() => {
-    void loadOrganization();
-  }, []);
-
-  async function loadOrganization(): Promise<void> {
-    try {
-      setLoading(true);
-      const data = await getOrganizationInfo();
-      setOrganization(data);
-      setForm({ name: data.name, description: data.description ?? "" });
-      setAvatarFile(
-        data.avatarUrl
-          ? {
-              fileId: data.avatarFileId ?? "",
-              fileName: "组织头像",
-              fileSize: 0,
-              fileMime: "image/*",
-              previewUrl: data.avatarUrl,
-            }
-          : null,
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect((): void => {
+    const identity = `${session.appScope}:${session.orgId}`;
+    if (!organization || initialized.current === identity) return;
+    initialized.current = identity;
+    setForm({ name: organization.name, description: organization.description ?? "" });
+    setAvatarFile(
+      organization.avatarUrl
+        ? {
+            fileId: organization.avatarFileId ?? "",
+            fileName: "组织头像",
+            fileSize: 0,
+            fileMime: "image/*",
+            previewUrl: organization.avatarUrl,
+          }
+        : null,
+    );
+  }, [organization, session.appScope, session.orgId]);
 
   async function handleSave(): Promise<void> {
-    const name = form.name.trim();
-    if (!name) {
-      $tip("请输入组织名称", "error");
-      return;
-    }
-
-    if (!organization) return;
-
-    if (organization.avatarUrl && !avatarFile?.fileId) {
-      $tip("当前组织头像缺少文件 ID，暂时无法安全保存资料，请重新上传头像后再保存", "error");
-      return;
-    }
-
     try {
-      setSaving(true);
-      await updateOrganizationInfo({
+      const name = form.name.trim();
+      if (!name) {
+        $tip("请输入组织名称", "error");
+        return;
+      }
+
+      if (!organization) return;
+
+      if (organization.avatarUrl && !avatarFile?.fileId) {
+        $tip("当前组织头像缺少文件 ID，暂时无法安全保存资料，请重新上传头像后再保存", "error");
+        return;
+      }
+
+      await saveMutation.mutateAsync({
         avatarFileId: avatarFile?.fileId ?? "",
         name,
         description: form.description.trim(),
       });
       $tip("组织信息已保存", "success");
-      await loadOrganization();
-    } finally {
-      setSaving(false);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
+
+  if (organizationQuery.isError && !organization)
+    return <Button onClick={() => void organizationQuery.refetch()}>加载失败，重试</Button>;
 
   if (loading) {
     return (

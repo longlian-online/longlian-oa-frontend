@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Loader2, Plus, Trash2, UserRound } from "lucide-react";
 
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { createAdmin, deleteAdmin, getAdminList } from "@/api/admin";
 import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
@@ -27,57 +28,60 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import type { AdminCreateDTO, AdminVO } from "@/types/admin";
 
 const PAGE_SIZE = 10;
 
 export default function AdminsPage() {
-  const [admins, setAdmins] = useState<AdminVO[]>([]);
-  const [total, setTotal] = useState(0);
+  const createAdminMutation = useApiMutation<
+    Awaited<ReturnType<typeof createAdmin>>,
+    Parameters<typeof createAdmin>
+  >({ mutationFn: (args) => createAdmin(...args), invalidate: [["adminAdmins"]], scope: "admin" });
+  const deleteAdminMutation = useApiMutation<
+    Awaited<ReturnType<typeof deleteAdmin>>,
+    Parameters<typeof deleteAdmin>
+  >({ mutationFn: (args) => deleteAdmin(...args), invalidate: [["adminAdmins"]], scope: "admin" });
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const saving = createAdminMutation.isPending || deleteAdminMutation.isPending;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<AdminCreateDTO>({ username: "", password: "" });
 
-  async function loadAdmins(nextPage = page): Promise<void> {
-    try {
-      setLoading(true);
-      const result = await getAdminList({ pageNum: nextPage, pageSize: PAGE_SIZE });
-      setAdmins(result.list ?? []);
-      setTotal(result.total ?? 0);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadAdmins();
-  }, [page]);
+  const listQuery = useApiQuery({
+    key: ["adminAdmins", "management", page],
+    queryFn: () => getAdminList({ pageNum: page, pageSize: PAGE_SIZE }),
+    scope: "admin",
+  });
+  const admins = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
 
   async function handleCreate(): Promise<void> {
-    if (!form.username.trim() || form.password.length < 6) {
-      $tip("请输入账号和至少 6 位密码", "error");
-      return;
-    }
     try {
-      setSaving(true);
-      await createAdmin({ username: form.username.trim(), password: form.password });
+      if (!form.username.trim() || form.password.length < 6) {
+        $tip("请输入账号和至少 6 位密码", "error");
+        return;
+      }
+      await createAdminMutation.mutateAsync([
+        { username: form.username.trim(), password: form.password },
+      ]);
       $tip("管理员已创建", "success");
       setDialogOpen(false);
       setForm({ username: "", password: "" });
       setPage(1);
-      await loadAdmins(1);
-    } finally {
-      setSaving(false);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
   async function handleDelete(admin: AdminVO): Promise<void> {
-    if (!window.confirm(`确定删除管理员「${admin.username}」吗？`)) return;
-    await deleteAdmin(admin.id);
-    $tip("管理员已删除", "success");
-    await loadAdmins();
+    try {
+      if (!window.confirm(`确定删除管理员「${admin.username}」吗？`)) return;
+      await deleteAdminMutation.mutateAsync([admin.id]);
+      $tip("管理员已删除", "success");
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
+    }
   }
 
   return (
@@ -91,7 +95,11 @@ export default function AdminsPage() {
               新增管理员
             </Button>
           </div>
-          {loading ? (
+          {listQuery.isError && !listQuery.data ? (
+            <Button variant="outline" onClick={() => void listQuery.refetch()}>
+              加载失败，重试
+            </Button>
+          ) : loading ? (
             <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
               <Loader2 className="mr-2 size-4 animate-spin" />
               加载中...

@@ -2,13 +2,15 @@ import type { ReactNode } from "react";
 import { Bell, Building2, CalendarClock, LogOut, Network, UserRound, Users } from "lucide-react";
 import { Navigate, NavLink, useLocation, useNavigate } from "react-router";
 
+import { getSessionSnapshot } from "@/lib/session";
+import { useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { adminLogout } from "@/api/auth";
 import { $tip } from "@/components/tip";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import PageTransition from "@/components/layout/PageTransition";
-import { clearAdminSession, getAdminRole, getAdminToken, getAdminUsername } from "@/lib/session";
+import { clearAdminSession, getAdminRole, getAdminUsername } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 interface AdminLayoutProps {
@@ -26,19 +28,25 @@ const navItems = [
 export default function AdminLayout({ children, title, description }: AdminLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const token = getAdminToken();
+  const token = useSessionSnapshot().adminToken;
+  const logoutMutation = useApiMutation({ scope: "admin", mutationFn: adminLogout });
 
   if (!token) {
     return <Navigate to="/admin/login" replace />;
   }
 
   async function handleLogout(): Promise<void> {
+    const started = getSessionSnapshot();
     try {
-      await adminLogout();
+      await logoutMutation.mutateAsync();
       $tip("管理员已退出登录", "success");
+    } catch {
+      /* 全局处理退出失败。 */
     } finally {
-      clearAdminSession();
-      void navigate("/admin/login", { replace: true });
+      if (getSessionSnapshot().adminScope === started.adminScope) {
+        clearAdminSession();
+        void navigate("/admin/login", { replace: true });
+      }
     }
   }
 
@@ -111,6 +119,7 @@ export default function AdminLayout({ children, title, description }: AdminLayou
                 <Button
                   variant="ghost"
                   className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+                  disabled={logoutMutation.isPending}
                   onClick={() => void handleLogout()}
                 >
                   <LogOut className="h-4 w-4" />

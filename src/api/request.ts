@@ -6,8 +6,10 @@ import {
   getToken,
 } from "@/lib/session";
 import { AUTH_EXPIRED_MESSAGE, AuthExpiredError, redirectExpiredSession } from "@/lib/authError";
-import { ApiError, GatewayError } from "@/api/apiError";
+import { getRequestContext } from "@/api/requestContext";
+import { ApiError, GatewayError, NetworkError } from "@/api/apiError";
 import { GATEWAY_ERROR_MESSAGE, NETWORK_ERROR_MESSAGE } from "@/services/notification";
+
 import type { ApiResult } from "@/types/planning";
 
 export { ApiError, GatewayError };
@@ -64,18 +66,20 @@ async function requestWithBase<T>(
   getCurrentToken: () => string | null = getToken,
   loginPath = "/login",
 ): Promise<T> {
-  const token = getToken();
+  const context = getRequestContext();
+  const token = context ? context.token : getToken();
+  const notify = !context?.managed;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options?.headers as Record<string, string>),
   };
 
-  const authToken = overrideToken === undefined ? token : overrideToken;
+  const authToken = context ? context.token : overrideToken === undefined ? token : overrideToken;
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;
   }
 
-  const orgId = includeOrgContext ? getCurrentOrgId() : null;
+  const orgId = includeOrgContext ? (context ? context.orgId : getCurrentOrgId()) : null;
   if (orgId) {
     headers["X-Org-Id"] = orgId;
   } else {
@@ -86,18 +90,23 @@ async function requestWithBase<T>(
   try {
     response = await fetch(buildApiUrl(`${basePath}${url}`), {
       ...options,
+      signal: context?.signal ?? options?.signal,
       headers,
     });
-  } catch {
-    throw new ApiError(NETWORK_ERROR_MESSAGE);
+  } catch (cause) {
+    if (cause instanceof Error && cause.name === "AbortError") throw cause;
+    throw new NetworkError(NETWORK_ERROR_MESSAGE, notify);
   }
 
   function handleUnauthorized(message: string): never {
     if (!authToken) {
-      throw new ApiError(message === AUTH_EXPIRED_MESSAGE ? `登录失败：${message}` : message);
+      throw new ApiError(
+        message === AUTH_EXPIRED_MESSAGE ? `登录失败：${message}` : message,
+        notify,
+      );
     }
     // Responses belong to the session that issued the request. Ignore older sessions.
-    if (getCurrentToken() === authToken) {
+    if (getCurrentToken() === authToken && (!context?.isCurrent || context.isCurrent())) {
       onUnauthorized();
       redirectExpiredSession(loginPath);
     }
@@ -105,7 +114,13 @@ async function requestWithBase<T>(
   }
 
   if (!response.ok) {
-    throw new GatewayError(response.status);
+    const retryAfter = response.headers.get("Retry-After");
+    const retryAfterMs = retryAfter
+      ? /^\d+$/.test(retryAfter)
+        ? Number(retryAfter) * 1000
+        : Math.max(0, Date.parse(retryAfter) - Date.now())
+      : undefined;
+    throw new GatewayError(response.status, notify, retryAfterMs);
   }
 
   const responseText = await response.text();
@@ -117,7 +132,7 @@ async function requestWithBase<T>(
   try {
     result = parseApiResponse<T>(responseText);
   } catch {
-    throw new ApiError(GATEWAY_ERROR_MESSAGE);
+    throw new ApiError(GATEWAY_ERROR_MESSAGE, notify);
   }
 
   if (isApiResult(result)) {
@@ -126,7 +141,7 @@ async function requestWithBase<T>(
     }
 
     if (result.code !== 0) {
-      throw new ApiError(result.msg || `API error: ${result.code}`);
+      throw new ApiError(result.msg || `API error: ${result.code}`, notify);
     }
 
     return result.data as T;

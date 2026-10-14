@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Layers, Mail, User, Lock, Eye, EyeOff } from "lucide-react";
 
+import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +30,10 @@ type CodeFormData = z.infer<typeof codeSchema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const passwordLogin = useApiMutation({ scope: "public", mutationFn: loginByPassword });
+  const codeLogin = useApiMutation({ scope: "public", mutationFn: loginByCode });
+  const sendCode = useApiMutation({ scope: "public", mutationFn: sendVerificationCode });
+  const isLoading = passwordLogin.isPending || codeLogin.isPending;
   const [showPassword, setShowPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [activeTab, setActiveTab] = useState<"password" | "code">("password");
@@ -59,26 +63,24 @@ export default function LoginPage() {
   );
 
   const onPasswordSubmit = async (data: PasswordFormData) => {
-    setIsLoading(true);
     try {
-      const result = await loginByPassword(data);
+      const result = await passwordLogin.mutateAsync(data);
       saveSession(result);
       $tip("登录成功", "success");
       void navigate("/dashboard/planning");
-    } finally {
-      setIsLoading(false);
+    } catch {
+      /* 共享 Mutation 负责错误提示。 */
     }
   };
 
   const onCodeSubmit = async (data: CodeFormData) => {
-    setIsLoading(true);
     try {
-      const result = await loginByCode(data);
+      const result = await codeLogin.mutateAsync(data);
       saveSession(result);
       $tip("登录成功", "success");
       void navigate("/dashboard/planning");
-    } finally {
-      setIsLoading(false);
+    } catch {
+      /* 共享 Mutation 负责错误提示。 */
     }
   };
 
@@ -87,7 +89,11 @@ export default function LoginPage() {
     const isValid = await codeForm.trigger("email");
     if (!isValid) return;
 
-    await sendVerificationCode({ email, businessType: "LOGIN" });
+    try {
+      await sendCode.mutateAsync({ email, businessType: "LOGIN" });
+    } catch {
+      return;
+    }
     $tip("验证码已发送", "success");
     setCountdown(60);
     const timer = setInterval(() => {
@@ -232,7 +238,7 @@ export default function LoginPage() {
                       variant="outline"
                       className="h-11 px-4 shrink-0"
                       onClick={handleSendCode}
-                      disabled={countdown > 0}
+                      disabled={countdown > 0 || sendCode.isPending}
                     >
                       {countdown > 0 ? `${countdown}s` : "发送"}
                     </Button>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowDownUp, ChevronRight, Search, Workflow } from "lucide-react";
 
+import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { getWorkshopList } from "@/api/workshop";
 import EmptyState from "@/components/EmptyState";
 import PageLoading from "@/components/PageLoading";
@@ -35,8 +36,6 @@ const SORT_LABELS: Record<WorkshopSortBy, string> = {
 export default function WorkshopPage() {
   const navigate = useNavigate();
   const { projectTypes } = useProjectTypes();
-  const [projects, setProjects] = useState<WorkshopProjectInfoVO[]>([]);
-  const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
   const [selectedType, setSelectedType] = useState("all");
@@ -45,34 +44,22 @@ export default function WorkshopPage() {
   const [sortBy, setSortBy] = useState<WorkshopSortBy>("RECENT_SUBMISSION");
   const [scrollState, setScrollState] = useState({ atStart: true, atEnd: false });
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    let active = true;
-    async function loadWorkshopProjects(): Promise<void> {
-      try {
-        setLoading(true);
-        const data = await getWorkshopList({
-          pageNum: page,
-          pageSize: PAGE_SIZE,
-          keyword: keyword || undefined,
-          projectType: selectedType === "all" ? undefined : selectedType,
-          isMyCreated,
-          sortBy,
-        });
-        if (!active) return;
-        setProjects(data.list);
-        setTotal(data.total);
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
-    void loadWorkshopProjects();
-    return () => {
-      active = false;
-    };
-  }, [page, keyword, selectedType, isMyCreated, sortBy]);
-
+  const params = {
+    pageNum: page,
+    pageSize: PAGE_SIZE,
+    keyword: keyword || undefined,
+    projectType: selectedType === "all" ? undefined : selectedType,
+    isMyCreated,
+    sortBy,
+  };
+  const listQuery = useApiQuery({
+    key: ["workshop", "list", params],
+    queryFn: () => getWorkshopList(params),
+  });
+  const projects = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
   useEffect(() => {
     const group = document.querySelector<HTMLDivElement>('[aria-label="企划类型筛选"]');
     if (!group) return;

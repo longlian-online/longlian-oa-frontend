@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Copy, Loader2, RefreshCw, Ticket } from "lucide-react";
 
+import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { createJoinInviteCode } from "@/api/organizationAdmin";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -13,23 +14,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/format";
-import type { InviteCodeVO } from "@/types/organizationAdmin";
 
 export default function OrganizationInviteDialog(): React.JSX.Element {
+  const createJoinInviteCodeMutation = useApiMutation<
+    Awaited<ReturnType<typeof createJoinInviteCode>>,
+    Parameters<typeof createJoinInviteCode>
+  >({ mutationFn: (args) => createJoinInviteCode(...args), invalidate: [] });
   const [open, setOpen] = useState(false);
-  const [invite, setInvite] = useState<InviteCodeVO | null>(null);
-  const [loading, setLoading] = useState(false);
+  const invite = createJoinInviteCodeMutation.data;
+  const loading = createJoinInviteCodeMutation.isPending;
   const [copying, setCopying] = useState(false);
 
   async function handleCreate(): Promise<void> {
-    setLoading(true);
-    setInvite(null);
     try {
-      const nextInvite = await createJoinInviteCode();
-      setInvite(nextInvite);
+      createJoinInviteCodeMutation.reset();
+      await createJoinInviteCodeMutation.mutateAsync([]);
       $tip("邀请码已生成", "success");
-    } finally {
-      setLoading(false);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
