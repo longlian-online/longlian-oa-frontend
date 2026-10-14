@@ -183,26 +183,40 @@ function OrganizationMembersContent() {
               onKeyDown={(event) => event.key === "Enter" && handleSearch()}
             />
           </div>
-          <Input
-            type="date"
-            aria-label="入组开始日期"
-            value={startJoinedTime}
-            className="w-36"
-            onChange={(event) => {
-              setStartJoinedTime(event.target.value);
-              setPage(1);
-            }}
-          />
-          <Input
-            type="date"
-            aria-label="入组结束日期"
-            value={endJoinedTime}
-            className="w-36"
-            onChange={(event) => {
-              setEndJoinedTime(event.target.value);
-              setPage(1);
-            }}
-          />
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="member-start-joined" className="shrink-0 text-xs text-muted-foreground">
+              开始
+            </Label>
+            <Input
+              id="member-start-joined"
+              type="date"
+              lang="zh-CN"
+              aria-label="入组开始日期"
+              value={startJoinedTime}
+              className="w-36"
+              onChange={(event) => {
+                setStartJoinedTime(event.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="member-end-joined" className="shrink-0 text-xs text-muted-foreground">
+              结束
+            </Label>
+            <Input
+              id="member-end-joined"
+              type="date"
+              lang="zh-CN"
+              aria-label="入组结束日期"
+              value={endJoinedTime}
+              className="w-36"
+              onChange={(event) => {
+                setEndJoinedTime(event.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
           <Select
             value={orderDir}
             onValueChange={(value) => {
