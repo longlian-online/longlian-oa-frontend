@@ -100,6 +100,7 @@ export default function TaskPlaza() {
         prev
           .map((group) => {
             const tasks = group.tasks.filter((task) => task.instanceId !== instanceId);
+            if (tasks.length === group.tasks.length) return group;
             return { ...group, tasks, pendingCount: Math.max(0, group.pendingCount - 1) };
           })
           .filter((group) => group.tasks.length > 0),
