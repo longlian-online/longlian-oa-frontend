@@ -55,7 +55,7 @@ export default function ProjectMetadataTag({ tag, compact = false }: ProjectMeta
       <span
         className={cn(
           "min-w-0 px-2 py-0.5 font-semibold",
-          compact ? "flex-1 truncate" : "[overflow-wrap:anywhere]",
+          compact ? "max-w-full truncate" : "[overflow-wrap:anywhere]",
           hasValue && (color ? TAG_KEY_COLOR_CLASSES[color] : "bg-primary/15"),
         )}
       >
@@ -65,7 +65,7 @@ export default function ProjectMetadataTag({ tag, compact = false }: ProjectMeta
         <span
           className={cn(
             "min-w-0 px-2 py-0.5 font-normal",
-            compact ? "flex-1 truncate" : "[overflow-wrap:anywhere]",
+            compact ? "max-w-full truncate" : "[overflow-wrap:anywhere]",
           )}
         >
           {tag.value}
