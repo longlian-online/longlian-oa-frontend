@@ -1,23 +1,23 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-10-13T16:39:59.510Z",
+  "generatedAt": "2026-10-14T16:47:35.645Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "69fe3419414085e9537a1b5821a8e4269d2eeb5f0238f8d0894292ad09cb7e7f",
-      "pathCount": 65,
-      "operationCount": 78
+      "sha256": "72cd81c96b34bcdcac4571257dd771f9fa81ab51d997e14612100339a00b02cb",
+      "pathCount": 67,
+      "operationCount": 81
     },
     {
       "name": "公共端",
       "slug": "公共端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E5%85%AC%E5%85%B1%E7%AB%AF",
       "file": "openapi/公共端.json",
-      "sha256": "d39087080a39ffa86b164d129e1ee684b7538f1f042edbcf43b6115f415fd863",
+      "sha256": "33bf13aef4f91f3a267ddbe8dbe3397beb899b31390e45743346ed2dd21559ca",
       "pathCount": 3,
       "operationCount": 4
     },
@@ -26,9 +26,9 @@
       "slug": "用户端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF",
       "file": "openapi/用户端.json",
-      "sha256": "8889213ad5857bb9d848a76019f12519e3724c776ee0230bfbe1623a370d8bbd",
-      "pathCount": 33,
-      "operationCount": 39
+      "sha256": "1a0fd345514cd3c0e8a7469c4cef66de85c4131105f43cf57718b0e7e6c29c41",
+      "pathCount": 35,
+      "operationCount": 41
     },
     {
       "name": "管理端",
@@ -44,9 +44,9 @@
       "slug": "组织管理端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF",
       "file": "openapi/组织管理端.json",
-      "sha256": "014ad79a7a48fe521361c8ccecf0c68ef48f9cac9d165c75a37029a4b77ef4ca",
+      "sha256": "d122d2c663f604f9c36402b1dd62ae3ad67f5bce918eaa097e98fe1003bab6e0",
       "pathCount": 21,
-      "operationCount": 25
+      "operationCount": 26
     }
   ],
   "operations": [
@@ -371,6 +371,16 @@
       "sha256": "414352428f6b899e81b379beccdef62e9d100b3711389083ac0ea09f3bf4ae36"
     },
     {
+      "id": "全部_get_-app-task-instance-instanceid-submissions",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/task/instance/{instanceId}/submissions",
+      "summary": "任务提交版本列表",
+      "tags": ["任务实例接口"],
+      "file": "operations/全部_get_-app-task-instance-instanceid-submissions.json",
+      "sha256": "4aa874d4da3aed2f1ea9bd0fcf9d1b5a5a191f90190e9b839ca979248bb3bb53"
+    },
+    {
       "id": "全部_post_-app-task-instance-instanceid-submit",
       "document": "全部",
       "method": "POST",
@@ -389,6 +399,16 @@
       "tags": ["任务实例接口"],
       "file": "operations/全部_get_-app-task-instance-item-itemid.json",
       "sha256": "405f774b19371617356cd4f47cd1310a2ccb428c1ba15d675648be99bb0e9ce1"
+    },
+    {
+      "id": "全部_get_-app-task-instance-mine",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/task/instance/mine",
+      "summary": "我的待办",
+      "tags": ["任务实例接口"],
+      "file": "operations/全部_get_-app-task-instance-mine.json",
+      "sha256": "d3fc77b4fa7783592901dfef83377f11361445570eb5710787f2e3b3841481c2"
     },
     {
       "id": "全部_get_-app-task-instance-plaza",
@@ -508,7 +528,7 @@
       "summary": "分页查询工坊企划列表",
       "tags": ["工坊接口"],
       "file": "operations/全部_post_-app-workshop-list.json",
-      "sha256": "705e88b283a75a22327a127bfb3786ee1a82443c963c5918888371aa928650a3"
+      "sha256": "4765727dfc2d8600301b0f0d5d10f9cda9945328ca01ac9e969ac8d57215a652"
     },
     {
       "id": "全部_post_-app-workshop-task-template",
@@ -748,7 +768,7 @@
       "summary": "创建原子任务",
       "tags": ["原子任务管理"],
       "file": "operations/全部_post_-orgadmin-task-base.json",
-      "sha256": "e3cb4243781d9485ccb4794859b11c7124b4dddb7f14548987c49f5cae975435"
+      "sha256": "a11426db8caad1d837aba34a5b9617151d7d37f1190340db4c52e64afd252a85"
     },
     {
       "id": "全部_delete_-orgadmin-task-base-taskid",
@@ -759,6 +779,16 @@
       "tags": ["原子任务管理"],
       "file": "operations/全部_delete_-orgadmin-task-base-taskid.json",
       "sha256": "fd86b05b7f6dec632a6d3b742b45576938ed97dd3c7d9d3c6a4f6cf154fa31cc"
+    },
+    {
+      "id": "全部_put_-orgadmin-task-base-taskid",
+      "document": "全部",
+      "method": "PUT",
+      "path": "/orgadmin/task/base/{taskId}",
+      "summary": "编辑原子任务",
+      "tags": ["原子任务管理"],
+      "file": "operations/全部_put_-orgadmin-task-base-taskid.json",
+      "sha256": "1cd5dd722c4f14d1cf24981b52d4d3083347c9cc7222e10f20a3840dc9ae1919"
     },
     {
       "id": "全部_patch_-orgadmin-task-base-taskid-status",
@@ -828,7 +858,7 @@
       "summary": "分页查询任务模板列表",
       "tags": ["任务模板管理"],
       "file": "operations/全部_post_-orgadmin-task-template-list.json",
-      "sha256": "b448b72ab71a44870032a44d6133d5cc8cef623d39d4bec43553b89c972e6877"
+      "sha256": "3205d343d4a1e2a7cf7e4cf9ad39f9c9c1f3bc02dfc6f1b3ec57dbeefaa5f3d9"
     },
     {
       "id": "公共端_get_-common-file-local",
@@ -1091,6 +1121,16 @@
       "sha256": "f675a1f7c48b31f8494f6543a8b466f96c2600a66a0d7ef082c240931c2ecaa1"
     },
     {
+      "id": "用户端_get_-app-task-instance-instanceid-submissions",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/task/instance/{instanceId}/submissions",
+      "summary": "任务提交版本列表",
+      "tags": ["任务实例接口"],
+      "file": "operations/用户端_get_-app-task-instance-instanceid-submissions.json",
+      "sha256": "cd514de1087622ce9f71b1916c32dc759322fe99778051e460d4b3800a44ae68"
+    },
+    {
       "id": "用户端_post_-app-task-instance-instanceid-submit",
       "document": "用户端",
       "method": "POST",
@@ -1109,6 +1149,16 @@
       "tags": ["任务实例接口"],
       "file": "operations/用户端_get_-app-task-instance-item-itemid.json",
       "sha256": "d0da285e8f64558c54d0298c5aa4fd63abe983b0be4bafb6c336205193a235fa"
+    },
+    {
+      "id": "用户端_get_-app-task-instance-mine",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/task/instance/mine",
+      "summary": "我的待办",
+      "tags": ["任务实例接口"],
+      "file": "operations/用户端_get_-app-task-instance-mine.json",
+      "sha256": "3f58f6d69a651c155928dea26059c5c888a500e5cc7b1fe9f9420a34f4a9b62e"
     },
     {
       "id": "用户端_get_-app-task-instance-plaza",
@@ -1228,7 +1278,7 @@
       "summary": "分页查询工坊企划列表",
       "tags": ["工坊接口"],
       "file": "operations/用户端_post_-app-workshop-list.json",
-      "sha256": "7a51cc6eeef476864435eaa9c57cff69cbca90291d948a12d6f06a0e7b836e40"
+      "sha256": "a477b8501c6295b04c4ca7e15edd419a3f5d9f46799f6554aacf3591c013864a"
     },
     {
       "id": "用户端_post_-app-workshop-task-template",
@@ -1528,7 +1578,7 @@
       "summary": "创建原子任务",
       "tags": ["原子任务管理"],
       "file": "operations/组织管理端_post_-orgadmin-task-base.json",
-      "sha256": "c81cdac433941f035755a3b98e5fff01664d26a246bb2f18cd4417ebeca254e0"
+      "sha256": "a989a47dd45b6e83746146110f27b750515e9581bfef7b9128b7ce90e4dd50dc"
     },
     {
       "id": "组织管理端_delete_-orgadmin-task-base-taskid",
@@ -1539,6 +1589,16 @@
       "tags": ["原子任务管理"],
       "file": "operations/组织管理端_delete_-orgadmin-task-base-taskid.json",
       "sha256": "1a881c80b1afa83088418f95d237750bf10240cb2ab3aad435f8ce70741648de"
+    },
+    {
+      "id": "组织管理端_put_-orgadmin-task-base-taskid",
+      "document": "组织管理端",
+      "method": "PUT",
+      "path": "/orgadmin/task/base/{taskId}",
+      "summary": "编辑原子任务",
+      "tags": ["原子任务管理"],
+      "file": "operations/组织管理端_put_-orgadmin-task-base-taskid.json",
+      "sha256": "56c47ddf7f02a2463a2433ee5256241695ee9a9154a4ad31e00c72210ed93312"
     },
     {
       "id": "组织管理端_patch_-orgadmin-task-base-taskid-status",
@@ -1608,7 +1668,7 @@
       "summary": "分页查询任务模板列表",
       "tags": ["任务模板管理"],
       "file": "operations/组织管理端_post_-orgadmin-task-template-list.json",
-      "sha256": "071c302ffe018cfe7b2bd121473a06245e4e703b7707978c843ba3a135d2517a"
+      "sha256": "3a0912bdb9f8a03eae34916cc4eb13f85175af44d7dee77377facebcb0a0ed81"
     }
   ]
 }

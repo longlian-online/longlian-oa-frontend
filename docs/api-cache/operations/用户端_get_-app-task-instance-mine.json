@@ -1,0 +1,42 @@
+{
+  "document": "用户端",
+  "method": "GET",
+  "operation": {
+    "description": "分页返回当前用户在当前组织内已接取（CLAIMED）的任务。bucket=SUBMITTABLE 前置阶段全部完成，WAITING 存在未完成前置；默认按接取时间升序",
+    "operationId": "listMyTasks",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "query",
+        "name": "listDTO",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/MyTaskListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOMyTaskVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "我的待办",
+    "tags": ["任务实例接口"]
+  },
+  "path": "/app/task/instance/mine",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

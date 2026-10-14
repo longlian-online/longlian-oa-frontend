@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useMachine } from "@xstate/react";
 import { Copy } from "lucide-react";
 
 import {
@@ -11,7 +10,6 @@ import {
   resetTask,
   submitTask,
 } from "@/api/workflowInstance";
-import { ApiError } from "@/api/apiError";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,12 +22,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { getUserId } from "@/lib/session";
-import type {
-  ItemTaskFlowVO,
-  ItemTaskInstanceVO,
-  ItemTaskNodeVO,
-  TaskSubmitDTO,
-} from "@/types/workflowInstance";
 import { createItemLifecycle } from "./itemLifecycle";
 import { buildParticipantRoster } from "./participantRoster";
 import TaskDetailPanel from "./TaskDetailPanel";
@@ -37,7 +29,9 @@ import { scrollTaskDetailIntoView } from "./scrollTaskDetailIntoView";
 import { canReset, canReject } from "./taskPermissions";
 import TaskFlowViewer from "./TaskFlowViewer";
 import TaskSubmitPanel from "./TaskSubmitPanel";
-import { workflowInstanceMachine } from "./workflowMachine";
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+
+import type { ItemTaskInstanceVO, ItemTaskNodeVO, TaskSubmitDTO } from "@/types/workflowInstance";
 
 interface WorkflowInstanceProps {
   itemId: string;
@@ -72,16 +66,47 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const currentUserId = getUserId();
   const lifecycle = useRef(createItemLifecycle(itemId));
   lifecycle.current.switchTo(itemId);
-  const isCurrentLifecycle = lifecycle.current.capture();
-  const loadGeneration = useRef(0);
-  const [loadedItemId, setLoadedItemId] = useState<string | null>(null);
+  const capturedLifecycle = lifecycle.current.capture();
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const isCurrentLifecycle = (): boolean => mounted.current && capturedLifecycle();
+  const actionLock = useRef(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const [detailScrollNonce, setDetailScrollNonce] = useState(0);
-  const [workflowState, sendWorkflowEvent] = useMachine(workflowInstanceMachine);
-  const [taskFlow, setTaskFlow] = useState<ItemTaskFlowVO | null>(null);
-  const [instances, setInstances] = useState<ItemTaskInstanceVO[]>([]);
-  const [detailRevision, setDetailRevision] = useState(0);
+  const flowQuery = useApiQuery({
+    key: ["flow", itemId],
+    queryFn: () => getItemTaskFlow(itemId),
+    enabled: Boolean(itemId),
+    staleTime: 0,
+  });
+  const instancesQuery = useApiQuery({
+    key: ["instances", itemId],
+    queryFn: () => getItemTaskInstances(itemId),
+    enabled: Boolean(itemId),
+    staleTime: 0,
+  });
+  const taskFlow = flowQuery.data;
+  const instances = instancesQuery.data ?? [];
+  const actionMutation = useApiMutation({
+    mutationFn: ({ action }: { instanceId: string; action: () => Promise<void> }) => action(),
+    invalidate: [
+      ["flow"],
+      ["instances"],
+      ["taskDetail"],
+      ["taskVersions"],
+      ["myTasks"],
+      ["items"],
+      ["projects"],
+      ["workshop"],
+      ["plaza"],
+    ],
+  });
   const [submitTarget, setSubmitTarget] = useState<{
     instance: ItemTaskInstanceVO;
     node: ItemTaskNodeVO;
@@ -105,12 +130,9 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
 
   useEffect(() => {
     setSelectedNodeId(null);
-    setTaskFlow(null);
-    setInstances([]);
     setSubmitTarget(null);
     setRejectTarget(null);
     setRejectComment("");
-    void loadData();
   }, [itemId]);
 
   const selectNode = useCallback((nodeId: string) => {
@@ -124,50 +146,22 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     scrollTaskDetailIntoView(detail);
   }, [detailScrollNonce, selectedNodeId]);
 
-  async function loadData(background = false): Promise<void> {
-    const generation = ++loadGeneration.current;
-    try {
-      if (!background) sendWorkflowEvent({ type: "LOAD" });
-      const [flowData, instanceData] = await Promise.all([
-        getItemTaskFlow(itemId),
-        getItemTaskInstances(itemId),
-      ]);
-      if (!isCurrentLifecycle() || generation !== loadGeneration.current) return;
-      setLoadedItemId(itemId);
-      setTaskFlow(flowData);
-      setInstances(instanceData);
-      setDetailRevision((current) => current + 1);
-      sendWorkflowEvent({ type: "LOADED" });
-    } catch (error) {
-      if (!isCurrentLifecycle() || generation !== loadGeneration.current) {
-        if (error instanceof ApiError) error.silence();
-        return;
-      }
-      setLoadedItemId(itemId);
-      sendWorkflowEvent({ type: background ? "ACTION_FAILED" : "LOAD_FAILED" });
-    }
-  }
-
   async function runInstanceAction(
     instanceId: string,
     action: () => Promise<void>,
     successMessage: string,
   ): Promise<boolean> {
-    if (!isCurrentLifecycle() || workflowState.matches("mutating")) return false;
+    if (!isCurrentLifecycle() || actionLock.current) return false;
+    actionLock.current = true;
     try {
-      sendWorkflowEvent({ type: "MUTATE", instanceId });
-      await action();
+      await actionMutation.mutateAsync({ instanceId, action });
       if (!isCurrentLifecycle()) return false;
       $tip(successMessage, "success");
-      await loadData(true);
       return isCurrentLifecycle();
-    } catch (error) {
-      if (!isCurrentLifecycle()) {
-        if (error instanceof ApiError) error.silence();
-        return false;
-      }
-      sendWorkflowEvent({ type: "ACTION_FAILED" });
+    } catch {
       return false;
+    } finally {
+      actionLock.current = false;
     }
   }
 
@@ -250,18 +244,26 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     }
   }
 
-  const mutatingInstanceId = workflowState.context.mutatingInstanceId;
+  const mutatingInstanceId = actionMutation.isPending
+    ? (actionMutation.variables?.instanceId ?? null)
+    : null;
 
-  if (loadedItemId !== itemId || workflowState.matches("loading")) {
+  if (flowQuery.isLoading || instancesQuery.isLoading) {
     return <div className="py-8 text-center text-sm text-muted-foreground">正在加载任务流...</div>;
   }
 
-  if (!taskFlow || workflowState.matches("error")) {
+  if (!taskFlow || (!instancesQuery.data && instancesQuery.isError)) {
     return (
       <div className="flex flex-col items-center gap-3 py-8 text-center text-sm text-muted-foreground">
-        <span>{workflowState.matches("error") ? "任务流加载失败" : "任务流不存在"}</span>
-        {workflowState.matches("error") && (
-          <Button variant="outline" size="sm" onClick={() => void loadData()}>
+        <span>
+          {flowQuery.isError || instancesQuery.isError ? "任务流加载失败" : "任务流不存在"}
+        </span>
+        {(flowQuery.isError || instancesQuery.isError) && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void Promise.all([flowQuery.refetch(), instancesQuery.refetch()])}
+          >
             重新加载
           </Button>
         )}
@@ -311,7 +313,6 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
             key={`${itemId}:${selectedNode.id}`}
             node={selectedNode}
             instance={selectedInstance}
-            revision={detailRevision}
             actions={
               selectedInstance && selectedNode.taskStatus !== null
                 ? {
@@ -356,6 +357,10 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
           onOpenChange={(open) => {
             if (!open) setSubmitTarget(null);
           }}
+          submitting={
+            actionMutation.isPending &&
+            actionMutation.variables?.instanceId === submitTarget.instance.id
+          }
           onSubmit={handleSubmit}
         />
       )}
@@ -377,7 +382,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
             </Button>
             <Button
               variant="destructive"
-              disabled={!rejectComment.trim()}
+              disabled={!rejectComment.trim() || actionMutation.isPending}
               onClick={() => void handleReject()}
             >
               打回

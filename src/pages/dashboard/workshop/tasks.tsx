@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   ChevronDown,
@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import {
   changeBaseTaskStatus,
   createOrganizationBaseTask,
@@ -40,6 +41,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { cn } from "@/lib/utils";
 import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
+
 import type {
   OrganizationBaseTaskCreateDTO,
   OrganizationBaseTaskVO,
@@ -65,16 +67,11 @@ const EMPTY_FORM: BaseTaskForm = {
 
 function BaseTaskManagementContent() {
   const confirm = useConfirm();
-  const [tasks, setTasks] = useState<OrganizationBaseTaskVO[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
   const [formOpen, setFormOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [editingTask, setEditingTask] = useState<OrganizationBaseTaskVO | null>(null);
-  const [mutatingId, setMutatingId] = useState<string | null>(null);
   const [form, setForm] = useState<BaseTaskForm>(EMPTY_FORM);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [iconKeyword, setIconKeyword] = useState("");
@@ -86,27 +83,42 @@ function BaseTaskManagementContent() {
   }, [iconEntries, iconKeyword]);
   const SelectedIcon = iconEntries.find(([name]) => name === form.icon)?.[1];
 
-  useEffect(() => {
-    void loadTasks();
-  }, [keyword, page]);
-
-  async function loadTasks(): Promise<void> {
-    try {
-      setLoading(true);
-      const data = await getOrganizationBaseTaskList({
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-        keyword: keyword || undefined,
-        sortBy: "REF_COUNT",
-        orderDir: "DESC",
-      });
-      setTasks(data.list);
-      setTotal(data.total);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  const params = {
+    pageNum: page,
+    pageSize: PAGE_SIZE,
+    keyword: keyword || undefined,
+    sortBy: "REF_COUNT" as const,
+    orderDir: "DESC" as const,
+  };
+  const listQuery = useApiQuery({
+    key: ["baseTasks", "list", params],
+    queryFn: () => getOrganizationBaseTaskList(params),
+  });
+  const tasks = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
+  const saveMutation = useApiMutation({
+    mutationFn: (payload: OrganizationBaseTaskCreateDTO) =>
+      editingTask
+        ? updateOrganizationBaseTask(editingTask.id, payload)
+        : createOrganizationBaseTask(payload),
+    invalidate: [["baseTasks"], ["templates"], ["templateOptions"]],
+  });
+  const statusMutation = useApiMutation({
+    mutationFn: ({ id, status }: { id: string; status: "ENABLED" | "DISABLED" }) =>
+      changeBaseTaskStatus(id, status),
+    invalidate: [["baseTasks"], ["templates"], ["templateOptions"]],
+  });
+  const saving = saveMutation.isPending;
+  const deleteMutation = useApiMutation({
+    mutationFn: (id: string) => deleteOrganizationBaseTask(id),
+    invalidate: [["baseTasks"], ["templates"], ["templateOptions"]],
+  });
+  const mutatingId = deleteMutation.isPending
+    ? deleteMutation.variables
+    : statusMutation.isPending
+      ? statusMutation.variables?.id
+      : null;
   function handleSearch(): void {
     setKeyword(searchText.trim());
     setPage(1);
@@ -184,7 +196,10 @@ function BaseTaskManagementContent() {
     }
   }
 
+  const saveLock = useRef(false);
   async function handleSave(): Promise<void> {
+    if (saveLock.current) return;
+    if (saving) return;
     const name = form.name.trim();
     if (!name) {
       $tip("请输入任务名称", "error");
@@ -220,13 +235,9 @@ function BaseTaskManagementContent() {
       })),
     };
 
+    saveLock.current = true;
     try {
-      setSaving(true);
-      if (editingTask) {
-        await updateOrganizationBaseTask(editingTask.id, payload);
-      } else {
-        await createOrganizationBaseTask(payload);
-      }
+      await saveMutation.mutateAsync(payload);
       $tip(editingTask ? "原子任务已修改" : "原子任务已创建", "success");
       setFormOpen(false);
       setForm(EMPTY_FORM);
@@ -235,23 +246,27 @@ function BaseTaskManagementContent() {
       setIconKeyword("");
       if (!editingTask && page !== 1) {
         setPage(1);
-      } else {
-        await loadTasks();
       }
+    } catch {
+      /* 保留表单，由共享 Mutation 提示错误。 */
     } finally {
-      setSaving(false);
+      saveLock.current = false;
     }
   }
 
+  const statusLock = useRef(false);
   async function handleToggleStatus(task: OrganizationBaseTaskVO): Promise<void> {
+    if (statusLock.current) return;
+    if (statusMutation.isPending) return;
     const nextStatus = task.status === "ENABLED" ? "DISABLED" : "ENABLED";
+    statusLock.current = true;
     try {
-      setMutatingId(task.id);
-      await changeBaseTaskStatus(task.id, nextStatus);
+      await statusMutation.mutateAsync({ id: task.id, status: nextStatus });
       $tip(nextStatus === "ENABLED" ? "原子任务已启用" : "原子任务已禁用", "success");
-      await loadTasks();
+    } catch {
+      /* 保留已有列表。 */
     } finally {
-      setMutatingId(null);
+      statusLock.current = false;
     }
   }
 
@@ -266,21 +281,24 @@ function BaseTaskManagementContent() {
     if (!confirmed) return;
 
     try {
-      setMutatingId(task.id);
-      await deleteOrganizationBaseTask(task.id);
+      await deleteMutation.mutateAsync(task.id);
       $tip("原子任务已删除", "success");
       if (tasks.length === 1 && page > 1) {
         setPage(page - 1);
-      } else {
-        await loadTasks();
       }
-    } finally {
-      setMutatingId(null);
+    } catch {
+      /* 共享 Mutation 显示错误，并保留已有列表。 */
     }
   }
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
+      {listQuery.isFetching && listQuery.data && (
+        <p role="status" className="text-sm text-muted-foreground">
+          正在刷新...
+        </p>
+      )}
+
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">原子任务</h1>
@@ -309,7 +327,12 @@ function BaseTaskManagementContent() {
         </div>
       </div>
 
-      {loading ? (
+      {listQuery.isError && !listQuery.data ? (
+        <div role="alert">
+          {listQuery.error.message}
+          <Button onClick={() => void listQuery.refetch()}>重试</Button>
+        </div>
+      ) : loading ? (
         <PageLoading message="正在加载原子任务..." />
       ) : tasks.length === 0 ? (
         <EmptyState

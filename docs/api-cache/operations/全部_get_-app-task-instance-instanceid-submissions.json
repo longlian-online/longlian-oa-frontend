@@ -1,0 +1,47 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "按版本号倒序返回该任务实例的全部提交版本，包含提交人/打回人与按表单快照组织的字段和附件",
+    "operationId": "listSubmissionVersions",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "任务实例ID",
+        "in": "path",
+        "name": "instanceId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/TaskSubmissionVersionVO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "任务提交版本列表",
+    "tags": ["任务实例接口"]
+  },
+  "path": "/app/task/instance/{instanceId}/submissions",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

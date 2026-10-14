@@ -1,22 +1,26 @@
-import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 
+import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { getProjectDetail } from "@/api/planning";
 import ProjectItemSection from "@/components/ProjectItem";
-import type { ProjectDetailInfoVO } from "@/types/planning";
 
 export default function ProjectItemListPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const [project, setProject] = useState<ProjectDetailInfoVO | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!projectId) return;
-
-    void getProjectDetail(projectId)
-      .then(setProject)
-      .finally(() => setLoading(false));
-  }, [projectId]);
+  const projectQuery = useApiQuery({
+    key: ["projects", "detail", projectId],
+    queryFn: () => getProjectDetail(projectId!),
+    enabled: Boolean(projectId),
+  });
+  const project = projectQuery.data;
+  const loading = projectQuery.isLoading;
+  if (projectQuery.isError && !project) {
+    return (
+      <div role="alert">
+        {projectQuery.error.message}
+        <button onClick={() => void projectQuery.refetch()}>重试</button>
+      </div>
+    );
+  }
 
   if (!projectId) {
     return <div className="py-8 text-center text-sm text-muted-foreground">项目不存在</div>;

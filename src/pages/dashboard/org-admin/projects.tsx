@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Ban, CheckCircle2, FolderOpen, Loader2, Search } from "lucide-react";
 
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { changeProjectStatus, getOrganizationProjects } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
@@ -20,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useConfirm } from "@/hooks/useConfirm";
+
 import type { OrganizationProjectStatus, OrganizationProjectVO } from "@/types/organizationAdmin";
 
 const PAGE_SIZE = 8;
@@ -33,32 +35,32 @@ function getStatusLabel(status: OrganizationProjectStatus): string {
 function OrganizationAdminProjectsContent() {
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const [projects, setProjects] = useState<OrganizationProjectVO[]>([]);
+  const changeProjectStatusMutation = useApiMutation<
+    Awaited<ReturnType<typeof changeProjectStatus>>,
+    Parameters<typeof changeProjectStatus>
+  >({
+    mutationFn: (args) => changeProjectStatus(...args),
+    invalidate: [["projects"], ["workshop"], ["plaza"]],
+  });
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const mutatingId = changeProjectStatusMutation.isPending
+    ? String(changeProjectStatusMutation.variables?.[0] ?? "new")
+    : null;
 
-  useEffect(() => {
-    void loadProjects();
-  }, [keyword, page]);
-
-  async function loadProjects(): Promise<void> {
-    try {
-      setLoading(true);
-      const result = await getOrganizationProjects({
+  const listQuery = useApiQuery({
+    key: ["projects", "management", keyword, page],
+    queryFn: () =>
+      getOrganizationProjects({
         keyword: keyword || undefined,
         pageNum: page,
         pageSize: PAGE_SIZE,
-      });
-      setProjects(result.list);
-      setTotal(result.total);
-    } finally {
-      setLoading(false);
-    }
-  }
+      }),
+  });
+  const projects = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
 
   function handleSearch(): void {
     setKeyword(searchText.trim());
@@ -66,24 +68,25 @@ function OrganizationAdminProjectsContent() {
   }
 
   async function handleChangeStatus(project: OrganizationProjectVO): Promise<void> {
-    const disabled = project.resourceStatus === "DISABLED";
-    const confirmed = await confirm({
-      title: disabled ? "启用企划？" : "禁用企划？",
-      description: disabled
-        ? `启用后「${project.title}」会重新出现在用户端。`
-        : `禁用后「${project.title}」将不再在用户端展示，已有数据会保留。`,
-      confirmText: disabled ? "启用" : "禁用",
-      variant: disabled ? "default" : "destructive",
-    });
-    if (!confirmed) return;
-
     try {
-      setMutatingId(project.id);
-      await changeProjectStatus(String(project.id), disabled ? "ENABLED" : "DISABLED");
+      const disabled = project.resourceStatus === "DISABLED";
+      const confirmed = await confirm({
+        title: disabled ? "启用企划？" : "禁用企划？",
+        description: disabled
+          ? `启用后「${project.title}」会重新出现在用户端。`
+          : `禁用后「${project.title}」将不再在用户端展示，已有数据会保留。`,
+        confirmText: disabled ? "启用" : "禁用",
+        variant: disabled ? "default" : "destructive",
+      });
+      if (!confirmed) return;
+
+      await changeProjectStatusMutation.mutateAsync([
+        String(project.id),
+        disabled ? "ENABLED" : "DISABLED",
+      ]);
       $tip(disabled ? "企划已启用" : "企划已禁用", "success");
-      await loadProjects();
-    } finally {
-      setMutatingId(null);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
@@ -113,7 +116,11 @@ function OrganizationAdminProjectsContent() {
         </div>
       </div>
 
-      {loading ? (
+      {listQuery.isError && !listQuery.data ? (
+        <Button variant="outline" onClick={() => void listQuery.refetch()}>
+          加载失败，重试
+        </Button>
+      ) : loading ? (
         <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
           <Loader2 className="mr-2 size-4 animate-spin" />
           正在加载企划...
