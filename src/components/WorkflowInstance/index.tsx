@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useMachine } from "@xstate/react";
 import { Copy } from "lucide-react";
 
@@ -33,6 +33,7 @@ import type {
 import { createItemLifecycle } from "./itemLifecycle";
 import { buildParticipantRoster } from "./participantRoster";
 import TaskDetailPanel from "./TaskDetailPanel";
+import { scrollTaskDetailIntoView } from "./scrollTaskDetailIntoView";
 import { canReset, canReject } from "./taskPermissions";
 import TaskFlowViewer from "./TaskFlowViewer";
 import TaskSubmitPanel from "./TaskSubmitPanel";
@@ -75,6 +76,8 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const loadGeneration = useRef(0);
   const [loadedItemId, setLoadedItemId] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const detailPanelRef = useRef<HTMLDivElement>(null);
+  const [detailScrollNonce, setDetailScrollNonce] = useState(0);
   const [workflowState, sendWorkflowEvent] = useMachine(workflowInstanceMachine);
   const [taskFlow, setTaskFlow] = useState<ItemTaskFlowVO | null>(null);
   const [instances, setInstances] = useState<ItemTaskInstanceVO[]>([]);
@@ -109,6 +112,17 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     setRejectComment("");
     void loadData();
   }, [itemId]);
+
+  const selectNode = useCallback((nodeId: string) => {
+    setSelectedNodeId(nodeId);
+    setDetailScrollNonce((nonce) => nonce + 1);
+  }, []);
+
+  useLayoutEffect(() => {
+    const detail = detailPanelRef.current;
+    if (!selectedNodeId || !detail) return;
+    scrollTaskDetailIntoView(detail);
+  }, [detailScrollNonce, selectedNodeId]);
 
   async function loadData(background = false): Promise<void> {
     const generation = ++loadGeneration.current;
@@ -280,7 +294,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
 
       <TaskFlowViewer
         selectedNodeId={selectedNodeId}
-        onSelectNode={setSelectedNodeId}
+        onSelectNode={selectNode}
         nodes={taskFlow.nodes}
         instances={sortedInstances}
         currentUserId={currentUserId}
@@ -292,33 +306,40 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
       />
 
       {selectedNode ? (
-        <TaskDetailPanel
-          key={`${itemId}:${selectedNode.id}`}
-          node={selectedNode}
-          instance={selectedInstance}
-          revision={detailRevision}
-          actions={
-            selectedInstance && selectedNode.taskStatus !== null
-              ? {
-                  currentUserId,
-                  mutating: mutatingInstanceId === selectedInstance.id,
-                  canSubmit: isNodeUnlocked(selectedNode, taskFlow.nodes),
-                  canReset: canReset(selectedInstance, currentUserId),
-                  canReject: canReject(selectedInstance, taskFlow.nodes, instances, currentUserId),
-                  onClaim: () =>
-                    void runInstanceAction(
-                      selectedInstance.id,
-                      () => claimTask(selectedInstance.id),
-                      "任务已接取",
+        <div ref={detailPanelRef}>
+          <TaskDetailPanel
+            key={`${itemId}:${selectedNode.id}`}
+            node={selectedNode}
+            instance={selectedInstance}
+            revision={detailRevision}
+            actions={
+              selectedInstance && selectedNode.taskStatus !== null
+                ? {
+                    currentUserId,
+                    mutating: mutatingInstanceId === selectedInstance.id,
+                    canSubmit: isNodeUnlocked(selectedNode, taskFlow.nodes),
+                    canReset: canReset(selectedInstance, currentUserId),
+                    canReject: canReject(
+                      selectedInstance,
+                      taskFlow.nodes,
+                      instances,
+                      currentUserId,
                     ),
-                  onSubmit: () => openSubmit(selectedInstance),
-                  onAbandon: () => void handleAbandon(selectedInstance.id),
-                  onReject: () => setRejectTarget(selectedInstance),
-                  onReset: () => void handleReset(selectedInstance.id),
-                }
-              : undefined
-          }
-        />
+                    onClaim: () =>
+                      void runInstanceAction(
+                        selectedInstance.id,
+                        () => claimTask(selectedInstance.id),
+                        "任务已接取",
+                      ),
+                    onSubmit: () => openSubmit(selectedInstance),
+                    onAbandon: () => void handleAbandon(selectedInstance.id),
+                    onReject: () => setRejectTarget(selectedInstance),
+                    onReset: () => void handleReset(selectedInstance.id),
+                  }
+                : undefined
+            }
+          />
+        </div>
       ) : (
         <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
           点击流程节点查看任务详情和操作。
