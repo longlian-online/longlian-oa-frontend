@@ -25,13 +25,12 @@ export default function AppLayout(): ReactElement {
       <div className="bg-background flex h-svh flex-col overflow-hidden">
         <AppHeader switcher={switcher} onMore={() => setIsOrganizationListOpen(true)} />
         <div className="flex min-h-0 flex-1 overflow-hidden">
+          {/* 宽度立即切换。对 width 做过渡会在收起过程中逐帧重排主区域。 */}
           <div
             aria-hidden={isSidebarHidden}
             className={cn(
-              "h-full shrink-0 overflow-hidden transition-[width,opacity,transform] duration-300 ease-out",
-              isSidebarHidden
-                ? "pointer-events-none w-0 -translate-x-4 opacity-0"
-                : "w-56 translate-x-0 opacity-100",
+              "h-full shrink-0 overflow-hidden",
+              isSidebarHidden ? "pointer-events-none w-0" : "w-56",
             )}
             inert={isSidebarHidden}
           >
