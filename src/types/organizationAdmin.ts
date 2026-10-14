@@ -109,6 +109,7 @@ export interface ProjectTypeVO {
   id: string;
   name: string;
   priority: number;
+  refCount: number;
   status: OrganizationResourceStatus;
   creatorId?: string;
   creatorNickname?: string;
