@@ -48,7 +48,7 @@ export function WorkshopProjectCard({
         </p>
         <div className="mt-2.5 flex flex-wrap gap-2">
           <Button size="sm" className="h-7 px-2 text-xs" onClick={() => onOpenWorkflow(project)}>
-            打开任务流
+            打开项目列表
           </Button>
           <Button
             variant="outline"
