@@ -8,7 +8,26 @@ import { AuthExpiredError } from "@/lib/authError";
 import type { FileValidationOptions, UploadedFileInfo, UploadBizType } from "@/types/file";
 
 const DEFAULT_MAX_SIZE = 50 * 1024 * 1024;
-const DEFAULT_ACCEPT = ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx", "zip"];
+const DEFAULT_ACCEPT = [
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "webp",
+  "bmp",
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "ppt",
+  "pptx",
+  "txt",
+  "csv",
+  "zip",
+  "rar",
+  "7z",
+];
 
 const MIME_BY_EXT: Record<string, string[]> = {
   jpg: ["image/jpeg", "image/jpg"],
@@ -20,7 +39,15 @@ const MIME_BY_EXT: Record<string, string[]> = {
   docx: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
   xls: ["application/vnd.ms-excel"],
   xlsx: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+  ppt: ["application/vnd.ms-powerpoint"],
+  pptx: ["application/vnd.openxmlformats-officedocument.presentationml.presentation"],
+  txt: ["text/plain"],
+  csv: ["text/csv", "application/vnd.ms-excel"],
+  webp: ["image/webp"],
+  bmp: ["image/bmp"],
   zip: ["application/zip", "application/x-zip-compressed"],
+  rar: ["application/vnd.rar", "application/x-rar-compressed"],
+  "7z": ["application/x-7z-compressed"],
 };
 
 interface UploadFileOptions extends FileValidationOptions {
@@ -28,7 +55,7 @@ interface UploadFileOptions extends FileValidationOptions {
   bizId: string;
 }
 
-interface UseUploadFileResult {
+export interface UseUploadFileResult {
   uploading: boolean;
   uploadFile: (file: File, options: UploadFileOptions) => Promise<UploadedFileInfo>;
 }
@@ -74,16 +101,20 @@ export function validateFile(file: File, options: FileValidationOptions): string
   return null;
 }
 
-async function uploadToPresignedUrl(uploadUrl: string, file: File): Promise<void> {
+async function uploadToPresignedUrl(
+  uploadUrl: string,
+  file: File,
+  contentDisposition?: string,
+): Promise<void> {
   if (!uploadUrl) return;
 
   const fileExt = getFileExt(file.name);
   const fileMime = normalizeMimeType(file, fileExt);
   const response = await fetch(uploadUrl, {
     method: "PUT",
-    headers: {
-      "Content-Type": fileMime,
-    },
+    headers: contentDisposition
+      ? { "Content-Type": fileMime, "Content-Disposition": contentDisposition }
+      : { "Content-Type": fileMime },
     body: file,
   });
 
@@ -123,7 +154,7 @@ export function useUploadFile(): UseUploadFileResult {
         bizId: options.bizId,
       });
 
-      await uploadToPresignedUrl(resource.uploadUrl, file);
+      await uploadToPresignedUrl(resource.uploadUrl, file, resource.contentDisposition);
 
       const uploadedFile: UploadedFileInfo = {
         fileId: resource.fileId,

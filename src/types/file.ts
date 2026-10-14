@@ -16,6 +16,8 @@ export interface ResourceCreateVO {
   uploadUrl: string;
   key: string;
   storageType: StorageType;
+  /** 上传需携带的 Content-Disposition 头值；仅任务提交附件返回 */
+  contentDisposition?: string;
 }
 
 export interface UploadedFileInfo {
