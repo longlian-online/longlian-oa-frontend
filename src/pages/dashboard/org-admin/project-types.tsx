@@ -225,6 +225,7 @@ function OrganizationProjectTypesContent() {
                 {types.map((type) => {
                   const disabled = type.status === "DISABLED";
                   const isMutating = mutatingId === type.id;
+                  const referenced = type.refCount > 0;
                   return (
                     <TableRow key={type.id}>
                       <TableCell className="font-medium text-foreground">{type.name}</TableCell>
@@ -280,8 +281,8 @@ function OrganizationProjectTypesContent() {
                             variant="ghost"
                             size="sm"
                             aria-label="删除企划类型"
-                            title="删除企划类型"
-                            disabled={isMutating}
+                            title={referenced ? "该类型已被企划引用，请改为禁用" : "删除企划类型"}
+                            disabled={isMutating || referenced}
                             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                             onClick={() => void handleDelete(type)}
                           >
