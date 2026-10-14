@@ -194,7 +194,7 @@ export default function TaskPlaza() {
                       selectedType)}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align="end" alignItemWithTrigger={false}>
                 <SelectItem value="all">所有类型</SelectItem>
                 {projectTypes.map((type) => (
                   <SelectItem key={type.id} value={type.name}>
