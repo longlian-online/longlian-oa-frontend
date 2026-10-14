@@ -69,6 +69,26 @@ export interface TaskSubmitDTO {
   values: Record<string, TaskSubmitValue>;
 }
 
+export type TaskSubmissionStatus = "SUBMITTED" | "REJECTED" | "RESET";
+
+export interface TaskSubmissionPerson {
+  id: string;
+  nickname?: string | null;
+  avatarUrl?: string | null;
+}
+
+export interface TaskSubmissionVersionVO {
+  versionNo: number;
+  status: TaskSubmissionStatus;
+  submittedAt?: string | null;
+  submitter?: TaskSubmissionPerson | null;
+  reviewedAt?: string | null;
+  reviewer?: TaskSubmissionPerson | null;
+  reviewComment?: string | null;
+  fields: TaskDetailField[];
+  unreadable: boolean;
+}
+
 export interface TaskRejectDTO {
   reviewComment: string;
 }

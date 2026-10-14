@@ -4,6 +4,7 @@ import type {
   ItemTaskInstanceVO,
   TaskInstanceDetailVO,
   TaskRejectDTO,
+  TaskSubmissionVersionVO,
   TaskSubmitDTO,
 } from "@/types/workflowInstance";
 
@@ -20,6 +21,13 @@ export async function getTaskInstanceDetail(
   signal?: AbortSignal,
 ): Promise<TaskInstanceDetailVO> {
   return request(`/task/instance/${instanceId}/detail`, { signal });
+}
+
+export async function getTaskSubmissionVersions(
+  instanceId: string,
+  signal?: AbortSignal,
+): Promise<TaskSubmissionVersionVO[]> {
+  return request(`/task/instance/${instanceId}/submissions`, { signal });
 }
 
 export async function claimTask(instanceId: string): Promise<void> {
