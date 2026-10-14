@@ -244,7 +244,7 @@ function ProjectCard({ project }: ProjectCardProps) {
         <div className="flex items-start justify-between gap-2">
           <h3
             title={project.title}
-            className="line-clamp-2 min-w-0 flex-1 break-words text-base font-semibold leading-6 text-foreground"
+            className="min-w-0 flex-1 truncate text-base font-semibold leading-6 text-foreground"
           >
             {project.title}
           </h3>
@@ -253,17 +253,17 @@ function ProjectCard({ project }: ProjectCardProps) {
           </Badge>
         </div>
 
-        <p className="mt-2 line-clamp-1 min-h-[18px] text-xs leading-[18px] text-muted-foreground">
+        <p className="mt-2 line-clamp-2 min-h-9 text-xs leading-[18px] text-muted-foreground">
           {project.description || "暂无简介"}
         </p>
 
-        <div className="mt-2 flex min-h-5 flex-wrap gap-1.5 overflow-hidden">
+        <div className="mt-3 flex min-h-5 flex-wrap gap-1.5 overflow-hidden">
           {metadataTags.map((tag, index) => (
             <ProjectMetadataTag key={index} tag={tag} compact />
           ))}
         </div>
 
-        <div className="mt-auto flex items-center gap-2 pt-2">
+        <div className="mt-auto flex items-center gap-2 pt-3">
           <Avatar className="size-9">
             <AvatarImage src={project.creatorAvatarUrl} />
             <AvatarFallback className="text-[10px]">{project.title.charAt(0)}</AvatarFallback>
