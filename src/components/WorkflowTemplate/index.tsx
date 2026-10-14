@@ -30,6 +30,9 @@ interface WorkflowStage {
   icon: LucideIcon;
 }
 
+/** Max stage chips shown on a card before collapsing the rest into「共 N 步」. */
+const MAX_VISIBLE_STAGES = 5;
+
 const SCOPE_LABELS: Record<WorkflowTemplateScope, string> = {
   PERSONAL: "个人",
   ORGANIZATION: "组织",
@@ -67,6 +70,40 @@ function getStages(nodes: WorkshopTaskTemplateNodeVO[]): WorkflowStage[] {
     });
 }
 
+/** Display-only: consecutive same-label stages render as one chip. */
+function collapseConsecutiveStages(stages: WorkflowStage[]): WorkflowStage[] {
+  const collapsed: WorkflowStage[] = [];
+
+  for (const stage of stages) {
+    const last = collapsed[collapsed.length - 1];
+    if (last && last.label === stage.label) {
+      continue;
+    }
+    collapsed.push(stage);
+  }
+
+  return collapsed;
+}
+
+function getDiagramStages(nodes: WorkshopTaskTemplateNodeVO[]): {
+  visible: WorkflowStage[];
+  totalSteps: number;
+  hasOverflow: boolean;
+} {
+  const stages = collapseConsecutiveStages(getStages(nodes));
+  const totalSteps = stages.length;
+
+  if (totalSteps <= MAX_VISIBLE_STAGES) {
+    return { visible: stages, totalSteps, hasOverflow: false };
+  }
+
+  return {
+    visible: stages.slice(0, MAX_VISIBLE_STAGES - 1),
+    totalSteps,
+    hasOverflow: true,
+  };
+}
+
 function WorkflowParallelBadge({ count }: { count: number }) {
   if (count <= 1) {
     return <div className="mt-1 h-4" />;
@@ -81,10 +118,24 @@ function WorkflowParallelBadge({ count }: { count: number }) {
   );
 }
 
-function WorkflowDiagram({ nodes }: { nodes: WorkshopTaskTemplateNodeVO[] }) {
-  const stages = getStages(nodes);
+function WorkflowStageOverflowSummary({ totalSteps }: { totalSteps: number }) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col items-center" title={`共 ${totalSteps} 步`}>
+      <div className="flex size-8 items-center justify-center rounded-full border border-dashed border-foreground/30 bg-muted text-[11px] font-bold text-muted-foreground">
+        …
+      </div>
+      <div className="mt-1 h-4" />
+      <div className="mt-1 max-w-14 truncate text-[11px] font-bold leading-4 text-muted-foreground">
+        共 {totalSteps} 步
+      </div>
+    </div>
+  );
+}
 
-  if (stages.length === 0) {
+function WorkflowDiagram({ nodes }: { nodes: WorkshopTaskTemplateNodeVO[] }) {
+  const { visible, totalSteps, hasOverflow } = getDiagramStages(nodes);
+
+  if (totalSteps === 0) {
     return (
       <div className="flex h-20 items-center justify-center text-sm text-muted-foreground">
         暂无节点
@@ -92,10 +143,13 @@ function WorkflowDiagram({ nodes }: { nodes: WorkshopTaskTemplateNodeVO[] }) {
     );
   }
 
+  const itemCount = visible.length + (hasOverflow ? 1 : 0);
+
   return (
-    <div className="flex w-full min-w-0 items-start justify-center px-1">
-      {stages.map((stage, index) => {
+    <div className="flex w-full min-w-0 items-start justify-center overflow-hidden px-1">
+      {visible.map((stage, index) => {
         const Icon = stage.icon;
+        const showConnector = index < itemCount - 1;
 
         return (
           <div key={`${stage.label}-${index}`} className="flex min-w-0 flex-1 items-start">
@@ -108,12 +162,17 @@ function WorkflowDiagram({ nodes }: { nodes: WorkshopTaskTemplateNodeVO[] }) {
                 {stage.label}
               </div>
             </div>
-            {index < stages.length - 1 && (
+            {showConnector && (
               <div className="mt-4 h-0.5 w-5 shrink-0 bg-foreground" aria-hidden="true" />
             )}
           </div>
         );
       })}
+      {hasOverflow && (
+        <div className="flex min-w-0 flex-1 items-start">
+          <WorkflowStageOverflowSummary totalSteps={totalSteps} />
+        </div>
+      )}
     </div>
   );
 }
