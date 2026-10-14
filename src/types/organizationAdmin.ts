@@ -192,14 +192,17 @@ export interface OrganizationTaskTemplateListDTO {
   orderDir?: "DESC" | "ASC";
 }
 
-export interface OrganizationTaskTemplateNodeVO {
-  id?: string;
+export interface OrganizationTaskTemplatePreviewNodeVO {
   baseTaskId?: string;
   baseTaskName?: string;
   baseTaskIcon?: string;
-  submitFields: TaskFormField[];
   sort?: number;
   parallelSort?: number;
+}
+
+export interface OrganizationTaskTemplateNodeVO extends OrganizationTaskTemplatePreviewNodeVO {
+  id?: string;
+  submitFields: TaskFormField[];
 }
 
 export interface OrganizationTaskTemplateVO {
@@ -211,8 +214,13 @@ export interface OrganizationTaskTemplateVO {
   refCount: number;
   status: OrganizationResourceStatus;
   createdAt?: string;
+  taskCount: number;
+  nodes: OrganizationTaskTemplatePreviewNodeVO[];
 }
 
-export interface OrganizationTaskTemplateDetailVO extends OrganizationTaskTemplateVO {
+export interface OrganizationTaskTemplateDetailVO extends Omit<
+  OrganizationTaskTemplateVO,
+  "nodes" | "taskCount"
+> {
   nodes: OrganizationTaskTemplateNodeVO[];
 }

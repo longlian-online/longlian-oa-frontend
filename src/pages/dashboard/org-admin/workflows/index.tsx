@@ -2,11 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Loader2, Search, Workflow } from "lucide-react";
 
-import {
-  changeTaskTemplateStatus,
-  getOrganizationTaskTemplate,
-  getOrganizationTaskTemplateList,
-} from "@/api/organizationAdmin";
+import { changeTaskTemplateStatus, getOrganizationTaskTemplateList } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
@@ -15,26 +11,11 @@ import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/hooks/useConfirm";
-import { toWorkflowTemplateNodes } from "@/lib/workflowTemplate";
+import { toOrganizationWorkflowCard } from "@/lib/workflowTemplate";
 import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
-import type {
-  OrganizationTaskTemplateVO,
-  OrganizationResourceStatus,
-} from "@/types/organizationAdmin";
+import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
 
 const PAGE_SIZE = 8;
-
-function toWorkflowCardTemplate(template: OrganizationTaskTemplateVO): WorkshopTaskTemplateVO {
-  return {
-    id: template.id,
-    name: template.name ?? "未命名工作流",
-    description: template.description,
-    scope: "ORGANIZATION",
-    taskCount: 0,
-    nodes: [],
-    isMine: true,
-  };
-}
 
 function OrganizationAdminWorkflowsContent() {
   const navigate = useNavigate();
@@ -62,19 +43,7 @@ function OrganizationAdminWorkflowsContent() {
         pageNum: page,
         pageSize: PAGE_SIZE,
       });
-      const cardTemplates = await Promise.all(
-        data.list.map(async (template) => {
-          const cardTemplate = toWorkflowCardTemplate(template);
-          try {
-            const detail = await getOrganizationTaskTemplate(template.id);
-            const nodes = toWorkflowTemplateNodes(detail.nodes);
-            return { ...cardTemplate, nodes, taskCount: nodes.length };
-          } catch {
-            return cardTemplate;
-          }
-        }),
-      );
-      setTemplates(cardTemplates);
+      setTemplates(data.list.map(toOrganizationWorkflowCard));
       setTemplateStatuses(
         Object.fromEntries(data.list.map((template) => [template.id, template.status])),
       );

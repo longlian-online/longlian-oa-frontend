@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Ban,
   CheckCircle2,
@@ -50,11 +50,13 @@ import {
 } from "@/components/ui/table";
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
-import type {
-  MemberSubmitCountVO,
-  OrganizationMemberListDTO,
-  OrganizationMemberVO,
-} from "@/types/organizationAdmin";
+import type { MemberSubmitCountVO, OrganizationMemberVO } from "@/types/organizationAdmin";
+
+import {
+  commitMemberListFilters,
+  MEMBER_SEARCH_DEBOUNCE_MS,
+  type MemberListFilters,
+} from "./memberListFilters";
 
 const PAGE_SIZE = 10;
 
@@ -65,12 +67,14 @@ function memberName(member: OrganizationMemberVO): string {
 function OrganizationMembersContent() {
   const confirm = useConfirm();
   const [members, setMembers] = useState<OrganizationMemberVO[]>([]);
-  const [searchText, setSearchText] = useState("");
-  const [keyword, setKeyword] = useState("");
-  const [startJoinedTime, setStartJoinedTime] = useState("");
-  const [endJoinedTime, setEndJoinedTime] = useState("");
-  const [orderDir, setOrderDir] =
-    useState<NonNullable<OrganizationMemberListDTO["orderDir"]>>("DESC");
+  const [filters, setFilters] = useState<MemberListFilters>({
+    keyword: "",
+    startJoinedTime: "",
+    endJoinedTime: "",
+    orderDir: "DESC",
+  });
+  const [appliedFilters, setAppliedFilters] = useState(filters);
+  const appliedFiltersRef = useRef(appliedFilters);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -83,8 +87,19 @@ function OrganizationMembersContent() {
   const [savingRole, setSavingRole] = useState(false);
 
   useEffect(() => {
+    const next = commitMemberListFilters(appliedFiltersRef.current, filters);
+    if (!next) return;
+    const timer = window.setTimeout(() => {
+      appliedFiltersRef.current = next;
+      setAppliedFilters(next);
+      setPage(1);
+    }, MEMBER_SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [filters]);
+
+  useEffect(() => {
     void loadMembers();
-  }, [keyword, startJoinedTime, endJoinedTime, orderDir, page]);
+  }, [appliedFilters, page]);
 
   async function loadMembers(): Promise<void> {
     try {
@@ -92,21 +107,16 @@ function OrganizationMembersContent() {
       const result = await getOrganizationMembers({
         pageNum: page,
         pageSize: PAGE_SIZE,
-        keyword: keyword || undefined,
-        startJoinedTime: startJoinedTime || undefined,
-        endJoinedTime: endJoinedTime || undefined,
-        orderDir,
+        keyword: appliedFilters.keyword || undefined,
+        startJoinedTime: appliedFilters.startJoinedTime || undefined,
+        endJoinedTime: appliedFilters.endJoinedTime || undefined,
+        orderDir: appliedFilters.orderDir,
       });
       setMembers(result.list);
       setTotal(result.total);
     } finally {
       setLoading(false);
     }
-  }
-
-  function handleSearch(): void {
-    setKeyword(searchText.trim());
-    setPage(1);
   }
 
   async function handleStatusChange(member: OrganizationMemberVO): Promise<void> {
@@ -176,11 +186,12 @@ function OrganizationMembersContent() {
           <div className="relative w-56 max-w-full">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              value={searchText}
+              value={filters.keyword}
               placeholder="搜索成员"
               className="pl-9"
-              onChange={(event) => setSearchText(event.target.value)}
-              onKeyDown={(event) => event.key === "Enter" && handleSearch()}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, keyword: event.target.value }))
+              }
             />
           </div>
           <div className="flex items-center gap-1.5">
@@ -192,12 +203,11 @@ function OrganizationMembersContent() {
               type="date"
               lang="zh-CN"
               aria-label="入组开始日期"
-              value={startJoinedTime}
+              value={filters.startJoinedTime}
               className="w-36"
-              onChange={(event) => {
-                setStartJoinedTime(event.target.value);
-                setPage(1);
-              }}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, startJoinedTime: event.target.value }))
+              }
             />
           </div>
           <div className="flex items-center gap-1.5">
@@ -209,33 +219,31 @@ function OrganizationMembersContent() {
               type="date"
               lang="zh-CN"
               aria-label="入组结束日期"
-              value={endJoinedTime}
+              value={filters.endJoinedTime}
               className="w-36"
-              onChange={(event) => {
-                setEndJoinedTime(event.target.value);
-                setPage(1);
-              }}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, endJoinedTime: event.target.value }))
+              }
             />
           </div>
           <Select
-            value={orderDir}
+            value={filters.orderDir}
             onValueChange={(value) => {
               if (!value) return;
-              setOrderDir(value as NonNullable<OrganizationMemberListDTO["orderDir"]>);
-              setPage(1);
+              setFilters((current) => ({
+                ...current,
+                orderDir: value as MemberListFilters["orderDir"],
+              }));
             }}
           >
             <SelectTrigger className="w-28" aria-label="排序方式">
-              <SelectValue>{orderDir === "ASC" ? "正序" : "倒序"}</SelectValue>
+              <SelectValue>{filters.orderDir === "ASC" ? "正序" : "倒序"}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="DESC">倒序</SelectItem>
               <SelectItem value="ASC">正序</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={handleSearch}>
-            搜索
-          </Button>
         </div>
       </div>
 

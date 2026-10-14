@@ -1,8 +1,11 @@
-import type { OrganizationTaskTemplateNodeVO } from "@/types/organizationAdmin";
-import type { WorkshopTaskTemplateNodeVO } from "@/types/workflowTemplate";
+import type {
+  OrganizationTaskTemplatePreviewNodeVO,
+  OrganizationTaskTemplateVO,
+} from "@/types/organizationAdmin";
+import type { WorkshopTaskTemplateVO, WorkshopTaskTemplateNodeVO } from "@/types/workflowTemplate";
 
 export function toWorkflowTemplateNodes(
-  nodes: OrganizationTaskTemplateNodeVO[],
+  nodes: OrganizationTaskTemplatePreviewNodeVO[],
 ): WorkshopTaskTemplateNodeVO[] {
   return nodes.flatMap((node) => {
     if (!node.baseTaskId || node.sort === undefined) return [];
@@ -16,4 +19,19 @@ export function toWorkflowTemplateNodes(
       },
     ];
   });
+}
+
+export function toOrganizationWorkflowCard(
+  template: OrganizationTaskTemplateVO,
+): WorkshopTaskTemplateVO {
+  const nodes = toWorkflowTemplateNodes(template.nodes);
+  return {
+    id: template.id,
+    name: template.name ?? "未命名工作流",
+    description: template.description,
+    scope: "ORGANIZATION",
+    taskCount: template.taskCount,
+    nodes,
+    isMine: true,
+  };
 }
