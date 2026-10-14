@@ -409,9 +409,17 @@ export default function ProjectItemSection({
                 onValueChange={(value: string | null) =>
                   setForm({ ...form, taskTemplateId: value || "" })
                 }
+                disabled={templateLoading}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={templateLoading ? "正在加载模板" : "选择流程模板"} />
+                <SelectTrigger className="w-full" disabled={templateLoading}>
+                  {templateLoading ? (
+                    <span className="flex flex-1 items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      正在加载模板
+                    </span>
+                  ) : (
+                    <SelectValue placeholder="选择流程模板" />
+                  )}
                 </SelectTrigger>
                 <SelectContent>
                   {templates.map((template) => (
