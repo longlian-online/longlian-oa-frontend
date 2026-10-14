@@ -15,26 +15,11 @@ import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/hooks/useConfirm";
-import { toWorkflowTemplateNodes } from "@/lib/workflowTemplate";
+import { toOrganizationWorkflowCard, toWorkflowTemplateNodes } from "@/lib/workflowTemplate";
 import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
-import type {
-  OrganizationTaskTemplateVO,
-  OrganizationResourceStatus,
-} from "@/types/organizationAdmin";
+import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
 
 const PAGE_SIZE = 8;
-
-function toWorkflowCardTemplate(template: OrganizationTaskTemplateVO): WorkshopTaskTemplateVO {
-  return {
-    id: template.id,
-    name: template.name ?? "未命名工作流",
-    description: template.description,
-    scope: "ORGANIZATION",
-    taskCount: 0,
-    nodes: [],
-    isMine: true,
-  };
-}
 
 function OrganizationAdminWorkflowsContent() {
   const navigate = useNavigate();
@@ -64,7 +49,10 @@ function OrganizationAdminWorkflowsContent() {
       });
       const cardTemplates = await Promise.all(
         data.list.map(async (template) => {
-          const cardTemplate = toWorkflowCardTemplate(template);
+          if (template.nodes != null) {
+            return toOrganizationWorkflowCard(template);
+          }
+          const cardTemplate = toOrganizationWorkflowCard(template);
           try {
             const detail = await getOrganizationTaskTemplate(template.id);
             const nodes = toWorkflowTemplateNodes(detail.nodes);
