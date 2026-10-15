@@ -99,12 +99,15 @@ export default function TaskPlaza() {
     ],
   });
   const claimLocks = useRef(new Set<string>());
-  async function handleClaim(instanceId: string): Promise<void> {
+  async function handleClaim(instanceId: string, isCurrentStage: boolean): Promise<void> {
     if (claimLocks.current.has(instanceId)) return;
     claimLocks.current.add(instanceId);
     try {
       await claimMutation.mutateAsync(instanceId);
-      $tip("接取成功，可在任务详情中提交", "success");
+      $tip(
+        isCurrentStage ? "接取成功，可在任务详情中提交" : "接取成功，等待前置阶段完成后再提交",
+        "success",
+      );
     } catch {
       /* 错误由共享 Mutation 处理。 */
     } finally {
@@ -251,7 +254,7 @@ export default function TaskPlaza() {
 interface ProjectGroupSectionProps {
   group: PlazaProjectGroup;
   claiming: Set<string>;
-  onClaim: (instanceId: string) => void;
+  onClaim: (instanceId: string, isCurrentStage: boolean) => void;
 }
 
 function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionProps) {
@@ -332,7 +335,7 @@ interface PlazaTaskCardProps {
   group: PlazaProjectGroup;
   task: PlazaTask;
   claiming: boolean;
-  onClaim: (instanceId: string) => void;
+  onClaim: (instanceId: string, isCurrentStage: boolean) => void;
 }
 
 function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
@@ -382,7 +385,11 @@ function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
 
       <div className="mt-2.5 flex items-center justify-between gap-2">
         <span className="text-xs text-muted-foreground">{waitLabel(task.createdAt)}</span>
-        <Button size="sm" disabled={claiming} onClick={() => onClaim(task.instanceId)}>
+        <Button
+          size="sm"
+          disabled={claiming}
+          onClick={() => onClaim(task.instanceId, task.isCurrentStage)}
+        >
           {claiming ? "接取中..." : "接取"}
         </Button>
       </div>
