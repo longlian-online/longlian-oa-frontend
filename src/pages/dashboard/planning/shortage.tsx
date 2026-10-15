@@ -6,7 +6,12 @@ import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Sparkles } from "lucide-re
 import { scopedKey } from "@/lib/queryKeys";
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { claimTask } from "@/api/workflowInstance";
-import { getTaskPlaza } from "@/api/plaza";
+import {
+  DEFAULT_PLAZA_SORT as DEFAULT_SORT,
+  PLAZA_PAGE_SIZE as PAGE_SIZE,
+  plazaListQuery,
+  plazaStageScope,
+} from "@/queries/planning";
 import EmptyState from "@/components/EmptyState";
 import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
@@ -25,9 +30,6 @@ import { useProjectTypes } from "@/hooks/useProjectTypes";
 
 import type { PlazaProjectGroup, PlazaSortBy, PlazaTask } from "@/types/plaza";
 
-const PAGE_SIZE = 8;
-const DEFAULT_SORT: PlazaSortBy = "WAIT";
-
 /** 分组默认展示的任务数，超出需手动展开 */
 const COLLAPSED_TASK_LIMIT = 6;
 
@@ -42,8 +44,7 @@ const DAY_MS = 86_400_000;
 export default function TaskPlaza() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const stageScope: "CURRENT" | "ALL" =
-    searchParams.get("stageScope") === "CURRENT" ? "CURRENT" : "ALL";
+  const stageScope = plazaStageScope(searchParams);
   const [previousScope, setPreviousScope] = useState(stageScope);
   const { projectTypes } = useProjectTypes();
   const [keyword, setKeyword] = useState("");
@@ -62,18 +63,9 @@ export default function TaskPlaza() {
     setPageNum(1);
   }
 
-  const params = {
-    pageNum: pageNum,
-    pageSize: PAGE_SIZE,
-    keyword: submittedKeyword || undefined,
-    projectType: selectedType === "all" ? undefined : selectedType,
-    sortBy,
-    stageScope,
-  };
-  const listQuery = useApiQuery({
-    key: ["plaza", "list", params],
-    queryFn: () => getTaskPlaza(params),
-  });
+  const listQuery = useApiQuery(
+    plazaListQuery(stageScope, pageNum, submittedKeyword, selectedType, sortBy),
+  );
   const groups = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;

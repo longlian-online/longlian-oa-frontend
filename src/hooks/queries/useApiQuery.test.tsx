@@ -11,6 +11,7 @@ import { ApiError, GatewayError, NetworkError } from "@/api/apiError";
 import { request } from "@/api/request";
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { AuthExpiredError } from "@/lib/authError";
+import { fetchApiQuery } from "@/lib/routeQuery";
 import { createQueryClient, queryClient, shouldRetryQuery } from "@/lib/queryClient";
 import { scopedKey, type ApiScope } from "@/lib/queryKeys";
 import {
@@ -109,6 +110,28 @@ afterEach((): void => {
       storage.delete(key);
     },
   });
+});
+
+test("loader 预取与页面共享缓存，新鲜数据不会重复请求", async (): Promise<void> => {
+  const send = vi.fn(async (): Promise<Response> => new Response('{"code":0,"data":"loaded"}'));
+  vi.stubGlobal("fetch", send);
+  const options = { key: ["projects", "list"], queryFn: () => request<string>("/projects") };
+  await fetchApiQuery(options);
+  const page = queryProbe(queryClient, options.queryFn);
+  expect(page.data).toBe("loaded");
+  await fetchApiQuery(options);
+  expect(send).toHaveBeenCalledTimes(1);
+});
+
+test("loader 在退出登录或尚未选择组织时不发送业务请求", async (): Promise<void> => {
+  const send = vi.fn();
+  vi.stubGlobal("fetch", send);
+  const options = { key: ["projects"], queryFn: () => request<string>("/projects") };
+  saveCurrentOrganization("");
+  expect(await fetchApiQuery(options)).toBeUndefined();
+  clearSession();
+  expect(await fetchApiQuery({ ...options, scope: "account" })).toBeUndefined();
+  expect(send).not.toHaveBeenCalled();
 });
 
 test("同组织同 key 的两个真实 Hook refetch 复用请求并传入组织头和取消信号", async (): Promise<void> => {

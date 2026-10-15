@@ -6,7 +6,6 @@ import {
   changeProjectTypeStatus,
   createOrganizationProjectType,
   deleteOrganizationProjectType,
-  getOrganizationProjectTypes,
   updateOrganizationProjectType,
 } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
@@ -35,9 +34,11 @@ import {
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
 
+import {
+  ORGANIZATION_ADMIN_PAGE_SIZE as PAGE_SIZE,
+  organizationProjectTypesQuery,
+} from "@/queries/organizationAdmin";
 import type { OrganizationResourceStatus, ProjectTypeVO } from "@/types/organizationAdmin";
-
-const PAGE_SIZE = 10;
 
 function OrganizationProjectTypesContent() {
   const confirm = useConfirm();
@@ -88,16 +89,7 @@ function OrganizationProjectTypesContent() {
   const [name, setName] = useState("");
   const [priority, setPriority] = useState("0");
 
-  const listQuery = useApiQuery({
-    key: ["projectTypes", "management", keyword, page],
-    queryFn: () =>
-      getOrganizationProjectTypes({
-        keyword: keyword || undefined,
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-        orderDir: "DESC",
-      }),
-  });
+  const listQuery = useApiQuery(organizationProjectTypesQuery(keyword, page));
   const types = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;

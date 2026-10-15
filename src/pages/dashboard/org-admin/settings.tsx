@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Building2, ImagePlus, Loader2, Save } from "lucide-react";
 
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
-import { getOrganizationInfo, updateOrganizationInfo } from "@/api/organizationAdmin";
+import { updateOrganizationInfo } from "@/api/organizationAdmin";
+import { organizationInfoQuery } from "@/queries/organizationAdmin";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import FileUpload from "@/components/FileUpload";
 import { $tip } from "@/components/tip";
@@ -21,10 +22,7 @@ interface OrganizationForm {
 
 function OrganizationSettingsContent() {
   const session = useSessionSnapshot();
-  const organizationQuery = useApiQuery({
-    key: ["organizationInfo"],
-    queryFn: getOrganizationInfo,
-  });
+  const organizationQuery = useApiQuery(organizationInfoQuery());
   const organization = organizationQuery.data;
   const saveMutation = useApiMutation({
     mutationFn: updateOrganizationInfo,

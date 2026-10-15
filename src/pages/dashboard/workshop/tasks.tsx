@@ -15,7 +15,6 @@ import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import {
   changeBaseTaskStatus,
   createOrganizationBaseTask,
-  getOrganizationBaseTaskList,
   updateOrganizationBaseTask,
 } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
@@ -38,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
+import { BASE_TASK_PAGE_SIZE as PAGE_SIZE, organizationBaseTasksQuery } from "@/queries/workshop";
 
 import type {
   OrganizationBaseTaskCreateDTO,
@@ -45,7 +45,6 @@ import type {
 } from "@/types/organizationAdmin";
 import type { TaskFormField } from "@/types/task";
 
-const PAGE_SIZE = 12;
 type LucideIconEntry = [string, LucideIcon];
 
 interface BaseTaskForm {
@@ -79,17 +78,7 @@ function BaseTaskManagementContent() {
   }, [iconEntries, iconKeyword]);
   const SelectedIcon = iconEntries.find(([name]) => name === form.icon)?.[1];
 
-  const params = {
-    pageNum: page,
-    pageSize: PAGE_SIZE,
-    keyword: keyword || undefined,
-    sortBy: "REF_COUNT" as const,
-    orderDir: "DESC" as const,
-  };
-  const listQuery = useApiQuery({
-    key: ["baseTasks", "list", params],
-    queryFn: () => getOrganizationBaseTaskList(params),
-  });
+  const listQuery = useApiQuery(organizationBaseTasksQuery(page, keyword));
   const tasks = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;

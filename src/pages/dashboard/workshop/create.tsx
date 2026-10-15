@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
-import { getBaseTaskList } from "@/api/baseTask";
+import { baseTaskOptionsQuery } from "@/queries/workshop";
 import { createWorkshopTaskTemplate, updateWorkshopTaskTemplate } from "@/api/workflowTemplate";
 import WorkflowEditor, {
   buildEditorNodes,
@@ -43,18 +43,7 @@ function CreateWorkflowPageContent() {
   const [nodes, setNodes] = useState<WorkflowEditorNode[]>(() =>
     buildEditorNodes(editingTemplate?.nodes),
   );
-  const baseTaskParams = {
-    pageNum: 1,
-    pageSize: 100,
-    status: "ENABLED" as const,
-    sortBy: "REF_COUNT" as const,
-    orderDir: "DESC" as const,
-  };
-  const baseTasksQuery = useApiQuery({
-    key: ["baseTasks", "options", baseTaskParams],
-    queryFn: () => getBaseTaskList(baseTaskParams),
-    staleTime: 300_000,
-  });
+  const baseTasksQuery = useApiQuery(baseTaskOptionsQuery());
   const baseTasks = baseTasksQuery.data?.list ?? [];
   const loadingBaseTasks = baseTasksQuery.isLoading;
   const saveMutation = useApiMutation({

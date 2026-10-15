@@ -1,6 +1,6 @@
 import { useMemo, useRef } from "react";
 
-import { getUserOrganizations, switchOrganization as submitOrganizationSwitch } from "@/api/user";
+import { switchOrganization as submitOrganizationSwitch } from "@/api/user";
 import { useApiMutation, useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import {
   prependRecentOrganization,
@@ -8,6 +8,7 @@ import {
   writeRecentOrganizationIds,
 } from "@/lib/recentOrganizations";
 import { saveCurrentOrganization } from "@/lib/session";
+import { organizationsQuery } from "@/queries/session";
 
 import type { OrganizationSimpleInfoVO } from "@/types/user";
 
@@ -24,11 +25,7 @@ export interface UseOrganizationSwitcherResult {
 
 export function useOrganizationSwitcher(): UseOrganizationSwitcherResult {
   const session = useSessionSnapshot();
-  const query = useApiQuery({
-    key: ["organizations"],
-    scope: "account",
-    queryFn: getUserOrganizations,
-  });
+  const query = useApiQuery(organizationsQuery);
   const mutation = useApiMutation({
     scope: "account",
     mutationFn: submitOrganizationSwitch,

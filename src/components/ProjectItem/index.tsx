@@ -5,7 +5,6 @@ import { ChevronRight, Loader2, Plus, Send, Trash2, Workflow } from "lucide-reac
 import {
   createProjectItem,
   deleteProjectItem,
-  getProjectItemList,
   getTaskTemplateOptions,
   publishProjectItem,
 } from "@/api/projectItem";
@@ -33,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
+import { PROJECT_ITEMS_PAGE_SIZE as PAGE_SIZE, projectItemsQuery } from "@/queries/planning";
 import { cn } from "@/lib/utils";
 
 import type {
@@ -41,8 +41,6 @@ import type {
   ProjectItemNodeVO,
   ProjectItemStatus,
 } from "@/types/projectItem";
-
-const PAGE_SIZE = 4;
 
 interface ProjectItemSectionProps {
   projectId: string;
@@ -134,11 +132,7 @@ export default function ProjectItemSection({
   }, []);
   const isCurrent = (): boolean =>
     mounted.current && projectLifecycle.current.generation === generation;
-  const itemsQuery = useApiQuery({
-    key: ["items", "list", projectId, { pageNum: page, pageSize: PAGE_SIZE }],
-    queryFn: () => getProjectItemList(projectId, { pageNum: page, pageSize: PAGE_SIZE }),
-    enabled: Boolean(projectId),
-  });
+  const itemsQuery = useApiQuery(projectItemsQuery(projectId, page));
   const templatesQuery = useApiQuery({
     key: ["templateOptions"],
     queryFn: getTaskTemplateOptions,

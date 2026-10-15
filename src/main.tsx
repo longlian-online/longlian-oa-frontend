@@ -2,10 +2,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import "@xyflow/react/dist/style.css";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router";
+import { RouterProvider } from "react-router/dom";
 
 import { queryClient } from "@/lib/queryClient";
-import App from "@/App";
+import { router } from "@/router";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import ImageCropProvider from "@/components/ImageCropProvider";
 import TipProvider from "@/components/tip";
@@ -21,9 +21,7 @@ createRoot(document.getElementById("app")!).render(
       <TipProvider />
       <ImageCropProvider />
       <ConfirmDialogProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <RouterProvider router={router} />
       </ConfirmDialogProvider>
     </QueryClientProvider>
   </StrictMode>,
