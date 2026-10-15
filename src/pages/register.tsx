@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Layers, Mail, User, Lock, Eye, EyeOff, Building2, Sparkles } from "lucide-react";
 
+import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +18,6 @@ import {
 import { getInviteInfo } from "@/api/user";
 import { $tip } from "@/components/tip";
 import { cn } from "@/lib/utils";
-import type { InviteInfoVO } from "@/types/auth";
 
 type RegisterMode = "join" | "create";
 
@@ -58,7 +58,10 @@ type RegisterFormData = z.infer<typeof registerObjectSchema>;
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [isLoading, setIsLoading] = useState(false);
+  const createOrg = useApiMutation({ scope: "public", mutationFn: registerCreateOrganization });
+  const joinOrg = useApiMutation({ scope: "public", mutationFn: registerJoinOrganization });
+  const sendCode = useApiMutation({ scope: "public", mutationFn: sendVerificationCode });
+  const isLoading = createOrg.isPending || joinOrg.isPending;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -67,8 +70,15 @@ export default function RegisterPage() {
   const modeRef = useRef(mode);
   modeRef.current = mode;
   const [modeDirection, setModeDirection] = useState<"left" | "right">("right");
-  const [inviteInfo, setInviteInfo] = useState<InviteInfoVO | null>(null);
-  const [isInviteLoading, setIsInviteLoading] = useState(false);
+  const [queriedInvite, setQueriedInvite] = useState("");
+  const inviteQuery = useApiQuery({
+    scope: "public",
+    key: ["inviteInfo", queriedInvite],
+    queryFn: () => getInviteInfo(queriedInvite),
+    enabled: Boolean(queriedInvite),
+  });
+  const inviteInfo = queriedInvite ? inviteQuery.data : undefined;
+  const isInviteLoading = inviteQuery.isFetching;
 
   const defaultInviteCode = searchParams.get("invite") || searchParams.get("inviteCode") || "";
 
@@ -94,7 +104,7 @@ export default function RegisterPage() {
     const nextMode = value as RegisterMode;
     setModeDirection(nextMode === "create" ? "right" : "left");
     setMode(nextMode);
-    setInviteInfo(null);
+    setQueriedInvite("");
     form.clearErrors("inviteCode");
   };
 
@@ -106,17 +116,16 @@ export default function RegisterPage() {
   );
 
   const onSubmit = async (data: RegisterFormData) => {
-    setIsLoading(true);
     try {
       if (mode === "create") {
-        await registerCreateOrganization(data);
+        await createOrg.mutateAsync(data);
       } else {
-        await registerJoinOrganization(data);
+        await joinOrg.mutateAsync(data);
       }
       $tip("注册成功，请登录", "success");
       void navigate("/login");
-    } finally {
-      setIsLoading(false);
+    } catch {
+      /* 共享 Mutation 负责错误提示。 */
     }
   };
 
@@ -126,16 +135,9 @@ export default function RegisterPage() {
     const isValid = await form.trigger("inviteCode");
     if (!isValid) return;
 
-    setIsInviteLoading(true);
-    try {
-      const result = await getInviteInfo(form.getValues("inviteCode"));
-      setInviteInfo(result);
-      $tip(`邀请码来自 ${result.orgName}`, "success");
-    } catch {
-      setInviteInfo(null);
-    } finally {
-      setIsInviteLoading(false);
-    }
+    const code = form.getValues("inviteCode").trim();
+    if (queriedInvite === code) await inviteQuery.refetch();
+    else setQueriedInvite(code);
   };
 
   const handleSendCode = async () => {
@@ -143,7 +145,11 @@ export default function RegisterPage() {
     const isValid = await form.trigger("email");
     if (!isValid) return;
 
-    await sendVerificationCode({ email, businessType: "REGISTER" });
+    try {
+      await sendCode.mutateAsync({ email, businessType: "REGISTER" });
+    } catch {
+      return;
+    }
     $tip("验证码已发送", "success");
     setCountdown(60);
     const timer = setInterval(() => {
@@ -194,7 +200,7 @@ export default function RegisterPage() {
                     placeholder={`请输入${INVITE_CODE_LABELS[mode]}`}
                     className="h-11 pl-10"
                     {...form.register("inviteCode", {
-                      onChange: () => setInviteInfo(null),
+                      onChange: () => setQueriedInvite(""),
                     })}
                   />
                 </div>
@@ -311,7 +317,7 @@ export default function RegisterPage() {
                   variant="outline"
                   className="h-11 px-4 shrink-0"
                   onClick={handleSendCode}
-                  disabled={countdown > 0}
+                  disabled={countdown > 0 || sendCode.isPending}
                 >
                   {countdown > 0 ? `${countdown}s` : "发送"}
                 </Button>

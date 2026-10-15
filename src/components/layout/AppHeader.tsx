@@ -1,9 +1,9 @@
-import { useRef, useState, type ChangeEvent, type ReactElement } from "react";
-// 通知入口暂时隐藏，保留原实现以便后续恢复。
-// import { Bell } from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent, type ReactElement } from "react";
 import { Check, KeyRound, LogOut, Pencil, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 
+import { getSessionSnapshot } from "@/lib/session";
+import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { logout } from "@/api/auth";
 import { changePassword, getInviteInfo, joinOrganizationByInvite, updateMyInfo } from "@/api/user";
 import { $tip } from "@/components/tip";
@@ -25,9 +25,9 @@ import { useTheme } from "@/hooks/useTheme";
 import { useUploadFile } from "@/hooks/useUploadFile";
 import { clearSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
-import type { InviteInfoVO } from "@/types/auth";
-import type { UseOrganizationSwitcherResult } from "@/hooks/useOrganizationSwitcher";
 import OrganizationIdentity from "./OrganizationIdentity";
+
+import type { UseOrganizationSwitcherResult } from "@/hooks/useOrganizationSwitcher";
 
 const navigationItems = [
   { to: "/dashboard/planning", label: "广场" },
@@ -58,21 +58,53 @@ interface AppHeaderProps {
 export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactElement {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { user, role, refresh } = useCurrentUser();
+  const { user, role } = useCurrentUser();
   const { theme, setTheme } = useTheme();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const { uploading: isUploadingAvatar, uploadFile } = useUploadFile();
   const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [isInviteConfirmOpen, setIsInviteConfirmOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
-  const [inviteInfo, setInviteInfo] = useState<InviteInfoVO | null>(null);
-  const [isLoadingInviteInfo, setIsLoadingInviteInfo] = useState(false);
-  const [isJoining, setIsJoining] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [queriedInvite, setQueriedInvite] = useState("");
+  const inviteQuery = useApiQuery({
+    scope: "account",
+    key: ["inviteInfo", queriedInvite],
+    queryFn: () => getInviteInfo(queriedInvite),
+    enabled: Boolean(queriedInvite),
+  });
+  const inviteInfo = queriedInvite ? inviteQuery.data : undefined;
+  const isLoadingInviteInfo = inviteQuery.isFetching;
+  const joinMutation = useApiMutation({
+    scope: "account",
+    mutationFn: joinOrganizationByInvite,
+    invalidate: [["organizations"], ["currentUser"]],
+  });
+  const isJoining = joinMutation.isPending;
+  const logoutMutation = useApiMutation({ scope: "account", mutationFn: logout });
+  const isLoggingOut = logoutMutation.isPending;
+  const updateProfile = useApiMutation({
+    scope: "account",
+    mutationFn: updateMyInfo,
+    invalidate: [["currentUser"]],
+  });
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const passwordMutation = useApiMutation({ scope: "account", mutationFn: changePassword });
+  const isChangingPassword = passwordMutation.isPending;
+
+  useEffect((): void => {
+    if (
+      isJoinOpen &&
+      queriedInvite &&
+      inviteQuery.isSuccess &&
+      inviteQuery.data &&
+      !inviteQuery.isFetching
+    ) {
+      setIsJoinOpen(false);
+      setIsInviteConfirmOpen(true);
+    }
+  }, [isJoinOpen, queriedInvite, inviteQuery.isSuccess, inviteQuery.data, inviteQuery.isFetching]);
 
   const handleJoinOrganization = async (): Promise<void> => {
     const normalizedInviteCode = inviteCode.trim();
@@ -81,30 +113,21 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
       return;
     }
 
-    setIsLoadingInviteInfo(true);
-    try {
-      const result = await getInviteInfo(normalizedInviteCode);
-      setInviteInfo(result);
-      setIsJoinOpen(false);
-      setIsInviteConfirmOpen(true);
-    } finally {
-      setIsLoadingInviteInfo(false);
-    }
+    if (queriedInvite === normalizedInviteCode) await inviteQuery.refetch();
+    else setQueriedInvite(normalizedInviteCode);
   };
 
   const handleConfirmJoinOrganization = async (): Promise<void> => {
     if (!inviteInfo || !inviteCode.trim()) return;
 
-    setIsJoining(true);
     try {
-      await joinOrganizationByInvite({ inviteCode: inviteCode.trim() });
+      await joinMutation.mutateAsync({ inviteCode: inviteCode.trim() });
       $tip("已加入组织", "success");
       setInviteCode("");
-      setInviteInfo(null);
+      setQueriedInvite("");
       setIsInviteConfirmOpen(false);
-      await switcher.refreshOrganizations();
-    } finally {
-      setIsJoining(false);
+    } catch {
+      /* 共享 Mutation 负责提示。 */
     }
   };
 
@@ -123,15 +146,14 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
       return;
     }
 
-    setIsChangingPassword(true);
     try {
-      await changePassword({ oldPassword, newPassword });
+      await passwordMutation.mutateAsync({ oldPassword, newPassword });
       $tip("密码已修改", "success");
       setOldPassword("");
       setNewPassword("");
       setIsChangePasswordOpen(false);
-    } finally {
-      setIsChangingPassword(false);
+    } catch {
+      /* 共享 Mutation 负责提示。 */
     }
   };
 
@@ -144,14 +166,17 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
   };
 
   const handleLogout = async (): Promise<void> => {
-    setIsLoggingOut(true);
+    const started = getSessionSnapshot();
     try {
-      await logout();
+      await logoutMutation.mutateAsync();
       $tip("已退出登录", "success");
+    } catch {
+      /* 全局处理退出失败。 */
     } finally {
-      clearSession();
-      setIsLoggingOut(false);
-      void navigate("/login", { replace: true });
+      if (getSessionSnapshot().appScope === started.appScope) {
+        clearSession();
+        void navigate("/login", { replace: true });
+      }
     }
   };
 
@@ -167,11 +192,10 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
         accept: ["jpg", "jpeg", "png", "gif"],
         maxSize: 5 * 1024 * 1024,
       });
-      await updateMyInfo({
+      await updateProfile.mutateAsync({
         nickname: user.nickname || user.username,
         avatarFileId: uploadedFile.fileId,
       });
-      await refresh();
       $tip("头像已更新", "success");
     } catch {
       // 上传和保存失败均由对应请求显示全局提示。
@@ -184,7 +208,10 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
         <OrganizationIdentity
           switcher={switcher}
           onMore={onMore}
-          onJoin={() => setIsJoinOpen(true)}
+          onJoin={() => {
+            setQueriedInvite("");
+            setIsJoinOpen(true);
+          }}
         />
       </div>
 
@@ -252,7 +279,7 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
                   type="button"
                   aria-label="更换头像"
                   title="更换头像"
-                  disabled={isUploadingAvatar}
+                  disabled={isUploadingAvatar || updateProfile.isPending}
                   className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full border border-background bg-foreground text-background transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => avatarInputRef.current?.click()}
                 >
@@ -321,7 +348,10 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
             value={inviteCode}
             placeholder="请输入邀请码"
             className="h-10"
-            onChange={(event) => setInviteCode(event.target.value)}
+            onChange={(event) => {
+              setInviteCode(event.target.value);
+              setQueriedInvite("");
+            }}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsJoinOpen(false)}>
@@ -338,7 +368,7 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
         open={isInviteConfirmOpen}
         onOpenChange={(open) => {
           setIsInviteConfirmOpen(open);
-          if (!open) setInviteInfo(null);
+          if (!open) setQueriedInvite("");
         }}
       >
         <DialogContent>

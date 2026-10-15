@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { Check, Info, Loader2 } from "lucide-react";
 
+import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { createProject, updateProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
 import ProjectMetadataEditor from "@/components/ProjectMetadataEditor";
@@ -15,8 +16,14 @@ import { getStatusLabel } from "@/lib/projectStatus";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
+
 import type { UploadedFileInfo } from "@/types/file";
-import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
+import type {
+  ProjectCreateDTO,
+  ProjectUpdateDTO,
+  ProjectDetailInfoVO,
+  ProjectStatus,
+} from "@/types/planning";
 import type { EditableProjectMetadataTag } from "@/components/ProjectMetadataEditor";
 import type { ProjectMetadataTag } from "@/lib/projectMetadata";
 
@@ -32,7 +39,15 @@ export default function CreateProject({ project }: CreateProjectProps) {
   const { projectTypes, loading: loadingProjectTypes } = useProjectTypes();
   const isEditing = Boolean(project);
   const coverBizId = project ? String(project.id) : (getCurrentOrgId() ?? "cover");
-  const [loading, setLoading] = useState(false);
+  const createMutation = useApiMutation({
+    mutationFn: (payload: ProjectCreateDTO) => createProject(payload),
+    invalidate: [["projects"], ["workshop"], ["plaza"]],
+  });
+  const updateMutation = useApiMutation({
+    mutationFn: (payload: ProjectUpdateDTO) => updateProject(project!.id, payload),
+    invalidate: [["projects"], ["workshop"], ["plaza"]],
+  });
+  const loading = createMutation.isPending || updateMutation.isPending;
   const [showInvalid, setShowInvalid] = useState(false);
   const [formData, setFormData] = useState({
     title: project?.title ?? "",
@@ -62,15 +77,20 @@ export default function CreateProject({ project }: CreateProjectProps) {
   const typeMissing = !formData.typeId;
   const coverMissing = !isEditing && !coverFile?.fileId;
 
+  const initializedProjectType = useRef(false);
   useEffect(() => {
-    if (!project || formData.typeId || projectTypes.length === 0) return;
+    if (initializedProjectType.current || !project || formData.typeId || projectTypes.length === 0)
+      return;
     const matchedType = projectTypes.find((type) => type.name === project.typeName);
     if (matchedType) {
+      initializedProjectType.current = true;
       setFormData((current) => ({ ...current, typeId: matchedType.id }));
     }
   }, [formData.typeId, project, projectTypes]);
 
+  const submitLock = useRef(false);
   async function handleSubmit(): Promise<void> {
+    if (submitLock.current || loading) return;
     if (titleMissing || typeMissing || coverMissing) {
       setShowInvalid(true);
       return;
@@ -92,10 +112,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
       submittedTags.push({ key: pendingTagKey, value: pendingTagValue, color: tagDraft.color });
     }
 
+    submitLock.current = true;
     try {
-      setLoading(true);
       if (isEditing && project) {
-        await updateProject(project.id, {
+        await updateMutation.mutateAsync({
           title: formData.title.trim(),
           alias: formData.alias.trim() || formData.title.trim(),
           description: formData.description.trim(),
@@ -109,7 +129,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
         $tip("企划已更新", "success");
         void navigate(`/dashboard/planning/${project.id}`);
       } else if (coverFile) {
-        await createProject({
+        await createMutation.mutateAsync({
           title: formData.title.trim(),
           alias: formData.alias.trim() || formData.title.trim(),
           typeId: formData.typeId,
@@ -120,8 +140,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
         $tip("企划创建成功", "success");
         void navigate("/dashboard/planning");
       }
+    } catch {
+      /* 保留表单，由共享 Mutation 提示错误。 */
     } finally {
-      setLoading(false);
+      submitLock.current = false;
     }
   }
 

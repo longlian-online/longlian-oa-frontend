@@ -3,12 +3,12 @@ import { GATEWAY_ERROR_MESSAGE, notificationService } from "@/services/notificat
 export class ApiError extends Error {
   silenced = false;
 
-  constructor(message: string) {
+  constructor(message: string, notify = true) {
     super(message);
     this.name = "ApiError";
     // Catch blocks run before timers, so they can silence a stale response first.
     setTimeout(() => {
-      if (this.silenced) return;
+      if (this.silenced || !notify) return;
       notificationService.notify({ type: "error", message: this.message });
     }, 0);
   }
@@ -20,10 +20,19 @@ export class ApiError extends Error {
 
 export class GatewayError extends ApiError {
   readonly status: number;
+  readonly retryAfterMs?: number;
 
-  constructor(status: number) {
-    super(GATEWAY_ERROR_MESSAGE);
+  constructor(status: number, notify = true, retryAfterMs?: number) {
+    super(GATEWAY_ERROR_MESSAGE, notify);
     this.name = "GatewayError";
     this.status = status;
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
+export class NetworkError extends ApiError {
+  constructor(message: string, notify = true) {
+    super(message, notify);
+    this.name = "NetworkError";
   }
 }

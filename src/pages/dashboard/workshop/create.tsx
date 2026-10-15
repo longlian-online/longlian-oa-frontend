@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { getBaseTaskList } from "@/api/baseTask";
 import { createWorkshopTaskTemplate, updateWorkshopTaskTemplate } from "@/api/workflowTemplate";
 import WorkflowEditor, {
@@ -14,8 +15,8 @@ import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+
 import type {
-  BaseTaskVO,
   WorkshopTaskTemplateCreateDTO,
   WorkshopTaskTemplateVO,
 } from "@/types/workflowTemplate";
@@ -39,36 +40,39 @@ function CreateWorkflowPageContent() {
     name: editingTemplate?.name ?? "",
     description: editingTemplate?.description ?? "",
   });
-  const [baseTasks, setBaseTasks] = useState<BaseTaskVO[]>([]);
   const [nodes, setNodes] = useState<WorkflowEditorNode[]>(() =>
     buildEditorNodes(editingTemplate?.nodes),
   );
-  const [loadingBaseTasks, setLoadingBaseTasks] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const baseTaskParams = {
+    pageNum: 1,
+    pageSize: 100,
+    status: "ENABLED" as const,
+    sortBy: "REF_COUNT" as const,
+    orderDir: "DESC" as const,
+  };
+  const baseTasksQuery = useApiQuery({
+    key: ["baseTasks", "options", baseTaskParams],
+    queryFn: () => getBaseTaskList(baseTaskParams),
+    staleTime: 300_000,
+  });
+  const baseTasks = baseTasksQuery.data?.list ?? [];
+  const loadingBaseTasks = baseTasksQuery.isLoading;
+  const saveMutation = useApiMutation({
+    mutationFn: (payload: WorkshopTaskTemplateCreateDTO) =>
+      editingTemplate
+        ? updateWorkshopTaskTemplate(String(editingTemplate.id), payload)
+        : createWorkshopTaskTemplate(payload),
+    invalidate: [["templates"], ["templateOptions"]],
+  });
+  const saving = saveMutation.isPending;
+  const canSave = Boolean(
+    formData.name.trim() && nodes.length > 0 && !saving && baseTasksQuery.data,
+  );
 
-  const canSave = Boolean(formData.name.trim() && nodes.length > 0 && !saving);
-
-  useEffect(() => {
-    void loadBaseTasks();
-  }, []);
-
-  async function loadBaseTasks(): Promise<void> {
-    try {
-      setLoadingBaseTasks(true);
-      const data = await getBaseTaskList({
-        pageNum: 1,
-        pageSize: 100,
-        status: "ENABLED",
-        sortBy: "REF_COUNT",
-        orderDir: "DESC",
-      });
-      setBaseTasks(data.list);
-    } finally {
-      setLoadingBaseTasks(false);
-    }
-  }
-
+  const saveLock = useRef(false);
   async function handleSave(): Promise<void> {
+    if (saveLock.current) return;
+    if (saving) return;
     if (!formData.name.trim()) {
       $tip("请输入流程名", "error");
       return;
@@ -91,23 +95,31 @@ function CreateWorkflowPageContent() {
       nodes: toCreateNodes(nodes),
     };
 
+    saveLock.current = true;
     try {
-      setSaving(true);
       if (editingTemplate) {
-        await updateWorkshopTaskTemplate(String(editingTemplate.id), payload);
+        await saveMutation.mutateAsync(payload);
         $tip("流程模板已更新", "success");
       } else {
-        await createWorkshopTaskTemplate(payload);
+        await saveMutation.mutateAsync(payload);
         $tip("流程模板已创建", "success");
       }
       void navigate("/dashboard/workshop/workflows");
+    } catch {
+      /* 失败保留画板草稿。 */
     } finally {
-      setSaving(false);
+      saveLock.current = false;
     }
   }
 
   return (
     <div className="-m-6 flex min-h-[calc(100svh-3.5rem)] flex-col bg-background">
+      {baseTasksQuery.isError && !baseTasksQuery.data && (
+        <div role="alert">
+          {baseTasksQuery.error.message}
+          <Button onClick={() => void baseTasksQuery.refetch()}>重试</Button>
+        </div>
+      )}
       <div className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-4">
         <h1 className="text-lg font-bold leading-6 text-foreground">
           {isEditing ? "编辑工作流程" : "创建工作流程"}
@@ -152,5 +164,7 @@ function CreateWorkflowPageContent() {
 }
 
 export default function CreateWorkflowPage() {
-  return <CreateWorkflowPageContent />;
+  const location = useLocation();
+  const state = location.state as CreateWorkflowLocationState | null;
+  return <CreateWorkflowPageContent key={state?.template?.id ?? "new"} />;
 }

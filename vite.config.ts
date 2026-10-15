@@ -45,6 +45,9 @@ const apiProxy: ProxyOptions = {
 };
 
 export default defineConfig({
+  fmt: {
+    ignorePatterns: [".agents/skills/**"],
+  },
   plugins: [ignoreUnknownRequests(), Pages({ dirs: "src/pages" }), react(), tailwindcss()],
   resolve: {
     alias: {

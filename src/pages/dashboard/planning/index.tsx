@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Clock, Filter, FolderOpen, Plus } from "lucide-react";
 
+import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { getProjectList } from "@/api/planning";
 import EmptyState from "@/components/EmptyState";
 import FilterToolbar from "@/components/FilterToolbar";
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
+
 import type { ProjectInfoVO, ProjectListDTO } from "@/types/planning";
 
 const PAGE_SIZE = 8;
@@ -38,51 +40,43 @@ const timeSortOptions = [
 export default function Planning() {
   const navigate = useNavigate();
   const { projectTypes } = useProjectTypes();
-  const [projects, setProjects] = useState<ProjectInfoVO[]>([]);
-  const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
+  const [submittedKeyword, setSubmittedKeyword] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [timeSort, setTimeSort] = useState(DEFAULT_TIME_SORT);
   const [pageNum, setPageNum] = useState(1);
-  const [total, setTotal] = useState(0);
-  // 首页第 1 格渲染“创建企划”占位卡，取的企划数比其余页少 1；
-  // 其余页通过显式 offset 对齐取数窗口，否则固定 pageNum 分页会跳过一条。
+
+  const params = {
+    pageNum: pageNum,
+    pageSize: pageNum === 1 ? PAGE_SIZE - 1 : PAGE_SIZE,
+    offset: pageNum === 1 ? undefined : PAGE_SIZE - 1 + (pageNum - 2) * PAGE_SIZE,
+    keyword: submittedKeyword || undefined,
+    projectType: selectedType === "all" ? undefined : selectedType,
+    ...timeSort,
+  };
+  const listQuery = useApiQuery({
+    key: ["projects", "list", params],
+    queryFn: () => getProjectList(params),
+  });
+  const projects = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
   const totalPages =
     total <= PAGE_SIZE - 1 ? 1 : 1 + Math.ceil((total - (PAGE_SIZE - 1)) / PAGE_SIZE);
-
-  useEffect(() => {
-    void loadProjects();
-  }, [pageNum, selectedType, timeSort]);
-
-  async function loadProjects(targetPage = pageNum): Promise<void> {
-    try {
-      setLoading(true);
-      const result = await getProjectList({
-        pageNum: targetPage,
-        pageSize: targetPage === 1 ? PAGE_SIZE - 1 : PAGE_SIZE,
-        offset: targetPage === 1 ? undefined : PAGE_SIZE - 1 + (targetPage - 2) * PAGE_SIZE,
-        keyword: keyword || undefined,
-        projectType: selectedType === "all" ? undefined : selectedType,
-        sortByTime: timeSort.sortByTime,
-        orderDir: timeSort.orderDir,
-      });
-      setProjects(result.list);
-      setTotal(result.total);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   function handleSearch(): void {
-    if (pageNum === 1) {
-      void loadProjects(1);
-      return;
-    }
+    setSubmittedKeyword(keyword.trim());
     setPageNum(1);
+    if (submittedKeyword === keyword.trim() && pageNum === 1) void listQuery.refetch();
   }
 
   return (
     <div className="space-y-6">
+      {listQuery.isFetching && listQuery.data && (
+        <p role="status" className="text-sm text-muted-foreground">
+          正在刷新...
+        </p>
+      )}
+
       <FilterToolbar
         searchValue={keyword}
         searchPlaceholder="搜索企划..."
@@ -150,7 +144,12 @@ export default function Planning() {
         }
       />
 
-      {loading ? (
+      {listQuery.isError && !listQuery.data ? (
+        <div role="alert">
+          {listQuery.error.message}
+          <Button onClick={() => void listQuery.refetch()}>重试</Button>
+        </div>
+      ) : loading ? (
         <PageLoading message="正在加载企划..." />
       ) : (
         <>

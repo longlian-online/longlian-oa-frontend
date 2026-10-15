@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useRef } from "react";
 import { useNavigate, useParams } from "react-router";
 import { BarChart3, CirclePlus, Info, Link2, Loader2, Pencil, Share2, X } from "lucide-react";
 
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { addProjectToWorkshop, getProjectDetail, removeProjectFromWorkshop } from "@/api/planning";
 import ProjectItemSection from "@/components/ProjectItem";
 import ProjectMetadataTag from "@/components/ProjectMetadataTag";
@@ -12,33 +13,35 @@ import { Progress } from "@/components/ui/progress";
 import { useConfirm } from "@/hooks/useConfirm";
 import { getStatusLabel } from "@/lib/projectStatus";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
-import type { ProjectDetailInfoVO } from "@/types/planning";
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const [project, setProject] = useState<ProjectDetailInfoVO | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [workshopLoading, setWorkshopLoading] = useState(false);
-
-  useEffect(() => {
-    if (projectId) {
-      void loadProjectDetail();
-    }
-  }, [projectId]);
-
-  async function loadProjectDetail(): Promise<void> {
-    try {
-      setLoading(true);
-      const data = await getProjectDetail(projectId!);
-      setProject(data);
-    } finally {
-      setLoading(false);
-    }
+  const projectQuery = useApiQuery({
+    key: ["projects", "detail", projectId],
+    queryFn: () => getProjectDetail(projectId!),
+    enabled: Boolean(projectId),
+  });
+  const project = projectQuery.data;
+  const loading = projectQuery.isLoading;
+  const workshopMutation = useApiMutation({
+    mutationFn: (remove: boolean) =>
+      remove ? removeProjectFromWorkshop(projectId!) : addProjectToWorkshop(projectId!),
+    invalidate: [["projects"], ["workshop"], ["plaza"]],
+  });
+  const workshopLoading = workshopMutation.isPending;
+  const workshopLock = useRef(false);
+  if (projectQuery.isError && !project) {
+    return (
+      <div role="alert">
+        {projectQuery.error.message}
+        <button onClick={() => void projectQuery.refetch()}>重试</button>
+      </div>
+    );
   }
-
   async function handleToggleWorkshop(): Promise<void> {
+    if (workshopLock.current) return;
     if (!project || !projectId) return;
 
     if (project.inWorkshop) {
@@ -50,18 +53,20 @@ export default function ProjectDetail() {
       if (!confirmed) return;
     }
 
+    if (workshopLock.current) return;
+    workshopLock.current = true;
     try {
-      setWorkshopLoading(true);
       if (project.inWorkshop) {
-        await removeProjectFromWorkshop(projectId);
+        await workshopMutation.mutateAsync(true);
         $tip("已退出企划", "success");
       } else {
-        await addProjectToWorkshop(projectId);
+        await workshopMutation.mutateAsync(false);
         $tip("已加入企划", "success");
       }
-      await loadProjectDetail();
+    } catch {
+      /* 全局 Mutation 错误提示保留当前数据。 */
     } finally {
-      setWorkshopLoading(false);
+      workshopLock.current = false;
     }
   }
 
@@ -231,12 +236,7 @@ export default function ProjectDetail() {
             )}
           </section>
 
-          <ProjectItemSection
-            projectId={projectId!}
-            isCreator={project.isCreator}
-            showDetailLink
-            onChanged={loadProjectDetail}
-          />
+          <ProjectItemSection projectId={projectId!} isCreator={project.isCreator} showDetailLink />
         </main>
       </div>
     </div>

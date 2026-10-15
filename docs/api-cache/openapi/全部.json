@@ -378,12 +378,12 @@
           },
           "fileExt": {
             "description": "文件扩展名",
-            "pattern": "(?i)jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx|zip",
+            "pattern": "(?i)jpg|jpeg|png|gif|webp|bmp|pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv|zip|rar|7z",
             "type": "string"
           },
           "fileMime": {
             "description": "文件MIME类型",
-            "pattern": "(?i)image/(jpeg|png|gif)|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/zip|application/x-zip-compressed",
+            "pattern": "(?i)image/(jpeg|png|gif|webp|bmp)|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.ms-powerpoint|application/vnd.openxmlformats-officedocument.presentationml.presentation|text/plain|text/csv|application/zip|application/x-zip-compressed|application/vnd.rar|application/x-rar-compressed|application/x-7z-compressed",
             "type": "string"
           },
           "fileName": {
@@ -421,6 +421,7 @@
         "type": "object"
       },
       "Field": {
+        "description": "按表单快照组织的展示字段",
         "discriminator": {
           "mapping": {
             "file": "#/components/schemas/FileField",
@@ -489,6 +490,10 @@
         "properties": {
           "description": {
             "description": "任务流说明",
+            "type": "string"
+          },
+          "itemTitle": {
+            "description": "项目名称",
             "type": "string"
           },
           "name": {
@@ -687,6 +692,80 @@
           },
           "userId": {
             "description": "用户id",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MyTaskListDTO": {
+        "description": "我的待办查询参数",
+        "properties": {
+          "bucket": {
+            "description": "分组：SUBMITTABLE-可提交，WAITING-等前置",
+            "enum": ["SUBMITTABLE", "WAITING"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码，默认 1",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数，默认 5",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "sortDirection": {
+            "description": "按接取时间排序：ASC-最早接取（默认），DESC-最晚接取",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          }
+        },
+        "required": ["bucket"],
+        "type": "object"
+      },
+      "MyTaskVO": {
+        "description": "我的待办条目",
+        "properties": {
+          "claimedAt": {
+            "description": "接取时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "instanceId": {
+            "description": "任务实例ID",
+            "type": "string"
+          },
+          "itemId": {
+            "description": "项目ID",
+            "type": "string"
+          },
+          "itemTitle": {
+            "description": "项目名",
+            "type": "string"
+          },
+          "nodeName": {
+            "description": "阶段名（任务节点名称）",
+            "type": "string"
+          },
+          "projectId": {
+            "description": "企划ID",
+            "type": "string"
+          },
+          "projectName": {
+            "description": "企划名",
+            "type": "string"
+          },
+          "stageSort": {
+            "description": "阶段序号（节点 sort）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingStageName": {
+            "description": "等待的前置阶段名（sort 最大的未完成前置）；仅 WAITING 分组返回，否则为 null",
             "type": "string"
           }
         },
@@ -1039,6 +1118,24 @@
         },
         "type": "object"
       },
+      "PageResultVOMyTaskVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/MyTaskVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "PageResultVOOrgDetailInfoVO": {
         "description": "通用分页返回结果",
         "properties": {
@@ -1215,6 +1312,21 @@
             "description": "总条数",
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Person": {
+        "description": "打回人，仅 REJECTED 存在",
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -1419,8 +1531,8 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅含 key、value，key 为非空白字符串且可重复，value 为字符串且可为空",
-            "example": "{\"tags\":[{\"key\":\"作者\",\"value\":\"smile_snow\"}]}",
+            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅允许 key、value、color。key 为非空白字符串且可重复；value 可省略，提供时必须为字符串且可为空；color 可省略，提供时仅允许 blue、green、amber、rose、violet。数组顺序和原始 JSON 保留",
+            "example": "{\"tags\":[{\"key\":\"加急\",\"color\":\"amber\"},{\"key\":\"作者\",\"value\":\"smile_snow\",\"color\":\"blue\"}]}",
             "type": "string"
           },
           "title": {
@@ -1468,7 +1580,7 @@
             "type": "boolean"
           },
           "metadata": {
-            "description": "扩展信息(JSON对象字符串，包含 tags 数组，每项仅含 key、value)",
+            "description": "扩展信息(JSON对象字符串，包含 tags 数组，每项含 key 及可选的 value、color；value 缺失或为空串表示单键标签，color 为 blue、green、amber、rose、violet 之一；按保存顺序原样返回)",
             "type": "string"
           },
           "pendingTaskCount": {
@@ -1521,7 +1633,7 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON对象字符串，包含 tags 数组；搜索结果中命中 value 的 tags 稳定前置)",
+            "description": "扩展信息(JSON对象字符串，包含 tags 数组，每项含 key 及可选的 value、color；color 为 blue、green、amber、rose、violet 之一；搜索结果中命中 value 的 tags 稳定前置并保留完整标签，数据库中的顺序不变)",
             "type": "string"
           },
           "projectStatus": {
@@ -1679,6 +1791,12 @@
             "minLength": 0,
             "type": "string"
           },
+          "offset": {
+            "description": "显式起始偏移量，传入后以它计算分页窗口（可跨页窗口），忽略 pageNum 的偏移意义",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
           "orderDir": {
             "description": "排序方式",
             "enum": ["DESC", "ASC"],
@@ -1737,6 +1855,11 @@
           },
           "priority": {
             "description": "优先级，仅影响用户端类型列表顺序，越大越靠前",
+            "format": "int32",
+            "type": "integer"
+          },
+          "refCount": {
+            "description": "引用次数（该类型被企划引用的次数）",
             "format": "int32",
             "type": "integer"
           },
@@ -1844,8 +1967,8 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅含 key、value，key 为非空白字符串且可重复，value 为字符串且可为空",
-            "example": "{\"tags\":[{\"key\":\"作者\",\"value\":\"smile_snow\"}]}",
+            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅允许 key、value、color。key 为非空白字符串且可重复；value 可省略，提供时必须为字符串且可为空；color 可省略，提供时仅允许 blue、green、amber、rose、violet。数组顺序和原始 JSON 保留",
+            "example": "{\"tags\":[{\"key\":\"加急\",\"color\":\"amber\"},{\"key\":\"作者\",\"value\":\"smile_snow\",\"color\":\"blue\"}]}",
             "type": "string"
           },
           "status": {
@@ -1934,6 +2057,10 @@
       "ResourceCreateVO": {
         "description": "创建文件上传响应",
         "properties": {
+          "contentDisposition": {
+            "description": "上传需携带的 Content-Disposition 头值；null 表示无需携带",
+            "type": "string"
+          },
           "fileId": {
             "description": "文件ID",
             "type": "string"
@@ -2169,6 +2296,52 @@
         "required": ["reviewComment"],
         "type": "object"
       },
+      "TaskSubmissionVersionVO": {
+        "description": "任务提交版本",
+        "properties": {
+          "fields": {
+            "description": "按表单快照组织的展示字段",
+            "items": {
+              "$ref": "#/components/schemas/Field"
+            },
+            "type": "array"
+          },
+          "reviewComment": {
+            "description": "打回意见，仅 REJECTED 存在",
+            "type": "string"
+          },
+          "reviewedAt": {
+            "description": "打回时间，仅 REJECTED 存在",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reviewer": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "status": {
+            "description": "版本状态：SUBMITTED 已提交 / REJECTED 已打回 / RESET 已重置",
+            "type": "string"
+          },
+          "submittedAt": {
+            "description": "提交时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "submitter": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "unreadable": {
+            "description": "存量数据内容解析失败；fields 为空不代表该版本没有内容",
+            "type": "boolean"
+          },
+          "versionNo": {
+            "description": "版本号，任务实例内从 1 递增",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "TaskSubmitDTO": {
         "description": "提交任务请求参数",
         "properties": {
@@ -2308,6 +2481,34 @@
         },
         "type": "object"
       },
+      "TaskTemplateListNodeVO": {
+        "description": "任务模板列表阶段预览，不含提交字段",
+        "properties": {
+          "baseTaskIcon": {
+            "description": "原子任务 Lucide 图标组件名",
+            "type": "string"
+          },
+          "baseTaskId": {
+            "description": "关联原子任务ID",
+            "type": "string"
+          },
+          "baseTaskName": {
+            "description": "原子任务名称，作为阶段名",
+            "type": "string"
+          },
+          "parallelSort": {
+            "description": "并行组内排序",
+            "format": "int32",
+            "type": "integer"
+          },
+          "sort": {
+            "description": "步骤顺序（相同 sort 表示并行节点）",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "TaskTemplateListVO": {
         "description": "任务模板列表行信息",
         "properties": {
@@ -2336,6 +2537,13 @@
             "description": "模板名称",
             "type": "string"
           },
+          "nodes": {
+            "description": "阶段预览。按 sort、parallelSort 排序，不含提交字段；编辑模板仍使用详情接口",
+            "items": {
+              "$ref": "#/components/schemas/TaskTemplateListNodeVO"
+            },
+            "type": "array"
+          },
           "refCount": {
             "description": "引用次数（已基于该模板创建的任务流数量）",
             "format": "int32",
@@ -2345,6 +2553,11 @@
             "description": "状态：ENABLED-启用，DISABLED-禁用",
             "enum": ["ENABLED", "DISABLED"],
             "type": "string"
+          },
+          "taskCount": {
+            "description": "任务节点数量（含并行节点）",
+            "format": "int32",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -2541,8 +2754,14 @@
             "maxLength": 20,
             "minLength": 0,
             "type": "string"
+          },
+          "sortBy": {
+            "description": "排序：RECENT_SUBMISSION-最近提交，CREATED_DESC-最新创建，CREATED_ASC-最早创建，默认最近提交",
+            "enum": ["RECENT_SUBMISSION", "CREATED_DESC", "CREATED_ASC"],
+            "type": "string"
           }
         },
+        "required": ["sortBy"],
         "type": "object"
       },
       "WorkshopProjectInfoVO": {
@@ -3637,6 +3856,44 @@
         "tags": ["任务实例接口"]
       }
     },
+    "/app/task/instance/mine": {
+      "get": {
+        "description": "分页返回当前用户在当前组织内已接取（CLAIMED）的任务。bucket=SUBMITTABLE 前置阶段全部完成，WAITING 存在未完成前置；默认按接取时间升序",
+        "operationId": "listMyTasks",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "query",
+            "name": "listDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/MyTaskListDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOMyTaskVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "我的待办",
+        "tags": ["任务实例接口"]
+      }
+    },
     "/app/task/instance/plaza": {
       "get": {
         "description": "分页返回当前组织内可接取的缺人任务，按企划分组。stageScope=ALL 返回所有阶段，CURRENT（默认）仅返回首个未完成阶段",
@@ -3854,6 +4111,49 @@
           }
         },
         "summary": "重置任务提交",
+        "tags": ["任务实例接口"]
+      }
+    },
+    "/app/task/instance/{instanceId}/submissions": {
+      "get": {
+        "description": "按版本号倒序返回该任务实例的全部提交版本，包含提交人/打回人与按表单快照组织的字段和附件",
+        "operationId": "listSubmissionVersions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务实例ID",
+            "in": "path",
+            "name": "instanceId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TaskSubmissionVersionVO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "任务提交版本列表",
         "tags": ["任务实例接口"]
       }
     },
@@ -4198,7 +4498,7 @@
     },
     "/app/workshop/list": {
       "post": {
-        "description": "查询当前用户工坊中的企划列表，支持标题模糊搜索、类型筛选、仅看我创建，默认按添加时间倒序。",
+        "description": "查询当前用户工坊中的企划列表，支持标题模糊搜索、类型筛选、仅看我创建，以及最近提交、最新创建、最早创建排序，默认最近提交。",
         "operationId": "getMyWorkshopList",
         "parameters": [
           {
@@ -5075,7 +5375,7 @@
     },
     "/orgadmin/task/base": {
       "post": {
-        "description": "任务创建后不可编辑，请确认标题、图标、简介和提交字段定义后提交",
+        "description": "创建任务标题、图标、简介和提交字段定义；创建后支持编辑",
         "operationId": "createBaseTask",
         "parameters": [
           {
@@ -5176,6 +5476,46 @@
         },
         "summary": "删除原子任务",
         "tags": ["原子任务管理"]
+      },
+      "put": {
+        "description": "整体更新任务定义；简介和图标省略或传 null 表示清空，submitFields 必填，传空数组清空提交字段。关联模板和后续新建工作流使用新定义，已有工作流保留名称及字段快照，图标同步更新。启用/禁用状态不变",
+        "operationId": "updateBaseTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseTaskCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "编辑原子任务",
+        "tags": ["原子任务管理"]
       }
     },
     "/orgadmin/task/base/{taskId}/status": {
@@ -5255,7 +5595,7 @@
     },
     "/orgadmin/task/template/list": {
       "post": {
-        "description": "支持名称模糊搜索、状态筛选、创建时间区间；支持按创建时间或引用次数排序，默认按引用次数倒序",
+        "description": "支持名称模糊搜索、状态筛选、创建时间区间；支持按创建时间或引用次数排序，默认按引用次数倒序。每行附带任务数和阶段预览（名称、图标、顺序），不含提交字段",
         "operationId": "listTaskTemplates",
         "parameters": [
           {
@@ -5434,6 +5774,10 @@
       "name": "企划类型管理"
     },
     {
+      "description": "原子任务（最小任务单元）的创建、编辑、启用/禁用和引用安全删除管理",
+      "name": "原子任务管理"
+    },
+    {
       "description": "用户个人工坊：企划列表、任务流模板列表与创建",
       "name": "工坊接口"
     },
@@ -5452,10 +5796,6 @@
     {
       "description": "管理员会话相关接口",
       "name": "管理员会话接口"
-    },
-    {
-      "description": "原子任务（最小任务单元）管理；任务创建后不可编辑，仅支持启用/禁用和删除未被引用的任务",
-      "name": "原子任务管理"
     },
     {
       "description": "用户相关的基础操作接口",

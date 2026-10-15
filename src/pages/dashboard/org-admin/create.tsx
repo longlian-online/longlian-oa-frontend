@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { Loader2 } from "lucide-react";
 
+import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import {
   createOrganizationTaskTemplate,
   getOrganizationBaseTaskList,
@@ -19,12 +20,13 @@ import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toWorkflowTemplateNodes } from "@/lib/workflowTemplate";
+
 import type { BaseTaskVO } from "@/types/workflowTemplate";
 import type {
   OrganizationBaseTaskVO,
   OrganizationTaskTemplateCreateDTO,
 } from "@/types/organizationAdmin";
-import { toWorkflowTemplateNodes } from "@/lib/workflowTemplate";
 
 interface WorkflowForm {
   name: string;
@@ -50,103 +52,105 @@ function OrganizationAdminCreateWorkflowContent() {
   const templateId = searchParams.get("templateId");
   const isEditing = Boolean(templateId);
   const [formData, setFormData] = useState<WorkflowForm>({ name: "", description: "" });
-  const [baseTasks, setBaseTasks] = useState<BaseTaskVO[]>([]);
+  const session = useSessionSnapshot();
+  const params = {
+    pageNum: 1,
+    pageSize: 100,
+    status: "ENABLED" as const,
+    sortBy: "REF_COUNT" as const,
+    orderDir: "DESC" as const,
+  };
+  const baseQuery = useApiQuery({
+    key: ["baseTasks", "options", params],
+    queryFn: () => getOrganizationBaseTaskList(params),
+    staleTime: 300_000,
+  });
+  const baseTasks = (baseQuery.data?.list ?? []).map(toEditorBaseTask);
+  const templateQuery = useApiQuery({
+    key: ["templates", "detail", templateId],
+    queryFn: () => getOrganizationTaskTemplate(templateId!),
+    enabled: Boolean(templateId),
+  });
+  const saveMutation = useApiMutation({
+    mutationFn: (payload: OrganizationTaskTemplateCreateDTO) =>
+      templateId
+        ? updateOrganizationTaskTemplate(templateId, payload)
+        : createOrganizationTaskTemplate(payload),
+    invalidate: [["templates"], ["templateOptions"]],
+  });
+  const initialized = useRef("");
   const [nodes, setNodes] = useState<WorkflowEditorNode[]>([]);
-  const [loadingBaseTasks, setLoadingBaseTasks] = useState(true);
-  const [loadingTemplate, setLoadingTemplate] = useState(isEditing);
-  const [saving, setSaving] = useState(false);
+  const loadingBaseTasks = baseQuery.isLoading;
+  const loadingTemplate = templateQuery.isLoading;
+  const saving = saveMutation.isPending;
 
-  const canSave = Boolean(formData.name.trim() && nodes.length > 0 && !saving && !loadingTemplate);
+  const canSave = Boolean(
+    formData.name.trim() &&
+    nodes.length > 0 &&
+    !saving &&
+    !loadingTemplate &&
+    Boolean(baseQuery.data) &&
+    (!isEditing || Boolean(templateQuery.data)),
+  );
 
-  useEffect(() => {
-    void loadBaseTasks();
-  }, []);
-
-  async function loadBaseTasks(): Promise<void> {
-    try {
-      setLoadingBaseTasks(true);
-      const data = await getOrganizationBaseTaskList({
-        pageNum: 1,
-        pageSize: 100,
-        status: "ENABLED",
-        sortBy: "REF_COUNT",
-        orderDir: "DESC",
-      });
-      setBaseTasks(data.list.map(toEditorBaseTask));
-    } finally {
-      setLoadingBaseTasks(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!templateId) {
-      setLoadingTemplate(false);
-      return;
-    }
-
-    const currentTemplateId = templateId;
-
-    async function loadTemplate(): Promise<void> {
-      try {
-        setLoadingTemplate(true);
-        const detail = await getOrganizationTaskTemplate(currentTemplateId);
-        setFormData({
-          name: detail.name ?? "未命名工作流",
-          description: detail.description ?? "",
-        });
-        setNodes(buildEditorNodes(toWorkflowTemplateNodes(detail.nodes)));
-      } finally {
-        setLoadingTemplate(false);
-      }
-    }
-
-    void loadTemplate();
-  }, [templateId]);
+  useEffect((): void => {
+    const identity = `${session.appScope}:${session.orgId}:${templateId ?? "new"}`;
+    if (initialized.current === identity) return;
+    if (templateId && !templateQuery.data) return;
+    initialized.current = identity;
+    const detail = templateQuery.data;
+    setFormData({ name: detail?.name ?? "", description: detail?.description ?? "" });
+    setNodes(detail ? buildEditorNodes(toWorkflowTemplateNodes(detail.nodes)) : []);
+  }, [templateQuery.data, templateId, session.appScope, session.orgId]);
 
   async function handleSave(): Promise<void> {
-    if (!formData.name.trim()) {
-      $tip("请输入流程名", "error");
-      return;
-    }
-
-    if (nodes.length === 0) {
-      $tip("请至少添加一个任务节点", "error");
-      return;
-    }
-
-    const validation = validateEditorNodes(nodes, baseTasks);
-    if (!validation.valid) {
-      $tip(validation.errors[0] || "工作流配置不完整", "error");
-      return;
-    }
-
-    const payload: OrganizationTaskTemplateCreateDTO = {
-      name: formData.name.trim(),
-      description: formData.description.trim() || undefined,
-      nodes: toCreateNodes(nodes).map(({ baseTaskId, sort, parallelSort }) => ({
-        baseTaskId,
-        sort,
-        parallelSort,
-      })),
-    };
-
     try {
-      setSaving(true);
+      if (!formData.name.trim()) {
+        $tip("请输入流程名", "error");
+        return;
+      }
+
+      if (nodes.length === 0) {
+        $tip("请至少添加一个任务节点", "error");
+        return;
+      }
+
+      const validation = validateEditorNodes(nodes, baseTasks);
+      if (!validation.valid) {
+        $tip(validation.errors[0] || "工作流配置不完整", "error");
+        return;
+      }
+
+      const payload: OrganizationTaskTemplateCreateDTO = {
+        name: formData.name.trim(),
+        description: formData.description.trim() || undefined,
+        nodes: toCreateNodes(nodes).map(({ baseTaskId, sort, parallelSort }) => ({
+          baseTaskId,
+          sort,
+          parallelSort,
+        })),
+      };
+
       if (templateId) {
-        await updateOrganizationTaskTemplate(templateId, payload);
+        await saveMutation.mutateAsync(payload);
         $tip("流程模板已更新", "success");
       } else {
-        await createOrganizationTaskTemplate(payload);
+        await saveMutation.mutateAsync(payload);
         $tip("流程模板已创建", "success");
       }
       void navigate("/dashboard/org-admin/workflows");
-    } finally {
-      setSaving(false);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
+  if (templateQuery.isError && !templateQuery.data)
+    return <Button onClick={() => void templateQuery.refetch()}>模板加载失败，重试</Button>;
   return (
     <div className="-m-6 flex min-h-[calc(100svh-3.5rem)] flex-col bg-background">
+      {baseQuery.isError && !baseQuery.data && (
+        <Button onClick={() => void baseQuery.refetch()}>任务库加载失败，重试</Button>
+      )}
       <div className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-4">
         <h1 className="text-lg font-bold leading-6 text-foreground">
           {isEditing ? "编辑工作流程" : "创建工作流程"}

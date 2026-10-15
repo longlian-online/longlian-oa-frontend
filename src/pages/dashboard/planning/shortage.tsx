@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useMutationState } from "@tanstack/react-query";
+import { useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Sparkles } from "lucide-react";
 
+import { scopedKey } from "@/lib/queryKeys";
+import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { claimTask } from "@/api/workflowInstance";
 import { getTaskPlaza } from "@/api/plaza";
 import EmptyState from "@/components/EmptyState";
@@ -19,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+
 import type { PlazaProjectGroup, PlazaSortBy, PlazaTask } from "@/types/plaza";
 
 const PAGE_SIZE = 8;
@@ -38,88 +42,84 @@ const DAY_MS = 86_400_000;
 export default function TaskPlaza() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const stageScope = searchParams.get("stageScope") === "CURRENT" ? "CURRENT" : "ALL";
+  const stageScope: "CURRENT" | "ALL" =
+    searchParams.get("stageScope") === "CURRENT" ? "CURRENT" : "ALL";
   const [previousScope, setPreviousScope] = useState(stageScope);
-  const requestVersion = useRef(0);
   const { projectTypes } = useProjectTypes();
-  const [groups, setGroups] = useState<PlazaProjectGroup[]>([]);
-  const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
+  const [submittedKeyword, setSubmittedKeyword] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [sortBy, setSortBy] = useState<PlazaSortBy>(DEFAULT_SORT);
   const [pageNum, setPageNum] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [claiming, setClaiming] = useState<Set<string>>(new Set());
+  const session = useSessionSnapshot();
+  const pendingClaims = useMutationState({
+    filters: { mutationKey: scopedKey(["claimTask"], "org", session), status: "pending" },
+    select: (mutation): string => String(mutation.state.variables),
+  });
+  const claiming = new Set(pendingClaims);
   if (previousScope !== stageScope) {
     setPreviousScope(stageScope);
     setPageNum(1);
-    setGroups([]);
   }
 
-  useEffect(() => {
-    void loadPlaza();
-  }, [pageNum, selectedType, sortBy, stageScope]);
-
-  async function loadPlaza(targetPage = pageNum): Promise<void> {
-    const version = ++requestVersion.current;
-    try {
-      setLoading(true);
-      const result = await getTaskPlaza({
-        pageNum: targetPage,
-        pageSize: PAGE_SIZE,
-        keyword: keyword || undefined,
-        projectType: selectedType === "all" ? undefined : selectedType,
-        sortBy,
-        stageScope,
-      });
-      if (version !== requestVersion.current) return;
-      setGroups(result.list);
-      setTotal(result.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "加载任务大厅失败", "error");
-    } finally {
-      if (version === requestVersion.current) setLoading(false);
-    }
-  }
-
+  const params = {
+    pageNum: pageNum,
+    pageSize: PAGE_SIZE,
+    keyword: submittedKeyword || undefined,
+    projectType: selectedType === "all" ? undefined : selectedType,
+    sortBy,
+    stageScope,
+  };
+  const listQuery = useApiQuery({
+    key: ["plaza", "list", params],
+    queryFn: () => getTaskPlaza(params),
+  });
+  const groups = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
   function handleSearch(): void {
-    if (pageNum === 1) {
-      void loadPlaza(1);
-      return;
-    }
+    setSubmittedKeyword(keyword.trim());
     setPageNum(1);
+    if (submittedKeyword === keyword.trim() && pageNum === 1) void listQuery.refetch();
   }
 
+  const claimMutation = useApiMutation({
+    key: ["claimTask"],
+    allowConcurrent: true,
+    mutationFn: claimTask,
+    invalidate: [
+      ["plaza"],
+      ["flow"],
+      ["instances"],
+      ["taskDetail"],
+      ["myTasks"],
+      ["items"],
+      ["projects"],
+      ["workshop"],
+    ],
+  });
+  const claimLocks = useRef(new Set<string>());
   async function handleClaim(instanceId: string): Promise<void> {
-    if (claiming.has(instanceId)) return;
-    setClaiming((prev) => new Set(prev).add(instanceId));
+    if (claimLocks.current.has(instanceId)) return;
+    claimLocks.current.add(instanceId);
     try {
-      await claimTask(instanceId);
+      await claimMutation.mutateAsync(instanceId);
       $tip("接取成功，可在任务详情中提交", "success");
-      setGroups((prev) =>
-        prev
-          .map((group) => {
-            const tasks = group.tasks.filter((task) => task.instanceId !== instanceId);
-            if (tasks.length === group.tasks.length) return group;
-            return { ...group, tasks, pendingCount: Math.max(0, group.pendingCount - 1) };
-          })
-          .filter((group) => group.tasks.length > 0),
-      );
-      setTotal((prev) => Math.max(0, prev - 1));
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "接取失败，请稍后再试", "error");
-      void loadPlaza(pageNum);
+    } catch {
+      /* 错误由共享 Mutation 处理。 */
     } finally {
-      setClaiming((prev) => {
-        const next = new Set(prev);
-        next.delete(instanceId);
-        return next;
-      });
+      claimLocks.current.delete(instanceId);
     }
   }
 
   return (
     <div className="space-y-6">
+      {listQuery.isFetching && listQuery.data && (
+        <p role="status" className="text-sm text-muted-foreground">
+          正在刷新...
+        </p>
+      )}
+
       <div>
         <h1 className="text-lg font-semibold text-foreground">任务大厅</h1>
         {!loading && (
@@ -208,7 +208,12 @@ export default function TaskPlaza() {
         }
       />
 
-      {loading ? (
+      {listQuery.isError && !listQuery.data ? (
+        <div role="alert">
+          {listQuery.error.message}
+          <Button onClick={() => void listQuery.refetch()}>重试</Button>
+        </div>
+      ) : loading ? (
         <PageLoading message="正在加载任务大厅..." />
       ) : groups.length === 0 ? (
         <EmptyState

@@ -1,45 +1,33 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Loader2, Search, Workflow } from "lucide-react";
 
+import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { getWorkshopTaskTemplateList } from "@/api/workflowTemplate";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { CreateWorkflowTemplateCard, WorkflowTemplateCard } from "@/components/WorkflowTemplate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
 import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 
 const PAGE_SIZE = 8;
 
 function WorkshopWorkflowsPageContent() {
   const navigate = useNavigate();
-  const [templates, setTemplates] = useState<WorkshopTaskTemplateVO[]>([]);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    void loadTemplates();
-  }, [keyword, page]);
-
-  async function loadTemplates(): Promise<void> {
-    try {
-      setLoading(true);
-      const data = await getWorkshopTaskTemplateList({
-        keyword,
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-      });
-      setTemplates(data.list);
-      setTotal(data.total);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  const params = { pageNum: page, pageSize: PAGE_SIZE, keyword: keyword || undefined };
+  const listQuery = useApiQuery({
+    key: ["templates", "list", params],
+    queryFn: () => getWorkshopTaskTemplateList(params),
+  });
+  const templates = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
   function handleSearch(): void {
     setKeyword(searchText.trim());
     setPage(1);
@@ -53,6 +41,12 @@ function WorkshopWorkflowsPageContent() {
 
   return (
     <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
+      {listQuery.isFetching && listQuery.data && (
+        <p role="status" className="text-sm text-muted-foreground">
+          正在刷新...
+        </p>
+      )}
+
       <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">工作流</h1>
@@ -83,7 +77,12 @@ function WorkshopWorkflowsPageContent() {
         </div>
       </div>
 
-      {loading ? (
+      {listQuery.isError && !listQuery.data ? (
+        <div role="alert">
+          {listQuery.error.message}
+          <Button onClick={() => void listQuery.refetch()}>重试</Button>
+        </div>
+      ) : loading ? (
         <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           正在加载工作流...

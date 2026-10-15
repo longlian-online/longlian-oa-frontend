@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Ban, Building2, CheckCircle2, Copy, KeyRound, Loader2 } from "lucide-react";
 
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import {
   changeAdminOrganizationStatus,
   createOrganizationInviteCode,
@@ -31,63 +32,78 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { AdminInviteCodeVO, AdminOrganizationVO } from "@/types/admin";
+
+import type { AdminOrganizationVO } from "@/types/admin";
 import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
 
 const PAGE_SIZE = 10;
 
 export default function AdminOrganizationsPage() {
-  const [organizations, setOrganizations] = useState<AdminOrganizationVO[]>([]);
-  const [total, setTotal] = useState(0);
+  const changeAdminOrganizationStatusMutation = useApiMutation<
+    Awaited<ReturnType<typeof changeAdminOrganizationStatus>>,
+    Parameters<typeof changeAdminOrganizationStatus>
+  >({
+    mutationFn: (args) => changeAdminOrganizationStatus(...args),
+    invalidate: [["adminOrganizations"]],
+    scope: "admin",
+  });
+  const createOrganizationInviteCodeMutation = useApiMutation<
+    Awaited<ReturnType<typeof createOrganizationInviteCode>>,
+    Parameters<typeof createOrganizationInviteCode>
+  >({
+    mutationFn: (args) => createOrganizationInviteCode(...args),
+    invalidate: [["adminOrganizations"]],
+    scope: "admin",
+  });
   const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [invite, setInvite] = useState<AdminInviteCodeVO | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const invite = createOrganizationInviteCodeMutation.data;
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [workingId, setWorkingId] = useState<string | null>(null);
+  const workingId =
+    (changeAdminOrganizationStatusMutation.isPending
+      ? String(changeAdminOrganizationStatusMutation.variables?.[0] ?? "new")
+      : null) ?? (createOrganizationInviteCodeMutation.isPending ? "new" : null);
 
-  async function loadOrganizations(nextPage = page): Promise<void> {
-    try {
-      setLoading(true);
-      const result = await getAdminOrganizations({
+  const listQuery = useApiQuery({
+    key: ["adminOrganizations", "management", page, keyword],
+    queryFn: () =>
+      getAdminOrganizations({
         orgName: keyword.trim(),
-        pageNum: nextPage,
+        pageNum: page,
         pageSize: PAGE_SIZE,
         orderDir: "DESC",
-      });
-      setOrganizations(result.list ?? []);
-      setTotal(result.total ?? 0);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadOrganizations();
-  }, [page]);
+      }),
+    scope: "admin",
+  });
+  const organizations = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
 
   async function handleSearch(): Promise<void> {
     setPage(1);
-    await loadOrganizations(1);
+    setKeyword(searchText.trim());
   }
 
   async function handleStatusChange(organization: AdminOrganizationVO): Promise<void> {
-    const nextStatus: OrganizationResourceStatus =
-      organization.status === "ENABLED" ? "DISABLED" : "ENABLED";
     try {
-      setWorkingId(organization.id);
-      await changeAdminOrganizationStatus(organization.id, nextStatus);
+      const nextStatus: OrganizationResourceStatus =
+        organization.status === "ENABLED" ? "DISABLED" : "ENABLED";
+      await changeAdminOrganizationStatusMutation.mutateAsync([organization.id, nextStatus]);
       $tip(nextStatus === "ENABLED" ? "组织已启用" : "组织已禁用", "success");
-      await loadOrganizations();
-    } finally {
-      setWorkingId(null);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
   async function handleCreateInvite(): Promise<void> {
-    setInvite(await createOrganizationInviteCode());
-    setInviteOpen(true);
-    $tip("创建组织邀请码已生成", "success");
+    try {
+      await createOrganizationInviteCodeMutation.mutateAsync([]);
+      setInviteOpen(true);
+      $tip("创建组织邀请码已生成", "success");
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
+    }
   }
 
   async function handleCopy(): Promise<void> {
@@ -107,8 +123,8 @@ export default function AdminOrganizationsPage() {
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-2">
               <Input
-                value={keyword}
-                onChange={(event) => setKeyword(event.target.value)}
+                value={searchText}
+                onChange={(event) => setSearchText(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") void handleSearch();
                 }}
@@ -119,12 +135,20 @@ export default function AdminOrganizationsPage() {
                 搜索
               </Button>
             </div>
-            <Button type="button" onClick={() => void handleCreateInvite()}>
+            <Button
+              type="button"
+              disabled={createOrganizationInviteCodeMutation.isPending}
+              onClick={() => void handleCreateInvite()}
+            >
               <KeyRound className="size-4" />
               生成创建邀请码
             </Button>
           </div>
-          {loading ? (
+          {listQuery.isError && !listQuery.data ? (
+            <Button variant="outline" onClick={() => void listQuery.refetch()}>
+              加载失败，重试
+            </Button>
+          ) : loading ? (
             <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
               <Loader2 className="mr-2 size-4 animate-spin" />
               加载中...

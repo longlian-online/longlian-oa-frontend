@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CheckCircle2, Edit3, Loader2, Plus, Search, Trash2, XCircle } from "lucide-react";
 
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import {
   changeProjectTypeStatus,
   createOrganizationProjectType,
@@ -33,43 +34,73 @@ import {
 } from "@/components/ui/table";
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
+
 import type { OrganizationResourceStatus, ProjectTypeVO } from "@/types/organizationAdmin";
 
 const PAGE_SIZE = 10;
 
 function OrganizationProjectTypesContent() {
   const confirm = useConfirm();
-  const [types, setTypes] = useState<ProjectTypeVO[]>([]);
+  const changeProjectTypeStatusMutation = useApiMutation<
+    Awaited<ReturnType<typeof changeProjectTypeStatus>>,
+    Parameters<typeof changeProjectTypeStatus>
+  >({
+    mutationFn: (args) => changeProjectTypeStatus(...args),
+    invalidate: [["projectTypes"], ["projects"], ["workshop"], ["plaza"]],
+  });
+  const createOrganizationProjectTypeMutation = useApiMutation<
+    Awaited<ReturnType<typeof createOrganizationProjectType>>,
+    Parameters<typeof createOrganizationProjectType>
+  >({
+    mutationFn: (args) => createOrganizationProjectType(...args),
+    invalidate: [["projectTypes"], ["projects"], ["workshop"], ["plaza"]],
+  });
+  const deleteOrganizationProjectTypeMutation = useApiMutation<
+    Awaited<ReturnType<typeof deleteOrganizationProjectType>>,
+    Parameters<typeof deleteOrganizationProjectType>
+  >({
+    mutationFn: (args) => deleteOrganizationProjectType(...args),
+    invalidate: [["projectTypes"], ["projects"], ["workshop"], ["plaza"]],
+  });
+  const updateOrganizationProjectTypeMutation = useApiMutation<
+    Awaited<ReturnType<typeof updateOrganizationProjectType>>,
+    Parameters<typeof updateOrganizationProjectType>
+  >({
+    mutationFn: (args) => updateOrganizationProjectType(...args),
+    invalidate: [["projectTypes"], ["projects"], ["workshop"], ["plaza"]],
+  });
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const mutatingId =
+    (changeProjectTypeStatusMutation.isPending
+      ? String(changeProjectTypeStatusMutation.variables?.[0] ?? "new")
+      : null) ??
+    (createOrganizationProjectTypeMutation.isPending ? "new" : null) ??
+    (deleteOrganizationProjectTypeMutation.isPending
+      ? String(deleteOrganizationProjectTypeMutation.variables?.[0] ?? "new")
+      : null) ??
+    (updateOrganizationProjectTypeMutation.isPending
+      ? String(updateOrganizationProjectTypeMutation.variables?.[0] ?? "new")
+      : null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState<ProjectTypeVO | null>(null);
   const [name, setName] = useState("");
   const [priority, setPriority] = useState("0");
 
-  useEffect(() => {
-    void loadTypes();
-  }, [keyword, page]);
-
-  async function loadTypes(): Promise<void> {
-    try {
-      setLoading(true);
-      const result = await getOrganizationProjectTypes({
+  const listQuery = useApiQuery({
+    key: ["projectTypes", "management", keyword, page],
+    queryFn: () =>
+      getOrganizationProjectTypes({
         keyword: keyword || undefined,
         pageNum: page,
         pageSize: PAGE_SIZE,
         orderDir: "DESC",
-      });
-      setTypes(result.list);
-      setTotal(result.total);
-    } finally {
-      setLoading(false);
-    }
-  }
+      }),
+  });
+  const types = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
 
   function handleSearch(): void {
     setKeyword(searchText.trim());
@@ -91,71 +122,70 @@ function OrganizationProjectTypesContent() {
   }
 
   async function handleSaveType(): Promise<void> {
-    const normalizedName = name.trim();
-    if (!normalizedName) {
-      $tip("请输入企划类型名称", "error");
-      return;
-    }
-    const normalizedPriority = Number(priority);
-    if (
-      !priority.trim() ||
-      !Number.isInteger(normalizedPriority) ||
-      normalizedPriority < -2147483648 ||
-      normalizedPriority > 2147483647
-    ) {
-      $tip("优先级必须为 32 位整数", "error");
-      return;
-    }
-
     try {
-      setMutatingId(editingType?.id ?? "new");
+      const normalizedName = name.trim();
+      if (!normalizedName) {
+        $tip("请输入企划类型名称", "error");
+        return;
+      }
+      const normalizedPriority = Number(priority);
+      if (
+        !priority.trim() ||
+        !Number.isInteger(normalizedPriority) ||
+        normalizedPriority < -2147483648 ||
+        normalizedPriority > 2147483647
+      ) {
+        $tip("优先级必须为 32 位整数", "error");
+        return;
+      }
+
       if (editingType) {
-        await updateOrganizationProjectType(editingType.id, {
-          name: normalizedName,
-          priority: normalizedPriority,
-        });
+        await updateOrganizationProjectTypeMutation.mutateAsync([
+          editingType.id,
+          {
+            name: normalizedName,
+            priority: normalizedPriority,
+          },
+        ]);
         $tip("企划类型已更新", "success");
       } else {
-        await createOrganizationProjectType({ name: normalizedName, priority: normalizedPriority });
+        await createOrganizationProjectTypeMutation.mutateAsync([
+          { name: normalizedName, priority: normalizedPriority },
+        ]);
         $tip("企划类型已创建", "success");
       }
       setDialogOpen(false);
-      await loadTypes();
-    } finally {
-      setMutatingId(null);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
   async function handleDelete(type: ProjectTypeVO): Promise<void> {
-    const confirmed = await confirm({
-      title: "删除企划类型？",
-      description: `删除后「${type.name}」将无法恢复，仅未被企划引用的类型可以删除。`,
-      confirmText: "删除",
-      variant: "destructive",
-    });
-    if (!confirmed) return;
-
     try {
-      setMutatingId(type.id);
-      await deleteOrganizationProjectType(type.id);
+      const confirmed = await confirm({
+        title: "删除企划类型？",
+        description: `删除后「${type.name}」将无法恢复，仅未被企划引用的类型可以删除。`,
+        confirmText: "删除",
+        variant: "destructive",
+      });
+      if (!confirmed) return;
+
+      await deleteOrganizationProjectTypeMutation.mutateAsync([type.id]);
       $tip("企划类型已删除", "success");
       if (types.length === 1 && page > 1) setPage((currentPage) => currentPage - 1);
-      await loadTypes();
-    } finally {
-      setMutatingId(null);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
   async function handleToggleStatus(type: ProjectTypeVO): Promise<void> {
-    const nextStatus: OrganizationResourceStatus =
-      type.status === "ENABLED" ? "DISABLED" : "ENABLED";
     try {
-      setMutatingId(type.id);
-      await changeProjectTypeStatus(type.id, nextStatus);
+      const nextStatus: OrganizationResourceStatus =
+        type.status === "ENABLED" ? "DISABLED" : "ENABLED";
+      await changeProjectTypeStatusMutation.mutateAsync([type.id, nextStatus]);
       $tip(nextStatus === "ENABLED" ? "企划类型已启用" : "企划类型已禁用", "success");
-      await loadTypes();
-    } finally {
-      setMutatingId(null);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
@@ -189,7 +219,11 @@ function OrganizationProjectTypesContent() {
         </div>
       </div>
 
-      {loading ? (
+      {listQuery.isError && !listQuery.data ? (
+        <Button variant="outline" onClick={() => void listQuery.refetch()}>
+          加载失败，重试
+        </Button>
+      ) : loading ? (
         <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
           <Loader2 className="mr-2 size-4 animate-spin" />
           正在加载企划类型...
