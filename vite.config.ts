@@ -1,7 +1,7 @@
 import { defineConfig } from "vite-plus";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import Pages from "vite-plugin-pages";
+import { fileRoutes } from "./tools/fileRoutes.ts";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import type { Plugin, ProxyOptions } from "vite-plus";
@@ -48,7 +48,7 @@ export default defineConfig({
   fmt: {
     ignorePatterns: [".agents/skills/**"],
   },
-  plugins: [ignoreUnknownRequests(), Pages({ dirs: "src/pages" }), react(), tailwindcss()],
+  plugins: [ignoreUnknownRequests(), fileRoutes(), react(), tailwindcss()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),

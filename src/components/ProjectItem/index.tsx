@@ -2,12 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { ChevronRight, Loader2, Plus, Trash2, Workflow } from "lucide-react";
 
-import {
-  createProjectItem,
-  deleteProjectItem,
-  getProjectItemList,
-  getTaskTemplateOptions,
-} from "@/api/projectItem";
+import { createProjectItem, deleteProjectItem, getTaskTemplateOptions } from "@/api/projectItem";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
@@ -32,6 +27,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
+import { PROJECT_ITEMS_PAGE_SIZE as PAGE_SIZE, projectItemsQuery } from "@/queries/planning";
 import { cn } from "@/lib/utils";
 
 import type {
@@ -39,8 +35,6 @@ import type {
   ProjectItemNodeState,
   ProjectItemNodeVO,
 } from "@/types/projectItem";
-
-const PAGE_SIZE = 4;
 
 interface ProjectItemSectionProps {
   projectId: string;
@@ -127,23 +121,7 @@ export default function ProjectItemSection({
   }, []);
   const isCurrent = (): boolean =>
     mounted.current && projectLifecycle.current.generation === generation;
-  const itemsQuery = useApiQuery({
-    key: [
-      "items",
-      "list",
-      projectId,
-      { pageNum: page, pageSize: PAGE_SIZE, status, sortByTime: "CREATE", orderDir },
-    ],
-    queryFn: () =>
-      getProjectItemList(projectId, {
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-        status,
-        sortByTime: "CREATE",
-        orderDir,
-      }),
-    enabled: Boolean(projectId),
-  });
+  const itemsQuery = useApiQuery(projectItemsQuery(projectId, page, status, orderDir));
   const templatesQuery = useApiQuery({
     key: ["templateOptions"],
     queryFn: getTaskTemplateOptions,

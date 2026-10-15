@@ -3,12 +3,10 @@ import { useNavigate } from "react-router";
 import { ChevronRight } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
-import { getMyTasks } from "@/api/myTask";
+import { MY_TASK_PAGE_SIZE as PAGE_SIZE, myTasksQuery } from "@/queries/workshop";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { MyTaskBucket, MyTaskSortDirection } from "@/types/myTask";
-
-const PAGE_SIZE = 5;
 
 function formatClaimedAt(value: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
@@ -31,8 +29,7 @@ export function MyTaskColumn({ bucket, title, dotClassName, sortDirection }: MyT
     setPage(1);
   }, [sortDirection]);
 
-  const params = { bucket, pageNum: page, pageSize: PAGE_SIZE, sortDirection };
-  const tasksQuery = useApiQuery({ key: ["myTasks", params], queryFn: () => getMyTasks(params) });
+  const tasksQuery = useApiQuery(myTasksQuery(bucket, page, sortDirection));
   const tasks = tasksQuery.data?.list ?? [];
   const total = tasksQuery.data?.total ?? 0;
   const loading = tasksQuery.isLoading;
@@ -82,7 +79,9 @@ export function MyTaskColumn({ bucket, title, dotClassName, sortDirection }: MyT
                 </span>
                 <span className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                   {!submittable && (
-                    <span className="mr-auto truncate">等{task.waitingStageName ?? "前置"}</span>
+                    <span className="mr-auto truncate">
+                      {task.waitingStageName ? `等${task.waitingStageName}` : "等待中"}
+                    </span>
                   )}
                   <span className="tabular-nums">{formatClaimedAt(task.claimedAt)}</span>
                   <ChevronRight className="size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5" />

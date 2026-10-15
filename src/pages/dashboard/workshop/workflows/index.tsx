@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Loader2, Search, Workflow } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
-import { getWorkshopTaskTemplateList } from "@/api/workflowTemplate";
+import { WORKFLOW_PAGE_SIZE as PAGE_SIZE, workflowListQuery } from "@/queries/workshop";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { CreateWorkflowTemplateCard, WorkflowTemplateCard } from "@/components/WorkflowTemplate";
@@ -12,19 +12,13 @@ import { Input } from "@/components/ui/input";
 
 import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 
-const PAGE_SIZE = 8;
-
 function WorkshopWorkflowsPageContent() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
 
-  const params = { pageNum: page, pageSize: PAGE_SIZE, keyword: keyword || undefined };
-  const listQuery = useApiQuery({
-    key: ["templates", "list", params],
-    queryFn: () => getWorkshopTaskTemplateList(params),
-  });
+  const listQuery = useApiQuery(workflowListQuery(page, keyword));
   const templates = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;

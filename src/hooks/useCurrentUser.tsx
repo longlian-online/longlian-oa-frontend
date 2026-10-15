@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
 
-import { getCurrentUser } from "@/api/user";
+import { currentUserQuery } from "@/queries/session";
 import { useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 
 import type { UserInfoVO } from "@/types/user";
@@ -17,7 +17,7 @@ const CurrentUserContext = createContext<UseCurrentUserResult | null>(null);
 
 export function CurrentUserProvider({ children }: { children: ReactNode }) {
   const session = useSessionSnapshot();
-  const query = useApiQuery({ key: ["currentUser"], queryFn: getCurrentUser, scope: "account" });
+  const query = useApiQuery(currentUserQuery);
   const value: UseCurrentUserResult = {
     user: query.data ?? null,
     role: session.role,

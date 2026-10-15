@@ -2,11 +2,7 @@ import { useState } from "react";
 import { Ban, Building2, CheckCircle2, Copy, KeyRound, Loader2 } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
-import {
-  changeAdminOrganizationStatus,
-  createOrganizationInviteCode,
-  getAdminOrganizations,
-} from "@/api/admin";
+import { changeAdminOrganizationStatus, createOrganizationInviteCode } from "@/api/admin";
 import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
@@ -33,10 +29,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import { ADMIN_PAGE_SIZE as PAGE_SIZE, adminOrganizationsQuery } from "@/queries/admin";
 import type { AdminOrganizationVO } from "@/types/admin";
 import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
-
-const PAGE_SIZE = 10;
 
 export default function AdminOrganizationsPage() {
   const changeAdminOrganizationStatusMutation = useApiMutation<
@@ -65,17 +60,7 @@ export default function AdminOrganizationsPage() {
       ? String(changeAdminOrganizationStatusMutation.variables?.[0] ?? "new")
       : null) ?? (createOrganizationInviteCodeMutation.isPending ? "new" : null);
 
-  const listQuery = useApiQuery({
-    key: ["adminOrganizations", "management", page, keyword],
-    queryFn: () =>
-      getAdminOrganizations({
-        orgName: keyword.trim(),
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-        orderDir: "DESC",
-      }),
-    scope: "admin",
-  });
+  const listQuery = useApiQuery(adminOrganizationsQuery(page, keyword));
   const organizations = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;

@@ -1,12 +1,10 @@
-import { Suspense, useEffect, useState, type ReactElement } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import { Outlet, useLocation } from "react-router";
 import AppBreadcrumb from "./AppBreadcrumb";
 import AppHeader from "./AppHeader";
 import AppSidebar from "./AppSidebar";
 import PageTransition from "./PageTransition";
 import OrganizationSidebar from "@/components/layout/OrganizationSidebar";
-import PageLoading from "@/components/PageLoading";
-import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import { useOrganizationSwitcher } from "@/hooks/useOrganizationSwitcher";
 import { cn } from "@/lib/utils";
 import { CurrentUserProvider } from "@/hooks/useCurrentUser";
@@ -48,11 +46,7 @@ export default function AppLayout(): ReactElement {
           <main className="min-w-0 flex-1 overflow-y-auto px-6 py-6 [scrollbar-gutter:stable]">
             <AppBreadcrumb />
             <PageTransition>
-              <RouteErrorBoundary resetKey={pathname}>
-                <Suspense fallback={<PageLoading message="页面加载中..." />}>
-                  <Outlet />
-                </Suspense>
-              </RouteErrorBoundary>
+              <Outlet />
             </PageTransition>
           </main>
         </div>

@@ -1,15 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Copy } from "lucide-react";
 
-import {
-  abandonTask,
-  claimTask,
-  getItemTaskFlow,
-  getItemTaskInstances,
-  rejectTask,
-  resetTask,
-  submitTask,
-} from "@/api/workflowInstance";
+import { abandonTask, claimTask, rejectTask, resetTask, submitTask } from "@/api/workflowInstance";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { getUserId } from "@/lib/session";
+import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
 import { createItemLifecycle } from "./itemLifecycle";
 import { buildParticipantRoster } from "./participantRoster";
 import TaskDetailPanel from "./TaskDetailPanel";
@@ -79,18 +72,8 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const [detailScrollNonce, setDetailScrollNonce] = useState(0);
-  const flowQuery = useApiQuery({
-    key: ["flow", itemId],
-    queryFn: () => getItemTaskFlow(itemId),
-    enabled: Boolean(itemId),
-    staleTime: 0,
-  });
-  const instancesQuery = useApiQuery({
-    key: ["instances", itemId],
-    queryFn: () => getItemTaskInstances(itemId),
-    enabled: Boolean(itemId),
-    staleTime: 0,
-  });
+  const flowQuery = useApiQuery(itemFlowQuery(itemId));
+  const instancesQuery = useApiQuery(itemInstancesQuery(itemId));
   const taskFlow = flowQuery.data;
   const instances = instancesQuery.data ?? [];
   const actionMutation = useApiMutation({

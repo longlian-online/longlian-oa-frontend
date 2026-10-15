@@ -1,4 +1,4 @@
-import { getProjectTypes } from "@/api/planning";
+import { projectTypesQuery } from "@/queries/planning";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 
 import type { ProjectTypeInfoVO } from "@/types/planning";
@@ -10,11 +10,7 @@ interface UseProjectTypesResult {
   reload: () => Promise<void>;
 }
 export function useProjectTypes(): UseProjectTypesResult {
-  const query = useApiQuery({
-    key: ["projectTypes"],
-    queryFn: getProjectTypes,
-    staleTime: 300_000,
-  });
+  const query = useApiQuery(projectTypesQuery());
   return {
     projectTypes: query.data ?? [],
     loading: query.isLoading,

@@ -1,16 +1,12 @@
 import { useParams } from "react-router";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
-import { getProjectDetail } from "@/api/planning";
+import { projectDetailQuery } from "@/queries/planning";
 import CreateProject from "@/pages/dashboard/planning/create";
 
 export default function EditProjectPage() {
   const { projectId } = useParams<{ projectId: string }>();
-  const projectQuery = useApiQuery({
-    key: ["projects", "detail", projectId],
-    queryFn: () => getProjectDetail(projectId!),
-    enabled: Boolean(projectId),
-  });
+  const projectQuery = useApiQuery(projectDetailQuery(projectId));
   const project = projectQuery.data;
   const loading = projectQuery.isLoading;
   if (projectQuery.isError && !project) {

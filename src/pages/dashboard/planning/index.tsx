@@ -3,7 +3,11 @@ import { Link, useNavigate } from "react-router";
 import { Clock, Filter, FolderOpen, Plus } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
-import { getProjectList } from "@/api/planning";
+import {
+  DEFAULT_PROJECT_TIME_SORT as DEFAULT_TIME_SORT,
+  PLANNING_PAGE_SIZE as PAGE_SIZE,
+  projectListQuery,
+} from "@/queries/planning";
 import EmptyState from "@/components/EmptyState";
 import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
@@ -22,13 +26,7 @@ import {
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 
-import type { ProjectInfoVO, ProjectListDTO } from "@/types/planning";
-
-const PAGE_SIZE = 8;
-const DEFAULT_TIME_SORT: Required<Pick<ProjectListDTO, "sortByTime" | "orderDir">> = {
-  sortByTime: "CREATE",
-  orderDir: "DESC",
-};
+import type { ProjectInfoVO } from "@/types/planning";
 
 const timeSortOptions = [
   { value: "CREATE-DESC", label: "最新创建" },
@@ -46,18 +44,9 @@ export default function Planning() {
   const [timeSort, setTimeSort] = useState(DEFAULT_TIME_SORT);
   const [pageNum, setPageNum] = useState(1);
 
-  const params = {
-    pageNum: pageNum,
-    pageSize: pageNum === 1 ? PAGE_SIZE - 1 : PAGE_SIZE,
-    offset: pageNum === 1 ? undefined : PAGE_SIZE - 1 + (pageNum - 2) * PAGE_SIZE,
-    keyword: submittedKeyword || undefined,
-    projectType: selectedType === "all" ? undefined : selectedType,
-    ...timeSort,
-  };
-  const listQuery = useApiQuery({
-    key: ["projects", "list", params],
-    queryFn: () => getProjectList(params),
-  });
+  const listQuery = useApiQuery(
+    projectListQuery(pageNum, submittedKeyword, selectedType, timeSort),
+  );
   const projects = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;
