@@ -15,6 +15,7 @@ interface FileUploadProps extends FileValidationOptions {
   imagePreview?: boolean;
   fillHeight?: boolean;
   className?: string;
+  invalid?: boolean;
   onChange: (file: UploadedFileInfo | null) => void;
 }
 
@@ -33,6 +34,7 @@ export default function FileUpload({
   accept,
   maxSize,
   className,
+  invalid = false,
   onChange,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -132,12 +134,13 @@ export default function FileUpload({
         <button
           type="button"
           disabled={uploading}
+          aria-invalid={invalid || undefined}
           onClick={() => inputRef.current?.click()}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            "group flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-input bg-muted/30 p-5 text-center transition-colors hover:border-primary/50 hover:bg-primary/[0.03] disabled:pointer-events-none disabled:opacity-60",
+            "group flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-input bg-muted/30 p-5 text-center transition-colors hover:border-primary/50 hover:bg-primary/[0.03] disabled:pointer-events-none disabled:opacity-60 aria-invalid:border-destructive",
             fillHeight
               ? "min-h-[340px] flex-1"
               : imagePreview

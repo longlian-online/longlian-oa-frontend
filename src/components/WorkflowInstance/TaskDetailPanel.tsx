@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, ExternalLink, FileText, Loader2 } from "lucide-
 
 import { ApiError } from "@/api/apiError";
 import { getTaskInstanceDetail, getTaskSubmissionVersions } from "@/api/workflowInstance";
+import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type {
@@ -13,6 +14,7 @@ import type {
   TaskInstanceDetailVO,
   TaskInstanceStatus,
   TaskSubmissionStatus,
+  TaskSubmissionVersionVO,
 } from "@/types/workflowInstance";
 import { createItemLifecycle } from "./itemLifecycle";
 import { AttachmentOpenError, openTaskAttachment, type AttachmentPopup } from "./taskAttachments";
@@ -33,7 +35,7 @@ interface TaskDetailActions {
 interface TaskDetailPanelProps {
   node: ItemTaskNodeVO;
   instance?: ItemTaskInstanceVO;
-  revision: number;
+
   actions?: TaskDetailActions;
 }
 
@@ -56,22 +58,16 @@ const VERSION_STATUS_VARIANTS: Record<TaskSubmissionStatus, "default" | "destruc
     RESET: "outline",
   };
 
-interface VersionView {
-  versionNo: number;
-  status: TaskSubmissionStatus;
-  submittedAt?: string | null;
-  submittedBy?: { id: string; nickname?: string | null; avatarUrl?: string | null } | null;
-  reviewComment?: string | null;
-  reviewedAt?: string | null;
-  reviewer?: { id: string; nickname?: string | null; avatarUrl?: string | null } | null;
-  fields: TaskDetailField[];
-  unreadable: boolean;
+export function submissionVersionAuthorLine(
+  version: Pick<TaskSubmissionVersionVO, "submitter" | "submittedAt">,
+): string {
+  return `${version.submitter?.nickname ?? "未知"} · ${version.submittedAt ?? "时间未知"}`;
 }
 
 function currentVersionOf(
   state: TaskInstanceDetailVO["submission"]["state"],
-  versions: VersionView[],
-): VersionView | null {
+  versions: TaskSubmissionVersionVO[],
+): TaskSubmissionVersionVO | null {
   if (versions.length === 0) return null;
   if (state === "submitted") {
     return versions.find((version) => version.status === "SUBMITTED") ?? null;
@@ -79,14 +75,14 @@ function currentVersionOf(
   return versions.find((version) => version.status === "RESET") ?? null;
 }
 
-function versionFromDetail(detail: TaskInstanceDetailVO): VersionView[] {
+export function versionFromDetail(detail: TaskInstanceDetailVO): TaskSubmissionVersionVO[] {
   if (detail.submission.state === "not_submitted") return [];
   return [
     {
       versionNo: 1,
       status: "SUBMITTED",
       submittedAt: detail.submission.submittedAt,
-      submittedBy: detail.task.assignee,
+      submitter: detail.task.assignee,
       fields: detail.submission.fields,
       unreadable: false,
     },
@@ -242,69 +238,44 @@ function TaskActions({
   );
 }
 
-export default function TaskDetailPanel({
-  node,
-  instance,
-  revision,
-  actions,
-}: TaskDetailPanelProps) {
+export default function TaskDetailPanel({ node, instance, actions }: TaskDetailPanelProps) {
   const instanceId = node.taskStatus === null ? undefined : (node.taskInstanceId ?? instance?.id);
-  const [retry, setRetry] = useState(0);
-  const contextKey = `${instanceId}:${revision}:${retry}:${instance?.status}:${instance?.completedAt}`;
+  const contextKey = `${instanceId}:${instance?.status}:${instance?.completedAt}`;
   const lifecycle = useRef(createItemLifecycle(contextKey));
   lifecycle.current.switchTo(contextKey);
   const isCurrent = lifecycle.current.capture();
-  const [loaded, setLoaded] = useState<{ key: string; detail: TaskInstanceDetailVO } | null>(null);
-  const [versions, setVersions] = useState<{ key: string; data: VersionView[] } | null>(null);
-  const [error, setError] = useState("");
-  const [versionError, setVersionError] = useState("");
+  const detailQuery = useApiQuery({
+    key: ["taskDetail", instanceId],
+    queryFn: () => getTaskInstanceDetail(instanceId!),
+    enabled: Boolean(instanceId),
+    staleTime: 0,
+  });
+  const versionsQuery = useApiQuery({
+    key: ["taskVersions", instanceId],
+    queryFn: () => getTaskSubmissionVersions(instanceId!),
+    enabled: Boolean(instanceId),
+    staleTime: 0,
+  });
+  const detail = detailQuery.data;
+  const versionList = versionsQuery.data ?? null;
+  const error = detailQuery.isError && !detail ? "任务详情加载失败，请重新加载后再试。" : "";
+  const versionError = versionsQuery.isError ? "版本记录加载失败，请重新加载后再试。" : "";
   const [attachmentError, setAttachmentError] = useState("");
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [expandedVersion, setExpandedVersion] = useState<number | null>(null);
   const opening = useRef(false);
   const popupRef = useRef<AttachmentPopup | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
-  const detail = loaded?.key === contextKey ? loaded.detail : null;
-  const versionList = versions?.key === contextKey ? versions.data : null;
   const versionsView = versionList ?? (detail ? versionFromDetail(detail) : []);
 
   useEffect(() => {
-    let active = true;
     const controller = new AbortController();
     controllerRef.current = controller;
-    setLoaded(null);
-    setVersions(null);
-    setError("");
-    setVersionError("");
     setAttachmentError("");
     setOpeningId(null);
     setExpandedVersion(null);
     opening.current = false;
-    if (instanceId) {
-      void getTaskInstanceDetail(instanceId, controller.signal)
-        .then((result) => {
-          if (active && isCurrent()) setLoaded({ key: contextKey, detail: result });
-        })
-        .catch((reason: unknown) => {
-          if (reason instanceof ApiError) reason.silence();
-          if (active && isCurrent()) setError("任务详情加载失败，请重新加载后再试。");
-        });
-      void getTaskSubmissionVersions(instanceId, controller.signal)
-        .then((result) => {
-          if (active && isCurrent()) {
-            setVersions({ key: contextKey, data: result });
-            const submitted = result.find((version) => version.status === "SUBMITTED");
-            const fallback = result.length > 0 ? result[0] : null;
-            setExpandedVersion((submitted ?? fallback)?.versionNo ?? null);
-          }
-        })
-        .catch((reason: unknown) => {
-          if (reason instanceof ApiError) reason.silence();
-          if (active && isCurrent()) setVersionError("版本记录加载失败，请重新加载后再试。");
-        });
-    }
     return () => {
-      active = false;
       controller.abort();
       popupRef.current?.close();
       popupRef.current = null;
@@ -324,11 +295,11 @@ export default function TaskDetailPanel({
       await openTaskAttachment(attachment, {
         now: () => Date.now() / 1000,
         isCurrent: isActive,
-        loadFields: () =>
-          getTaskSubmissionVersions(instanceId, signal).then((result) => {
-            if (isActive()) setVersions({ key: contextKey, data: result });
-            return result.flatMap((version) => version.fields);
-          }),
+        loadFields: async () => {
+          const result = await versionsQuery.refetch();
+          if (result.error || !result.data) throw result.error ?? new Error("版本记录加载失败");
+          return result.data.flatMap((version) => version.fields);
+        },
         openPopup: () => {
           const tab = window.open("", "_blank");
           if (!tab) return null;
@@ -405,7 +376,10 @@ export default function TaskDetailPanel({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setRetry((current2) => current2 + 1)}
+                  onClick={() => {
+                    void detailQuery.refetch();
+                    void versionsQuery.refetch();
+                  }}
                 >
                   重新加载
                 </Button>
@@ -444,7 +418,10 @@ export default function TaskDetailPanel({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setRetry((current2) => current2 + 1)}
+                      onClick={() => {
+                        void detailQuery.refetch();
+                        void versionsQuery.refetch();
+                      }}
                     >
                       重新加载
                     </Button>
@@ -487,8 +464,7 @@ export default function TaskDetailPanel({
                               <Badge variant="secondary">当前</Badge>
                             )}
                             <span className="min-w-0 flex-1 text-xs text-muted-foreground">
-                              {version.submittedBy?.nickname ?? "未知"} ·{" "}
-                              {version.submittedAt ?? "时间未知"}
+                              {submissionVersionAuthorLine(version)}
                             </span>
                             {expanded ? (
                               <ChevronUp className="size-4 shrink-0 text-muted-foreground" />

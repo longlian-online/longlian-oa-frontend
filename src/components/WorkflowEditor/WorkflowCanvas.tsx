@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import {
   MarkerType,
   ReactFlow,
@@ -13,9 +13,18 @@ import { Layers2, LocateFixed } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
+import { buildDragPreviewScene } from "./dragPreview";
 import WorkflowNode, { type WorkflowFlowNode } from "./WorkflowNode";
 import {
   groupNodes,
+  getWorkflowDropTarget,
+  applyWorkflowDropTarget,
+  WORKFLOW_STAGE_GAP as STAGE_GAP,
+  WORKFLOW_PARALLEL_GAP as PARALLEL_GAP,
+  WORKFLOW_START_X as START_X,
+  WORKFLOW_START_Y as START_Y,
+  WORKFLOW_NODE_WIDTH,
+  type WorkflowDropTarget,
   getNodeLabel,
   WORKFLOW_TASK_DRAG_TYPE,
   type WorkflowEditorNode,
@@ -32,12 +41,8 @@ interface WorkflowCanvasProps {
   onAddNode: (baseTaskId: string, stageIndex?: number) => void;
 }
 
+type CanvasNode = WorkflowFlowNode;
 const NODE_TYPES = { workflow: WorkflowNode };
-const STAGE_GAP = 316;
-const PARALLEL_GAP = 132;
-const START_X = 72;
-const START_Y = 80;
-const PARALLEL_SNAP_DISTANCE = 52;
 
 function buildFlowNodes(
   nodes: WorkflowEditorNode[],
@@ -108,13 +113,39 @@ export default function WorkflowCanvas({
     () => buildFlowNodes(nodes, baseTasks, selectedNodeId, onSelectNode, onRemoveNode),
     [baseTasks, nodes, onRemoveNode, onSelectNode, selectedNodeId],
   );
-  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<WorkflowFlowNode>(initialNodes);
+  const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<CanvasNode>(initialNodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(buildEdges(nodes));
   const [dragging, setDragging] = useState(false);
-  const [flowInstance, setFlowInstance] = useState<ReactFlowInstance<
-    WorkflowFlowNode,
-    Edge
-  > | null>(null);
+  const [flowInstance, setFlowInstance] = useState<ReactFlowInstance<CanvasNode, Edge> | null>(
+    null,
+  );
+
+  const [preview, setPreview] = useState<{ localId: string; target: WorkflowDropTarget } | null>(
+    null,
+  );
+  const previewRef = useRef<typeof preview>(null);
+  const previewNodes = useMemo(
+    () => (preview ? applyWorkflowDropTarget(nodes, preview.localId, preview.target) : null),
+    [nodes, preview],
+  );
+  const previewScene = useMemo(() => {
+    if (!preview || !previewNodes) return { nodes: flowNodes, edges: flowEdges };
+    return buildDragPreviewScene(
+      flowNodes,
+      buildFlowNodes(previewNodes, baseTasks, selectedNodeId, onSelectNode, onRemoveNode),
+      buildEdges(previewNodes),
+      preview.localId,
+    );
+  }, [
+    baseTasks,
+    flowEdges,
+    flowNodes,
+    onRemoveNode,
+    onSelectNode,
+    preview,
+    previewNodes,
+    selectedNodeId,
+  ]);
 
   useEffect(() => {
     if (!dragging) setFlowNodes(initialNodes);
@@ -124,36 +155,46 @@ export default function WorkflowCanvas({
     setFlowEdges(buildEdges(nodes));
   }, [nodes, setFlowEdges]);
 
-  const handleNodeClick: NodeMouseHandler<WorkflowFlowNode> = useCallback(
+  const handleNodeClick: NodeMouseHandler<CanvasNode> = useCallback(
     (_event, node) => onSelectNode(node.id),
     [onSelectNode],
   );
 
-  const handleNodeDragStop: OnNodeDrag<WorkflowFlowNode> = useCallback(
-    (_event, draggedNode) => {
-      setDragging(false);
-      const groups = groupNodes(nodes);
-      const candidates = groups
-        .map((group, index) => ({
-          group,
-          index,
-          distance: Math.abs(draggedNode.position.x - (START_X + index * STAGE_GAP)),
-        }))
-        .filter(({ group }) => !group.some((node) => node.localId === draggedNode.id));
-      const nearest = candidates.sort((prev, next) => prev.distance - next.distance)[0];
+  const getDropTarget = useCallback(
+    (node: CanvasNode): WorkflowDropTarget =>
+      getWorkflowDropTarget(nodes, node.id, {
+        x: node.position.x + (node.measured?.width ?? WORKFLOW_NODE_WIDTH) / 2,
+        y: node.position.y + (node.measured?.height ?? 96) / 2,
+      }),
+    [nodes],
+  );
 
-      if (nearest && nearest.distance < PARALLEL_SNAP_DISTANCE) {
-        onMoveToParallelGroup(draggedNode.id, nearest.group[0].sort);
+  const handleNodeDrag: OnNodeDrag<CanvasNode> = useCallback(
+    (_event, node): void => {
+      const target = getDropTarget(node);
+      const previous = previewRef.current;
+      if (
+        previous?.localId === node.id &&
+        JSON.stringify(previous.target) === JSON.stringify(target)
+      )
         return;
-      }
-
-      const targetStageIndex = Math.max(
-        0,
-        Math.min(groups.length, Math.round((draggedNode.position.x - START_X) / STAGE_GAP)),
-      );
-      onMoveToStage(draggedNode.id, targetStageIndex);
+      const next = { localId: node.id, target };
+      previewRef.current = next;
+      setPreview(next);
     },
-    [nodes, onMoveToParallelGroup, onMoveToStage],
+    [getDropTarget],
+  );
+
+  const handleNodeDragStop: OnNodeDrag<CanvasNode> = useCallback(
+    (_event, draggedNode): void => {
+      const target = getDropTarget(draggedNode);
+      previewRef.current = null;
+      setPreview(null);
+      setDragging(false);
+      if (target.type === "parallel") onMoveToParallelGroup(draggedNode.id, target.targetSort);
+      else onMoveToStage(draggedNode.id, target.stageIndex);
+    },
+    [getDropTarget, onMoveToParallelGroup, onMoveToStage],
   );
 
   const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>): void => {
@@ -218,14 +259,16 @@ export default function WorkflowCanvas({
           流程阶段
         </span>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">靠近节点同列并行，拖到列间新增阶段</span>
+          <span className="text-xs text-muted-foreground">
+            拖入节点中心并行，拖到左侧或列间插入阶段
+          </span>
           <Badge variant="outline">{nodes.length} 个节点</Badge>
         </div>
       </div>
-      <ReactFlow<WorkflowFlowNode, Edge>
+      <ReactFlow<CanvasNode, Edge>
         proOptions={{ hideAttribution: true }}
-        nodes={flowNodes}
-        edges={flowEdges}
+        nodes={previewScene.nodes}
+        edges={previewScene.edges}
         nodeTypes={NODE_TYPES}
         minZoom={0.55}
         maxZoom={1.35}
@@ -236,7 +279,11 @@ export default function WorkflowCanvas({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
-        onNodeDragStart={() => setDragging(true)}
+        onNodeDragStart={(event, node) => {
+          setDragging(true);
+          handleNodeDrag(event, node, [node]);
+        }}
+        onNodeDrag={handleNodeDrag}
         onNodeDragStop={handleNodeDragStop}
         onPaneClick={() => onSelectNode(null)}
         onInit={setFlowInstance}

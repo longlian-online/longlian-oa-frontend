@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { Check, Info, Loader2 } from "lucide-react";
 
+import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { createProject, updateProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
 import ProjectMetadataEditor from "@/components/ProjectMetadataEditor";
@@ -15,8 +16,14 @@ import { getStatusLabel } from "@/lib/projectStatus";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
+
 import type { UploadedFileInfo } from "@/types/file";
-import type { ProjectDetailInfoVO, ProjectStatus } from "@/types/planning";
+import type {
+  ProjectCreateDTO,
+  ProjectUpdateDTO,
+  ProjectDetailInfoVO,
+  ProjectStatus,
+} from "@/types/planning";
 import type { EditableProjectMetadataTag } from "@/components/ProjectMetadataEditor";
 import type { ProjectMetadataTag } from "@/lib/projectMetadata";
 
@@ -32,7 +39,16 @@ export default function CreateProject({ project }: CreateProjectProps) {
   const { projectTypes, loading: loadingProjectTypes } = useProjectTypes();
   const isEditing = Boolean(project);
   const coverBizId = project ? String(project.id) : (getCurrentOrgId() ?? "cover");
-  const [loading, setLoading] = useState(false);
+  const createMutation = useApiMutation({
+    mutationFn: (payload: ProjectCreateDTO) => createProject(payload),
+    invalidate: [["projects"], ["workshop"], ["plaza"]],
+  });
+  const updateMutation = useApiMutation({
+    mutationFn: (payload: ProjectUpdateDTO) => updateProject(project!.id, payload),
+    invalidate: [["projects"], ["workshop"], ["plaza"]],
+  });
+  const loading = createMutation.isPending || updateMutation.isPending;
+  const [showInvalid, setShowInvalid] = useState(false);
   const [formData, setFormData] = useState({
     title: project?.title ?? "",
     alias: project?.alias ?? "",
@@ -57,18 +73,28 @@ export default function CreateProject({ project }: CreateProjectProps) {
   );
   const selectedProjectType = projectTypes.find((type) => type.id === formData.typeId);
 
-  const canSubmit = Boolean(formData.title && formData.typeId && (isEditing || coverFile?.fileId));
+  const titleMissing = !formData.title.trim();
+  const typeMissing = !formData.typeId;
+  const coverMissing = !isEditing && !coverFile?.fileId;
 
+  const initializedProjectType = useRef(false);
   useEffect(() => {
-    if (!project || formData.typeId || projectTypes.length === 0) return;
+    if (initializedProjectType.current || !project || formData.typeId || projectTypes.length === 0)
+      return;
     const matchedType = projectTypes.find((type) => type.name === project.typeName);
     if (matchedType) {
+      initializedProjectType.current = true;
       setFormData((current) => ({ ...current, typeId: matchedType.id }));
     }
   }, [formData.typeId, project, projectTypes]);
 
+  const submitLock = useRef(false);
   async function handleSubmit(): Promise<void> {
-    if (!canSubmit || (!isEditing && !coverFile)) return;
+    if (submitLock.current || loading) return;
+    if (titleMissing || typeMissing || coverMissing) {
+      setShowInvalid(true);
+      return;
+    }
 
     const pendingTagKey = tagDraft.key.trim();
     const pendingTagValue = tagDraft.value.trim();
@@ -86,10 +112,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
       submittedTags.push({ key: pendingTagKey, value: pendingTagValue, color: tagDraft.color });
     }
 
+    submitLock.current = true;
     try {
-      setLoading(true);
       if (isEditing && project) {
-        await updateProject(project.id, {
+        await updateMutation.mutateAsync({
           title: formData.title.trim(),
           alias: formData.alias.trim() || formData.title.trim(),
           description: formData.description.trim(),
@@ -103,7 +129,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
         $tip("企划已更新", "success");
         void navigate(`/dashboard/planning/${project.id}`);
       } else if (coverFile) {
-        await createProject({
+        await createMutation.mutateAsync({
           title: formData.title.trim(),
           alias: formData.alias.trim() || formData.title.trim(),
           typeId: formData.typeId,
@@ -114,8 +140,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
         $tip("企划创建成功", "success");
         void navigate("/dashboard/planning");
       }
+    } catch {
+      /* 保留表单，由共享 Mutation 提示错误。 */
     } finally {
-      setLoading(false);
+      submitLock.current = false;
     }
   }
 
@@ -134,17 +162,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            className="min-w-24"
-            onClick={handleSubmit}
-            disabled={loading || !canSubmit}
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            {isEditing ? "保存修改" : "创建企划"}
-          </Button>
-        </div>
+        <Button size="sm" className="min-w-24" onClick={handleSubmit} disabled={loading}>
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+          {isEditing ? "保存修改" : "创建企划"}
+        </Button>
       </div>
 
       <div className="grid items-start justify-center gap-4 lg:items-stretch lg:grid-cols-[280px_minmax(0,720px)]">
@@ -152,7 +173,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
           <section className="flex w-full flex-col rounded-xl border bg-card p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-medium text-foreground">封面</h2>
+                <h2 className="text-sm font-medium text-foreground">
+                  封面
+                  {!isEditing && <span className="text-destructive"> *</span>}
+                </h2>
               </div>
             </div>
 
@@ -166,6 +190,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
               accept={["jpg", "jpeg", "png", "gif"]}
               maxSize={10 * 1024 * 1024}
               fillHeight
+              invalid={showInvalid && coverMissing}
               onChange={setCoverFile}
             />
           </section>
@@ -180,10 +205,13 @@ export default function CreateProject({ project }: CreateProjectProps) {
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-foreground">企划名</label>
+                <label className="text-sm font-medium text-foreground">
+                  企划名<span className="text-destructive"> *</span>
+                </label>
                 <Input
                   placeholder="例如：春季漫画汉化企划"
                   value={formData.title}
+                  aria-invalid={showInvalid && titleMissing}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
@@ -204,7 +232,9 @@ export default function CreateProject({ project }: CreateProjectProps) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">企划类型</label>
+                <label className="text-sm font-medium text-foreground">
+                  企划类型<span className="text-destructive"> *</span>
+                </label>
                 <Select
                   value={formData.typeId}
                   onValueChange={(value: string | null) =>
@@ -217,6 +247,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
                       "h-10 w-full justify-between px-3 text-sm font-medium",
                     )}
                     disabled={loadingProjectTypes}
+                    aria-invalid={showInvalid && typeMissing}
                   >
                     <span
                       className={cn("truncate", !selectedProjectType && "text-muted-foreground")}

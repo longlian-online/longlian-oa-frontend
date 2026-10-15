@@ -664,6 +664,11 @@
             "format": "int32",
             "type": "integer"
           },
+          "refCount": {
+            "description": "引用次数（该类型被企划引用的次数）",
+            "format": "int32",
+            "type": "integer"
+          },
           "status": {
             "description": "状态：ENABLED-启用，DISABLED-禁用",
             "enum": ["ENABLED", "DISABLED"],
@@ -899,6 +904,34 @@
         },
         "type": "object"
       },
+      "TaskTemplateListNodeVO": {
+        "description": "任务模板列表阶段预览，不含提交字段",
+        "properties": {
+          "baseTaskIcon": {
+            "description": "原子任务 Lucide 图标组件名",
+            "type": "string"
+          },
+          "baseTaskId": {
+            "description": "关联原子任务ID",
+            "type": "string"
+          },
+          "baseTaskName": {
+            "description": "原子任务名称，作为阶段名",
+            "type": "string"
+          },
+          "parallelSort": {
+            "description": "并行组内排序",
+            "format": "int32",
+            "type": "integer"
+          },
+          "sort": {
+            "description": "步骤顺序（相同 sort 表示并行节点）",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "TaskTemplateListVO": {
         "description": "任务模板列表行信息",
         "properties": {
@@ -927,6 +960,13 @@
             "description": "模板名称",
             "type": "string"
           },
+          "nodes": {
+            "description": "阶段预览。按 sort、parallelSort 排序，不含提交字段；编辑模板仍使用详情接口",
+            "items": {
+              "$ref": "#/components/schemas/TaskTemplateListNodeVO"
+            },
+            "type": "array"
+          },
           "refCount": {
             "description": "引用次数（已基于该模板创建的任务流数量）",
             "format": "int32",
@@ -936,6 +976,11 @@
             "description": "状态：ENABLED-启用，DISABLED-禁用",
             "enum": ["ENABLED", "DISABLED"],
             "type": "string"
+          },
+          "taskCount": {
+            "description": "任务节点数量（含并行节点）",
+            "format": "int32",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -1623,7 +1668,7 @@
     },
     "/orgadmin/task/base": {
       "post": {
-        "description": "任务创建后不可编辑，请确认标题、图标、简介和提交字段定义后提交",
+        "description": "创建任务标题、图标、简介和提交字段定义；创建后支持编辑",
         "operationId": "createBaseTask",
         "parameters": [
           {
@@ -1724,6 +1769,46 @@
         },
         "summary": "删除原子任务",
         "tags": ["原子任务管理"]
+      },
+      "put": {
+        "description": "整体更新任务定义；简介和图标省略或传 null 表示清空，submitFields 必填，传空数组清空提交字段。关联模板和后续新建工作流使用新定义，已有工作流保留名称及字段快照，图标同步更新。启用/禁用状态不变",
+        "operationId": "updateBaseTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseTaskCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "编辑原子任务",
+        "tags": ["原子任务管理"]
       }
     },
     "/orgadmin/task/base/{taskId}/status": {
@@ -1803,7 +1888,7 @@
     },
     "/orgadmin/task/template/list": {
       "post": {
-        "description": "支持名称模糊搜索、状态筛选、创建时间区间；支持按创建时间或引用次数排序，默认按引用次数倒序",
+        "description": "支持名称模糊搜索、状态筛选、创建时间区间；支持按创建时间或引用次数排序，默认按引用次数倒序。每行附带任务数和阶段预览（名称、图标、顺序），不含提交字段",
         "operationId": "listTaskTemplates",
         "parameters": [
           {
@@ -1982,16 +2067,16 @@
       "name": "企划类型管理"
     },
     {
+      "description": "原子任务（最小任务单元）的创建、编辑、启用/禁用和引用安全删除管理",
+      "name": "原子任务管理"
+    },
+    {
       "description": "组织成员管理：入组申请审核、组员列表、邀请",
       "name": "组织成员管理"
     },
     {
       "description": "组织相关接口",
       "name": "组织信息管理接口"
-    },
-    {
-      "description": "原子任务（最小任务单元）管理；任务创建后不可编辑，仅支持启用/禁用和删除未被引用的任务",
-      "name": "原子任务管理"
     },
     {
       "description": "任务流模板的增删改查与状态管理，仅管理员可操作",

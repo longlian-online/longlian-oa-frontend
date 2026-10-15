@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Ban,
   CheckCircle2,
@@ -9,6 +9,8 @@ import {
   Users,
 } from "lucide-react";
 
+import { getSessionSnapshot, saveCurrentOrganization } from "@/lib/session";
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import {
   changeMemberRole,
   changeMemberStatus,
@@ -50,11 +52,13 @@ import {
 } from "@/components/ui/table";
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
-import type {
-  MemberSubmitCountVO,
-  OrganizationMemberListDTO,
-  OrganizationMemberVO,
-} from "@/types/organizationAdmin";
+import type { OrganizationMemberVO } from "@/types/organizationAdmin";
+
+import {
+  commitMemberListFilters,
+  MEMBER_SEARCH_DEBOUNCE_MS,
+  type MemberListFilters,
+} from "./memberListFilters";
 
 const PAGE_SIZE = 10;
 
@@ -64,83 +68,95 @@ function memberName(member: OrganizationMemberVO): string {
 
 function OrganizationMembersContent() {
   const confirm = useConfirm();
-  const [members, setMembers] = useState<OrganizationMemberVO[]>([]);
-  const [searchText, setSearchText] = useState("");
-  const [keyword, setKeyword] = useState("");
-  const [startJoinedTime, setStartJoinedTime] = useState("");
-  const [endJoinedTime, setEndJoinedTime] = useState("");
-  const [orderDir, setOrderDir] =
-    useState<NonNullable<OrganizationMemberListDTO["orderDir"]>>("DESC");
+  const [filters, setFilters] = useState<MemberListFilters>({
+    keyword: "",
+    startJoinedTime: "",
+    endJoinedTime: "",
+    orderDir: "DESC",
+  });
+  const [appliedFilters, setAppliedFilters] = useState(filters);
+  const appliedFiltersRef = useRef(appliedFilters);
+  const changeMemberRoleMutation = useApiMutation<
+    Awaited<ReturnType<typeof changeMemberRole>>,
+    Parameters<typeof changeMemberRole>
+  >({
+    mutationFn: (args) => changeMemberRole(...args),
+    invalidate: [["members"], ["applications"], ["memberSubmitCounts"], ["currentUser"]],
+  });
+  const changeMemberStatusMutation = useApiMutation<
+    Awaited<ReturnType<typeof changeMemberStatus>>,
+    Parameters<typeof changeMemberStatus>
+  >({
+    mutationFn: (args) => changeMemberStatus(...args),
+    invalidate: [["members"], ["applications"], ["memberSubmitCounts"], ["currentUser"]],
+  });
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const mutatingId = changeMemberStatusMutation.isPending
+    ? String(changeMemberStatusMutation.variables?.[0] ?? "new")
+    : null;
   const [detailMember, setDetailMember] = useState<OrganizationMemberVO | null>(null);
-  const [submitCounts, setSubmitCounts] = useState<MemberSubmitCountVO[]>([]);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const detailQuery = useApiQuery({
+    key: ["memberSubmitCounts", detailMember?.id],
+    queryFn: () => getMemberSubmitCounts(detailMember!.id),
+    enabled: Boolean(detailMember),
+  });
+  const submitCounts = detailQuery.data?.list ?? [];
+  const detailLoading = detailQuery.isLoading;
   const [roleMember, setRoleMember] = useState<OrganizationMemberVO | null>(null);
   const [selectedRole, setSelectedRole] = useState<OrgMemberRole>("ORG_USER");
-  const [savingRole, setSavingRole] = useState(false);
+  const savingRole = changeMemberRoleMutation.isPending;
 
   useEffect(() => {
-    void loadMembers();
-  }, [keyword, startJoinedTime, endJoinedTime, orderDir, page]);
+    const next = commitMemberListFilters(appliedFiltersRef.current, filters);
+    if (!next) return;
+    const timer = window.setTimeout(() => {
+      appliedFiltersRef.current = next;
+      setAppliedFilters(next);
+      setPage(1);
+    }, MEMBER_SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [filters]);
 
-  async function loadMembers(): Promise<void> {
-    try {
-      setLoading(true);
-      const result = await getOrganizationMembers({
+  const listQuery = useApiQuery({
+    key: ["members", "management", appliedFilters, page],
+    queryFn: () =>
+      getOrganizationMembers({
         pageNum: page,
         pageSize: PAGE_SIZE,
-        keyword: keyword || undefined,
-        startJoinedTime: startJoinedTime || undefined,
-        endJoinedTime: endJoinedTime || undefined,
-        orderDir,
-      });
-      setMembers(result.list);
-      setTotal(result.total);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function handleSearch(): void {
-    setKeyword(searchText.trim());
-    setPage(1);
-  }
+        keyword: appliedFilters.keyword || undefined,
+        startJoinedTime: appliedFilters.startJoinedTime || undefined,
+        endJoinedTime: appliedFilters.endJoinedTime || undefined,
+        orderDir: appliedFilters.orderDir,
+      }),
+  });
+  const members = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
 
   async function handleStatusChange(member: OrganizationMemberVO): Promise<void> {
-    const disabled = member.status === "DISABLED";
-    const confirmed = await confirm({
-      title: disabled ? "启用成员？" : "禁用成员？",
-      description: disabled
-        ? `启用后「${memberName(member)}」可以继续参与组织工作。`
-        : `禁用后「${memberName(member)}」将无法继续参与组织工作。`,
-      confirmText: disabled ? "启用" : "禁用",
-      variant: disabled ? "default" : "destructive",
-    });
-    if (!confirmed) return;
-
     try {
-      setMutatingId(member.id);
-      await changeMemberStatus(member.id, disabled ? "ENABLED" : "DISABLED");
+      const disabled = member.status === "DISABLED";
+      const confirmed = await confirm({
+        title: disabled ? "启用成员？" : "禁用成员？",
+        description: disabled
+          ? `启用后「${memberName(member)}」可以继续参与组织工作。`
+          : `禁用后「${memberName(member)}」将无法继续参与组织工作。`,
+        confirmText: disabled ? "启用" : "禁用",
+        variant: disabled ? "default" : "destructive",
+      });
+      if (!confirmed) return;
+
+      await changeMemberStatusMutation.mutateAsync([member.id, disabled ? "ENABLED" : "DISABLED"]);
+      if (!disabled && member.userId === getSessionSnapshot().userId)
+        saveCurrentOrganization("", null);
       $tip(disabled ? "成员已启用" : "成员已禁用", "success");
-      await loadMembers();
-    } finally {
-      setMutatingId(null);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
-  async function handleOpenSubmitCounts(member: OrganizationMemberVO): Promise<void> {
+  function handleOpenSubmitCounts(member: OrganizationMemberVO): void {
     setDetailMember(member);
-    setSubmitCounts([]);
-    try {
-      setDetailLoading(true);
-      const result = await getMemberSubmitCounts(member.id);
-      setSubmitCounts(result.list);
-    } finally {
-      setDetailLoading(false);
-    }
   }
 
   function openRoleDialog(member: OrganizationMemberVO): void {
@@ -149,16 +165,15 @@ function OrganizationMembersContent() {
   }
 
   async function handleRoleChange(): Promise<void> {
-    if (!roleMember) return;
-
     try {
-      setSavingRole(true);
-      await changeMemberRole(roleMember.id, selectedRole);
+      if (!roleMember) return;
+      await changeMemberRoleMutation.mutateAsync([roleMember.id, selectedRole]);
+      if (roleMember.userId === getSessionSnapshot().userId)
+        saveCurrentOrganization(getSessionSnapshot().orgId ?? "", selectedRole);
       $tip("角色已修改", "success");
       setRoleMember(null);
-      await loadMembers();
-    } finally {
-      setSavingRole(false);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
@@ -176,56 +191,72 @@ function OrganizationMembersContent() {
           <div className="relative w-56 max-w-full">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              value={searchText}
+              value={filters.keyword}
               placeholder="搜索成员"
               className="pl-9"
-              onChange={(event) => setSearchText(event.target.value)}
-              onKeyDown={(event) => event.key === "Enter" && handleSearch()}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, keyword: event.target.value }))
+              }
             />
           </div>
-          <Input
-            type="date"
-            aria-label="入组开始日期"
-            value={startJoinedTime}
-            className="w-36"
-            onChange={(event) => {
-              setStartJoinedTime(event.target.value);
-              setPage(1);
-            }}
-          />
-          <Input
-            type="date"
-            aria-label="入组结束日期"
-            value={endJoinedTime}
-            className="w-36"
-            onChange={(event) => {
-              setEndJoinedTime(event.target.value);
-              setPage(1);
-            }}
-          />
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="member-start-joined" className="shrink-0 text-xs text-muted-foreground">
+              开始
+            </Label>
+            <Input
+              id="member-start-joined"
+              type="date"
+              lang="zh-CN"
+              aria-label="入组开始日期"
+              value={filters.startJoinedTime}
+              className="w-36"
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, startJoinedTime: event.target.value }))
+              }
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="member-end-joined" className="shrink-0 text-xs text-muted-foreground">
+              结束
+            </Label>
+            <Input
+              id="member-end-joined"
+              type="date"
+              lang="zh-CN"
+              aria-label="入组结束日期"
+              value={filters.endJoinedTime}
+              className="w-36"
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, endJoinedTime: event.target.value }))
+              }
+            />
+          </div>
           <Select
-            value={orderDir}
+            value={filters.orderDir}
             onValueChange={(value) => {
               if (!value) return;
-              setOrderDir(value as NonNullable<OrganizationMemberListDTO["orderDir"]>);
-              setPage(1);
+              setFilters((current) => ({
+                ...current,
+                orderDir: value as MemberListFilters["orderDir"],
+              }));
             }}
           >
             <SelectTrigger className="w-28" aria-label="排序方式">
-              <SelectValue>{orderDir === "ASC" ? "正序" : "倒序"}</SelectValue>
+              <SelectValue>{filters.orderDir === "ASC" ? "正序" : "倒序"}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="DESC">倒序</SelectItem>
               <SelectItem value="ASC">正序</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={handleSearch}>
-            搜索
-          </Button>
         </div>
       </div>
 
-      {loading ? (
+      {listQuery.isError && !listQuery.data ? (
+        <Button variant="outline" onClick={() => void listQuery.refetch()}>
+          加载失败，重试
+        </Button>
+      ) : loading ? (
         <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
           <Loader2 className="mr-2 size-4 animate-spin" />
           正在加载成员...
@@ -309,7 +340,7 @@ function OrganizationMembersContent() {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => void handleOpenSubmitCounts(member)}
+                            onClick={() => handleOpenSubmitCounts(member)}
                           >
                             <ClipboardList className="size-4" />
                             统计
@@ -363,7 +394,9 @@ function OrganizationMembersContent() {
             </DialogTitle>
             <DialogDescription>查看该成员按原子任务汇总的提交次数。</DialogDescription>
           </DialogHeader>
-          {detailLoading ? (
+          {detailQuery.isError && !detailQuery.data ? (
+            <Button onClick={() => void detailQuery.refetch()}>加载失败，重试</Button>
+          ) : detailLoading ? (
             <div className="flex min-h-24 items-center justify-center text-sm text-muted-foreground">
               <Loader2 className="mr-2 size-4 animate-spin" />
               正在加载统计...

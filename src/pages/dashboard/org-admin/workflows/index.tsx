@@ -1,12 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Loader2, Search, Workflow } from "lucide-react";
 
-import {
-  changeTaskTemplateStatus,
-  getOrganizationTaskTemplate,
-  getOrganizationTaskTemplateList,
-} from "@/api/organizationAdmin";
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { changeTaskTemplateStatus, getOrganizationTaskTemplateList } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
@@ -15,74 +12,35 @@ import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/hooks/useConfirm";
-import { toWorkflowTemplateNodes } from "@/lib/workflowTemplate";
+import { toOrganizationWorkflowCard } from "@/lib/workflowTemplate";
 import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
-import type {
-  OrganizationTaskTemplateVO,
-  OrganizationResourceStatus,
-} from "@/types/organizationAdmin";
+import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
 
 const PAGE_SIZE = 8;
-
-function toWorkflowCardTemplate(template: OrganizationTaskTemplateVO): WorkshopTaskTemplateVO {
-  return {
-    id: template.id,
-    name: template.name ?? "未命名工作流",
-    description: template.description,
-    scope: "ORGANIZATION",
-    taskCount: 0,
-    nodes: [],
-    isMine: true,
-  };
-}
 
 function OrganizationAdminWorkflowsContent() {
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const [templates, setTemplates] = useState<WorkshopTaskTemplateVO[]>([]);
-  const [templateStatuses, setTemplateStatuses] = useState<
-    Record<string, OrganizationResourceStatus>
-  >({});
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [mutatingTemplateId, setMutatingTemplateId] = useState<string | null>(null);
-
-  useEffect(() => {
-    void loadTemplates();
-  }, [keyword, page]);
-
-  async function loadTemplates(): Promise<void> {
-    try {
-      setLoading(true);
-      const data = await getOrganizationTaskTemplateList({
-        keyword,
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-      });
-      const cardTemplates = await Promise.all(
-        data.list.map(async (template) => {
-          const cardTemplate = toWorkflowCardTemplate(template);
-          try {
-            const detail = await getOrganizationTaskTemplate(template.id);
-            const nodes = toWorkflowTemplateNodes(detail.nodes);
-            return { ...cardTemplate, nodes, taskCount: nodes.length };
-          } catch {
-            return cardTemplate;
-          }
-        }),
-      );
-      setTemplates(cardTemplates);
-      setTemplateStatuses(
-        Object.fromEntries(data.list.map((template) => [template.id, template.status])),
-      );
-      setTotal(data.total);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const params = { keyword, pageNum: page, pageSize: PAGE_SIZE };
+  const listQuery = useApiQuery({
+    key: ["templates", "management", params],
+    queryFn: () => getOrganizationTaskTemplateList(params),
+  });
+  const templates = (listQuery.data?.list ?? []).map(toOrganizationWorkflowCard);
+  const templateStatuses = Object.fromEntries(
+    (listQuery.data?.list ?? []).map((template) => [template.id, template.status]),
+  );
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
+  const statusMutation = useApiMutation({
+    mutationFn: ({ id, status }: { id: string; status: OrganizationResourceStatus }) =>
+      changeTaskTemplateStatus(id, status),
+    invalidate: [["templates"], ["templateOptions"]],
+  });
+  const mutatingTemplateId = statusMutation.isPending ? statusMutation.variables?.id : null;
 
   function handleSearch(): void {
     setKeyword(searchText.trim());
@@ -94,25 +52,23 @@ function OrganizationAdminWorkflowsContent() {
   }
 
   async function handleStatusChange(template: WorkshopTaskTemplateVO): Promise<void> {
-    const isDisabled = templateStatuses[template.id] === "DISABLED";
-    const nextStatus: OrganizationResourceStatus = isDisabled ? "ENABLED" : "DISABLED";
-    const confirmed = await confirm({
-      title: isDisabled ? "启用工作流？" : "禁用工作流？",
-      description: isDisabled
-        ? `启用后「${template.name}」可以继续用于创建新项目。`
-        : `禁用后「${template.name}」不能再用于创建新项目，已有任务流不受影响。`,
-      confirmText: isDisabled ? "启用" : "禁用",
-      variant: isDisabled ? "default" : "destructive",
-    });
-    if (!confirmed) return;
-
     try {
-      setMutatingTemplateId(template.id);
-      await changeTaskTemplateStatus(template.id, nextStatus);
+      const isDisabled = templateStatuses[template.id] === "DISABLED";
+      const nextStatus: OrganizationResourceStatus = isDisabled ? "ENABLED" : "DISABLED";
+      const confirmed = await confirm({
+        title: isDisabled ? "启用工作流？" : "禁用工作流？",
+        description: isDisabled
+          ? `启用后「${template.name}」可以继续用于创建新项目。`
+          : `禁用后「${template.name}」不能再用于创建新项目，已有任务流不受影响。`,
+        confirmText: isDisabled ? "启用" : "禁用",
+        variant: isDisabled ? "default" : "destructive",
+      });
+      if (!confirmed) return;
+
+      await statusMutation.mutateAsync({ id: template.id, status: nextStatus });
       $tip(isDisabled ? "工作流已启用" : "工作流已禁用", "success");
-      await loadTemplates();
-    } finally {
-      setMutatingTemplateId(null);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
@@ -148,7 +104,9 @@ function OrganizationAdminWorkflowsContent() {
         </div>
       </div>
 
-      {loading ? (
+      {listQuery.isError && !listQuery.data ? (
+        <Button onClick={() => void listQuery.refetch()}>加载失败，重试</Button>
+      ) : loading ? (
         <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           正在加载工作流...

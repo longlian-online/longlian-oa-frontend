@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { ChevronRight, Loader2, Plus, Send, Trash2, Workflow } from "lucide-react";
 
@@ -31,14 +31,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
 import { cn } from "@/lib/utils";
+
 import type {
   ProjectItemListVO,
   ProjectItemNodeState,
   ProjectItemNodeVO,
   ProjectItemStatus,
-  TaskTemplateOptionVO,
 } from "@/types/projectItem";
 
 const PAGE_SIZE = 4;
@@ -46,7 +47,6 @@ const PAGE_SIZE = 4;
 interface ProjectItemSectionProps {
   projectId: string;
   isCreator?: boolean;
-  onChanged?: () => Promise<void> | void;
   showDetailLink?: boolean;
 }
 
@@ -110,20 +110,65 @@ function ProjectItemNodeList({ nodes }: { nodes: ProjectItemNodeVO[] }) {
 export default function ProjectItemSection({
   projectId,
   isCreator = false,
-  onChanged,
   showDetailLink = false,
 }: ProjectItemSectionProps) {
   const confirm = useConfirm();
   const navigate = useNavigate();
-  const [items, setItems] = useState<ProjectItemListVO[]>([]);
-  const [templates, setTemplates] = useState<TaskTemplateOptionVO[]>([]);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [templateLoading, setTemplateLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [mutatingItemId, setMutatingItemId] = useState<string | null>(null);
+  const actionLock = useRef(false);
+  const projectLifecycle = useRef({ id: projectId, generation: 0 });
+  if (projectLifecycle.current.id !== projectId) {
+    projectLifecycle.current = {
+      id: projectId,
+      generation: projectLifecycle.current.generation + 1,
+    };
+  }
+  const generation = projectLifecycle.current.generation;
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const isCurrent = (): boolean =>
+    mounted.current && projectLifecycle.current.generation === generation;
+  const itemsQuery = useApiQuery({
+    key: ["items", "list", projectId, { pageNum: page, pageSize: PAGE_SIZE }],
+    queryFn: () => getProjectItemList(projectId, { pageNum: page, pageSize: PAGE_SIZE }),
+    enabled: Boolean(projectId),
+  });
+  const templatesQuery = useApiQuery({
+    key: ["templateOptions"],
+    queryFn: getTaskTemplateOptions,
+    enabled: dialogOpen,
+    staleTime: 300_000,
+  });
+  const createMutation = useApiMutation({
+    mutationFn: (dto: ProjectItemForm) => createProjectItem(projectId, dto),
+    invalidate: [["items"], ["projects"], ["workshop"], ["plaza"]],
+  });
+  const itemMutation = useApiMutation({
+    mutationFn: ({ id, publish }: { id: string; publish: boolean }) =>
+      publish ? publishProjectItem(projectId, id) : deleteProjectItem(projectId, id),
+    invalidate: [
+      ["items"],
+      ["projects"],
+      ["flow"],
+      ["instances"],
+      ["taskDetail"],
+      ["workshop"],
+      ["plaza"],
+    ],
+  });
+  const items = itemsQuery.data?.list ?? [];
+  const total = itemsQuery.data?.total ?? 0;
+  const templates = templatesQuery.data ?? [];
+  const loading = itemsQuery.isLoading;
+  const templateLoading = templatesQuery.isLoading;
+  const saving = createMutation.isPending;
+  const mutatingItemId = itemMutation.isPending ? itemMutation.variables?.id : null;
   const [form, setForm] = useState<ProjectItemForm>({
     title: "",
     taskTemplateId: "",
@@ -134,61 +179,28 @@ export default function ProjectItemSection({
     [form.taskTemplateId, form.title, saving],
   );
 
-  useEffect(() => {
-    void loadItems();
-  }, [page, projectId]);
-
-  useEffect(() => {
-    if (dialogOpen && templates.length === 0) {
-      void loadTemplates();
-    }
-  }, [dialogOpen, templates.length]);
-
-  async function loadItems(): Promise<void> {
-    try {
-      setLoading(true);
-      const data = await getProjectItemList(projectId, {
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-      });
-      setItems(data.list);
-      setTotal(data.total);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadTemplates(): Promise<void> {
-    try {
-      setTemplateLoading(true);
-      const data = await getTaskTemplateOptions();
-      setTemplates(data);
-    } finally {
-      setTemplateLoading(false);
-    }
-  }
-
   function openCreateDialog(): void {
     setForm({ title: "", taskTemplateId: "" });
     setDialogOpen(true);
   }
 
   async function handleCreateItem(): Promise<void> {
-    if (!canCreate) return;
+    if (!canCreate || actionLock.current) return;
+    actionLock.current = true;
 
     try {
-      setSaving(true);
-      await createProjectItem(projectId, {
+      await createMutation.mutateAsync({
         title: form.title.trim(),
         taskTemplateId: form.taskTemplateId,
       });
+      if (!isCurrent()) return;
       $tip("项目已创建", "success");
       setDialogOpen(false);
       setPage(1);
-      await loadItems();
-      await onChanged?.();
+    } catch {
+      // Mutation 的最终失败由共享错误入口提示，保留当前草稿。
     } finally {
-      setSaving(false);
+      actionLock.current = false;
     }
   }
 
@@ -198,20 +210,20 @@ export default function ProjectItemSection({
       description: `删除后「${item.title}」的流程与任务记录将不可恢复。`,
       confirmText: "删除",
     });
-    if (!confirmed) return;
+    if (!confirmed || actionLock.current) return;
+    actionLock.current = true;
 
     try {
-      setMutatingItemId(item.id);
-      await deleteProjectItem(projectId, item.id);
+      await itemMutation.mutateAsync({ id: item.id, publish: false });
+      if (!isCurrent()) return;
       $tip("项目已删除", "success");
       if (items.length === 1 && page > 1) {
         setPage(page - 1);
-      } else {
-        await loadItems();
       }
-      await onChanged?.();
+    } catch {
+      // Mutation 的最终失败由共享错误入口提示，保留当前草稿。
     } finally {
-      setMutatingItemId(null);
+      actionLock.current = false;
     }
   }
 
@@ -221,16 +233,17 @@ export default function ProjectItemSection({
       description: `发布后「${item.title}」会进入成员可见状态。`,
       confirmText: "发布",
     });
-    if (!confirmed) return;
+    if (!confirmed || actionLock.current) return;
+    actionLock.current = true;
 
     try {
-      setMutatingItemId(item.id);
-      await publishProjectItem(projectId, item.id);
+      await itemMutation.mutateAsync({ id: item.id, publish: true });
+      if (!isCurrent()) return;
       $tip("项目已发布", "success");
-      await loadItems();
-      await onChanged?.();
+    } catch {
+      // Mutation 的最终失败由共享错误入口提示，保留当前草稿。
     } finally {
-      setMutatingItemId(null);
+      actionLock.current = false;
     }
   }
 
@@ -272,6 +285,11 @@ export default function ProjectItemSection({
         <div className="flex min-h-40 items-center justify-center text-sm text-muted-foreground">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           正在加载项目...
+        </div>
+      ) : itemsQuery.isError && !itemsQuery.data ? (
+        <div className="py-8 text-center">
+          <p>项目加载失败</p>
+          <Button onClick={() => void itemsQuery.refetch()}>重新加载</Button>
         </div>
       ) : items.length === 0 ? (
         <EmptyState
@@ -409,9 +427,17 @@ export default function ProjectItemSection({
                 onValueChange={(value: string | null) =>
                   setForm({ ...form, taskTemplateId: value || "" })
                 }
+                disabled={templateLoading}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={templateLoading ? "正在加载模板" : "选择流程模板"} />
+                <SelectTrigger className="w-full" disabled={templateLoading}>
+                  {templateLoading ? (
+                    <span className="flex flex-1 items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      正在加载模板
+                    </span>
+                  ) : (
+                    <SelectValue placeholder="选择流程模板" />
+                  )}
                 </SelectTrigger>
                 <SelectContent>
                   {templates.map((template) => (

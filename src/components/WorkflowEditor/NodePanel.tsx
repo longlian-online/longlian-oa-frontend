@@ -1,10 +1,11 @@
-import { useMemo, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { Loader2, Plus, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { getWorkflowTaskDescription, getWorkflowTaskIcon } from "@/lib/workflowVisuals";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
+import { createTaskDragImage } from "./taskDragImage";
 import { WORKFLOW_TASK_DRAG_TYPE } from "./utils";
 
 interface NodePanelProps {
@@ -14,6 +15,25 @@ interface NodePanelProps {
 }
 
 export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: NodePanelProps) {
+  const dragImages = useRef(new WeakMap<HTMLButtonElement, HTMLImageElement>());
+  const activeDragImage = useRef<HTMLImageElement | null>(null);
+  useEffect(() => () => activeDragImage.current?.remove(), []);
+
+  function handlePrepareDragImage(button: HTMLButtonElement): void {
+    void createTaskDragImage(button)
+      .then((image) => {
+        if (image && button.isConnected) dragImages.current.set(button, image);
+      })
+      .catch(() => {
+        dragImages.current.delete(button);
+      });
+  }
+
+  function handleDragEnd(): void {
+    activeDragImage.current?.remove();
+    activeDragImage.current = null;
+  }
+
   const [keyword, setKeyword] = useState("");
   const filteredTasks = useMemo(() => {
     const query = keyword.trim().toLocaleLowerCase();
@@ -26,6 +46,16 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
   }, [baseTasks, keyword]);
 
   function handleDragStart(event: DragEvent<HTMLButtonElement>, taskId: string): void {
+    const button = event.currentTarget;
+    const image = dragImages.current.get(button);
+    if (image?.complete && image.naturalWidth > 0) {
+      handleDragEnd();
+      image.className = "pointer-events-none fixed left-0 top-0 -translate-x-full";
+      document.body.append(image);
+      activeDragImage.current = image;
+      const bounds = button.getBoundingClientRect();
+      event.dataTransfer.setDragImage(image, event.clientX - bounds.x, event.clientY - bounds.y);
+    }
     event.dataTransfer.effectAllowed = "copy";
     event.dataTransfer.setData(WORKFLOW_TASK_DRAG_TYPE, taskId);
   }
@@ -75,6 +105,9 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
                 }
                 className="group inline-flex h-10 max-w-44 shrink-0 cursor-grab items-center gap-2 rounded-full border bg-background px-2.5 text-left transition-[border-color,box-shadow] hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm active:cursor-grabbing"
                 onClick={() => onAddNode(String(task.id))}
+                onPointerEnter={(event) => handlePrepareDragImage(event.currentTarget)}
+                onPointerDown={(event) => handlePrepareDragImage(event.currentTarget)}
+                onDragEnd={handleDragEnd}
                 onDragStart={(event) => handleDragStart(event, String(task.id))}
               >
                 <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">

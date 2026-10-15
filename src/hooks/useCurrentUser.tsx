@@ -1,7 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 
 import { getCurrentUser } from "@/api/user";
-import { getSessionRole, getToken } from "@/lib/session";
+import { useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
+
 import type { UserInfoVO } from "@/types/user";
 
 interface UseCurrentUserResult {
@@ -12,61 +13,25 @@ interface UseCurrentUserResult {
   error: string | null;
   refresh: () => Promise<void>;
 }
-
 const CurrentUserContext = createContext<UseCurrentUserResult | null>(null);
 
-function useCurrentUserState(): UseCurrentUserResult {
-  const [user, setUser] = useState<UserInfoVO | null>(null);
-  const [role, setRole] = useState<string | null>(getSessionRole);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async (): Promise<void> => {
-    if (!getToken()) {
-      setUser(null);
-      setRole(null);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-      setRole(getSessionRole());
-    } catch (refreshError) {
-      setUser(null);
-      setRole(getSessionRole());
-      setError(refreshError instanceof Error ? refreshError.message : "获取用户信息失败");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  return {
-    user,
-    role,
-    isLoading,
-    isAuthenticated: !!getToken(),
-    error,
-    refresh,
-  };
-}
-
 export function CurrentUserProvider({ children }: { children: ReactNode }) {
-  const value = useCurrentUserState();
+  const session = useSessionSnapshot();
+  const query = useApiQuery({ key: ["currentUser"], queryFn: getCurrentUser, scope: "account" });
+  const value: UseCurrentUserResult = {
+    user: query.data ?? null,
+    role: session.role,
+    isLoading: query.isLoading,
+    isAuthenticated: Boolean(session.token),
+    error: query.error?.message ?? null,
+    refresh: async (): Promise<void> => {
+      await query.refetch();
+    },
+  };
   return <CurrentUserContext.Provider value={value}>{children}</CurrentUserContext.Provider>;
 }
-
 export function useCurrentUser(): UseCurrentUserResult {
   const context = useContext(CurrentUserContext);
-  if (!context) {
-    throw new Error("useCurrentUser must be used within CurrentUserProvider");
-  }
+  if (!context) throw new Error("useCurrentUser must be used within CurrentUserProvider");
   return context;
 }

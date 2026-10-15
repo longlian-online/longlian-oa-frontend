@@ -1,11 +1,20 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { ApiError } from "@/api/apiError";
 import { createFileUpload } from "@/api/file";
+import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { $tip } from "@/components/tip";
 import { requestImageCrop, UploadCancelledError } from "@/lib/imageCropRequest";
+import { getSessionSnapshot } from "@/lib/session";
+import { isScopeCurrent } from "@/lib/queryKeys";
 import { AuthExpiredError } from "@/lib/authError";
-import type { FileValidationOptions, UploadedFileInfo, UploadBizType } from "@/types/file";
+
+import type {
+  CreateFileReqDTO,
+  FileValidationOptions,
+  UploadedFileInfo,
+  UploadBizType,
+} from "@/types/file";
 
 const DEFAULT_MAX_SIZE = 50 * 1024 * 1024;
 const DEFAULT_ACCEPT = [
@@ -125,6 +134,16 @@ async function uploadToPresignedUrl(
 
 export function useUploadFile(): UseUploadFileResult {
   const [uploading, setUploading] = useState(false);
+  const activeUploads = useRef(0);
+  const allocation = useApiMutation({
+    mutationFn: (dto: CreateFileReqDTO) => createFileUpload(dto),
+    allowConcurrent: true,
+  });
+  const avatarAllocation = useApiMutation({
+    mutationFn: (dto: CreateFileReqDTO) => createFileUpload(dto),
+    allowConcurrent: true,
+    scope: "account",
+  });
 
   const uploadFile = async (file: File, options: UploadFileOptions): Promise<UploadedFileInfo> => {
     const validationError = validateFile(file, options);
@@ -133,6 +152,12 @@ export function useUploadFile(): UseUploadFileResult {
       throw new Error(validationError);
     }
 
+    const started = getSessionSnapshot();
+    const scope = options.bizType === "avatar" ? "account" : "org";
+    const ensureCurrent = (): void => {
+      if (!isScopeCurrent(scope, started)) throw new DOMException("会话已切换", "AbortError");
+    };
+    activeUploads.current += 1;
     setUploading(true);
     try {
       if (normalizeMimeType(file, getFileExt(file.name)).startsWith("image/")) {
@@ -143,9 +168,12 @@ export function useUploadFile(): UseUploadFileResult {
         const croppedValidationError = validateFile(file, options);
         if (croppedValidationError) throw new Error(croppedValidationError);
       }
+      ensureCurrent();
       const fileExt = getFileExt(file.name);
       const fileMime = normalizeMimeType(file, fileExt);
-      const resource = await createFileUpload({
+      const resource = await (
+        options.bizType === "avatar" ? avatarAllocation : allocation
+      ).mutateAsync({
         fileName: file.name,
         fileExt,
         fileSize: file.size,
@@ -156,6 +184,7 @@ export function useUploadFile(): UseUploadFileResult {
 
       await uploadToPresignedUrl(resource.uploadUrl, file, resource.contentDisposition);
 
+      ensureCurrent();
       const uploadedFile: UploadedFileInfo = {
         fileId: resource.fileId,
         fileName: file.name,
@@ -169,6 +198,7 @@ export function useUploadFile(): UseUploadFileResult {
     } catch (error) {
       if (
         !(error instanceof UploadCancelledError) &&
+        !(error instanceof Error && error.name === "AbortError") &&
         !(error instanceof ApiError) &&
         !(error instanceof AuthExpiredError)
       ) {
@@ -176,7 +206,8 @@ export function useUploadFile(): UseUploadFileResult {
       }
       throw error;
     } finally {
-      setUploading(false);
+      activeUploads.current -= 1;
+      setUploading(activeUploads.current > 0);
     }
   };
 

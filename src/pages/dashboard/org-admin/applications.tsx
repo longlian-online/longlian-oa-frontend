@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, Clock3, Loader2, Search, UserRound, X } from "lucide-react";
 
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { getJoinApplications, reviewJoinApplication } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
@@ -26,8 +27,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { JoinApplicationReviewDTO, JoinApplicationVO } from "@/types/organizationAdmin";
 import { formatDate } from "@/lib/format";
+
+import type { JoinApplicationReviewDTO, JoinApplicationVO } from "@/types/organizationAdmin";
 
 const PAGE_SIZE = 10;
 
@@ -38,36 +40,34 @@ function applicationName(application: JoinApplicationVO): string {
 type ReviewAction = Extract<JoinApplicationReviewDTO["applicationStatus"], "APPROVED" | "REJECTED">;
 
 function OrganizationApplicationsContent() {
-  const [applications, setApplications] = useState<JoinApplicationVO[]>([]);
+  const reviewJoinApplicationMutation = useApiMutation<
+    Awaited<ReturnType<typeof reviewJoinApplication>>,
+    Parameters<typeof reviewJoinApplication>
+  >({
+    mutationFn: (args) => reviewJoinApplication(...args),
+    invalidate: [["applications"], ["members"], ["memberSubmitCounts"], ["currentUser"]],
+  });
   const [searchText, setSearchText] = useState("");
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [reviewing, setReviewing] = useState<JoinApplicationVO | null>(null);
   const [reviewAction, setReviewAction] = useState<ReviewAction>("APPROVED");
   const [reviewRemark, setReviewRemark] = useState("");
-  const [reviewLoading, setReviewLoading] = useState(false);
+  const reviewLoading = reviewJoinApplicationMutation.isPending;
 
-  useEffect(() => {
-    void loadApplications();
-  }, [keyword, page]);
-
-  async function loadApplications(): Promise<void> {
-    try {
-      setLoading(true);
-      const result = await getJoinApplications({
+  const listQuery = useApiQuery({
+    key: ["applications", "management", keyword, page],
+    queryFn: () =>
+      getJoinApplications({
         pageNum: page,
         pageSize: PAGE_SIZE,
         keyword: keyword || undefined,
         orderDir: "DESC",
-      });
-      setApplications(result.list);
-      setTotal(result.total);
-    } finally {
-      setLoading(false);
-    }
-  }
+      }),
+  });
+  const applications = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
 
   function handleSearch(): void {
     setKeyword(searchText.trim());
@@ -81,18 +81,19 @@ function OrganizationApplicationsContent() {
   }
 
   async function handleReview(): Promise<void> {
-    if (!reviewing) return;
     try {
-      setReviewLoading(true);
-      await reviewJoinApplication(reviewing.id, {
-        applicationStatus: reviewAction,
-        reviewRemark: reviewRemark.trim() || undefined,
-      });
+      if (!reviewing) return;
+      await reviewJoinApplicationMutation.mutateAsync([
+        reviewing.id,
+        {
+          applicationStatus: reviewAction,
+          reviewRemark: reviewRemark.trim() || undefined,
+        },
+      ]);
       $tip(reviewAction === "APPROVED" ? "已通过入组申请" : "已拒绝入组申请", "success");
       setReviewing(null);
-      await loadApplications();
-    } finally {
-      setReviewLoading(false);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
@@ -120,7 +121,11 @@ function OrganizationApplicationsContent() {
         </div>
       </div>
 
-      {loading ? (
+      {listQuery.isError && !listQuery.data ? (
+        <Button variant="outline" onClick={() => void listQuery.refetch()}>
+          加载失败，重试
+        </Button>
+      ) : loading ? (
         <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
           <Loader2 className="mr-2 size-4 animate-spin" />
           正在加载申请...

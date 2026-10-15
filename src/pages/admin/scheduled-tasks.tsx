@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CalendarClock, Loader2, Play } from "lucide-react";
 
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { getScheduledTasks, triggerScheduledTask } from "@/api/admin";
 import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
@@ -25,40 +26,40 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import type { ScheduledTaskVO } from "@/types/admin";
 
 export default function ScheduledTasksPage() {
-  const [tasks, setTasks] = useState<ScheduledTaskVO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [triggering, setTriggering] = useState(false);
+  const triggerScheduledTaskMutation = useApiMutation<
+    Awaited<ReturnType<typeof triggerScheduledTask>>,
+    Parameters<typeof triggerScheduledTask>
+  >({
+    mutationFn: (args) => triggerScheduledTask(...args),
+    invalidate: [["scheduledTasks"]],
+    scope: "admin",
+  });
+  const tasksQuery = useApiQuery({
+    key: ["scheduledTasks"],
+    queryFn: getScheduledTasks,
+    scope: "admin",
+  });
+  const tasks = tasksQuery.data ?? [];
+  const loading = tasksQuery.isLoading;
+  const triggering = triggerScheduledTaskMutation.isPending;
   const [selectedTask, setSelectedTask] = useState<ScheduledTaskVO | null>(null);
   const [executeTime, setExecuteTime] = useState("");
 
-  async function loadTasks(): Promise<void> {
-    try {
-      setLoading(true);
-      setTasks(await getScheduledTasks());
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadTasks();
-  }, []);
-
   async function handleTrigger(): Promise<void> {
-    if (!selectedTask) return;
     try {
-      setTriggering(true);
-      await triggerScheduledTask(
+      if (!selectedTask) return;
+      await triggerScheduledTaskMutation.mutateAsync([
         selectedTask.taskName,
         executeTime ? { executeTime: new Date(executeTime).toISOString() } : {},
-      );
+      ]);
       $tip("定时任务已触发", "success");
       setSelectedTask(null);
-    } finally {
-      setTriggering(false);
+    } catch {
+      /* QueryClient 统一显示最终错误，草稿保留。 */
     }
   }
 
@@ -66,7 +67,9 @@ export default function ScheduledTasksPage() {
     <AdminLayout title="定时任务" description="查看后台已注册任务，必要时手动触发执行。">
       <Card>
         <CardContent className="p-4 sm:p-6">
-          {loading ? (
+          {tasksQuery.isError && !tasksQuery.data ? (
+            <Button onClick={() => void tasksQuery.refetch()}>加载失败，重试</Button>
+          ) : loading ? (
             <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
               <Loader2 className="mr-2 size-4 animate-spin" />
               加载中...
