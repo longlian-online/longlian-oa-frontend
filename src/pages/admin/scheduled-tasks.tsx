@@ -2,7 +2,8 @@ import { useState } from "react";
 import { CalendarClock, Loader2, Play } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
-import { getScheduledTasks, triggerScheduledTask } from "@/api/admin";
+import { triggerScheduledTask } from "@/api/admin";
+import { scheduledTasksQuery } from "@/queries/admin";
 import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
 import { $tip } from "@/components/tip";
@@ -38,11 +39,7 @@ export default function ScheduledTasksPage() {
     invalidate: [["scheduledTasks"]],
     scope: "admin",
   });
-  const tasksQuery = useApiQuery({
-    key: ["scheduledTasks"],
-    queryFn: getScheduledTasks,
-    scope: "admin",
-  });
+  const tasksQuery = useApiQuery(scheduledTasksQuery());
   const tasks = tasksQuery.data ?? [];
   const loading = tasksQuery.isLoading;
   const triggering = triggerScheduledTaskMutation.isPending;

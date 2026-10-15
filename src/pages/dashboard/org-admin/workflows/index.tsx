@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Loader2, Search, Workflow } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
-import { changeTaskTemplateStatus, getOrganizationTaskTemplateList } from "@/api/organizationAdmin";
+import { changeTaskTemplateStatus } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
@@ -13,10 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/hooks/useConfirm";
 import { toOrganizationWorkflowCard } from "@/lib/workflowTemplate";
+import {
+  ORGANIZATION_ADMIN_CARD_PAGE_SIZE as PAGE_SIZE,
+  organizationTemplatesQuery,
+} from "@/queries/organizationAdmin";
 import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
-
-const PAGE_SIZE = 8;
 
 function OrganizationAdminWorkflowsContent() {
   const navigate = useNavigate();
@@ -24,11 +26,7 @@ function OrganizationAdminWorkflowsContent() {
   const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
-  const params = { keyword, pageNum: page, pageSize: PAGE_SIZE };
-  const listQuery = useApiQuery({
-    key: ["templates", "management", params],
-    queryFn: () => getOrganizationTaskTemplateList(params),
-  });
+  const listQuery = useApiQuery(organizationTemplatesQuery(keyword, page));
   const templates = (listQuery.data?.list ?? []).map(toOrganizationWorkflowCard);
   const templateStatuses = Object.fromEntries(
     (listQuery.data?.list ?? []).map((template) => [template.id, template.status]),

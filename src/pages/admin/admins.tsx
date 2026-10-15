@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Loader2, Plus, Trash2, UserRound } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
-import { createAdmin, deleteAdmin, getAdminList } from "@/api/admin";
+import { createAdmin, deleteAdmin } from "@/api/admin";
 import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
@@ -29,9 +29,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import { ADMIN_PAGE_SIZE as PAGE_SIZE, adminListQuery } from "@/queries/admin";
 import type { AdminCreateDTO, AdminVO } from "@/types/admin";
-
-const PAGE_SIZE = 10;
 
 export default function AdminsPage() {
   const createAdminMutation = useApiMutation<
@@ -47,11 +46,7 @@ export default function AdminsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<AdminCreateDTO>({ username: "", password: "" });
 
-  const listQuery = useApiQuery({
-    key: ["adminAdmins", "management", page],
-    queryFn: () => getAdminList({ pageNum: page, pageSize: PAGE_SIZE }),
-    scope: "admin",
-  });
+  const listQuery = useApiQuery(adminListQuery(page));
   const admins = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;

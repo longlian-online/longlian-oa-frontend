@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check, Clock3, Loader2, Search, UserRound, X } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
-import { getJoinApplications, reviewJoinApplication } from "@/api/organizationAdmin";
+import { reviewJoinApplication } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
@@ -29,9 +29,11 @@ import {
 } from "@/components/ui/table";
 import { formatDate } from "@/lib/format";
 
+import {
+  ORGANIZATION_ADMIN_PAGE_SIZE as PAGE_SIZE,
+  organizationApplicationsQuery,
+} from "@/queries/organizationAdmin";
 import type { JoinApplicationReviewDTO, JoinApplicationVO } from "@/types/organizationAdmin";
-
-const PAGE_SIZE = 10;
 
 function applicationName(application: JoinApplicationVO): string {
   return application.nickname || application.username || application.userId;
@@ -55,16 +57,7 @@ function OrganizationApplicationsContent() {
   const [reviewRemark, setReviewRemark] = useState("");
   const reviewLoading = reviewJoinApplicationMutation.isPending;
 
-  const listQuery = useApiQuery({
-    key: ["applications", "management", keyword, page],
-    queryFn: () =>
-      getJoinApplications({
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-        keyword: keyword || undefined,
-        orderDir: "DESC",
-      }),
-  });
+  const listQuery = useApiQuery(organizationApplicationsQuery(keyword, page));
   const applications = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;
