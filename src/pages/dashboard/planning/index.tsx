@@ -24,7 +24,7 @@ import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 
 import type { ProjectInfoVO, ProjectListDTO } from "@/types/planning";
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 12;
 const DEFAULT_TIME_SORT: Required<Pick<ProjectListDTO, "sortByTime" | "orderDir">> = {
   sortByTime: "CREATE",
   orderDir: "DESC",
