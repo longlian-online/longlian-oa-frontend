@@ -12,7 +12,7 @@ function buildQuery(params?: ProjectItemListDTO): string {
 
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== "") {
+    if (value !== undefined && (value !== "" || key === "status")) {
       searchParams.set(key, String(value));
     }
   });
@@ -41,12 +41,6 @@ export async function createProjectItem(
 export async function deleteProjectItem(projectId: string, itemId: string): Promise<void> {
   return request(`/projects/${projectId}/items/${itemId}`, {
     method: "DELETE",
-  });
-}
-
-export async function publishProjectItem(projectId: string, itemId: string): Promise<void> {
-  return request(`/projects/${projectId}/items/${itemId}/publish`, {
-    method: "PATCH",
   });
 }
 

@@ -12,7 +12,7 @@ import type {
   ProjectTypeInfoVO,
 } from "@/types/planning";
 import type { PlazaProjectGroup, PlazaSortBy } from "@/types/plaza";
-import type { ProjectItemListVO } from "@/types/projectItem";
+import type { ProjectItemListFilter, ProjectItemListVO } from "@/types/projectItem";
 import type { ItemTaskFlowVO, ItemTaskInstanceVO } from "@/types/workflowInstance";
 
 export const PLANNING_PAGE_SIZE = 12;
@@ -59,8 +59,16 @@ export function projectDetailQuery(
 export function projectItemsQuery(
   projectId: string,
   pageNum = 1,
+  status: ProjectItemListFilter | "" = "IN_PROGRESS",
+  orderDir: "ASC" | "DESC" = "DESC",
 ): ApiQueryOptions<PageResult<ProjectItemListVO>> {
-  const params = { pageNum, pageSize: PROJECT_ITEMS_PAGE_SIZE };
+  const params = {
+    pageNum,
+    pageSize: PROJECT_ITEMS_PAGE_SIZE,
+    status,
+    sortByTime: "CREATE" as const,
+    orderDir,
+  };
   return {
     key: ["items", "list", projectId, params],
     queryFn: () => getProjectItemList(projectId, params),

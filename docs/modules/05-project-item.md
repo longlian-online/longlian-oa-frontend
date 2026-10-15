@@ -11,9 +11,11 @@
 - 查询企划下项目列表。
 - 创建项目并绑定流程模板。
 - 删除项目。
-- 发布项目。
-  - 仅当项目下所有任务都已完成时才显示发布按钮，由后端再次校验。
 - 展示项目进度、当前节点和节点概览。
+- 按「进行中 / 已完成 / 全部」筛选，默认展示进行中。已完成指至少有一个任务且全部任务已完成；没有任务或仍有未完成任务的项目属于进行中。全部包含这两类。
+- 支持「最早发布 / 最新发布」排序，默认最新发布；切换状态或排序时回到第一页，切换状态保留排序。
+- 排序复用列表接口的 `sortByTime=CREATE` 和 `orderDir=ASC/DESC`（当前接口无独立发布时间字段，按条目创建时间排序）。
+- 全部状态显式发送 `status=`，避免省略参数时触发后端默认进行中筛选。
 
 暂不实现：
 
@@ -46,12 +48,11 @@ src/
 
 ## 接口
 
-| 方法     | 路径                                               | 用途             |
-| -------- | -------------------------------------------------- | ---------------- |
-| `GET`    | `/app/projects/{projectId}/items`                  | 分页查询项目列表 |
-| `POST`   | `/app/projects/{projectId}/items`                  | 创建项目         |
-| `DELETE` | `/app/projects/{projectId}/items/{itemId}`         | 删除项目         |
-| `PATCH`  | `/app/projects/{projectId}/items/{itemId}/publish` | 公布项目         |
+| 方法     | 路径                                       | 用途             |
+| -------- | ------------------------------------------ | ---------------- |
+| `GET`    | `/app/projects/{projectId}/items`          | 分页查询项目列表 |
+| `POST`   | `/app/projects/{projectId}/items`          | 创建项目         |
+| `DELETE` | `/app/projects/{projectId}/items/{itemId}` | 删除项目         |
 
 ## 数据结构
 
@@ -64,7 +65,6 @@ interface ProjectItemCreateDTO {
 interface ProjectItemListVO {
   id: string;
   title: string;
-  status: "IN_PROGRESS" | "COMPLETED" | "PUBLISHED";
   createdAt: string;
   updatedAt: string;
   progressPercent: number;
@@ -87,8 +87,7 @@ interface ProjectItemNodeVO {
 - 创建项目时必须选择流程模板。
 - 项目卡片能展示进度和当前节点。
 - 删除项目需要确认。
-- 发布项目成功后状态刷新。
-- 项目下仍有未完成任务时看不到发布按钮。
+- 已完成筛选只返回全部任务已完成的项目；没有任务的项目留在进行中。状态筛选及排序在后端分页前执行，项目卡片与网格样式保持不变。
 
 ## 依赖
 
