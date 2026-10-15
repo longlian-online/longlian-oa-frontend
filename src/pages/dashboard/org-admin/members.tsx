@@ -9,6 +9,11 @@ import {
   Users,
 } from "lucide-react";
 
+import {
+  canEditOrganizationMemberRole,
+  isOrganizationOwnerRole,
+  organizationMemberRoleLabel,
+} from "@/lib/organizationRole";
 import { getSessionSnapshot, saveCurrentOrganization } from "@/lib/session";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import {
@@ -147,7 +152,7 @@ function OrganizationMembersContent() {
 
   function openRoleDialog(member: OrganizationMemberVO): void {
     setRoleMember(member);
-    setSelectedRole(member.orgRole ?? "ORG_USER");
+    setSelectedRole(member.orgRole === "ORG_ADMIN" ? "ORG_ADMIN" : "ORG_USER");
   }
 
   async function handleRoleChange(): Promise<void> {
@@ -169,7 +174,9 @@ function OrganizationMembersContent() {
         <div>
           <h1 className="text-xl font-bold text-foreground">成员管理</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            查看组织成员，管理成员状态与组织角色。
+            {isOrganizationOwnerRole(getSessionSnapshot().role)
+              ? "查看组织成员，管理成员状态与组织角色。"
+              : "查看组织成员，管理成员状态。"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -296,9 +303,7 @@ function OrganizationMembersContent() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        {member.orgRole === "ORG_ADMIN" ? "组织管理员" : "普通用户"}
-                      </TableCell>
+                      <TableCell>{organizationMemberRoleLabel(member.orgRole)}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {formatDate(member.joinedAt)}
                       </TableCell>
@@ -313,15 +318,20 @@ function OrganizationMembersContent() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openRoleDialog(member)}
-                          >
-                            <ShieldCheck className="size-4" />
-                            角色
-                          </Button>
+                          {canEditOrganizationMemberRole(
+                            getSessionSnapshot().role,
+                            member.orgRole,
+                          ) ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openRoleDialog(member)}
+                            >
+                              <ShieldCheck className="size-4" />
+                              角色
+                            </Button>
+                          ) : null}
                           <Button
                             type="button"
                             variant="ghost"

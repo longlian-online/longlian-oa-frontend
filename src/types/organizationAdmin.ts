@@ -2,7 +2,7 @@ import type { TaskFormField } from "./task";
 
 export type OrganizationResourceStatus = "ENABLED" | "DISABLED";
 
-export type OrganizationMemberRole = "ORG_ADMIN" | "ORG_USER";
+export type OrganizationMemberRole = "ORG_OWNER" | "ORG_ADMIN" | "ORG_USER";
 
 export interface OrganizationInfoVO {
   id: string;
