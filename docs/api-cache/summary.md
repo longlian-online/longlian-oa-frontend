@@ -1,7 +1,7 @@
 # API 缓存摘要
 
 来源：https://sit.neo.oa.api.longlian.online/v3/api-docs
-更新时间：2026-10-14T16:47:35.645Z
+更新时间：2026-10-15T09:39:51.449Z
 
 ## 文档分组
 
@@ -17,6 +17,20 @@
 
 | 分组       | 方法   | 路径                                                    | 摘要                             | 缓存文件                                                                             |
 | ---------- | ------ | ------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------ |
+| 公共端     | GET    | `/common/file/local`                                    | 读取本地文件                     | `operations/公共端_get_-common-file-local.json`                                      |
+| 公共端     | PUT    | `/common/file/local`                                    | 本地上传文件                     | `operations/公共端_put_-common-file-local.json`                                      |
+| 公共端     | POST   | `/common/file/upload`                                   | 创建文件上传                     | `operations/公共端_post_-common-file-upload.json`                                    |
+| 公共端     | GET    | `/common/system/info`                                   | 获取系统信息                     | `operations/公共端_get_-common-system-info.json`                                     |
+| 管理端     | GET    | `/admin/admins/`                                        | 分页查询管理员列表               | `operations/管理端_get_-admin-admins.json`                                           |
+| 管理端     | POST   | `/admin/admins/`                                        | 创建管理员                       | `operations/管理端_post_-admin-admins.json`                                          |
+| 管理端     | DELETE | `/admin/admins/{id}`                                    | 删除管理员                       | `operations/管理端_delete_-admin-admins-id.json`                                     |
+| 管理端     | GET    | `/admin/organizations/`                                 | 分页查询组织列表                 | `operations/管理端_get_-admin-organizations.json`                                    |
+| 管理端     | PATCH  | `/admin/organizations/{orgId}/status`                   | 操作组织状态                     | `operations/管理端_patch_-admin-organizations-orgid-status.json`                     |
+| 管理端     | POST   | `/admin/organizations/invite-codes/create-org`          | 生成邀请码（超管）               | `operations/管理端_post_-admin-organizations-invite-codes-create-org.json`           |
+| 管理端     | GET    | `/admin/scheduled-tasks/`                               | 列出所有已注册的定时任务         | `operations/管理端_get_-admin-scheduled-tasks.json`                                  |
+| 管理端     | POST   | `/admin/scheduled-tasks/{taskName}/trigger`             | 手动触发定时任务                 | `operations/管理端_post_-admin-scheduled-tasks-taskname-trigger.json`                |
+| 管理端     | DELETE | `/admin/session`                                        | 管理员登出                       | `operations/管理端_delete_-admin-session.json`                                       |
+| 管理端     | POST   | `/admin/session`                                        | 管理员登录                       | `operations/管理端_post_-admin-session.json`                                         |
 | 全部       | GET    | `/admin/admins/`                                        | 分页查询管理员列表               | `operations/全部_get_-admin-admins.json`                                             |
 | 全部       | POST   | `/admin/admins/`                                        | 创建管理员                       | `operations/全部_post_-admin-admins.json`                                            |
 | 全部       | DELETE | `/admin/admins/{id}`                                    | 删除管理员                       | `operations/全部_delete_-admin-admins-id.json`                                       |
@@ -98,10 +112,6 @@
 | 全部       | PUT    | `/orgadmin/task/template/{templateId}`                  | 更新任务模板                     | `operations/全部_put_-orgadmin-task-template-templateid.json`                        |
 | 全部       | PATCH  | `/orgadmin/task/template/{templateId}/status`           | 启用/禁用任务模板                | `operations/全部_patch_-orgadmin-task-template-templateid-status.json`               |
 | 全部       | POST   | `/orgadmin/task/template/list`                          | 分页查询任务模板列表             | `operations/全部_post_-orgadmin-task-template-list.json`                             |
-| 公共端     | GET    | `/common/file/local`                                    | 读取本地文件                     | `operations/公共端_get_-common-file-local.json`                                      |
-| 公共端     | PUT    | `/common/file/local`                                    | 本地上传文件                     | `operations/公共端_put_-common-file-local.json`                                      |
-| 公共端     | POST   | `/common/file/upload`                                   | 创建文件上传                     | `operations/公共端_post_-common-file-upload.json`                                    |
-| 公共端     | GET    | `/common/system/info`                                   | 获取系统信息                     | `operations/公共端_get_-common-system-info.json`                                     |
 | 用户端     | GET    | `/app/item/{itemId}/flow`                               | 获取项目任务流（含节点执行状态） | `operations/用户端_get_-app-item-itemid-flow.json`                                   |
 | 用户端     | GET    | `/app/projects`                                         | 分页查询企划列表                 | `operations/用户端_get_-app-projects.json`                                           |
 | 用户端     | POST   | `/app/projects`                                         | 创建企划                         | `operations/用户端_post_-app-projects.json`                                          |
@@ -143,16 +153,6 @@
 | 用户端     | POST   | `/app/workshop/task-template`                           | 创建工坊个人任务流模板           | `operations/用户端_post_-app-workshop-task-template.json`                            |
 | 用户端     | PUT    | `/app/workshop/task-template/{templateId}`              | 更新工坊个人任务流模板           | `operations/用户端_put_-app-workshop-task-template-templateid.json`                  |
 | 用户端     | POST   | `/app/workshop/task-template/list`                      | 分页查询工坊任务流模板列表       | `operations/用户端_post_-app-workshop-task-template-list.json`                       |
-| 管理端     | GET    | `/admin/admins/`                                        | 分页查询管理员列表               | `operations/管理端_get_-admin-admins.json`                                           |
-| 管理端     | POST   | `/admin/admins/`                                        | 创建管理员                       | `operations/管理端_post_-admin-admins.json`                                          |
-| 管理端     | DELETE | `/admin/admins/{id}`                                    | 删除管理员                       | `operations/管理端_delete_-admin-admins-id.json`                                     |
-| 管理端     | GET    | `/admin/organizations/`                                 | 分页查询组织列表                 | `operations/管理端_get_-admin-organizations.json`                                    |
-| 管理端     | PATCH  | `/admin/organizations/{orgId}/status`                   | 操作组织状态                     | `operations/管理端_patch_-admin-organizations-orgid-status.json`                     |
-| 管理端     | POST   | `/admin/organizations/invite-codes/create-org`          | 生成邀请码（超管）               | `operations/管理端_post_-admin-organizations-invite-codes-create-org.json`           |
-| 管理端     | GET    | `/admin/scheduled-tasks/`                               | 列出所有已注册的定时任务         | `operations/管理端_get_-admin-scheduled-tasks.json`                                  |
-| 管理端     | POST   | `/admin/scheduled-tasks/{taskName}/trigger`             | 手动触发定时任务                 | `operations/管理端_post_-admin-scheduled-tasks-taskname-trigger.json`                |
-| 管理端     | DELETE | `/admin/session`                                        | 管理员登出                       | `operations/管理端_delete_-admin-session.json`                                       |
-| 管理端     | POST   | `/admin/session`                                        | 管理员登录                       | `operations/管理端_post_-admin-session.json`                                         |
 | 组织管理端 | POST   | `/orgadmin/members`                                     | 分页查询组员列表                 | `operations/组织管理端_post_-orgadmin-members.json`                                  |
 | 组织管理端 | GET    | `/orgadmin/members/{memberId}/base-tasks/submit-counts` | 查询组员各原子任务提交数         | `operations/组织管理端_get_-orgadmin-members-memberid-base-tasks-submit-counts.json` |
 | 组织管理端 | PATCH  | `/orgadmin/members/{memberId}/role`                     | 调整成员组织角色                 | `operations/组织管理端_patch_-orgadmin-members-memberid-role.json`                   |

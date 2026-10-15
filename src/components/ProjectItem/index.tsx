@@ -1,17 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { ChevronRight, Loader2, Plus, Send, Trash2, Workflow } from "lucide-react";
+import { ChevronRight, Loader2, Plus, Trash2, Workflow } from "lucide-react";
 
-import {
-  createProjectItem,
-  deleteProjectItem,
-  getTaskTemplateOptions,
-  publishProjectItem,
-} from "@/api/projectItem";
+import { createProjectItem, deleteProjectItem, getTaskTemplateOptions } from "@/api/projectItem";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
 import { PROJECT_ITEMS_PAGE_SIZE as PAGE_SIZE, projectItemsQuery } from "@/queries/planning";
@@ -39,7 +34,6 @@ import type {
   ProjectItemListVO,
   ProjectItemNodeState,
   ProjectItemNodeVO,
-  ProjectItemStatus,
 } from "@/types/projectItem";
 
 interface ProjectItemSectionProps {
@@ -53,23 +47,11 @@ interface ProjectItemForm {
   taskTemplateId: string;
 }
 
-const STATUS_LABELS: Record<ProjectItemStatus, string> = {
-  IN_PROGRESS: "进行中",
-  COMPLETED: "已完成",
-  PUBLISHED: "已发布",
-};
-
 const NODE_LABELS: Record<ProjectItemNodeState, string> = {
   COMPLETED: "完成",
   IN_PROGRESS: "当前",
   LOCKED: "锁定",
 };
-
-function getStatusVariant(status: ProjectItemStatus): "default" | "secondary" | "outline" {
-  if (status === "PUBLISHED") return "default";
-  if (status === "COMPLETED") return "secondary";
-  return "outline";
-}
 
 function sortNodes(nodes: ProjectItemNodeVO[]): ProjectItemNodeVO[] {
   return [...nodes].sort((prev, next) => {
@@ -112,7 +94,14 @@ export default function ProjectItemSection({
 }: ProjectItemSectionProps) {
   const confirm = useConfirm();
   const navigate = useNavigate();
-  const [page, setPage] = useState(1);
+  const [{ page, status, orderDir }, setQuery] = useState<{
+    page: number;
+    status: "IN_PROGRESS" | "COMPLETED" | "";
+    orderDir: "ASC" | "DESC";
+  }>({ page: 1, status: "IN_PROGRESS", orderDir: "DESC" });
+  function setPage(nextPage: number): void {
+    setQuery((query) => ({ ...query, page: nextPage }));
+  }
   const [dialogOpen, setDialogOpen] = useState(false);
   const actionLock = useRef(false);
   const projectLifecycle = useRef({ id: projectId, generation: 0 });
@@ -132,7 +121,7 @@ export default function ProjectItemSection({
   }, []);
   const isCurrent = (): boolean =>
     mounted.current && projectLifecycle.current.generation === generation;
-  const itemsQuery = useApiQuery(projectItemsQuery(projectId, page));
+  const itemsQuery = useApiQuery(projectItemsQuery(projectId, page, status, orderDir));
   const templatesQuery = useApiQuery({
     key: ["templateOptions"],
     queryFn: getTaskTemplateOptions,
@@ -143,9 +132,8 @@ export default function ProjectItemSection({
     mutationFn: (dto: ProjectItemForm) => createProjectItem(projectId, dto),
     invalidate: [["items"], ["projects"], ["workshop"], ["plaza"]],
   });
-  const itemMutation = useApiMutation({
-    mutationFn: ({ id, publish }: { id: string; publish: boolean }) =>
-      publish ? publishProjectItem(projectId, id) : deleteProjectItem(projectId, id),
+  const deleteMutation = useApiMutation({
+    mutationFn: (id: string) => deleteProjectItem(projectId, id),
     invalidate: [
       ["items"],
       ["projects"],
@@ -162,7 +150,7 @@ export default function ProjectItemSection({
   const loading = itemsQuery.isLoading;
   const templateLoading = templatesQuery.isLoading;
   const saving = createMutation.isPending;
-  const mutatingItemId = itemMutation.isPending ? itemMutation.variables?.id : null;
+  const mutatingItemId = deleteMutation.isPending ? deleteMutation.variables : null;
   const [form, setForm] = useState<ProjectItemForm>({
     title: "",
     taskTemplateId: "",
@@ -208,32 +196,12 @@ export default function ProjectItemSection({
     actionLock.current = true;
 
     try {
-      await itemMutation.mutateAsync({ id: item.id, publish: false });
+      await deleteMutation.mutateAsync(item.id);
       if (!isCurrent()) return;
       $tip("项目已删除", "success");
       if (items.length === 1 && page > 1) {
         setPage(page - 1);
       }
-    } catch {
-      // Mutation 的最终失败由共享错误入口提示，保留当前草稿。
-    } finally {
-      actionLock.current = false;
-    }
-  }
-
-  async function handlePublishItem(item: ProjectItemListVO): Promise<void> {
-    const confirmed = await confirm({
-      title: "发布项目？",
-      description: `发布后「${item.title}」会进入成员可见状态。`,
-      confirmText: "发布",
-    });
-    if (!confirmed || actionLock.current) return;
-    actionLock.current = true;
-
-    try {
-      await itemMutation.mutateAsync({ id: item.id, publish: true });
-      if (!isCurrent()) return;
-      $tip("项目已发布", "success");
     } catch {
       // Mutation 的最终失败由共享错误入口提示，保留当前草稿。
     } finally {
@@ -249,9 +217,6 @@ export default function ProjectItemSection({
             <Workflow className="h-4 w-4 text-muted-foreground" />
             项目
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            绑定流程模板后，项目会按节点生成任务流。
-          </p>
         </div>
         <div className="flex items-center gap-2">
           {showDetailLink && (
@@ -273,6 +238,38 @@ export default function ProjectItemSection({
             </Button>
           )}
         </div>
+      </div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Tabs
+          value={status || "ALL"}
+          onValueChange={(value) => {
+            if (value === "IN_PROGRESS" || value === "COMPLETED" || value === "ALL") {
+              setQuery((query) => ({ ...query, status: value === "ALL" ? "" : value, page: 1 }));
+            }
+          }}
+        >
+          <TabsList variant="line" aria-label="项目完成情况">
+            <TabsTrigger value="IN_PROGRESS">进行中</TabsTrigger>
+            <TabsTrigger value="COMPLETED">已完成</TabsTrigger>
+            <TabsTrigger value="ALL">全部</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <Select
+          value={orderDir}
+          onValueChange={(value) => {
+            if (value === "ASC" || value === "DESC") {
+              setQuery((query) => ({ ...query, orderDir: value, page: 1 }));
+            }
+          }}
+        >
+          <SelectTrigger size="sm" aria-label="发布时间排序">
+            <SelectValue>{orderDir === "ASC" ? "最早发布" : "最新发布"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ASC">最早发布</SelectItem>
+            <SelectItem value="DESC">最新发布</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
@@ -309,39 +306,13 @@ export default function ProjectItemSection({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="truncate text-base font-semibold text-foreground">
-                      {item.title}
-                    </h3>
-                    <Badge variant={getStatusVariant(item.status)}>
-                      {STATUS_LABELS[item.status]}
-                    </Badge>
-                  </div>
+                  <h3 className="truncate text-base font-semibold text-foreground">{item.title}</h3>
                   <p className="mt-1 text-xs text-muted-foreground">
                     当前阶段：{item.currentNodeName || "尚未开始"}
                   </p>
                 </div>
                 {isCreator && (
                   <div className="flex shrink-0 items-center gap-1">
-                    {item.status !== "PUBLISHED" &&
-                      item.nodes.length > 0 &&
-                      // 节点状态由后端按该节点全部任务实例汇总，全部节点完成即所有任务已完成
-                      item.nodes.every((node) => node.state === "COMPLETED") && (
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="发布项目"
-                          title="发布项目"
-                          disabled={mutatingItemId === item.id}
-                          onClick={() => void handlePublishItem(item)}
-                        >
-                          {mutatingItemId === item.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Send className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
                     <Button
                       variant="ghost"
                       size="icon-sm"
