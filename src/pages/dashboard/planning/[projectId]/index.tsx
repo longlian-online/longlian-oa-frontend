@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router";
 import { BarChart3, CirclePlus, Info, Link2, Loader2, Pencil, Share2, X } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
-import { addProjectToWorkshop, getProjectDetail, removeProjectFromWorkshop } from "@/api/planning";
+import { addProjectToWorkshop, removeProjectFromWorkshop } from "@/api/planning";
+import { projectDetailQuery } from "@/queries/planning";
 import ProjectItemSection from "@/components/ProjectItem";
 import ProjectMetadataTag from "@/components/ProjectMetadataTag";
 import { $tip } from "@/components/tip";
@@ -19,11 +20,7 @@ export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const projectQuery = useApiQuery({
-    key: ["projects", "detail", projectId],
-    queryFn: () => getProjectDetail(projectId!),
-    enabled: Boolean(projectId),
-  });
+  const projectQuery = useApiQuery(projectDetailQuery(projectId));
   const project = projectQuery.data;
   const loading = projectQuery.isLoading;
   const workshopMutation = useApiMutation({

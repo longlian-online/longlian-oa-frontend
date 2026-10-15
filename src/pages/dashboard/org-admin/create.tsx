@@ -5,8 +5,6 @@ import { Loader2 } from "lucide-react";
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import {
   createOrganizationTaskTemplate,
-  getOrganizationBaseTaskList,
-  getOrganizationTaskTemplate,
   updateOrganizationTaskTemplate,
 } from "@/api/organizationAdmin";
 import WorkflowEditor, {
@@ -21,6 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toWorkflowTemplateNodes } from "@/lib/workflowTemplate";
+import {
+  organizationTemplateBaseTasksQuery,
+  organizationTemplateQuery,
+} from "@/queries/organizationAdmin";
 
 import type { BaseTaskVO } from "@/types/workflowTemplate";
 import type {
@@ -53,24 +55,9 @@ function OrganizationAdminCreateWorkflowContent() {
   const isEditing = Boolean(templateId);
   const [formData, setFormData] = useState<WorkflowForm>({ name: "", description: "" });
   const session = useSessionSnapshot();
-  const params = {
-    pageNum: 1,
-    pageSize: 100,
-    status: "ENABLED" as const,
-    sortBy: "REF_COUNT" as const,
-    orderDir: "DESC" as const,
-  };
-  const baseQuery = useApiQuery({
-    key: ["baseTasks", "options", params],
-    queryFn: () => getOrganizationBaseTaskList(params),
-    staleTime: 300_000,
-  });
+  const baseQuery = useApiQuery(organizationTemplateBaseTasksQuery());
   const baseTasks = (baseQuery.data?.list ?? []).map(toEditorBaseTask);
-  const templateQuery = useApiQuery({
-    key: ["templates", "detail", templateId],
-    queryFn: () => getOrganizationTaskTemplate(templateId!),
-    enabled: Boolean(templateId),
-  });
+  const templateQuery = useApiQuery(organizationTemplateQuery(templateId));
   const saveMutation = useApiMutation({
     mutationFn: (payload: OrganizationTaskTemplateCreateDTO) =>
       templateId

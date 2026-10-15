@@ -87,7 +87,7 @@ docker run --rm -it -p 5173:5173 \
 
 ```
 src/
-├── main.tsx                  # 入口：主题初始化 + BrowserRouter + useRoutes
+├── main.tsx                  # 入口：主题初始化 + QueryClientProvider + RouterProvider
 ├── index.css                 # 全局样式：Tailwind + 主题变量 import
 ├── pages/                    # 页面（文件即路由，无需手动注册）
 │   ├── index.tsx             # → /
@@ -124,6 +124,16 @@ src/
 | `src/pages/dashboard/index.tsx` | `/dashboard` |
 
 禁止在 `main.tsx` 手动注册 `<Route>`。
+
+### 首屏数据与页面资源并行加载
+
+- `src/router.tsx` 使用 React Router Data Router。`vite-plugin-pages` 继续生成路径和嵌套关系，页面通过路由 `lazy` 加载，不在入口手写页面路径。
+- 有首屏数据的页面，在 `src/routeLoaders/` 下创建同路径 `.ts` 文件并导出 `loader`；例如 `pages/dashboard/planning/index.tsx` 对应 `routeLoaders/dashboard/planning/index.ts`。loader 静态注册，与页面模块下载并行执行；不要从页面模块导入 loader。
+- `src/queries/` 保存页面与 loader 共用的查询配置。loader 调用 `fetchApiQuery`，页面继续使用 `useApiQuery`，复用同一 Query 缓存、会话身份与组织上下文。新鲜缓存不会重复请求；筛选、分页和操作后的失效刷新仍由 Query 管理。
+- 独立的首屏请求使用 `Promise.all`；单个请求直接 `await`。弹窗详情和用户操作触发的数据不放入首屏 loader。
+- 用户、组织和平台管理员的查询作用域保持隔离。未登录访问受保护页面会跳转登录页；没有选定组织时不发送组织业务请求。父子 loader 并行执行，子 loader 不依赖父 loader 完成后才能校验登录或权限。
+- 工作流与任务实例查询保留 `staleTime: 0`，每次进入由 loader 读取最新数据，组件挂载不重复请求；操作后失效刷新、窗口聚焦刷新保持启用。
+- 导航等待期间保留当前页面并展示加载提示；初次加载、模块下载失败、首屏接口失败和未知地址均有路由级兜底。
 
 企划列表的企划卡片和「创建新企划」卡片使用路由 `Link`，保留普通点击的站内跳转，并支持右键在新标签页打开、中键、Cmd/Ctrl + 点击及键盘 Enter 导航。
 导航卡片应使用带 `href` 的链接，而不是仅用 `onClick` 调用 `navigate` 的普通元素。

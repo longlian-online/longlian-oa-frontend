@@ -3,7 +3,12 @@ import { useNavigate } from "react-router";
 import { ArrowDownUp, ChevronRight, Search, Workflow } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
-import { getWorkshopList } from "@/api/workshop";
+import {
+  DEFAULT_TASK_SORT,
+  DEFAULT_WORKSHOP_SORT,
+  WORKSHOP_PAGE_SIZE as PAGE_SIZE,
+  workshopListQuery,
+} from "@/queries/workshop";
 import EmptyState from "@/components/EmptyState";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
@@ -22,7 +27,6 @@ import { useProjectTypes } from "@/hooks/useProjectTypes";
 import type { MyTaskSortDirection } from "@/types/myTask";
 import type { WorkshopProjectInfoVO, WorkshopSortBy } from "@/types/workshop";
 
-const PAGE_SIZE = 6;
 const TASK_SORT_LABELS: Record<MyTaskSortDirection, string> = {
   ASC: "最早接取",
   DESC: "最近接取",
@@ -40,23 +44,14 @@ export default function WorkshopPage() {
   const [searchText, setSearchText] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [isMyCreated, setIsMyCreated] = useState(false);
-  const [taskSort, setTaskSort] = useState<MyTaskSortDirection>("ASC");
-  const [sortBy, setSortBy] = useState<WorkshopSortBy>("RECENT_SUBMISSION");
+  const [taskSort, setTaskSort] = useState<MyTaskSortDirection>(DEFAULT_TASK_SORT);
+  const [sortBy, setSortBy] = useState<WorkshopSortBy>(DEFAULT_WORKSHOP_SORT);
   const [scrollState, setScrollState] = useState({ atStart: true, atEnd: false });
   const [page, setPage] = useState(1);
 
-  const params = {
-    pageNum: page,
-    pageSize: PAGE_SIZE,
-    keyword: keyword || undefined,
-    projectType: selectedType === "all" ? undefined : selectedType,
-    isMyCreated,
-    sortBy,
-  };
-  const listQuery = useApiQuery({
-    key: ["workshop", "list", params],
-    queryFn: () => getWorkshopList(params),
-  });
+  const listQuery = useApiQuery(
+    workshopListQuery(page, keyword, selectedType, isMyCreated, sortBy),
+  );
   const projects = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;

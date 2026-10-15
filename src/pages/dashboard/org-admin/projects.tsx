@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Ban, CheckCircle2, FolderOpen, Loader2, Search } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
-import { changeProjectStatus, getOrganizationProjects } from "@/api/organizationAdmin";
+import { changeProjectStatus } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
@@ -22,9 +22,11 @@ import {
 } from "@/components/ui/table";
 import { useConfirm } from "@/hooks/useConfirm";
 
+import {
+  ORGANIZATION_ADMIN_CARD_PAGE_SIZE as PAGE_SIZE,
+  organizationProjectsQuery,
+} from "@/queries/organizationAdmin";
 import type { OrganizationProjectStatus, OrganizationProjectVO } from "@/types/organizationAdmin";
-
-const PAGE_SIZE = 8;
 
 function getStatusLabel(status: OrganizationProjectStatus): string {
   if (status === "已完成") return "已完成";
@@ -49,15 +51,7 @@ function OrganizationAdminProjectsContent() {
     ? String(changeProjectStatusMutation.variables?.[0] ?? "new")
     : null;
 
-  const listQuery = useApiQuery({
-    key: ["projects", "management", keyword, page],
-    queryFn: () =>
-      getOrganizationProjects({
-        keyword: keyword || undefined,
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-      }),
-  });
+  const listQuery = useApiQuery(organizationProjectsQuery(keyword, page));
   const projects = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;

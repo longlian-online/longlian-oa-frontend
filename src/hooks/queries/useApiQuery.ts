@@ -8,7 +8,7 @@ import {
   type UseQueryResult,
 } from "@tanstack/react-query";
 
-import { runWithRequestContext } from "@/api/requestContext";
+import { apiQueryOptions, executeScopedApi, type ApiQueryOptions } from "@/lib/apiQuery";
 import { isScopeCurrent, scopedKey, type ApiScope } from "@/lib/queryKeys";
 import { getSessionSnapshot, subscribeSession, type SessionSnapshot } from "@/lib/session";
 
@@ -16,31 +16,9 @@ export function useSessionSnapshot(): SessionSnapshot {
   return useSyncExternalStore(subscribeSession, getSessionSnapshot, getSessionSnapshot);
 }
 
-interface ApiQueryOptions<T> {
-  key: QueryKey;
-  queryFn: () => Promise<T>;
-  scope?: ApiScope;
-  enabled?: boolean;
-  staleTime?: number;
-}
-
-export function useApiQuery<T>({
-  key,
-  queryFn,
-  scope = "org",
-  enabled = true,
-  staleTime,
-}: ApiQueryOptions<T>): UseQueryResult<T, Error> {
+export function useApiQuery<T>(options: ApiQueryOptions<T>): UseQueryResult<T, Error> {
   const session = useSessionSnapshot();
-  const authenticated =
-    scope === "public" ||
-    (scope === "admin" ? Boolean(session.adminToken) : Boolean(session.token));
-  return useQuery({
-    queryKey: scopedKey(key, scope, session),
-    enabled: enabled && authenticated && (scope !== "org" || Boolean(session.orgId)),
-    staleTime: staleTime ?? 30_000,
-    queryFn: ({ signal }): Promise<T> => executeScopedApi(scope, session, queryFn, signal),
-  });
+  return useQuery(apiQueryOptions(options, session));
 }
 
 interface ApiMutationOptions<T, V> {
@@ -119,35 +97,4 @@ export function useApiMutation<T = void, V = void>({
       void mutateAsync(...args).catch(() => undefined);
     },
   };
-}
-
-async function executeScopedApi<T>(
-  scope: ApiScope,
-  session: SessionSnapshot,
-  execute: () => Promise<T>,
-  signal?: AbortSignal,
-): Promise<T> {
-  if (
-    !isScopeCurrent(scope, session) ||
-    (scope !== "public" && !(scope === "admin" ? session.adminToken : session.token)) ||
-    (scope === "org" && !session.orgId)
-  )
-    throw new DOMException("请求上下文不可用", "AbortError");
-  try {
-    const result = await runWithRequestContext(
-      {
-        token: scope === "public" ? null : scope === "admin" ? session.adminToken : session.token,
-        orgId: scope === "org" || scope === "account" ? session.orgId : null,
-        signal,
-        managed: true,
-        isCurrent: () => isScopeCurrent(scope, session),
-      },
-      execute,
-    );
-    if (!isScopeCurrent(scope, session)) throw new DOMException("会话已切换", "AbortError");
-    return result;
-  } catch (error) {
-    if (!isScopeCurrent(scope, session)) throw new DOMException("会话已切换", "AbortError");
-    throw error;
-  }
 }

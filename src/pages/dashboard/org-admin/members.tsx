@@ -15,7 +15,6 @@ import {
   changeMemberRole,
   changeMemberStatus,
   getMemberSubmitCounts,
-  getOrganizationMembers,
   type OrgMemberRole,
 } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
@@ -52,6 +51,11 @@ import {
 } from "@/components/ui/table";
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
+import {
+  INITIAL_MEMBER_LIST_FILTERS,
+  ORGANIZATION_ADMIN_PAGE_SIZE as PAGE_SIZE,
+  organizationMembersQuery,
+} from "@/queries/organizationAdmin";
 import type { OrganizationMemberVO } from "@/types/organizationAdmin";
 
 import {
@@ -60,20 +64,13 @@ import {
   type MemberListFilters,
 } from "./memberListFilters";
 
-const PAGE_SIZE = 10;
-
 function memberName(member: OrganizationMemberVO): string {
   return member.nickname || member.username || member.userId;
 }
 
 function OrganizationMembersContent() {
   const confirm = useConfirm();
-  const [filters, setFilters] = useState<MemberListFilters>({
-    keyword: "",
-    startJoinedTime: "",
-    endJoinedTime: "",
-    orderDir: "DESC",
-  });
+  const [filters, setFilters] = useState<MemberListFilters>(INITIAL_MEMBER_LIST_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState(filters);
   const appliedFiltersRef = useRef(appliedFilters);
   const changeMemberRoleMutation = useApiMutation<
@@ -117,18 +114,7 @@ function OrganizationMembersContent() {
     return () => window.clearTimeout(timer);
   }, [filters]);
 
-  const listQuery = useApiQuery({
-    key: ["members", "management", appliedFilters, page],
-    queryFn: () =>
-      getOrganizationMembers({
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-        keyword: appliedFilters.keyword || undefined,
-        startJoinedTime: appliedFilters.startJoinedTime || undefined,
-        endJoinedTime: appliedFilters.endJoinedTime || undefined,
-        orderDir: appliedFilters.orderDir,
-      }),
-  });
+  const listQuery = useApiQuery(organizationMembersQuery(appliedFilters, page));
   const members = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;
