@@ -70,27 +70,12 @@ function getStages(nodes: WorkshopTaskTemplateNodeVO[]): WorkflowStage[] {
     });
 }
 
-/** Display-only: consecutive same-label stages render as one chip. */
-function collapseConsecutiveStages(stages: WorkflowStage[]): WorkflowStage[] {
-  const collapsed: WorkflowStage[] = [];
-
-  for (const stage of stages) {
-    const last = collapsed[collapsed.length - 1];
-    if (last && last.label === stage.label) {
-      continue;
-    }
-    collapsed.push(stage);
-  }
-
-  return collapsed;
-}
-
 function getDiagramStages(nodes: WorkshopTaskTemplateNodeVO[]): {
   visible: WorkflowStage[];
   totalSteps: number;
   hasOverflow: boolean;
 } {
-  const stages = collapseConsecutiveStages(getStages(nodes));
+  const stages = getStages(nodes);
   const totalSteps = stages.length;
 
   if (totalSteps <= MAX_VISIBLE_STAGES) {
