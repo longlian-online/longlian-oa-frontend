@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Sparkles } from "lucide-react";
 
 import { scopedKey } from "@/lib/queryKeys";
+import { projectThumbnailSrc } from "@/lib/projectThumbnail";
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { claimTask } from "@/api/workflowInstance";
 import {
@@ -253,6 +254,7 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
   const [expanded, setExpanded] = useState(false);
   const hasMore = group.tasks.length > COLLAPSED_TASK_LIMIT;
   const visibleTasks = expanded ? group.tasks : group.tasks.slice(0, COLLAPSED_TASK_LIMIT);
+  const imageUrl = projectThumbnailSrc(group.thumbnailUrl, group.coverUrl);
 
   return (
     <section>
@@ -261,9 +263,9 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
           to={`/dashboard/planning/${group.projectId}`}
           className="group flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {group.coverUrl ? (
+          {imageUrl ? (
             <img
-              src={group.coverUrl}
+              src={imageUrl}
               alt={group.title}
               className="size-10 shrink-0 rounded-md border object-cover"
             />

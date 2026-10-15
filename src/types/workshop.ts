@@ -13,6 +13,7 @@ export interface WorkshopProjectInfoVO {
   id: string;
   title: string;
   coverUrl?: string;
+  thumbnailUrl?: string;
   creatorAvatarUrl?: string;
   lastSubmitterUsername?: string;
   lastSubmitterAt?: string;
