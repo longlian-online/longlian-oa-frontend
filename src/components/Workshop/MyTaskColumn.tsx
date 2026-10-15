@@ -79,7 +79,9 @@ export function MyTaskColumn({ bucket, title, dotClassName, sortDirection }: MyT
                 </span>
                 <span className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
                   {!submittable && (
-                    <span className="mr-auto truncate">等{task.waitingStageName ?? "前置"}</span>
+                    <span className="mr-auto truncate">
+                      {task.waitingStageName ? `等${task.waitingStageName}` : "等待中"}
+                    </span>
                   )}
                   <span className="tabular-nums">{formatClaimedAt(task.claimedAt)}</span>
                   <ChevronRight className="size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5" />

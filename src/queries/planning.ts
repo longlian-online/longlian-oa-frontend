@@ -15,7 +15,7 @@ import type { PlazaProjectGroup, PlazaSortBy } from "@/types/plaza";
 import type { ProjectItemListVO } from "@/types/projectItem";
 import type { ItemTaskFlowVO, ItemTaskInstanceVO } from "@/types/workflowInstance";
 
-export const PLANNING_PAGE_SIZE = 8;
+export const PLANNING_PAGE_SIZE = 12;
 export const PROJECT_ITEMS_PAGE_SIZE = 4;
 export const PLAZA_PAGE_SIZE = 8;
 export const DEFAULT_PROJECT_TIME_SORT: Required<Pick<ProjectListDTO, "sortByTime" | "orderDir">> =

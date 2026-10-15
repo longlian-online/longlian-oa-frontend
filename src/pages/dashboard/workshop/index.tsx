@@ -93,7 +93,7 @@ export default function WorkshopPage() {
 
       <section className="flex min-w-0 flex-col gap-3">
         <div className="flex min-w-0 items-center justify-between gap-2">
-          <h2 className="text-base font-semibold text-foreground">我的待办</h2>
+          <h2 className="text-base font-semibold text-foreground">待办</h2>
           <Select
             value={taskSort}
             onValueChange={(value: string | null) => {
@@ -123,7 +123,7 @@ export default function WorkshopPage() {
           />
           <MyTaskColumn
             bucket="WAITING"
-            title="等前置"
+            title="等待中"
             dotClassName="bg-amber-600"
             sortDirection={taskSort}
           />
@@ -132,7 +132,7 @@ export default function WorkshopPage() {
 
       <section className="flex min-w-0 flex-col gap-3">
         <div className="flex min-w-0 items-center justify-between gap-2">
-          <h2 className="text-base font-semibold text-foreground">我关注的企划</h2>
+          <h2 className="text-base font-semibold text-foreground">企划</h2>
           <Select
             value={sortBy}
             onValueChange={(value: string | null) => {
