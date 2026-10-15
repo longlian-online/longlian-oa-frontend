@@ -2,7 +2,7 @@
   "document": "组织管理端",
   "method": "PATCH",
   "operation": {
-    "description": "禁用后用户无法登录；超管身份不可被禁用。status: ENABLED-启用，DISABLED-禁用",
+    "description": "仅限制成员访问当前组织，不改变用户全局账号状态。status: ENABLED-启用，DISABLED-禁用",
     "operationId": "changeMemberStatus",
     "parameters": [
       {
@@ -35,13 +35,6 @@
     },
     "responses": {
       "200": {
-        "content": {
-          "*/*": {
-            "schema": {
-              "$ref": "#/components/schemas/ResultVoid"
-            }
-          }
-        },
         "description": "OK"
       }
     },

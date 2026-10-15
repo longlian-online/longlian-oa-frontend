@@ -2,7 +2,7 @@
   "document": "全部",
   "method": "GET",
   "operation": {
-    "description": "返回任务实例信息及最近一次提交的元数据详情",
+    "description": "返回任务信息及服务器组装的提交字段和附件",
     "operationId": "getTaskInstanceDetail",
     "parameters": [
       {

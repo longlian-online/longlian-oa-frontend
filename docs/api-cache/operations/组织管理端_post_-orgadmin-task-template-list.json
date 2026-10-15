@@ -2,7 +2,7 @@
   "document": "组织管理端",
   "method": "POST",
   "operation": {
-    "description": "支持名称模糊搜索、状态筛选、创建时间区间；支持按创建时间或引用次数排序，默认按引用次数倒序",
+    "description": "支持名称模糊搜索、状态筛选、创建时间区间；支持按创建时间或引用次数排序，默认按引用次数倒序。每行附带任务数和阶段预览（名称、图标、顺序），不含提交字段",
     "operationId": "listTaskTemplates",
     "parameters": [
       {

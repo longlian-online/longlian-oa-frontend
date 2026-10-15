@@ -12,7 +12,7 @@ function buildQuery(params?: ProjectItemListDTO): string {
 
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== "") {
+    if (value !== undefined && (value !== "" || key === "status")) {
       searchParams.set(key, String(value));
     }
   });

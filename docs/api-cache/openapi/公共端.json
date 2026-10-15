@@ -4,10 +4,6 @@
       "CreateFileReqDTO": {
         "description": "创建文件上传请求参数",
         "properties": {
-          "bizId": {
-            "description": "业务ID(用户ID/组织ID/任务ID)",
-            "type": "string"
-          },
           "bizType": {
             "description": "业务类型(avatar/cover/task_submit)",
             "pattern": "avatar|cover|task_submit",
@@ -15,12 +11,12 @@
           },
           "fileExt": {
             "description": "文件扩展名",
-            "pattern": "(?i)jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx|zip",
+            "pattern": "(?i)jpg|jpeg|png|gif|webp|bmp|pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv|zip|rar|7z",
             "type": "string"
           },
           "fileMime": {
             "description": "文件MIME类型",
-            "pattern": "(?i)image/(jpeg|png|gif)|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/zip|application/x-zip-compressed",
+            "pattern": "(?i)image/(jpeg|png|gif|webp|bmp)|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.ms-powerpoint|application/vnd.openxmlformats-officedocument.presentationml.presentation|text/plain|text/csv|application/zip|application/x-zip-compressed|application/vnd.rar|application/x-rar-compressed|application/x-7z-compressed",
             "type": "string"
           },
           "fileName": {
@@ -36,12 +32,33 @@
             "type": "integer"
           }
         },
-        "required": ["bizId", "bizType", "fileExt", "fileMime", "fileName", "fileSize"],
+        "required": ["bizType", "fileExt", "fileMime", "fileName", "fileSize"],
+        "type": "object"
+      },
+      "LocalFileReadDTO": {
+        "properties": {
+          "expires": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "key": {
+            "type": "string"
+          },
+          "signature": {
+            "pattern": "[0-9a-f]{64}",
+            "type": "string"
+          }
+        },
+        "required": ["expires", "key", "signature"],
         "type": "object"
       },
       "ResourceCreateVO": {
         "description": "创建文件上传响应",
         "properties": {
+          "contentDisposition": {
+            "description": "上传需携带的 Content-Disposition 头值；null 表示无需携带",
+            "type": "string"
+          },
           "fileId": {
             "description": "文件ID",
             "type": "string"
@@ -74,6 +91,17 @@
           }
         },
         "type": "object"
+      },
+      "SystemInfoVO": {
+        "description": "系统信息",
+        "properties": {
+          "version": {
+            "description": "后端版本号",
+            "example": "1.0.13-SNAPSHOT",
+            "type": "string"
+          }
+        },
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -98,22 +126,31 @@
   "paths": {
     "/common/file/local": {
       "get": {
-        "description": "通过预签名 key 读取本地存储的文件内容，返回原始文件流",
+        "description": "通过带有效期和签名的链接读取文件，裸 key 不可读取",
         "operationId": "readLocalFile",
         "parameters": [
           {
             "in": "query",
-            "name": "key",
+            "name": "dto",
             "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/LocalFileReadDTO"
+            }
+          },
+          {
+            "in": "query",
+            "name": "t",
+            "required": false,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
             }
           }
         ],
         "responses": {
           "200": {
             "content": {
-              "*/*": {
+              "application/octet-stream": {
                 "schema": {
                   "format": "binary",
                   "type": "string"
@@ -132,35 +169,13 @@
         "parameters": [
           {
             "in": "query",
-            "name": "key",
+            "name": "dto",
             "required": true,
             "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "sessionContext",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/SessionContext"
+              "$ref": "#/components/schemas/LocalFileReadDTO"
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "items": {
-                  "format": "byte",
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "OK"
@@ -209,6 +224,27 @@
         "summary": "创建文件上传",
         "tags": ["文件上传接口"]
       }
+    },
+    "/common/system/info": {
+      "get": {
+        "description": "无需登录，返回当前系统信息",
+        "operationId": "getSystemInfo",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemInfoVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [],
+        "summary": "获取系统信息",
+        "tags": ["系统信息接口"]
+      }
     }
   },
   "security": [
@@ -218,8 +254,8 @@
   ],
   "servers": [
     {
-      "description": "Generated server url",
-      "url": "http://sit.neo.oa.api.longlian.online"
+      "description": "Configured server URL",
+      "url": "https://sit.neo.oa.api.longlian.online/"
     }
   ],
   "tags": [

@@ -2,7 +2,7 @@
   "document": "用户端",
   "method": "POST",
   "operation": {
-    "description": "切换用户当前所在组织",
+    "description": "更新用户默认组织，不改变其他请求的组织作用域",
     "operationId": "switchOrg",
     "parameters": [
       {
@@ -36,7 +36,7 @@
         "description": "OK"
       }
     },
-    "summary": "切换组织",
+    "summary": "设置默认组织",
     "tags": ["用户接口"]
   },
   "path": "/app/user/switch",

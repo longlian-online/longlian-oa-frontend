@@ -2,7 +2,7 @@
   "document": "用户端",
   "method": "DELETE",
   "operation": {
-    "description": "将指定企划从当前用户的个人工坊中移除",
+    "description": "将指定企划从当前用户的个人工坊中移除。企划负责人不能退出自己的企划",
     "operationId": "removeFromWorkshop",
     "parameters": [
       {

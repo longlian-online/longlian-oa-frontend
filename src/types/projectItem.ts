@@ -11,6 +11,9 @@ export interface ProjectItemListDTO {
   pageNum?: number;
   pageSize?: number;
   keyword?: string;
+  status?: ProjectItemStatus | "";
+  sortByTime?: "CREATE" | "UPDATE";
+  orderDir?: "ASC" | "DESC";
 }
 
 export interface ProjectItemListVO {

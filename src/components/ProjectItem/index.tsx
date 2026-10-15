@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useConfirm } from "@/hooks/useConfirm";
 import { cn } from "@/lib/utils";
 import type {
@@ -115,7 +116,14 @@ export default function ProjectItemSection({
   const navigate = useNavigate();
   const [items, setItems] = useState<ProjectItemListVO[]>([]);
   const [templates, setTemplates] = useState<TaskTemplateOptionVO[]>([]);
-  const [page, setPage] = useState(1);
+  const [{ page, status, orderDir }, setQuery] = useState<{
+    page: number;
+    status: "IN_PROGRESS" | "COMPLETED" | "";
+    orderDir: "ASC" | "DESC";
+  }>({ page: 1, status: "IN_PROGRESS", orderDir: "DESC" });
+  function setPage(nextPage: number): void {
+    setQuery((query) => ({ ...query, page: nextPage }));
+  }
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [templateLoading, setTemplateLoading] = useState(false);
@@ -134,7 +142,7 @@ export default function ProjectItemSection({
 
   useEffect(() => {
     void loadItems();
-  }, [page, projectId]);
+  }, [page, projectId, status, orderDir]);
 
   useEffect(() => {
     if (dialogOpen && templates.length === 0) {
@@ -148,6 +156,9 @@ export default function ProjectItemSection({
       const data = await getProjectItemList(projectId, {
         pageNum: page,
         pageSize: PAGE_SIZE,
+        status,
+        sortByTime: "CREATE",
+        orderDir,
       });
       setItems(data.list);
       setTotal(data.total);
@@ -250,9 +261,6 @@ export default function ProjectItemSection({
             <Workflow className="h-4 w-4 text-muted-foreground" />
             项目
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            绑定流程模板后，项目会按节点生成任务流。
-          </p>
         </div>
         {isCreator && (
           <Button size="sm" onClick={openCreateDialog}>
@@ -260,6 +268,38 @@ export default function ProjectItemSection({
             创建项目
           </Button>
         )}
+      </div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Tabs
+          value={status || "ALL"}
+          onValueChange={(value) => {
+            if (value === "IN_PROGRESS" || value === "COMPLETED" || value === "ALL") {
+              setQuery((query) => ({ ...query, status: value === "ALL" ? "" : value, page: 1 }));
+            }
+          }}
+        >
+          <TabsList variant="line" aria-label="项目状态">
+            <TabsTrigger value="IN_PROGRESS">进行中</TabsTrigger>
+            <TabsTrigger value="COMPLETED">已完成</TabsTrigger>
+            <TabsTrigger value="ALL">全部</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <Select
+          value={orderDir}
+          onValueChange={(value) => {
+            if (value === "ASC" || value === "DESC") {
+              setQuery((query) => ({ ...query, orderDir: value, page: 1 }));
+            }
+          }}
+        >
+          <SelectTrigger size="sm" aria-label="发布时间排序">
+            <SelectValue>{orderDir === "ASC" ? "最早发布" : "最新发布"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ASC">最早发布</SelectItem>
+            <SelectItem value="DESC">最新发布</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
