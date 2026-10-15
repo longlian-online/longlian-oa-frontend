@@ -14,6 +14,7 @@ import {
   notificationService,
   resetNotificationService,
 } from "@/services/notification";
+import { clearSession } from "@/lib/session";
 
 const storage = new Map<string, string>();
 const replace = vi.fn();
@@ -26,6 +27,9 @@ beforeEach((): void => {
   vi.clearAllMocks();
   vi.stubGlobal("localStorage", {
     getItem: (key: string): string | null => storage.get(key) ?? null,
+    setItem: (key: string, value: string): void => {
+      storage.set(key, value);
+    },
     removeItem: (key: string): boolean => storage.delete(key),
   });
   vi.stubGlobal("window", {
@@ -35,6 +39,7 @@ beforeEach((): void => {
   });
   vi.stubGlobal("PopStateEvent", Event);
   vi.stubGlobal("CustomEvent", Event);
+  clearSession();
 });
 
 afterEach((): void => {
@@ -288,4 +293,142 @@ test("network failures notify without clearing the session", async (): Promise<v
   expect(listener).toHaveBeenCalledWith({ type: "error", message: NETWORK_ERROR_MESSAGE });
   expect(storage.get("token")).toBe("user");
   expect(replace).not.toHaveBeenCalled();
+});
+
+function json(body: unknown): Response {
+  return new Response(JSON.stringify(body));
+}
+
+function accessToken(exp: number): string {
+  const payload = btoa(JSON.stringify({ exp }))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
+  return `header.${payload}.signature`;
+}
+
+function authorization(init: RequestInit | undefined): string | null {
+  const headers = init?.headers;
+  if (!headers || typeof headers !== "object") return null;
+  return (headers as Record<string, string>).Authorization ?? null;
+}
+
+test("an expired access token refreshes once and retries without changing the org", async (): Promise<void> => {
+  storage.set("token", "old");
+  storage.set("refreshToken", "refresh");
+  storage.set("currentOrgId", "42");
+  storage.set("userId", "1");
+  const fetchMock = vi.fn(async (url: string, init?: RequestInit): Promise<Response> => {
+    if (String(url).endsWith("/session/refresh")) {
+      return json({ code: 0, msg: "ok", data: { token: "new", refreshToken: "next" } });
+    }
+    if (authorization(init) === "Bearer old") {
+      return json({ code: 1, msg: "登录已过期，请重新登录", data: null });
+    }
+    return json({ code: 0, msg: "ok", data: { ok: true } });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+
+  await expect(request("/resource")).resolves.toEqual({ ok: true });
+
+  expect(storage.get("token")).toBe("new");
+  expect(storage.get("refreshToken")).toBe("next");
+  expect(storage.get("currentOrgId")).toBe("42");
+  expect(storage.get("userId")).toBe("1");
+  const refreshCalls = fetchMock.mock.calls.filter(([url]) =>
+    String(url).endsWith("/session/refresh"),
+  );
+  expect(refreshCalls).toHaveLength(1);
+  expect(authorization(refreshCalls[0]?.[1] as RequestInit | undefined)).toBeNull();
+  expect(replace).not.toHaveBeenCalled();
+});
+
+test("concurrent expired requests share one refresh", async (): Promise<void> => {
+  storage.set("token", "old");
+  storage.set("refreshToken", "refresh");
+  let refreshCalls = 0;
+  let releaseRefresh: (response: Response) => void = () => undefined;
+  const refreshPromise = new Promise<Response>((resolve) => {
+    releaseRefresh = resolve;
+  });
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string, init?: RequestInit): Promise<Response> => {
+      if (String(url).endsWith("/session/refresh")) {
+        refreshCalls += 1;
+        return refreshPromise;
+      }
+      if (authorization(init) === "Bearer old") {
+        return json({ code: 1, msg: "登录已过期，请重新登录", data: null });
+      }
+      return json({ code: 0, msg: "ok", data: { ok: true } });
+    }),
+  );
+
+  const pending = Promise.all([request("/one"), request("/two")]);
+  for (let attempt = 0; refreshCalls < 1 && attempt < 20; attempt += 1) await Promise.resolve();
+  expect(refreshCalls).toBe(1);
+  releaseRefresh(json({ code: 0, msg: "ok", data: { token: "new", refreshToken: "next" } }));
+  await expect(pending).resolves.toEqual([{ ok: true }, { ok: true }]);
+  expect(refreshCalls).toBe(1);
+  expect(replace).not.toHaveBeenCalled();
+});
+
+test("a rejected refresh clears the user session once", async (): Promise<void> => {
+  storage.set("token", "old");
+  storage.set("refreshToken", "refresh");
+  storage.set("currentOrgId", "42");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async (url: string): Promise<Response> =>
+        json({
+          code: 1,
+          msg: String(url).endsWith("/session/refresh") ? "登录已过期，请重新登录" : "错误",
+          data: null,
+        }),
+    ),
+  );
+
+  await expect(request("/resource")).rejects.toThrow();
+  expect(storage.get("token")).toBeUndefined();
+  expect(storage.get("refreshToken")).toBeUndefined();
+  expect(storage.get("currentOrgId")).toBeUndefined();
+  expect(replace).toHaveBeenCalledTimes(1);
+});
+
+test("an access token inside five minutes refreshes before the request", async (): Promise<void> => {
+  const exp = Math.floor(Date.now() / 1000) + 4 * 60;
+  storage.set("token", accessToken(exp));
+  storage.set("refreshToken", "refresh");
+  storage.set("currentOrgId", "42");
+  const renewed = accessToken(exp + 6 * 60 * 60);
+  const fetchMock = vi.fn(async (url: string, init?: RequestInit): Promise<Response> => {
+    if (String(url).endsWith("/session/refresh")) {
+      return json({ code: 0, msg: "ok", data: { token: renewed, refreshToken: "next" } });
+    }
+    return json({ code: 0, msg: "ok", data: { seen: authorization(init) } });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+
+  await expect(request("/resource")).resolves.toEqual({ seen: `Bearer ${renewed}` });
+  expect(
+    fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/session/refresh")),
+  ).toHaveLength(1);
+  expect(storage.get("currentOrgId")).toBe("42");
+});
+
+test("an access token outside five minutes is not refreshed early", async (): Promise<void> => {
+  storage.set("token", accessToken(Math.floor(Date.now() / 1000) + 6 * 60));
+  storage.set("refreshToken", "refresh");
+  const fetchMock = vi.fn(async (url: string): Promise<Response> => {
+    void url;
+    return json({ code: 0, msg: "ok", data: { ok: true } });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+
+  await expect(request("/resource")).resolves.toEqual({ ok: true });
+  expect(
+    fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/session/refresh")),
+  ).toHaveLength(0);
 });

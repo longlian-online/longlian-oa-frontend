@@ -3,8 +3,11 @@ import { beforeEach, expect, test, vi } from "vite-plus/test";
 import {
   clearSession,
   getCurrentOrgId,
+  getRefreshToken,
   getSessionRole,
+  getSessionSnapshot,
   saveCurrentOrganization,
+  saveRotatedCredentials,
   saveSession,
 } from "@/lib/session";
 
@@ -82,4 +85,47 @@ test("switching without a role removes previous administrator privileges", (): v
     expect(getSessionRole()).toBeNull();
     expect(storage.has("role")).toBe(false);
   }
+});
+
+test("login stores and clearing removes the refresh token", (): void => {
+  saveSession({
+    userId: "1",
+    token: "token",
+    refreshToken: "refresh",
+    defaultOrgId: "9",
+    role: "ORG_USER",
+  });
+  expect(getRefreshToken()).toBe("refresh");
+
+  saveSession({ userId: "1", token: "next", defaultOrgId: "9", role: "ORG_USER" });
+  expect(getRefreshToken()).toBeNull();
+
+  saveSession({
+    userId: "1",
+    token: "token",
+    refreshToken: "refresh",
+    defaultOrgId: "9",
+    role: "ORG_USER",
+  });
+  clearSession();
+  expect(getRefreshToken()).toBeNull();
+});
+
+test("rotating credentials keeps the current organization and query scope", (): void => {
+  saveSession({
+    userId: "1",
+    token: "token",
+    refreshToken: "refresh",
+    defaultOrgId: "9",
+    role: "ORG_USER",
+  });
+  const scope = getSessionSnapshot().appScope;
+
+  saveRotatedCredentials("next-token", "next-refresh");
+
+  expect(getCurrentOrgId()).toBe("9");
+  expect(getSessionRole()).toBe("ORG_USER");
+  expect(getSessionSnapshot().appScope).toBe(scope);
+  expect(getSessionSnapshot().token).toBe("next-token");
+  expect(getRefreshToken()).toBe("next-refresh");
 });

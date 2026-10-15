@@ -2,6 +2,7 @@ import type { AdminLoginVO, LoginVO } from "@/types/auth";
 
 const TOKEN_KEY = "token";
 const USER_ID_KEY = "userId";
+const REFRESH_TOKEN_KEY = "refreshToken";
 const CURRENT_ORG_ID_KEY = "currentOrgId";
 const ROLE_KEY = "role";
 const ADMIN_TOKEN_KEY = "adminToken";
@@ -11,10 +12,21 @@ const ADMIN_ROLE_KEY = "adminRole";
 
 export function saveSession(session: LoginVO): void {
   forceAppScope = true;
+  rotatedFromToken = null;
   localStorage.setItem(TOKEN_KEY, session.token);
+  if (session.refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, session.refreshToken);
+  else localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.setItem(USER_ID_KEY, session.userId);
   writeCurrentOrganization(session.defaultOrgId ?? "", session.role);
   localStorage.removeItem("roles");
+  notifySessionChange();
+}
+
+/** 只替换两张凭证。查询作用域和当前组织保持不变。 */
+export function saveRotatedCredentials(token: string, refreshToken: string): void {
+  rotatedFromToken = getToken();
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
   notifySessionChange();
 }
 
@@ -39,7 +51,9 @@ function writeCurrentOrganization(orgId: string, role?: string | null): void {
 }
 
 export function clearSession(): void {
+  rotatedFromToken = null;
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(USER_ID_KEY);
   localStorage.removeItem(CURRENT_ORG_ID_KEY);
   localStorage.removeItem(ROLE_KEY);
@@ -66,6 +80,14 @@ export function clearAdminSession(): void {
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
+}
+
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function rotatedFrom(): string | null {
+  return rotatedFromToken;
 }
 
 export function getAdminToken(): string | null {
@@ -116,6 +138,7 @@ let cachedSnapshot: SessionSnapshot | undefined;
 let scopeSequence = 0;
 let forceAppScope = false;
 let forceAdminScope = false;
+let rotatedFromToken: string | null = null;
 
 export function getSessionSnapshot(): SessionSnapshot {
   const token = getToken();
@@ -141,7 +164,11 @@ export function getSessionSnapshot(): SessionSnapshot {
     orgId,
     role,
     appScope:
-      !forceAppScope && cachedSnapshot?.token === token && cachedSnapshot.userId === userId
+      !forceAppScope &&
+      cachedSnapshot &&
+      cachedSnapshot.userId === userId &&
+      (cachedSnapshot.token === token ||
+        (cachedSnapshot.token !== null && token !== null && userId !== null))
         ? cachedSnapshot.appScope
         : `session-${++scopeSequence}`,
     adminScope:
