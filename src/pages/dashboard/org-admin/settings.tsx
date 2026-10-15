@@ -7,7 +7,7 @@ import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import FileUpload from "@/components/FileUpload";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getCurrentOrgId } from "@/lib/session";
@@ -97,7 +97,6 @@ function OrganizationSettingsContent() {
       <div className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div>
           <h1 className="text-xl font-bold text-foreground">组织设置</h1>
-          <p className="mt-1 text-sm text-muted-foreground">管理组织在用户端展示的基础信息。</p>
         </div>
         <Button type="button" disabled={saving || !organization} onClick={() => void handleSave()}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
@@ -112,7 +111,6 @@ function OrganizationSettingsContent() {
               <ImagePlus className="size-4 text-muted-foreground" />
               <CardTitle>组织头像</CardTitle>
             </div>
-            <CardDescription>头像会展示在组织入口和成员相关页面。</CardDescription>
           </CardHeader>
           <CardContent>
             <FileUpload
@@ -136,7 +134,6 @@ function OrganizationSettingsContent() {
               <Building2 className="size-4 text-muted-foreground" />
               <CardTitle>基础信息</CardTitle>
             </div>
-            <CardDescription>这些信息会作为组织的公开介绍展示。</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <label className="flex flex-col gap-2 text-sm font-medium text-foreground">

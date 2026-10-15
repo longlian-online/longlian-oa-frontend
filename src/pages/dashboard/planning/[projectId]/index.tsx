@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useConfirm } from "@/hooks/useConfirm";
+import { formatDate } from "@/lib/format";
 import { getStatusLabel } from "@/lib/projectStatus";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 
@@ -183,6 +184,10 @@ export default function ProjectDetail() {
                 <span className="font-medium text-foreground">
                   {project.inWorkshop ? "已添加" : "未添加"}
                 </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">创建时间</span>
+                <span className="font-medium text-foreground">{formatDate(project.createdAt)}</span>
               </div>
             </div>
           </section>
