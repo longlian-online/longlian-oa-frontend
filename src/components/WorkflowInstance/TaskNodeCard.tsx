@@ -15,6 +15,8 @@ interface TaskNodeCardProps {
   node: ItemTaskNodeVO;
   instance?: ItemTaskInstanceVO;
   currentUserId?: string | null;
+  selected: boolean;
+  onSelect: () => void;
   mutating: boolean;
   canSubmit: boolean;
   onClaim: (instanceId: string) => void;
@@ -48,6 +50,8 @@ export default function TaskNodeCard({
   node,
   instance,
   currentUserId,
+  selected,
+  onSelect,
   mutating,
   canSubmit,
   onClaim,
@@ -57,12 +61,25 @@ export default function TaskNodeCard({
   const status = node.taskStatus === undefined ? (instance?.status ?? null) : node.taskStatus;
   const style = getNodeStyle(status);
   const StatusIcon = style.icon;
-  const TaskIcon = getWorkflowTaskIcon(node.name, node.baseTaskIconName);
+  const TaskIcon = getWorkflowTaskIcon(node.name, node.baseTaskIcon);
   const isAssignedToMe = Boolean(instance?.assigneeId && instance.assigneeId === currentUserId);
   const initials = instance?.assigneeNickname?.slice(0, 1) || "?";
 
   return (
-    <article className={cn("w-60 rounded-xl border bg-card p-3.5 shadow-sm", style.className)}>
+    <article
+      className={cn(
+        "relative w-60 rounded-xl border bg-card p-3.5 shadow-sm",
+        style.className,
+        selected && "ring-2 ring-primary",
+      )}
+    >
+      <button
+        type="button"
+        aria-label={`查看${node.name}任务详情`}
+        aria-pressed={selected}
+        onClick={onSelect}
+        className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-muted-foreground">
           <StatusIcon className="size-4" />
@@ -73,11 +90,7 @@ export default function TaskNodeCard({
 
       <div className="mt-3 flex min-w-0 items-center gap-2">
         <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary/10 text-primary">
-          {node.baseTaskIconUrl ? (
-            <img src={node.baseTaskIconUrl} alt="" className="size-full object-cover" />
-          ) : (
-            <TaskIcon className="size-3.5" />
-          )}
+          <TaskIcon className="size-3.5" />
         </div>
         <h3 className="truncate text-sm font-semibold text-foreground">{node.name}</h3>
       </div>
@@ -107,7 +120,7 @@ export default function TaskNodeCard({
         {status === "PENDING" && instance && (
           <Button
             size="xs"
-            className="w-full"
+            className="relative z-10 w-full"
             disabled={mutating}
             onClick={() => onClaim(instance.id)}
           >
@@ -117,7 +130,7 @@ export default function TaskNodeCard({
         {status === "CLAIMED" && isAssignedToMe && instance && canSubmit && (
           <Button
             size="xs"
-            className="w-full"
+            className="relative z-10 w-full"
             disabled={mutating}
             onClick={() => onSubmit(instance, node)}
           >

@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { useMachine } from "@xstate/react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Copy } from "lucide-react";
 
 import {
   abandonTask,
   claimTask,
   getItemTaskFlow,
   getItemTaskInstances,
-  getTaskInstanceDetail,
   rejectTask,
   resetTask,
   submitTask,
@@ -23,16 +22,16 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { getUserId } from "@/lib/session";
-import type {
-  ItemTaskFlowVO,
-  ItemTaskInstanceVO,
-  ItemTaskNodeVO,
-  TaskInstanceDetailVO,
-} from "@/types/workflowInstance";
-import TaskActionPanel from "./TaskActionPanel";
+import { createItemLifecycle } from "./itemLifecycle";
+import { buildParticipantRoster } from "./participantRoster";
+import TaskDetailPanel from "./TaskDetailPanel";
+import { scrollTaskDetailIntoView } from "./scrollTaskDetailIntoView";
+import { canReset, canReject } from "./taskPermissions";
 import TaskFlowViewer from "./TaskFlowViewer";
 import TaskSubmitPanel from "./TaskSubmitPanel";
-import { workflowInstanceMachine } from "./workflowMachine";
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+
+import type { ItemTaskInstanceVO, ItemTaskNodeVO, TaskSubmitDTO } from "@/types/workflowInstance";
 
 interface WorkflowInstanceProps {
   itemId: string;
@@ -65,60 +64,114 @@ function isNodeUnlocked(node: ItemTaskNodeVO, nodes: ItemTaskNodeVO[]): boolean 
 export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const currentUserId = getUserId();
-  const [workflowState, sendWorkflowEvent] = useMachine(workflowInstanceMachine);
-  const [taskFlow, setTaskFlow] = useState<ItemTaskFlowVO | null>(null);
-  const [instances, setInstances] = useState<ItemTaskInstanceVO[]>([]);
+  const lifecycle = useRef(createItemLifecycle(itemId));
+  lifecycle.current.switchTo(itemId);
+  const capturedLifecycle = lifecycle.current.capture();
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const isCurrentLifecycle = (): boolean => mounted.current && capturedLifecycle();
+  const actionLock = useRef(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const detailPanelRef = useRef<HTMLDivElement>(null);
+  const [detailScrollNonce, setDetailScrollNonce] = useState(0);
+  const flowQuery = useApiQuery({
+    key: ["flow", itemId],
+    queryFn: () => getItemTaskFlow(itemId),
+    enabled: Boolean(itemId),
+    staleTime: 0,
+  });
+  const instancesQuery = useApiQuery({
+    key: ["instances", itemId],
+    queryFn: () => getItemTaskInstances(itemId),
+    enabled: Boolean(itemId),
+    staleTime: 0,
+  });
+  const taskFlow = flowQuery.data;
+  const instances = instancesQuery.data ?? [];
+  const actionMutation = useApiMutation({
+    mutationFn: ({ action }: { instanceId: string; action: () => Promise<void> }) => action(),
+    invalidate: [
+      ["flow"],
+      ["instances"],
+      ["taskDetail"],
+      ["taskVersions"],
+      ["myTasks"],
+      ["items"],
+      ["projects"],
+      ["workshop"],
+      ["plaza"],
+    ],
+  });
   const [submitTarget, setSubmitTarget] = useState<{
     instance: ItemTaskInstanceVO;
-    node?: ItemTaskNodeVO;
+    node: ItemTaskNodeVO;
   } | null>(null);
   const [rejectTarget, setRejectTarget] = useState<ItemTaskInstanceVO | null>(null);
   const [rejectComment, setRejectComment] = useState("");
-  const [detailTarget, setDetailTarget] = useState<ItemTaskInstanceVO | null>(null);
-  const [detail, setDetail] = useState<TaskInstanceDetailVO | null>(null);
-
   const sortedInstances = useMemo(() => getSortedInstances(instances), [instances]);
-  const visibleInstances = sortedInstances;
+  const participantRoster = useMemo(
+    () => (taskFlow ? buildParticipantRoster(taskFlow.itemTitle, instances) : ""),
+    [instances, taskFlow],
+  );
+  const selectedNode = taskFlow?.nodes.find((node) => node.id === selectedNodeId);
+  const selectedInstance = selectedNode
+    ? sortedInstances.find((instance) =>
+        selectedNode.taskInstanceId
+          ? instance.id === selectedNode.taskInstanceId
+          : instance.sort === selectedNode.sort &&
+            instance.parallelSort === selectedNode.parallelSort,
+      )
+    : undefined;
 
   useEffect(() => {
-    void loadData();
+    setSelectedNodeId(null);
+    setSubmitTarget(null);
+    setRejectTarget(null);
+    setRejectComment("");
   }, [itemId]);
 
-  async function loadData(background = false): Promise<void> {
-    try {
-      if (!background) sendWorkflowEvent({ type: "LOAD" });
-      const [flowData, instanceData] = await Promise.all([
-        getItemTaskFlow(itemId),
-        getItemTaskInstances(itemId),
-      ]);
-      setTaskFlow(flowData);
-      setInstances(instanceData);
-      sendWorkflowEvent({ type: "LOADED" });
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务流加载失败", "error");
-      sendWorkflowEvent({ type: background ? "ACTION_FAILED" : "LOAD_FAILED" });
-    }
-  }
+  const selectNode = useCallback((nodeId: string) => {
+    setSelectedNodeId(nodeId);
+    setDetailScrollNonce((nonce) => nonce + 1);
+  }, []);
+
+  useLayoutEffect(() => {
+    const detail = detailPanelRef.current;
+    if (!selectedNodeId || !detail) return;
+    scrollTaskDetailIntoView(detail);
+  }, [detailScrollNonce, selectedNodeId]);
 
   async function runInstanceAction(
     instanceId: string,
     action: () => Promise<void>,
     successMessage: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
+    if (!isCurrentLifecycle() || actionLock.current) return false;
+    actionLock.current = true;
     try {
-      sendWorkflowEvent({ type: "MUTATE", instanceId });
-      await action();
+      await actionMutation.mutateAsync({ instanceId, action });
+      if (!isCurrentLifecycle()) return false;
       $tip(successMessage, "success");
-      await loadData(true);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务操作失败", "error");
-      sendWorkflowEvent({ type: "ACTION_FAILED" });
+      return isCurrentLifecycle();
+    } catch {
+      return false;
+    } finally {
+      actionLock.current = false;
     }
   }
 
   function openSubmit(instance: ItemTaskInstanceVO, node?: ItemTaskNodeVO): void {
     const targetNode = node ?? findNodeByInstance(instance, taskFlow?.nodes ?? []);
-    if (targetNode && !isNodeUnlocked(targetNode, taskFlow?.nodes ?? [])) {
+    if (!targetNode) {
+      $tip("任务提交表单尚未加载，请重新加载任务流", "error");
+      return;
+    }
+    if (!isNodeUnlocked(targetNode, taskFlow?.nodes ?? [])) {
       $tip("请先完成前置阶段", "error");
       return;
     }
@@ -128,36 +181,34 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     });
   }
 
-  async function handleSubmit(metadata: Record<string, unknown>): Promise<void> {
-    if (!submitTarget) return;
+  async function handleSubmit(submission: TaskSubmitDTO): Promise<boolean> {
+    if (!submitTarget) return false;
 
-    await runInstanceAction(
+    const succeeded = await runInstanceAction(
       submitTarget.instance.id,
-      () => submitTask(submitTarget.instance.id, { metadata: JSON.stringify(metadata) }),
+      () => submitTask(submitTarget.instance.id, submission),
       "任务已提交",
     );
-    setSubmitTarget(null);
+    if (succeeded) setSubmitTarget(null);
+    return succeeded;
   }
 
   async function handleReject(): Promise<void> {
-    if (!rejectTarget || !rejectComment.trim()) return;
+    if (
+      !rejectTarget ||
+      !rejectComment.trim() ||
+      !canReject(rejectTarget, taskFlow?.nodes ?? [], instances, currentUserId)
+    )
+      return;
 
-    await runInstanceAction(
+    const succeeded = await runInstanceAction(
       rejectTarget.id,
       () => rejectTask(rejectTarget.id, { reviewComment: rejectComment.trim() }),
       "任务已打回",
     );
-    setRejectTarget(null);
-    setRejectComment("");
-  }
-
-  async function handleViewDetail(instance: ItemTaskInstanceVO): Promise<void> {
-    try {
-      const data = await getTaskInstanceDetail(instance.id);
-      setDetail(data);
-      setDetailTarget(instance);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务详情加载失败", "error");
+    if (succeeded) {
+      setRejectTarget(null);
+      setRejectComment("");
     }
   }
 
@@ -172,6 +223,8 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   }
 
   async function handleReset(instanceId: string): Promise<void> {
+    const instance = instances.find((candidate) => candidate.id === instanceId);
+    if (!instance || !canReset(instance, currentUserId)) return;
     const confirmed = await confirm({
       title: "重置提交？",
       description: "重置后任务会回到待提交状态，需要重新提交。",
@@ -181,18 +234,36 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
     await runInstanceAction(instanceId, () => resetTask(instanceId), "任务已重置");
   }
 
-  const mutatingInstanceId = workflowState.context.mutatingInstanceId;
+  async function handleCopyParticipantRoster(): Promise<void> {
+    if (!participantRoster || !taskFlow) return;
+    try {
+      await navigator.clipboard.writeText(participantRoster);
+      $tip(`${taskFlow.itemTitle} · 参与名单已复制`, "success");
+    } catch {
+      $tip("复制失败，请手动复制", "error");
+    }
+  }
 
-  if (workflowState.matches("loading")) {
+  const mutatingInstanceId = actionMutation.isPending
+    ? (actionMutation.variables?.instanceId ?? null)
+    : null;
+
+  if (flowQuery.isLoading || instancesQuery.isLoading) {
     return <div className="py-8 text-center text-sm text-muted-foreground">正在加载任务流...</div>;
   }
 
-  if (!taskFlow || workflowState.matches("error")) {
+  if (!taskFlow || (!instancesQuery.data && instancesQuery.isError)) {
     return (
       <div className="flex flex-col items-center gap-3 py-8 text-center text-sm text-muted-foreground">
-        <span>{workflowState.matches("error") ? "任务流加载失败" : "任务流不存在"}</span>
-        {workflowState.matches("error") && (
-          <Button variant="outline" size="sm" onClick={() => void loadData()}>
+        <span>
+          {flowQuery.isError || instancesQuery.isError ? "任务流加载失败" : "任务流不存在"}
+        </span>
+        {(flowQuery.isError || instancesQuery.isError) && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void Promise.all([flowQuery.refetch(), instancesQuery.refetch()])}
+          >
             重新加载
           </Button>
         )}
@@ -210,9 +281,22 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
             <p className="mt-0.5 truncate text-sm text-muted-foreground">{taskFlow.description}</p>
           )}
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto shrink-0"
+          disabled={!participantRoster}
+          title={participantRoster ? "复制参与名单" : "暂无参与人"}
+          onClick={() => void handleCopyParticipantRoster()}
+        >
+          <Copy data-icon="inline-start" />
+          复制参与名单
+        </Button>
       </header>
 
       <TaskFlowViewer
+        selectedNodeId={selectedNodeId}
+        onSelectNode={selectNode}
         nodes={taskFlow.nodes}
         instances={sortedInstances}
         currentUserId={currentUserId}
@@ -223,34 +307,63 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
         onSubmit={(instance, node) => openSubmit(instance, node)}
       />
 
-      <TaskActionPanel
-        instances={visibleInstances}
-        currentUserId={currentUserId}
-        mutatingInstanceId={mutatingInstanceId}
-        canSubmit={(instance) => {
-          const node = findNodeByInstance(instance, taskFlow.nodes);
-          return !node || isNodeUnlocked(node, taskFlow.nodes);
-        }}
-        onClaim={(instanceId) =>
-          void runInstanceAction(instanceId, () => claimTask(instanceId), "任务已接取")
-        }
-        onSubmit={(instance) => openSubmit(instance)}
-        onAbandon={(instanceId) => void handleAbandon(instanceId)}
-        onReject={setRejectTarget}
-        onReset={(instanceId) => void handleReset(instanceId)}
-        onViewDetail={(instance) => void handleViewDetail(instance)}
-      />
+      {selectedNode ? (
+        <div ref={detailPanelRef}>
+          <TaskDetailPanel
+            key={`${itemId}:${selectedNode.id}`}
+            node={selectedNode}
+            instance={selectedInstance}
+            actions={
+              selectedInstance && selectedNode.taskStatus !== null
+                ? {
+                    currentUserId,
+                    mutating: mutatingInstanceId === selectedInstance.id,
+                    canSubmit: isNodeUnlocked(selectedNode, taskFlow.nodes),
+                    canReset: canReset(selectedInstance, currentUserId),
+                    canReject: canReject(
+                      selectedInstance,
+                      taskFlow.nodes,
+                      instances,
+                      currentUserId,
+                    ),
+                    onClaim: () =>
+                      void runInstanceAction(
+                        selectedInstance.id,
+                        () => claimTask(selectedInstance.id),
+                        "任务已接取",
+                      ),
+                    onSubmit: () => openSubmit(selectedInstance),
+                    onAbandon: () => void handleAbandon(selectedInstance.id),
+                    onReject: () => setRejectTarget(selectedInstance),
+                    onReset: () => void handleReset(selectedInstance.id),
+                  }
+                : undefined
+            }
+          />
+        </div>
+      ) : (
+        <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
+          点击流程节点查看任务详情和操作。
+        </div>
+      )}
 
-      <TaskSubmitPanel
-        open={Boolean(submitTarget)}
-        taskInstanceId={submitTarget?.instance.id}
-        taskName={submitTarget?.instance.name}
-        metaSchema={submitTarget?.node?.metaSchema}
-        onOpenChange={(open) => {
-          if (!open) setSubmitTarget(null);
-        }}
-        onSubmit={handleSubmit}
-      />
+      {submitTarget && (
+        <TaskSubmitPanel
+          key={submitTarget.instance.id}
+          open
+          taskInstanceId={submitTarget.instance.id}
+          taskName={submitTarget.instance.name}
+          submitFields={submitTarget.node.submitFields}
+          onOpenChange={(open) => {
+            if (!open) setSubmitTarget(null);
+          }}
+          submitting={
+            actionMutation.isPending &&
+            actionMutation.variables?.instanceId === submitTarget.instance.id
+          }
+          onSubmit={handleSubmit}
+        />
+      )}
 
       <Dialog open={Boolean(rejectTarget)} onOpenChange={(open) => !open && setRejectTarget(null)}>
         <DialogContent>
@@ -269,31 +382,12 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
             </Button>
             <Button
               variant="destructive"
-              disabled={!rejectComment.trim()}
+              disabled={!rejectComment.trim() || actionMutation.isPending}
               onClick={() => void handleReject()}
             >
               打回
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={Boolean(detailTarget)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDetailTarget(null);
-            setDetail(null);
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>提交详情{detailTarget ? `：${detailTarget.name}` : ""}</DialogTitle>
-          </DialogHeader>
-          <pre className="max-h-80 overflow-auto rounded-xl bg-secondary/60 p-3 text-xs text-foreground">
-            {detail?.metadata || "暂无提交元数据"}
-          </pre>
         </DialogContent>
       </Dialog>
     </div>

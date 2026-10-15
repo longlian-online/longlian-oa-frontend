@@ -7,6 +7,8 @@ interface PaginationBarProps {
   page: number;
   pageSize: number;
   total: number;
+  /** 显式传入总页数；不传时按 ceil(total/pageSize) 估算（适用于每页条数恒定的列表）。 */
+  totalPages?: number;
   disabled?: boolean;
   className?: string;
   onPageChange: (page: number) => void;
@@ -34,14 +36,15 @@ export default function PaginationBar({
   page,
   pageSize,
   total,
+  totalPages: totalPagesProp,
   disabled = false,
   className,
   onPageChange,
 }: PaginationBarProps) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const totalPages = totalPagesProp ?? Math.max(1, Math.ceil(total / pageSize));
   const normalizedPage = Math.min(Math.max(page, 1), totalPages);
 
-  if (total <= pageSize) {
+  if (totalPages <= 1) {
     return null;
   }
 
@@ -77,7 +80,7 @@ export default function PaginationBar({
                 onClick={() => onPageChange(item)}
                 className={
                   item === normalizedPage
-                    ? "h-8 min-w-8 rounded-lg bg-foreground px-3 py-2 text-base font-normal text-background hover:bg-foreground hover:text-background"
+                    ? "h-8 min-w-8 rounded-lg bg-primary px-3 py-2 text-base font-normal text-primary-foreground hover:bg-primary hover:text-primary-foreground"
                     : "h-8 min-w-8 rounded-lg px-3 py-2 text-base font-normal text-foreground hover:bg-secondary"
                 }
               >

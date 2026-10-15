@@ -1,19 +1,41 @@
 import { request } from "@/api/request";
-import type { JoinByInviteCodeDTO, InviteInfoVO } from "@/types/auth";
-import type { UpdateMyInfoDTO, UserInfoVO } from "@/types/user";
 
-let currentUserRequest: Promise<UserInfoVO> | null = null;
+import type { JoinByInviteCodeDTO, InviteInfoVO } from "@/types/auth";
+import type {
+  ChangePasswordDTO,
+  OrganizationSimpleInfoVO,
+  OrgIdDTO,
+  UpdateMyInfoDTO,
+  UserInfoVO,
+  UserOrgSwitchVO,
+} from "@/types/user";
 
 export async function getCurrentUser(): Promise<UserInfoVO> {
-  currentUserRequest ??= request<UserInfoVO>("/user/").finally(() => {
-    currentUserRequest = null;
+  return request("/user/");
+}
+
+export async function getUserOrganizations(): Promise<OrganizationSimpleInfoVO[]> {
+  return request("/user/organizations");
+}
+
+export async function switchOrganization(dto: OrgIdDTO): Promise<UserOrgSwitchVO> {
+  const organization = await request<UserOrgSwitchVO>("/user/switch", {
+    method: "POST",
+    body: JSON.stringify(dto),
   });
-  return currentUserRequest;
+  return organization;
 }
 
 export async function updateMyInfo(dto: UpdateMyInfoDTO): Promise<void> {
   await request("/user/", {
     method: "PUT",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function changePassword(dto: ChangePasswordDTO): Promise<void> {
+  await request("/user/password", {
+    method: "PATCH",
     body: JSON.stringify(dto),
   });
 }
@@ -25,7 +47,7 @@ export async function getInviteInfo(inviteCode: string): Promise<InviteInfoVO> {
 }
 
 export async function joinOrganizationByInvite(dto: JoinByInviteCodeDTO): Promise<void> {
-  return request("/user/organizations/join-by-invite", {
+  await request("/user/organizations/join-by-invite", {
     method: "POST",
     body: JSON.stringify(dto),
   });

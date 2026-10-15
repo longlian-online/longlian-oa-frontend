@@ -1,39 +1,26 @@
-import { useEffect, useState } from "react";
-
 import { getProjectTypes } from "@/api/planning";
-import { $tip } from "@/components/tip";
+import { useApiQuery } from "@/hooks/queries/useApiQuery";
+
 import type { ProjectTypeInfoVO } from "@/types/planning";
 
 interface UseProjectTypesResult {
   projectTypes: ProjectTypeInfoVO[];
   loading: boolean;
+  error: Error | null;
   reload: () => Promise<void>;
 }
-
 export function useProjectTypes(): UseProjectTypesResult {
-  const [projectTypes, setProjectTypes] = useState<ProjectTypeInfoVO[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  async function loadProjectTypes(): Promise<void> {
-    try {
-      setLoading(true);
-      const data = await getProjectTypes();
-      setProjectTypes(data);
-    } catch (error) {
-      setProjectTypes([]);
-      $tip(error instanceof Error ? error.message : "企划类型加载失败", "error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadProjectTypes();
-  }, []);
-
+  const query = useApiQuery({
+    key: ["projectTypes"],
+    queryFn: getProjectTypes,
+    staleTime: 300_000,
+  });
   return {
-    projectTypes,
-    loading,
-    reload: loadProjectTypes,
+    projectTypes: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error,
+    reload: async (): Promise<void> => {
+      await query.refetch();
+    },
   };
 }

@@ -1,4 +1,5 @@
 import { request } from "@/api/request";
+
 import type {
   PageResult,
   ProjectCreateDTO,
@@ -8,10 +9,6 @@ import type {
   ProjectTypeInfoVO,
   ProjectUpdateDTO,
 } from "@/types/planning";
-
-const projectListRequests = new Map<string, Promise<PageResult<ProjectInfoVO>>>();
-const projectDetailRequests = new Map<string, Promise<ProjectDetailInfoVO>>();
-let projectTypesRequest: Promise<ProjectTypeInfoVO[]> | null = null;
 
 function toQueryString(params: Record<string, string | number | undefined>): string {
   const searchParams = new URLSearchParams();
@@ -25,51 +22,20 @@ function toQueryString(params: Record<string, string | number | undefined>): str
 }
 
 export async function getProjectTypes(): Promise<ProjectTypeInfoVO[]> {
-  projectTypesRequest ??= request<PageResult<ProjectTypeInfoVO> | ProjectTypeInfoVO[]>(
+  const result = await request<PageResult<ProjectTypeInfoVO> | ProjectTypeInfoVO[]>(
     "/projects/types",
-  )
-    .then((result) => (Array.isArray(result) ? result : result.list))
-    .finally(() => {
-      projectTypesRequest = null;
-    });
-  return projectTypesRequest;
+  );
+  return Array.isArray(result) ? result : result.list;
 }
 
 export async function getProjectList(dto: ProjectListDTO): Promise<PageResult<ProjectInfoVO>> {
-  const requestKey = JSON.stringify(dto);
-  const existingRequest = projectListRequests.get(requestKey);
-  if (existingRequest) {
-    return existingRequest;
-  }
-
-  const listRequest = request<PageResult<ProjectInfoVO>>(
-    `/projects${toQueryString({
-      keyword: dto.keyword,
-      projectType: dto.projectType,
-      pageNum: dto.pageNum,
-      pageSize: dto.pageSize,
-      sortByTime: dto.sortByTime,
-      orderDir: dto.orderDir,
-    })}`,
-  ).finally(() => {
-    projectListRequests.delete(requestKey);
-  });
-  projectListRequests.set(requestKey, listRequest);
-  return listRequest;
+  return request(
+    `/projects${toQueryString({ keyword: dto.keyword, projectType: dto.projectType, pageNum: dto.pageNum, pageSize: dto.pageSize, offset: dto.offset, sortByTime: dto.sortByTime, orderDir: dto.orderDir })}`,
+  );
 }
 
 export async function getProjectDetail(projectId: number | string): Promise<ProjectDetailInfoVO> {
-  const requestKey = String(projectId);
-  const existingRequest = projectDetailRequests.get(requestKey);
-  if (existingRequest) {
-    return existingRequest;
-  }
-
-  const detailRequest = request<ProjectDetailInfoVO>(`/projects/${projectId}`).finally(() => {
-    projectDetailRequests.delete(requestKey);
-  });
-  projectDetailRequests.set(requestKey, detailRequest);
-  return detailRequest;
+  return request(`/projects/${projectId}`);
 }
 
 export async function createProject(dto: ProjectCreateDTO): Promise<void> {

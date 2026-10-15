@@ -1,11 +1,42 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
+import { ApiError } from "@/api/apiError";
 import { createFileUpload } from "@/api/file";
+import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { $tip } from "@/components/tip";
-import type { FileValidationOptions, UploadedFileInfo, UploadBizType } from "@/types/file";
+import { requestImageCrop, UploadCancelledError } from "@/lib/imageCropRequest";
+import { getSessionSnapshot } from "@/lib/session";
+import { isScopeCurrent } from "@/lib/queryKeys";
+import { AuthExpiredError } from "@/lib/authError";
+
+import type {
+  CreateFileReqDTO,
+  FileValidationOptions,
+  UploadedFileInfo,
+  UploadBizType,
+} from "@/types/file";
 
 const DEFAULT_MAX_SIZE = 50 * 1024 * 1024;
-const DEFAULT_ACCEPT = ["jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx", "zip"];
+const DEFAULT_ACCEPT = [
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "webp",
+  "bmp",
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "ppt",
+  "pptx",
+  "txt",
+  "csv",
+  "zip",
+  "rar",
+  "7z",
+];
 
 const MIME_BY_EXT: Record<string, string[]> = {
   jpg: ["image/jpeg", "image/jpg"],
@@ -17,7 +48,15 @@ const MIME_BY_EXT: Record<string, string[]> = {
   docx: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
   xls: ["application/vnd.ms-excel"],
   xlsx: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+  ppt: ["application/vnd.ms-powerpoint"],
+  pptx: ["application/vnd.openxmlformats-officedocument.presentationml.presentation"],
+  txt: ["text/plain"],
+  csv: ["text/csv", "application/vnd.ms-excel"],
+  webp: ["image/webp"],
+  bmp: ["image/bmp"],
   zip: ["application/zip", "application/x-zip-compressed"],
+  rar: ["application/vnd.rar", "application/x-rar-compressed"],
+  "7z": ["application/x-7z-compressed"],
 };
 
 interface UploadFileOptions extends FileValidationOptions {
@@ -25,7 +64,7 @@ interface UploadFileOptions extends FileValidationOptions {
   bizId: string;
 }
 
-interface UseUploadFileResult {
+export interface UseUploadFileResult {
   uploading: boolean;
   uploadFile: (file: File, options: UploadFileOptions) => Promise<UploadedFileInfo>;
 }
@@ -49,7 +88,7 @@ function formatFileSize(size: number): string {
   return `${(size / 1024 / 1024).toFixed(1)}MB`;
 }
 
-function validateFile(file: File, options: FileValidationOptions): string | null {
+export function validateFile(file: File, options: FileValidationOptions): string | null {
   const accept = options.accept ?? DEFAULT_ACCEPT;
   const maxSize = options.maxSize ?? DEFAULT_MAX_SIZE;
   const fileExt = getFileExt(file.name);
@@ -71,16 +110,20 @@ function validateFile(file: File, options: FileValidationOptions): string | null
   return null;
 }
 
-async function uploadToPresignedUrl(uploadUrl: string, file: File): Promise<void> {
+async function uploadToPresignedUrl(
+  uploadUrl: string,
+  file: File,
+  contentDisposition?: string,
+): Promise<void> {
   if (!uploadUrl) return;
 
   const fileExt = getFileExt(file.name);
   const fileMime = normalizeMimeType(file, fileExt);
   const response = await fetch(uploadUrl, {
     method: "PUT",
-    headers: {
-      "Content-Type": fileMime,
-    },
+    headers: contentDisposition
+      ? { "Content-Type": fileMime, "Content-Disposition": contentDisposition }
+      : { "Content-Type": fileMime },
     body: file,
   });
 
@@ -91,6 +134,16 @@ async function uploadToPresignedUrl(uploadUrl: string, file: File): Promise<void
 
 export function useUploadFile(): UseUploadFileResult {
   const [uploading, setUploading] = useState(false);
+  const activeUploads = useRef(0);
+  const allocation = useApiMutation({
+    mutationFn: (dto: CreateFileReqDTO) => createFileUpload(dto),
+    allowConcurrent: true,
+  });
+  const avatarAllocation = useApiMutation({
+    mutationFn: (dto: CreateFileReqDTO) => createFileUpload(dto),
+    allowConcurrent: true,
+    scope: "account",
+  });
 
   const uploadFile = async (file: File, options: UploadFileOptions): Promise<UploadedFileInfo> => {
     const validationError = validateFile(file, options);
@@ -99,11 +152,28 @@ export function useUploadFile(): UseUploadFileResult {
       throw new Error(validationError);
     }
 
+    const started = getSessionSnapshot();
+    const scope = options.bizType === "avatar" ? "account" : "org";
+    const ensureCurrent = (): void => {
+      if (!isScopeCurrent(scope, started)) throw new DOMException("会话已切换", "AbortError");
+    };
+    activeUploads.current += 1;
     setUploading(true);
     try {
+      if (normalizeMimeType(file, getFileExt(file.name)).startsWith("image/")) {
+        file = await requestImageCrop(
+          file,
+          options.bizType === "avatar" ? 1 : options.bizType === "cover" ? 2 / 3 : undefined,
+        );
+        const croppedValidationError = validateFile(file, options);
+        if (croppedValidationError) throw new Error(croppedValidationError);
+      }
+      ensureCurrent();
       const fileExt = getFileExt(file.name);
       const fileMime = normalizeMimeType(file, fileExt);
-      const resource = await createFileUpload({
+      const resource = await (
+        options.bizType === "avatar" ? avatarAllocation : allocation
+      ).mutateAsync({
         fileName: file.name,
         fileExt,
         fileSize: file.size,
@@ -112,8 +182,9 @@ export function useUploadFile(): UseUploadFileResult {
         bizId: options.bizId,
       });
 
-      await uploadToPresignedUrl(resource.uploadUrl, file);
+      await uploadToPresignedUrl(resource.uploadUrl, file, resource.contentDisposition);
 
+      ensureCurrent();
       const uploadedFile: UploadedFileInfo = {
         fileId: resource.fileId,
         fileName: file.name,
@@ -125,10 +196,18 @@ export function useUploadFile(): UseUploadFileResult {
       $tip("文件上传成功", "success");
       return uploadedFile;
     } catch (error) {
-      $tip(error instanceof Error ? error.message : "文件上传失败", "error");
+      if (
+        !(error instanceof UploadCancelledError) &&
+        !(error instanceof Error && error.name === "AbortError") &&
+        !(error instanceof ApiError) &&
+        !(error instanceof AuthExpiredError)
+      ) {
+        $tip(error instanceof Error ? error.message : "文件上传失败", "error");
+      }
       throw error;
     } finally {
-      setUploading(false);
+      activeUploads.current -= 1;
+      setUploading(activeUploads.current > 0);
     }
   };
 

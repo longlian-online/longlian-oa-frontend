@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Eye, EyeOff, Layers, Lock, ShieldCheck, User } from "lucide-react";
 
+import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { adminLogin } from "@/api/auth";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,8 @@ type AdminLoginFormData = z.infer<typeof adminLoginSchema>;
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const loginMutation = useApiMutation({ scope: "public", mutationFn: adminLogin });
+  const isLoading = loginMutation.isPending;
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<AdminLoginFormData>({
@@ -33,16 +35,13 @@ export default function AdminLoginPage() {
   });
 
   const handleSubmit = async (data: AdminLoginFormData): Promise<void> => {
-    setIsLoading(true);
     try {
-      const result = await adminLogin(data);
+      const result = await loginMutation.mutateAsync(data);
       saveAdminSession(result);
       $tip("管理员登录成功", "success");
       void navigate("/admin", { replace: true });
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "管理员登录失败", "error");
-    } finally {
-      setIsLoading(false);
+    } catch {
+      /* 共享 Mutation 负责错误提示。 */
     }
   };
 
@@ -54,7 +53,7 @@ export default function AdminLoginPage() {
             <ShieldCheck className="h-6 w-6 text-primary-foreground" />
           </div>
           <h1 className="text-xl font-semibold text-foreground">管理员登录</h1>
-          <p className="mt-1 text-sm text-muted-foreground">进入系统管理端</p>
+          <p className="mt-1 text-sm text-muted-foreground">进入平台管理端</p>
         </div>
 
         <div className="rounded-2xl border bg-card p-6 shadow-sm">

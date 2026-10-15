@@ -26,6 +26,13 @@ function ignoreUnknownRequests(): Plugin {
   };
 }
 
+export function isAdminApiPath(pathname: string): boolean {
+  return (
+    pathname === "/admin/session" ||
+    /^\/admin\/(?:admins|organizations|scheduled-tasks)\//.test(pathname)
+  );
+}
+
 const apiProxy: ProxyOptions = {
   target: "https://sit.neo.oa.api.longlian.online",
   changeOrigin: true,
@@ -38,11 +45,19 @@ const apiProxy: ProxyOptions = {
 };
 
 export default defineConfig({
+  fmt: {
+    ignorePatterns: [".agents/skills/**"],
+  },
   plugins: [ignoreUnknownRequests(), Pages({ dirs: "src/pages" }), react(), tailwindcss()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
     },
+  },
+  // 路由是动态 import。只扫 index.html 会在首次进入页面时再优化依赖，
+  // 浏览器拿到 504 Outdated Optimize Dep，动态模块失败后页面空白。
+  optimizeDeps: {
+    entries: ["index.html", "src/**/*.{ts,tsx}", "!src/**/*.test.{ts,tsx}"],
   },
   server: {
     watch: {
@@ -51,7 +66,8 @@ export default defineConfig({
     proxy: {
       "/app": apiProxy,
       "/common": apiProxy,
-      "^/admin/(?!login(?:/|$)|$).*": apiProxy,
+      "^/admin/session$": apiProxy,
+      "^/admin/(?:admins|organizations|scheduled-tasks)/": apiProxy,
       "/orgadmin": apiProxy,
     },
   },

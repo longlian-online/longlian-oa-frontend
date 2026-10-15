@@ -2,10 +2,11 @@
 /* 多主题通过 [data-color-theme="xxx"] 覆盖 --primary 等变量即可 */
 @layer base {
   :root {
-    --background: oklch(99% 0 0);
+    --background: #f7f7f7;
     --foreground: oklch(14% 0 0);
+    --sidebar: oklch(99% 0 0);
 
-    --card: oklch(100% 0 0);
+    --card: oklch(99% 0 0);
     --card-foreground: oklch(14% 0 0);
 
     --popover: oklch(100% 0 0);
@@ -18,7 +19,7 @@
     --secondary-foreground: oklch(14% 0 0);
 
     --muted: oklch(96% 0 0);
-    --muted-foreground: oklch(55% 0 0);
+    --muted-foreground: oklch(30% 0 0);
 
     --accent: oklch(96% 0 0);
     --accent-foreground: oklch(14% 0 0);
@@ -36,6 +37,7 @@
   .dark {
     --background: oklch(14% 0 0);
     --foreground: oklch(95% 0 0);
+    --sidebar: var(--background);
 
     --card: oklch(18% 0 0);
     --card-foreground: oklch(95% 0 0);
@@ -46,13 +48,13 @@
     --primary: oklch(95% 0 0);
     --primary-foreground: oklch(14% 0 0);
 
-    --secondary: oklch(22% 0 0);
+    --secondary: oklch(18% 0 0);
     --secondary-foreground: oklch(95% 0 0);
 
-    --muted: oklch(22% 0 0);
+    --muted: oklch(18% 0 0);
     --muted-foreground: oklch(62% 0 0);
 
-    --accent: oklch(22% 0 0);
+    --accent: oklch(18% 0 0);
     --accent-foreground: oklch(95% 0 0);
 
     --destructive: oklch(45% 0.18 25);
@@ -84,9 +86,9 @@
     --accent: oklch(30% 0.08 350);
     --accent-foreground: oklch(90% 0.12 350);
     --ring: oklch(72% 0.22 350);
-    --secondary: oklch(20% 0.04 350);
+    --secondary: oklch(18% 0.04 350);
     --secondary-foreground: oklch(90% 0.12 350);
-    --muted: oklch(20% 0.04 350);
+    --muted: oklch(18% 0.04 350);
     --muted-foreground: oklch(62% 0.06 350);
   }
 }

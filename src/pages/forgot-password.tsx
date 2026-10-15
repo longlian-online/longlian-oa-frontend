@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { ArrowLeft, Layers, Mail } from "lucide-react";
 
+import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { resetPassword, sendVerificationCode } from "@/api/auth";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -27,8 +28,10 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
-  const [isSending, setIsSending] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
+  const sendCode = useApiMutation({ scope: "public", mutationFn: sendVerificationCode });
+  const isSending = sendCode.isPending;
+  const reset = useApiMutation({ scope: "public", mutationFn: resetPassword });
+  const isResetting = reset.isPending;
   const [hasSent, setHasSent] = useState(false);
 
   const form = useForm<ForgotPasswordFormData>({
@@ -45,35 +48,29 @@ export default function ForgotPasswordPage() {
     const isEmailValid = await form.trigger("email");
     if (!isEmailValid) return;
 
-    setIsSending(true);
     try {
-      await sendVerificationCode({
+      await sendCode.mutateAsync({
         email: form.getValues("email"),
         businessType: "FORGOT_PASSWORD",
       });
       setHasSent(true);
       $tip("验证码已发送", "success");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "发送验证码失败", "error");
-    } finally {
-      setIsSending(false);
+    } catch {
+      /* 共享 Mutation 负责错误提示。 */
     }
   };
 
   const handleSubmit = async (data: ForgotPasswordFormData): Promise<void> => {
-    setIsResetting(true);
     try {
-      await resetPassword({
+      await reset.mutateAsync({
         email: data.email,
         code: data.code.toUpperCase(),
         password: data.password,
       });
       $tip("密码已重置，请使用新密码登录", "success");
       void navigate("/login", { replace: true });
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "重置密码失败", "error");
-    } finally {
-      setIsResetting(false);
+    } catch {
+      /* 共享 Mutation 负责错误提示。 */
     }
   };
 

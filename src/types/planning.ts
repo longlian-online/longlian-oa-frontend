@@ -43,6 +43,8 @@ export interface ProjectListDTO {
   projectType?: string;
   pageNum?: number;
   pageSize?: number;
+  /** 绝对偏移量；后端传入后按它取窗口，供首页条数与其他页不同的分页使用 */
+  offset?: number;
   sortByTime?: "CREATE" | "UPDATE";
   orderDir?: "DESC" | "ASC";
 }
@@ -62,6 +64,7 @@ export interface ProjectUpdateDTO {
   metadata: string;
   description: string;
   coverFileId?: string;
+  status?: ProjectStatus;
 }
 
 export interface PageResult<T> {

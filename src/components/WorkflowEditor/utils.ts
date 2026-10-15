@@ -150,17 +150,14 @@ export function moveNodeToStage(
   const groups = groupNodes(remainingNodes);
   const boundedIndex = Math.min(Math.max(targetStageIndex, 0), groups.length);
 
-  const result: WorkflowEditorNode[] = [];
-  groups.forEach((group, index) => {
-    if (index === boundedIndex) {
-      result.push({ ...movingNode, sort: result.length + 1, parallelSort: 1 });
-    }
-    result.push(...group);
-  });
-
-  if (boundedIndex === groups.length) {
-    result.push({ ...movingNode, sort: result.length + 1, parallelSort: 1 });
-  }
+  groups.splice(boundedIndex, 0, [movingNode]);
+  const result = groups.flatMap((group, index) =>
+    group.map((node, parallelIndex) => ({
+      ...node,
+      sort: index + 1,
+      parallelSort: parallelIndex + 1,
+    })),
+  );
 
   return normalizeNodes(result);
 }
@@ -191,4 +188,53 @@ export function moveNodeByOffset(
   if (currentIndex < 0) return normalizeNodes(nodes);
 
   return moveNodeToStage(nodes, localId, currentIndex + offset);
+}
+
+export const WORKFLOW_STAGE_GAP = 316;
+export const WORKFLOW_PARALLEL_GAP = 132;
+export const WORKFLOW_START_X = 72;
+export const WORKFLOW_START_Y = 80;
+export const WORKFLOW_NODE_WIDTH = 224;
+
+export type WorkflowDropTarget =
+  | { type: "stage"; stageIndex: number }
+  | { type: "parallel"; targetSort: number };
+
+export function getWorkflowDropTarget(
+  nodes: WorkflowEditorNode[],
+  movingId: string,
+  center: { x: number; y: number },
+): WorkflowDropTarget {
+  const groups = groupNodes(nodes);
+  const maxParallelCount = Math.max(1, ...groups.map((group) => group.length));
+  const sourceIndex = groups.findIndex((group) => group.some((node) => node.localId === movingId));
+  for (const [index, group] of groups.entries()) {
+    const columnCenter = WORKFLOW_START_X + index * WORKFLOW_STAGE_GAP + WORKFLOW_NODE_WIDTH / 2;
+    const top = WORKFLOW_START_Y + ((maxParallelCount - group.length) / 2) * WORKFLOW_PARALLEL_GAP;
+    if (
+      index !== sourceIndex &&
+      Math.abs(center.x - columnCenter) <= 64 &&
+      center.y >= top - 24 &&
+      center.y <= top + group.length * WORKFLOW_PARALLEL_GAP
+    ) {
+      return { type: "parallel", targetSort: group[0].sort };
+    }
+  }
+  let stageIndex = groups.filter(
+    (_, index) =>
+      center.x > WORKFLOW_START_X + index * WORKFLOW_STAGE_GAP + WORKFLOW_NODE_WIDTH / 2,
+  ).length;
+  if (sourceIndex >= 0 && groups[sourceIndex].length === 1 && sourceIndex < stageIndex)
+    stageIndex -= 1;
+  return { type: "stage", stageIndex };
+}
+
+export function applyWorkflowDropTarget(
+  nodes: WorkflowEditorNode[],
+  localId: string,
+  target: WorkflowDropTarget,
+): WorkflowEditorNode[] {
+  return target.type === "parallel"
+    ? moveNodeToParallelGroup(nodes, localId, target.targetSort)
+    : moveNodeToStage(nodes, localId, target.stageIndex);
 }

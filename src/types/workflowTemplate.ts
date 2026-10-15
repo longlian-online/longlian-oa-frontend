@@ -1,3 +1,5 @@
+import type { TaskFormField } from "./task";
+
 export type WorkflowTemplateScope = "PERSONAL" | "ORGANIZATION";
 
 export interface WorkshopTaskTemplateDTO {
@@ -33,8 +35,7 @@ export interface WorkshopTaskTemplateNodeVO {
   id?: string;
   baseTaskId: string;
   baseTaskName?: string;
-  baseTaskIconName?: string;
-  baseTaskIconUrl?: string;
+  baseTaskIcon?: string;
   customName?: string;
   sort: number;
   parallelSort?: number;
@@ -61,18 +62,16 @@ export type BaseTaskStatus = "ENABLED" | "DISABLED";
 export interface BaseTaskCreateDTO {
   name: string;
   description?: string;
-  iconFileId?: string;
-  iconName?: string;
-  metaSchema?: string;
+  icon?: string;
+  submitFields: TaskFormField[];
 }
 
 export interface BaseTaskVO {
   id: string;
   name: string;
   description?: string;
-  iconName?: string;
-  iconUrl?: string;
-  metaSchema?: string;
+  icon?: string;
+  submitFields: TaskFormField[];
   refCount: number;
   status: BaseTaskStatus;
   createdAt: string;

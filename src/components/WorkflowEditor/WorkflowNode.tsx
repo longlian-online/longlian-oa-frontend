@@ -10,11 +10,11 @@ export interface WorkflowNodeData extends Record<string, unknown> {
   label: string;
   taskName: string;
   description?: string;
-  iconName?: string;
-  iconUrl?: string;
+  icon?: string;
   stage: number;
   parallelCount: number;
   selected: boolean;
+  preview?: boolean;
   onSelect: (localId: string) => void;
   onRemove: (localId: string) => void;
 }
@@ -22,7 +22,7 @@ export interface WorkflowNodeData extends Record<string, unknown> {
 export type WorkflowFlowNode = Node<WorkflowNodeData, "workflow">;
 
 function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
-  const Icon = getWorkflowTaskIcon(data.taskName, data.iconName);
+  const Icon = getWorkflowTaskIcon(data.taskName, data.icon);
   const description = getWorkflowTaskDescription(data.taskName, data.description);
 
   return (
@@ -30,6 +30,8 @@ function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
       className={cn(
         "group relative w-56 rounded-xl border bg-card p-3 text-left shadow-sm transition-[border-color,box-shadow,transform]",
         "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md",
+        data.preview &&
+          "border-2 border-dashed border-primary bg-primary/10 ring-2 ring-primary/15",
         data.selected && "border-primary ring-2 ring-primary/15",
       )}
     >
@@ -46,11 +48,7 @@ function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
       >
         <div className="flex items-start gap-3 pr-6">
           <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
-            {data.iconUrl ? (
-              <img src={data.iconUrl} alt="" className="size-full object-cover" />
-            ) : (
-              <Icon className="size-4" />
-            )}
+            <Icon className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-foreground">{data.label}</div>
@@ -71,18 +69,20 @@ function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
           )}
         </div>
       </button>
-      <button
-        type="button"
-        aria-label={`删除${data.label}节点`}
-        title="删除节点"
-        className="nodrag nopan absolute right-2 top-2 inline-flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
-        onClick={(event) => {
-          event.stopPropagation();
-          data.onRemove(id);
-        }}
-      >
-        <Trash2 className="size-3.5" />
-      </button>
+      {!data.preview && (
+        <button
+          type="button"
+          aria-label={`删除${data.label}节点`}
+          title="删除节点"
+          className="nodrag nopan absolute right-2 top-2 inline-flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={(event) => {
+            event.stopPropagation();
+            data.onRemove(id);
+          }}
+        >
+          <Trash2 className="size-3.5" />
+        </button>
+      )}
       <Handle
         type="source"
         position={Position.Right}

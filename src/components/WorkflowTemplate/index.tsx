@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Ban, ChevronRight, Plus } from "lucide-react";
+import { Ban, CheckCircle2, ChevronRight, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ interface WorkflowTemplateCardProps {
   template: WorkshopTaskTemplateVO;
   onEdit: (template: WorkshopTaskTemplateVO) => void;
   onDisable?: (template: WorkshopTaskTemplateVO) => void;
+  onStatusChange?: (template: WorkshopTaskTemplateVO) => void;
+  status?: "ENABLED" | "DISABLED";
   disabling?: boolean;
 }
 
@@ -26,7 +28,6 @@ interface WorkflowStage {
   label: string;
   parallelCount: number;
   icon: LucideIcon;
-  iconUrl?: string;
 }
 
 const SCOPE_LABELS: Record<WorkflowTemplateScope, string> = {
@@ -60,9 +61,8 @@ function getStages(nodes: WorkshopTaskTemplateNodeVO[]): WorkflowStage[] {
         parallelCount: sortedGroup.length,
         icon: getWorkflowTaskIcon(
           sortedGroup[0].baseTaskName || label,
-          sortedGroup[0].baseTaskIconName,
+          sortedGroup[0].baseTaskIcon,
         ),
-        iconUrl: sortedGroup[0].baseTaskIconUrl,
       };
     });
 }
@@ -101,11 +101,7 @@ function WorkflowDiagram({ nodes }: { nodes: WorkshopTaskTemplateNodeVO[] }) {
           <div key={`${stage.label}-${index}`} className="flex min-w-0 flex-1 items-start">
             <div className="flex min-w-0 flex-1 flex-col items-center">
               <div className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-foreground text-background">
-                {stage.iconUrl ? (
-                  <img src={stage.iconUrl} alt="" className="size-full object-cover" />
-                ) : (
-                  <Icon className="size-3.5" />
-                )}
+                <Icon className="size-3.5" />
               </div>
               <WorkflowParallelBadge count={stage.parallelCount} />
               <div className="mt-1 max-w-12 truncate text-[11px] font-bold leading-4 text-muted-foreground">
@@ -126,9 +122,13 @@ export function WorkflowTemplateCard({
   template,
   onEdit,
   onDisable,
+  onStatusChange,
+  status,
   disabling = false,
 }: WorkflowTemplateCardProps) {
   const taskCount = template.taskCount || template.nodes.length;
+  const isDisabled = status === "DISABLED";
+  const handleStatusChange = onStatusChange ?? onDisable;
 
   return (
     <article className="flex min-h-[190px] min-w-0 flex-col rounded-xl border bg-card px-4 py-4 shadow-sm transition-colors hover:border-foreground/20">
@@ -155,16 +155,21 @@ export function WorkflowTemplateCard({
       <div className="flex items-center justify-between text-xs leading-[18px]">
         <div className="text-foreground">任务数：{taskCount}</div>
         <div className="flex items-center gap-1">
-          {onDisable && (
+          {handleStatusChange && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1 px-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className={cn(
+                "h-7 gap-1 px-1.5 text-xs",
+                isDisabled
+                  ? "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  : "text-destructive hover:bg-destructive/10 hover:text-destructive",
+              )}
               disabled={disabling}
-              onClick={() => onDisable(template)}
+              onClick={() => handleStatusChange(template)}
             >
-              <Ban className="size-3.5" />
-              禁用
+              {isDisabled ? <CheckCircle2 className="size-3.5" /> : <Ban className="size-3.5" />}
+              {isDisabled ? "启用" : "禁用"}
             </Button>
           )}
           {template.isMine ? (

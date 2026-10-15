@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Layers, Mail, User, Lock, Eye, EyeOff } from "lucide-react";
 
+import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +30,10 @@ type CodeFormData = z.infer<typeof codeSchema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const passwordLogin = useApiMutation({ scope: "public", mutationFn: loginByPassword });
+  const codeLogin = useApiMutation({ scope: "public", mutationFn: loginByCode });
+  const sendCode = useApiMutation({ scope: "public", mutationFn: sendVerificationCode });
+  const isLoading = passwordLogin.isPending || codeLogin.isPending;
   const [showPassword, setShowPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [activeTab, setActiveTab] = useState<"password" | "code">("password");
@@ -59,30 +63,24 @@ export default function LoginPage() {
   );
 
   const onPasswordSubmit = async (data: PasswordFormData) => {
-    setIsLoading(true);
     try {
-      const result = await loginByPassword(data);
+      const result = await passwordLogin.mutateAsync(data);
       saveSession(result);
       $tip("登录成功", "success");
       void navigate("/dashboard/planning");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "登录失败", "error");
-    } finally {
-      setIsLoading(false);
+    } catch {
+      /* 共享 Mutation 负责错误提示。 */
     }
   };
 
   const onCodeSubmit = async (data: CodeFormData) => {
-    setIsLoading(true);
     try {
-      const result = await loginByCode(data);
+      const result = await codeLogin.mutateAsync(data);
       saveSession(result);
       $tip("登录成功", "success");
       void navigate("/dashboard/planning");
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "登录失败", "error");
-    } finally {
-      setIsLoading(false);
+    } catch {
+      /* 共享 Mutation 负责错误提示。 */
     }
   };
 
@@ -92,21 +90,21 @@ export default function LoginPage() {
     if (!isValid) return;
 
     try {
-      await sendVerificationCode({ email, businessType: "LOGIN" });
-      $tip("验证码已发送", "success");
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "发送验证码失败", "error");
+      await sendCode.mutateAsync({ email, businessType: "LOGIN" });
+    } catch {
+      return;
     }
+    $tip("验证码已发送", "success");
+    setCountdown(60);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   return (
@@ -130,7 +128,10 @@ export default function LoginPage() {
             </TabsList>
 
             {/* Password Login */}
-            <TabsContent value="password" className={tabPanelClassName}>
+            <TabsContent
+              value="password"
+              className={activeTab === "password" ? tabPanelClassName : undefined}
+            >
               <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-xs text-muted-foreground">
@@ -194,7 +195,10 @@ export default function LoginPage() {
             </TabsContent>
 
             {/* Code Login */}
-            <TabsContent value="code" className={tabPanelClassName}>
+            <TabsContent
+              value="code"
+              className={activeTab === "code" ? tabPanelClassName : undefined}
+            >
               <form onSubmit={codeForm.handleSubmit(onCodeSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-xs text-muted-foreground">
@@ -234,7 +238,7 @@ export default function LoginPage() {
                       variant="outline"
                       className="h-11 px-4 shrink-0"
                       onClick={handleSendCode}
-                      disabled={countdown > 0}
+                      disabled={countdown > 0 || sendCode.isPending}
                     >
                       {countdown > 0 ? `${countdown}s` : "发送"}
                     </Button>

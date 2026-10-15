@@ -1,18 +1,25 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   ChevronDown,
   ExternalLink,
   Loader2,
+  Pencil,
   Plus,
   Search,
-  Trash2,
   Workflow,
   X,
 } from "lucide-react";
 
-import { changeBaseTaskStatus, createBaseTask, getBaseTaskList } from "@/api/baseTask";
+import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import {
+  changeBaseTaskStatus,
+  createOrganizationBaseTask,
+  getOrganizationBaseTaskList,
+  updateOrganizationBaseTask,
+} from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
+import BaseTaskFieldsEditor from "@/components/BaseTaskFieldsEditor";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
@@ -28,17 +35,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
-import type { BaseTaskCreateDTO, BaseTaskVO } from "@/types/workflowTemplate";
+
+import type {
+  OrganizationBaseTaskCreateDTO,
+  OrganizationBaseTaskVO,
+} from "@/types/organizationAdmin";
+import type { TaskFormField } from "@/types/task";
 
 const PAGE_SIZE = 12;
 type LucideIconEntry = [string, LucideIcon];
@@ -46,40 +51,23 @@ type LucideIconEntry = [string, LucideIcon];
 interface BaseTaskForm {
   name: string;
   description: string;
-  iconName?: string;
-  metaFields: TaskMetaField[];
+  icon?: string;
+  submitFields: TaskFormField[];
 }
 
-type TaskMetaFieldType = "text" | "textarea" | "file" | "number" | "select";
-
-interface TaskMetaField {
-  id: string;
-  name: string;
-  fieldType: TaskMetaFieldType;
-  required: boolean;
-  options: string[];
-}
-
-const FIELD_TYPE_LABELS: Record<TaskMetaFieldType, string> = {
-  text: "单行文本",
-  textarea: "多行文本",
-  file: "文件上传",
-  number: "数字",
-  select: "下拉选择",
+const EMPTY_FORM: BaseTaskForm = {
+  name: "",
+  description: "",
+  icon: undefined,
+  submitFields: [],
 };
 
-const EMPTY_FORM: BaseTaskForm = { name: "", description: "", iconName: undefined, metaFields: [] };
-
 function BaseTaskManagementContent() {
-  const [tasks, setTasks] = useState<BaseTaskVO[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<OrganizationBaseTaskVO | null>(null);
   const [form, setForm] = useState<BaseTaskForm>(EMPTY_FORM);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [iconKeyword, setIconKeyword] = useState("");
@@ -89,45 +77,71 @@ function BaseTaskManagementContent() {
     const query = iconKeyword.trim().toLowerCase();
     return query ? iconEntries.filter(([name]) => name.toLowerCase().includes(query)) : iconEntries;
   }, [iconEntries, iconKeyword]);
-  const SelectedIcon = iconEntries.find(([name]) => name === form.iconName)?.[1];
+  const SelectedIcon = iconEntries.find(([name]) => name === form.icon)?.[1];
 
-  useEffect(() => {
-    void loadTasks();
-  }, [keyword, page]);
-
-  async function loadTasks(): Promise<void> {
-    try {
-      setLoading(true);
-      const data = await getBaseTaskList({
-        pageNum: page,
-        pageSize: PAGE_SIZE,
-        keyword: keyword || undefined,
-        sortBy: "REF_COUNT",
-        orderDir: "DESC",
-      });
-      setTasks(data.list);
-      setTotal(data.total);
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "原子任务加载失败", "error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  const params = {
+    pageNum: page,
+    pageSize: PAGE_SIZE,
+    keyword: keyword || undefined,
+    sortBy: "REF_COUNT" as const,
+    orderDir: "DESC" as const,
+  };
+  const listQuery = useApiQuery({
+    key: ["baseTasks", "list", params],
+    queryFn: () => getOrganizationBaseTaskList(params),
+  });
+  const tasks = listQuery.data?.list ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const loading = listQuery.isLoading;
+  const saveMutation = useApiMutation({
+    mutationFn: (payload: OrganizationBaseTaskCreateDTO) =>
+      editingTask
+        ? updateOrganizationBaseTask(editingTask.id, payload)
+        : createOrganizationBaseTask(payload),
+    invalidate: [["baseTasks"], ["templates"], ["templateOptions"]],
+  });
+  const statusMutation = useApiMutation({
+    mutationFn: ({ id, status }: { id: string; status: "ENABLED" | "DISABLED" }) =>
+      changeBaseTaskStatus(id, status),
+    invalidate: [["baseTasks"], ["templates"], ["templateOptions"]],
+  });
+  const saving = saveMutation.isPending;
+  const mutatingId = statusMutation.isPending ? statusMutation.variables?.id : null;
   function handleSearch(): void {
     setKeyword(searchText.trim());
     setPage(1);
   }
 
-  function addMetaField(): void {
+  function openCreate(): void {
+    setEditingTask(null);
+    setForm(EMPTY_FORM);
+    setIconPickerOpen(false);
+    setIconKeyword("");
+    setFormOpen(true);
+  }
+
+  function openEdit(task: OrganizationBaseTaskVO): void {
+    setEditingTask(task);
+    setForm({
+      name: task.name ?? "",
+      description: task.description ?? "",
+      icon: task.icon,
+      submitFields: task.submitFields.map((field) => ({ ...field, options: [...field.options] })),
+    });
+    setIconPickerOpen(false);
+    setIconKeyword("");
+    setFormOpen(true);
+  }
+
+  function addSubmitField(): void {
     setForm({
       ...form,
-      metaFields: [
-        ...form.metaFields,
+      submitFields: [
+        ...form.submitFields,
         {
-          id: `field-${Date.now()}`,
-          name: "",
-          fieldType: "text",
+          key: `field-${crypto.randomUUID()}`,
+          label: "",
+          type: "text",
           required: false,
           options: [],
         },
@@ -135,17 +149,17 @@ function BaseTaskManagementContent() {
     });
   }
 
-  function updateMetaField(fieldId: string, patch: Partial<TaskMetaField>): void {
+  function updateSubmitField(fieldKey: string, patch: Partial<TaskFormField>): void {
     setForm({
       ...form,
-      metaFields: form.metaFields.map((field) =>
-        field.id === fieldId ? { ...field, ...patch } : field,
+      submitFields: form.submitFields.map((field) =>
+        field.key === fieldKey ? { ...field, ...patch } : field,
       ),
     });
   }
 
-  function removeMetaField(fieldId: string): void {
-    setForm({ ...form, metaFields: form.metaFields.filter((field) => field.id !== fieldId) });
+  function removeSubmitField(fieldKey: string): void {
+    setForm({ ...form, submitFields: form.submitFields.filter((field) => field.key !== fieldKey) });
   }
 
   async function handleIconPickerToggle(): Promise<void> {
@@ -170,83 +184,93 @@ function BaseTaskManagementContent() {
     }
   }
 
-  async function handleCreate(): Promise<void> {
+  const saveLock = useRef(false);
+  async function handleSave(): Promise<void> {
+    if (saveLock.current) return;
+    if (saving) return;
     const name = form.name.trim();
     if (!name) {
       $tip("请输入任务名称", "error");
       return;
     }
 
-    const invalidField = form.metaFields.find((field) => !field.name.trim());
+    const invalidField = form.submitFields.find((field) => !field.label.trim());
     if (invalidField) {
       $tip("请填写每个提交字段的名称", "error");
       return;
     }
 
-    const invalidSelectField = form.metaFields.find(
-      (field) => field.fieldType === "select" && field.options.length === 0,
-    );
+    const invalidSelectField = form.submitFields.find((field) => {
+      if (field.type !== "select") return false;
+      return field.options.every((option) => option.trim() === "");
+    });
     if (invalidSelectField) {
-      $tip(`请为「${invalidSelectField.name}」填写至少一个选项`, "error");
+      $tip(`请为「${invalidSelectField.label}」填写至少一个选项`, "error");
       return;
     }
 
-    const metaSchema = form.metaFields.length
-      ? JSON.stringify(
-          form.metaFields.map(({ name: fieldName, fieldType, required, options }) => ({
-            name: fieldName.trim(),
-            fieldType,
-            required,
-            ...(fieldType === "select" ? { options } : {}),
-          })),
-        )
-      : undefined;
-
-    const payload: BaseTaskCreateDTO = {
+    const payload: OrganizationBaseTaskCreateDTO = {
       name,
       description: form.description.trim() || undefined,
-      iconName: form.iconName,
-      metaSchema,
+      icon: form.icon?.trim() || undefined,
+      submitFields: form.submitFields.map((field) => ({
+        ...field,
+        label: field.label.trim(),
+        options:
+          field.type === "select"
+            ? [...new Set(field.options.map((option) => option.trim()).filter(Boolean))]
+            : [],
+      })),
     };
 
+    saveLock.current = true;
     try {
-      setCreating(true);
-      await createBaseTask(payload);
-      $tip("原子任务已创建", "success");
-      setCreateOpen(false);
+      await saveMutation.mutateAsync(payload);
+      $tip(editingTask ? "原子任务已修改" : "原子任务已创建", "success");
+      setFormOpen(false);
       setForm(EMPTY_FORM);
+      setEditingTask(null);
       setIconPickerOpen(false);
       setIconKeyword("");
-      setPage(1);
-      await loadTasks();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "原子任务创建失败", "error");
+      if (!editingTask && page !== 1) {
+        setPage(1);
+      }
+    } catch {
+      /* 保留表单，由共享 Mutation 提示错误。 */
     } finally {
-      setCreating(false);
+      saveLock.current = false;
     }
   }
 
-  async function handleToggleStatus(task: BaseTaskVO): Promise<void> {
+  const statusLock = useRef(false);
+  async function handleToggleStatus(task: OrganizationBaseTaskVO): Promise<void> {
+    if (statusLock.current) return;
+    if (statusMutation.isPending) return;
     const nextStatus = task.status === "ENABLED" ? "DISABLED" : "ENABLED";
+    statusLock.current = true;
     try {
-      setMutatingId(task.id);
-      await changeBaseTaskStatus(task.id, nextStatus);
+      await statusMutation.mutateAsync({ id: task.id, status: nextStatus });
       $tip(nextStatus === "ENABLED" ? "原子任务已启用" : "原子任务已禁用", "success");
-      await loadTasks();
-    } catch (error) {
-      $tip(error instanceof Error ? error.message : "任务状态修改失败", "error");
+    } catch {
+      /* 保留已有列表。 */
     } finally {
-      setMutatingId(null);
+      statusLock.current = false;
     }
   }
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
+      {listQuery.isFetching && listQuery.data && (
+        <p role="status" className="text-sm text-muted-foreground">
+          正在刷新...
+        </p>
+      )}
+
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">原子任务</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            管理工作流可使用的基础节点。创建后不可编辑，只能启用或禁用。
+            管理工作流可使用的基础节点，支持创建、编辑和启用或禁用。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -263,42 +287,44 @@ function BaseTaskManagementContent() {
           <Button variant="outline" onClick={handleSearch}>
             搜索
           </Button>
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={openCreate}>
             <Plus data-icon="inline-start" />
             创建任务
           </Button>
         </div>
       </div>
 
-      {loading ? (
+      {listQuery.isError && !listQuery.data ? (
+        <div role="alert">
+          {listQuery.error.message}
+          <Button onClick={() => void listQuery.refetch()}>重试</Button>
+        </div>
+      ) : loading ? (
         <PageLoading message="正在加载原子任务..." />
       ) : tasks.length === 0 ? (
         <EmptyState
           icon={<Workflow className="size-5 text-muted-foreground" />}
           title="暂无原子任务"
           description="先创建翻译、审核、嵌字等任务，再去编排工作流。"
-          action={<Button onClick={() => setCreateOpen(true)}>创建第一个任务</Button>}
+          action={<Button onClick={openCreate}>创建第一个任务</Button>}
         />
       ) : (
         <>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {tasks.map((task) => {
-              const Icon = getWorkflowTaskIcon(task.name, task.iconName);
+              const taskName = task.name ?? "未命名任务";
+              const Icon = getWorkflowTaskIcon(taskName, task.icon);
 
               return (
                 <article key={task.id} className="flex flex-col rounded-lg border bg-card p-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-3">
                       <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
-                        {task.iconUrl ? (
-                          <img src={task.iconUrl} alt="" className="size-full object-cover" />
-                        ) : (
-                          <Icon className="size-4" />
-                        )}
+                        <Icon className="size-4" />
                       </div>
                       <div className="min-w-0">
                         <h2 className="truncate text-sm font-semibold text-foreground">
-                          {task.name}
+                          {taskName}
                         </h2>
                         <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
                           {task.description || "暂无任务说明"}
@@ -313,17 +339,33 @@ function BaseTaskManagementContent() {
                     <div className="text-xs text-muted-foreground">
                       已被 {task.refCount} 个模板引用
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={mutatingId === task.id}
-                      onClick={() => void handleToggleStatus(task)}
-                    >
-                      {mutatingId === task.id && (
-                        <Loader2 data-icon="inline-start" className="animate-spin" />
-                      )}
-                      {task.status === "ENABLED" ? "禁用" : "启用"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={mutatingId === task.id}
+                        onClick={() => openEdit(task)}
+                      >
+                        <Pencil data-icon="inline-start" />
+                        编辑
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={
+                          task.status === "ENABLED"
+                            ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            : "text-muted-foreground"
+                        }
+                        disabled={mutatingId === task.id}
+                        onClick={() => void handleToggleStatus(task)}
+                      >
+                        {mutatingId === task.id && (
+                          <Loader2 data-icon="inline-start" className="animate-spin" />
+                        )}
+                        {task.status === "ENABLED" ? "禁用" : "启用"}
+                      </Button>
+                    </div>
                   </div>
                 </article>
               );
@@ -339,12 +381,19 @@ function BaseTaskManagementContent() {
         </>
       )}
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog
+        open={formOpen}
+        onOpenChange={(open) => {
+          if (!saving) setFormOpen(open);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>创建原子任务</DialogTitle>
+            <DialogTitle>{editingTask ? "编辑原子任务" : "创建原子任务"}</DialogTitle>
             <DialogDescription>
-              创建后名称、说明和字段定义不可修改，请确认无误后提交。
+              {editingTask
+                ? "修改会影响所有引用模板及后续新建工作流；已有工作流保留名称和提交字段，图标同步更新。"
+                : "定义任务名称、图标和提交字段，创建后可继续编辑。"}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
@@ -370,11 +419,9 @@ function BaseTaskManagementContent() {
               <span className="text-sm font-medium text-foreground">节点图标</span>
               <div className="flex gap-2">
                 <Input
-                  value={form.iconName || ""}
+                  value={form.icon || ""}
                   placeholder="输入或粘贴图标名，例如 Languages"
-                  onChange={(event) =>
-                    setForm({ ...form, iconName: event.target.value || undefined })
-                  }
+                  onChange={(event) => setForm({ ...form, icon: event.target.value || undefined })}
                 />
                 <a
                   href="https://lucide.dev/icons"
@@ -402,7 +449,7 @@ function BaseTaskManagementContent() {
                     )}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-left text-foreground">
-                    {form.iconName || "选择图标"}
+                    {form.icon || "选择图标"}
                   </span>
                   <ChevronDown
                     className={cn(
@@ -433,7 +480,7 @@ function BaseTaskManagementContent() {
                         <>
                           <div className="grid grid-cols-7 gap-1.5 sm:grid-cols-9">
                             {filteredIcons.map(([name, Icon]) => {
-                              const selected = form.iconName === name;
+                              const selected = form.icon === name;
                               return (
                                 <button
                                   key={name}
@@ -446,7 +493,7 @@ function BaseTaskManagementContent() {
                                     selected && "border-primary bg-primary/10 text-primary",
                                   )}
                                   onClick={() => {
-                                    setForm({ ...form, iconName: name });
+                                    setForm({ ...form, icon: name });
                                     setIconPickerOpen(false);
                                     setIconKeyword("");
                                   }}
@@ -465,12 +512,12 @@ function BaseTaskManagementContent() {
                         </>
                       )}
                     </div>
-                    {form.iconName && (
+                    {form.icon && (
                       <button
                         type="button"
                         className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                         onClick={() => {
-                          setForm({ ...form, iconName: undefined });
+                          setForm({ ...form, icon: undefined });
                           setIconPickerOpen(false);
                           setIconKeyword("");
                         }}
@@ -486,99 +533,20 @@ function BaseTaskManagementContent() {
                 支持全部 Lucide 图标；未填写时按任务名称自动匹配。
               </span>
             </div>
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-medium text-foreground">提交字段（可选）</span>
-                <Button type="button" variant="outline" size="sm" onClick={addMetaField}>
-                  <Plus data-icon="inline-start" />
-                  新增字段
-                </Button>
-              </div>
-              {form.metaFields.length === 0 ? (
-                <div className="rounded-lg border border-dashed px-3 py-4 text-sm text-muted-foreground">
-                  没有额外提交内容，成员可直接完成任务。
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {form.metaFields.map((field, index) => (
-                    <div key={field.id} className="rounded-lg border bg-muted/20 p-3">
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto_auto] sm:items-center">
-                        <Input
-                          value={field.name}
-                          maxLength={100}
-                          placeholder={`字段 ${index + 1}，例如译文链接`}
-                          onChange={(event) =>
-                            updateMetaField(field.id, { name: event.target.value })
-                          }
-                        />
-                        <Select
-                          value={field.fieldType}
-                          onValueChange={(value: string | null) => {
-                            if (!value) return;
-                            updateMetaField(field.id, { fieldType: value as TaskMetaFieldType });
-                          }}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(FIELD_TYPE_LABELS).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <label className="flex h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap px-1 text-sm text-muted-foreground">
-                          <input
-                            type="checkbox"
-                            checked={field.required}
-                            className="size-4 accent-primary"
-                            onChange={(event) =>
-                              updateMetaField(field.id, { required: event.target.checked })
-                            }
-                          />
-                          必填
-                        </label>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`删除字段 ${index + 1}`}
-                          title="删除字段"
-                          onClick={() => removeMetaField(field.id)}
-                        >
-                          <Trash2 className="text-muted-foreground" />
-                        </Button>
-                      </div>
-                      {field.fieldType === "select" && (
-                        <Input
-                          value={field.options.join("、")}
-                          placeholder="填写选项，以顿号分隔，例如：通过、需修改"
-                          className="mt-2"
-                          onChange={(event) =>
-                            updateMetaField(field.id, {
-                              options: event.target.value
-                                .split(/[、,，]/)
-                                .map((option) => option.trim())
-                                .filter(Boolean),
-                            })
-                          }
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <BaseTaskFieldsEditor
+              fields={form.submitFields}
+              onAdd={addSubmitField}
+              onChange={updateSubmitField}
+              onRemove={removeSubmitField}
+            />
           </div>
           <DialogFooter>
-            <Button variant="outline" disabled={creating} onClick={() => setCreateOpen(false)}>
+            <Button variant="outline" disabled={saving} onClick={() => setFormOpen(false)}>
               取消
             </Button>
-            <Button disabled={creating || !form.name.trim()} onClick={() => void handleCreate()}>
-              {creating && <Loader2 data-icon="inline-start" className="animate-spin" />}
-              创建
+            <Button disabled={saving || !form.name.trim()} onClick={() => void handleSave()}>
+              {saving && <Loader2 data-icon="inline-start" className="animate-spin" />}
+              {editingTask ? "保存修改" : "创建"}
             </Button>
           </DialogFooter>
         </DialogContent>
