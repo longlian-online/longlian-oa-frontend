@@ -117,7 +117,7 @@ export default function ProjectItemSection({
   const navigate = useNavigate();
   const [{ page, status, orderDir }, setQuery] = useState<{
     page: number;
-    status: "IN_PROGRESS" | "COMPLETED" | "";
+    status: "IN_PROGRESS" | "PUBLISHED" | "";
     orderDir: "ASC" | "DESC";
   }>({ page: 1, status: "IN_PROGRESS", orderDir: "DESC" });
   function setPage(nextPage: number): void {
@@ -301,14 +301,14 @@ export default function ProjectItemSection({
         <Tabs
           value={status || "ALL"}
           onValueChange={(value) => {
-            if (value === "IN_PROGRESS" || value === "COMPLETED" || value === "ALL") {
+            if (value === "IN_PROGRESS" || value === "PUBLISHED" || value === "ALL") {
               setQuery((query) => ({ ...query, status: value === "ALL" ? "" : value, page: 1 }));
             }
           }}
         >
           <TabsList variant="line" aria-label="项目状态">
             <TabsTrigger value="IN_PROGRESS">进行中</TabsTrigger>
-            <TabsTrigger value="COMPLETED">已完成</TabsTrigger>
+            <TabsTrigger value="PUBLISHED">已完成</TabsTrigger>
             <TabsTrigger value="ALL">全部</TabsTrigger>
           </TabsList>
         </Tabs>
