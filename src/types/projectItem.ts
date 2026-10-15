@@ -1,4 +1,4 @@
-export type ProjectItemStatus = "IN_PROGRESS" | "COMPLETED" | "PUBLISHED";
+export type ProjectItemListFilter = "IN_PROGRESS" | "COMPLETED";
 
 export type ProjectItemNodeState = "COMPLETED" | "IN_PROGRESS" | "LOCKED";
 
@@ -11,7 +11,7 @@ export interface ProjectItemListDTO {
   pageNum?: number;
   pageSize?: number;
   keyword?: string;
-  status?: ProjectItemStatus | "";
+  status?: ProjectItemListFilter | "";
   sortByTime?: "CREATE" | "UPDATE";
   orderDir?: "ASC" | "DESC";
 }
@@ -19,7 +19,6 @@ export interface ProjectItemListDTO {
 export interface ProjectItemListVO {
   id: string;
   title: string;
-  status: ProjectItemStatus;
   createdAt: string;
   updatedAt: string;
   progressPercent: number;

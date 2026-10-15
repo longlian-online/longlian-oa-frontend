@@ -44,12 +44,6 @@ export async function deleteProjectItem(projectId: string, itemId: string): Prom
   });
 }
 
-export async function publishProjectItem(projectId: string, itemId: string): Promise<void> {
-  return request(`/projects/${projectId}/items/${itemId}/publish`, {
-    method: "PATCH",
-  });
-}
-
 export async function getTaskTemplateOptions(): Promise<TaskTemplateOptionVO[]> {
   return request("/task-template/options");
 }
