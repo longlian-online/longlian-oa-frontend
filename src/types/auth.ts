@@ -15,6 +15,8 @@ export interface LoginVO {
   /** 已保存的默认组织。不参与鉴权，只作为客户端下次声明的组织。 */
   defaultOrgId?: string | null;
   token: string;
+  /** 只用于换发访问凭证，不参与业务请求。 */
+  refreshToken?: string;
   /** 默认组织内的角色，仅供展示。默认组织不可用时为空。 */
   role?: string | null;
 }
