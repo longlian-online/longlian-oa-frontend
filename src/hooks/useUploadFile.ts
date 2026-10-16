@@ -62,6 +62,10 @@ const MIME_BY_EXT: Record<string, string[]> = {
 interface UploadFileOptions extends FileValidationOptions {
   bizType: UploadBizType;
   bizId: string;
+  /** 文件已经裁成目标比例时跳过裁剪窗。 */
+  skipCrop?: boolean;
+  /** 裁剪前的原始文件上限；裁剪结果仍用 maxSize。 */
+  maxSourceSize?: number;
 }
 
 export interface UseUploadFileResult {
@@ -146,10 +150,13 @@ export function useUploadFile(): UseUploadFileResult {
   });
 
   const uploadFile = async (file: File, options: UploadFileOptions): Promise<UploadedFileInfo> => {
-    const validationError = validateFile(file, options);
-    if (validationError) {
-      $tip(validationError, "error");
-      throw new Error(validationError);
+    const sourceError = validateFile(file, {
+      ...options,
+      maxSize: options.skipCrop ? options.maxSize : (options.maxSourceSize ?? options.maxSize),
+    });
+    if (sourceError) {
+      $tip(sourceError, "error");
+      throw new Error(sourceError);
     }
 
     const started = getSessionSnapshot();
@@ -160,11 +167,17 @@ export function useUploadFile(): UseUploadFileResult {
     activeUploads.current += 1;
     setUploading(true);
     try {
-      if (normalizeMimeType(file, getFileExt(file.name)).startsWith("image/")) {
-        file = await requestImageCrop(
-          file,
-          options.bizType === "avatar" ? 1 : options.bizType === "cover" ? 2 / 3 : undefined,
-        );
+      if (
+        !options.skipCrop &&
+        normalizeMimeType(file, getFileExt(file.name)).startsWith("image/")
+      ) {
+        file =
+          options.bizType === "thumbnail"
+            ? await requestImageCrop(file, 1, { shape: "rect", allowOriginal: false })
+            : await requestImageCrop(
+                file,
+                options.bizType === "avatar" ? 1 : options.bizType === "cover" ? 2 / 3 : undefined,
+              );
         const croppedValidationError = validateFile(file, options);
         if (croppedValidationError) throw new Error(croppedValidationError);
       }

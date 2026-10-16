@@ -28,6 +28,7 @@ export interface PlazaProjectGroup {
   title: string;
   typeName: string;
   coverUrl: string | null;
+  thumbnailUrl?: string | null;
   /** 该企划缺人任务总数 */
   pendingCount: number;
   /** 涉及条目数 */

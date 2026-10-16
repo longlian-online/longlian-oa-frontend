@@ -1,7 +1,16 @@
+export type ImageCropShape = "rect" | "round";
+
+export interface ImageCropOptions {
+  shape?: ImageCropShape;
+  allowOriginal?: boolean;
+}
+
 interface ImageCropRequest {
   id: number;
   file: File;
   aspect?: number;
+  shape?: ImageCropShape;
+  allowOriginal: boolean;
   resolve: (file: File) => void;
   reject: (error: Error) => void;
 }
@@ -32,9 +41,21 @@ export function getImageCropRequest(): ImageCropRequest | null {
   return queue[0] ?? null;
 }
 
-export function requestImageCrop(file: File, aspect?: number): Promise<File> {
+export function requestImageCrop(
+  file: File,
+  aspect?: number,
+  options?: ImageCropOptions,
+): Promise<File> {
   return new Promise((resolve, reject) => {
-    queue.push({ id: ++nextId, file, aspect, resolve, reject });
+    queue.push({
+      id: ++nextId,
+      file,
+      aspect,
+      shape: options?.shape,
+      allowOriginal: options?.allowOriginal !== false,
+      resolve,
+      reject,
+    });
     notify();
   });
 }

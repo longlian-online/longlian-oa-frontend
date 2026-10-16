@@ -13,6 +13,33 @@ export function getCropOutput(file: File): CropOutput {
   };
 }
 
+export function centerSquareArea(width: number, height: number): Area {
+  if (width <= 0 || height <= 0) throw new Error("图片尺寸无效");
+  const size = Math.min(width, height);
+  return { x: (width - size) / 2, y: (height - size) / 2, width: size, height: size };
+}
+
+export async function centerCropSquare(file: File): Promise<File> {
+  const image = await loadImage(file);
+  return cropImageFile(file, image, centerSquareArea(image.naturalWidth, image.naturalHeight));
+}
+
+function loadImage(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("图片无法读取"));
+    };
+    image.src = url;
+  });
+}
+
 export async function cropImageFile(
   file: File,
   image: HTMLImageElement,

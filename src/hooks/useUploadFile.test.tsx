@@ -239,3 +239,37 @@ test("直传期间账号切换后不把旧文件回填到新会话", async () =>
   await rejected;
   expect($tip).not.toHaveBeenCalled();
 });
+
+test("缩略图裁剪为方形且不提供上传原图，已裁好的文件不再打开裁剪窗", async () => {
+  const cropped = new File(["square"], "thumb.png", { type: "image/png" });
+  crop.mockResolvedValue(cropped);
+  create.mockResolvedValue({ fileId: "thumb-id", uploadUrl: "" });
+  let upload: UseUploadFileResult["uploadFile"] | undefined;
+  function Probe(): null {
+    upload = useUploadFile().uploadFile;
+    return null;
+  }
+  renderToString(
+    <QueryClientProvider client={createQueryClient()}>
+      <Probe />
+    </QueryClientProvider>,
+  );
+  await upload!(new File(["source"], "thumb.png", { type: "image/png" }), {
+    bizType: "thumbnail",
+    bizId: "project",
+    accept: ["png"],
+    maxSize: 1024 * 1024,
+    maxSourceSize: 10 * 1024 * 1024,
+  });
+  expect(crop).toHaveBeenCalledWith(expect.any(File), 1, { shape: "rect", allowOriginal: false });
+
+  crop.mockClear();
+  await upload!(cropped, {
+    bizType: "thumbnail",
+    bizId: "project",
+    accept: ["png"],
+    maxSize: 1024 * 1024,
+    skipCrop: true,
+  });
+  expect(crop).not.toHaveBeenCalled();
+});

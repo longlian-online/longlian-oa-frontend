@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Check, Info, Loader2 } from "lucide-react";
 
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
+import { useUploadFile } from "@/hooks/useUploadFile";
 import { createProject, updateProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
 import ProjectMetadataEditor from "@/components/ProjectMetadataEditor";
@@ -16,6 +17,13 @@ import { getStatusLabel } from "@/lib/projectStatus";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
+import { centerCropSquare } from "@/lib/imageCrop";
+import { requestImageCrop, UploadCancelledError } from "@/lib/imageCropRequest";
+import {
+  THUMBNAIL_MAX_BYTES,
+  THUMBNAIL_SOURCE_MAX_BYTES,
+  fileFromPreview,
+} from "@/lib/projectThumbnail";
 
 import type { UploadedFileInfo } from "@/types/file";
 import type {
@@ -71,6 +79,122 @@ export default function CreateProject({ project }: CreateProjectProps) {
         }
       : null,
   );
+  const [thumbnailFile, setThumbnailFile] = useState<UploadedFileInfo | null>(
+    project?.thumbnailUrl
+      ? {
+          fileId: "",
+          fileName: project.title,
+          fileSize: 0,
+          fileMime: "image/*",
+          previewUrl: project.thumbnailUrl,
+        }
+      : null,
+  );
+  const thumbnailOrigin = useRef<"cover" | "custom">(project?.thumbnailUrl ? "custom" : "cover");
+  const [thumbnailFollowsCover, setThumbnailFollowsCover] = useState(
+    thumbnailOrigin.current === "cover",
+  );
+  const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
+  const thumbnailToken = useRef(0);
+  const [thumbnailBusy, setThumbnailBusy] = useState(false);
+  const { uploadFile } = useUploadFile();
+
+  function rememberThumbnailOrigin(origin: "cover" | "custom"): void {
+    thumbnailOrigin.current = origin;
+    setThumbnailFollowsCover(origin === "cover");
+  }
+
+  async function uploadPreparedThumbnail(
+    file: File,
+    origin: "cover" | "custom",
+    token: number,
+  ): Promise<void> {
+    const uploaded = await uploadFile(file, {
+      bizType: "thumbnail",
+      bizId: coverBizId,
+      accept: ["jpg", "jpeg", "png", "gif"],
+      maxSize: THUMBNAIL_MAX_BYTES,
+      skipCrop: true,
+    });
+    if (token !== thumbnailToken.current) return;
+    rememberThumbnailOrigin(origin);
+    setThumbnailFile(uploaded);
+  }
+
+  async function generateThumbnailFromCover(previewUrl: string, fileName: string): Promise<void> {
+    const token = ++thumbnailToken.current;
+    setThumbnailBusy(true);
+    try {
+      const source = await fileFromPreview(previewUrl, fileName);
+      const cropped = await centerCropSquare(source);
+      if (token !== thumbnailToken.current) return;
+      if (cropped.size > THUMBNAIL_MAX_BYTES) {
+        $tip("从封面截取的缩略图超过 1MB，请手动裁剪或自行上传", "error");
+        setThumbnailFile(null);
+        return;
+      }
+      await uploadPreparedThumbnail(cropped, "cover", token);
+    } catch (error) {
+      if (token !== thumbnailToken.current || error instanceof UploadCancelledError) return;
+      setThumbnailFile(null);
+    } finally {
+      if (token === thumbnailToken.current) setThumbnailBusy(false);
+    }
+  }
+
+  async function handleCoverChange(next: UploadedFileInfo | null): Promise<void> {
+    setCoverFile(next);
+    if (thumbnailOrigin.current !== "cover") return;
+    if (!next?.previewUrl) {
+      thumbnailToken.current += 1;
+      setThumbnailFile(null);
+      setThumbnailBusy(false);
+      return;
+    }
+    await generateThumbnailFromCover(next.previewUrl, next.fileName);
+  }
+
+  async function cropThumbnailFromCover(): Promise<void> {
+    if (!coverFile?.previewUrl || thumbnailBusy) return;
+    const token = ++thumbnailToken.current;
+    setThumbnailBusy(true);
+    try {
+      const source = await fileFromPreview(coverFile.previewUrl, coverFile.fileName);
+      const cropped = await requestImageCrop(source, 1, { shape: "rect", allowOriginal: false });
+      if (token !== thumbnailToken.current) return;
+      if (cropped.size > THUMBNAIL_MAX_BYTES) {
+        $tip("缩略图不能超过 1MB，请缩小裁剪区域或换一张图", "error");
+        return;
+      }
+      await uploadPreparedThumbnail(cropped, "cover", token);
+    } catch (error) {
+      if (error instanceof UploadCancelledError) return;
+    } finally {
+      if (token === thumbnailToken.current) setThumbnailBusy(false);
+    }
+  }
+
+  async function uploadCustomThumbnail(file: File): Promise<void> {
+    const token = ++thumbnailToken.current;
+    setThumbnailBusy(true);
+    try {
+      const uploaded = await uploadFile(file, {
+        bizType: "thumbnail",
+        bizId: coverBizId,
+        accept: ["jpg", "jpeg", "png", "gif"],
+        maxSize: THUMBNAIL_MAX_BYTES,
+        maxSourceSize: THUMBNAIL_SOURCE_MAX_BYTES,
+      });
+      if (token !== thumbnailToken.current) return;
+      rememberThumbnailOrigin("custom");
+      setThumbnailFile(uploaded);
+    } catch (error) {
+      if (error instanceof UploadCancelledError) return;
+    } finally {
+      if (token === thumbnailToken.current) setThumbnailBusy(false);
+    }
+  }
+
   const selectedProjectType = projectTypes.find((type) => type.id === formData.typeId);
 
   const titleMissing = !formData.title.trim();
@@ -90,7 +214,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
 
   const submitLock = useRef(false);
   async function handleSubmit(): Promise<void> {
-    if (submitLock.current || loading) return;
+    if (submitLock.current || loading || thumbnailBusy) return;
     if (titleMissing || typeMissing || coverMissing) {
       setShowInvalid(true);
       return;
@@ -121,6 +245,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
           description: formData.description.trim(),
           metadata: JSON.stringify({ tags: submittedTags }),
           coverFileId: coverFile?.fileId || undefined,
+          thumbnailFileId: thumbnailFile?.fileId || undefined,
           status:
             formData.status === "进行中" || formData.status === "已完成"
               ? formData.status
@@ -135,6 +260,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
           typeId: formData.typeId,
           description: formData.description.trim(),
           coverFileId: coverFile.fileId,
+          thumbnailFileId: thumbnailFile?.fileId || undefined,
           metadata: JSON.stringify({ tags: submittedTags }),
         });
         $tip("企划创建成功", "success");
@@ -158,11 +284,18 @@ export default function CreateProject({ project }: CreateProjectProps) {
               </h1>
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {isEditing ? "更新基础信息、封面与标签。" : "填写基础信息、封面与标签。"}
+              {isEditing
+                ? "更新基础信息、封面、缩略图与标签。"
+                : "填写基础信息、封面、缩略图与标签。"}
             </p>
           </div>
         </div>
-        <Button size="sm" className="min-w-24" onClick={handleSubmit} disabled={loading}>
+        <Button
+          size="sm"
+          className="min-w-24"
+          onClick={handleSubmit}
+          disabled={loading || thumbnailBusy}
+        >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           {isEditing ? "保存修改" : "创建企划"}
         </Button>
@@ -191,8 +324,69 @@ export default function CreateProject({ project }: CreateProjectProps) {
               maxSize={10 * 1024 * 1024}
               fillHeight
               invalid={showInvalid && coverMissing}
-              onChange={setCoverFile}
+              onChange={(file) => void handleCoverChange(file)}
             />
+            <div className="mt-4 border-t pt-4">
+              <h2 className="text-sm font-medium text-foreground">缩略图</h2>
+              <p className="mt-1 text-xs text-muted-foreground">1:1 · 最大 1MB</p>
+              <div className="mt-3 flex items-start gap-3">
+                <div className="size-24 shrink-0 overflow-hidden rounded-lg border bg-muted">
+                  {thumbnailFile?.previewUrl ? (
+                    <img
+                      src={thumbnailFile.previewUrl}
+                      alt="缩略图预览"
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
+                      1:1
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    {thumbnailBusy
+                      ? "正在处理缩略图"
+                      : thumbnailFollowsCover
+                        ? thumbnailFile
+                          ? "从封面中心截取"
+                          : "上传封面后自动截取，也可自行上传"
+                        : "自定义，不随封面更新"}
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={!coverFile?.previewUrl || thumbnailBusy}
+                      onClick={() => void cropThumbnailFromCover()}
+                    >
+                      从封面裁剪
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={thumbnailBusy}
+                      onClick={() => thumbnailInputRef.current?.click()}
+                    >
+                      上传缩略图
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              <input
+                ref={thumbnailInputRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,.gif"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) void uploadCustomThumbnail(file);
+                }}
+              />
+            </div>
           </section>
         </aside>
 
