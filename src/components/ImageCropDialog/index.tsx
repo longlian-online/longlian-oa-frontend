@@ -15,15 +15,27 @@ import { $tip } from "@/components/tip";
 import { cn } from "@/lib/utils";
 import { cropImageFile } from "@/lib/imageCrop";
 
+function describeCrop(file: File, allowOriginal: boolean): string {
+  const gif = file.name.toLowerCase().endsWith(".gif");
+  if (!allowOriginal) {
+    return gif ? "GIF 裁剪后将保存为静态 PNG。请截取方形区域。" : "请截取方形区域后再上传。";
+  }
+  return gif ? "GIF 裁剪后将保存为静态 PNG，上传原图可保留动画。" : "也可以直接上传原图。";
+}
+
 interface ImageCropDialogProps {
   file: File;
   aspect?: number;
+  shape?: "rect" | "round";
+  allowOriginal?: boolean;
   onComplete: (file: File | null) => void;
 }
 
 export default function ImageCropDialog({
   file,
   aspect,
+  shape,
+  allowOriginal = true,
   onComplete,
 }: ImageCropDialogProps): React.JSX.Element {
   const [url, setUrl] = useState("");
@@ -74,11 +86,7 @@ export default function ImageCropDialog({
       >
         <DialogHeader>
           <DialogTitle>裁剪图片</DialogTitle>
-          <DialogDescription>
-            {file.name.toLowerCase().endsWith(".gif")
-              ? "GIF 裁剪后将保存为静态 PNG，上传原图可保留动画。"
-              : "也可以直接上传原图。"}
-          </DialogDescription>
+          <DialogDescription>{describeCrop(file, allowOriginal)}</DialogDescription>
         </DialogHeader>
         <div
           className={cn(
@@ -105,7 +113,7 @@ export default function ImageCropDialog({
                 zoom={Math.max(zoom, minZoom)}
                 maxZoom={Math.max(3, minZoom)}
                 aspect={aspect ?? imageAspect}
-                cropShape={aspect === 1 ? "round" : "rect"}
+                cropShape={shape ?? (aspect === 1 ? "round" : "rect")}
                 objectFit="contain"
                 minZoom={minZoom}
                 restrictPosition
@@ -158,14 +166,16 @@ export default function ImageCropDialog({
           >
             取消
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={processing}
-            onClick={() => onComplete(file)}
-          >
-            上传原图
-          </Button>
+          {allowOriginal && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={processing}
+              onClick={() => onComplete(file)}
+            >
+              上传原图
+            </Button>
+          )}
           <Button
             type="button"
             disabled={processing || failed || !area?.width || !area?.height}

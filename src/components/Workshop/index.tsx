@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { projectThumbnailSrc } from "@/lib/projectThumbnail";
 import type { WorkshopProjectInfoVO } from "@/types/workshop";
 
 interface WorkshopProjectCardProps {
@@ -25,12 +26,13 @@ export function WorkshopProjectCard({
   onOpenWorkflow,
   onOpenProject,
 }: WorkshopProjectCardProps) {
+  const imageUrl = projectThumbnailSrc(project.thumbnailUrl, project.coverUrl);
   return (
     <article className="group flex min-w-0 items-start gap-3 rounded-xl border bg-card p-3 shadow-sm transition-colors hover:border-foreground/20">
-      <div className="h-[72px] w-14 shrink-0 overflow-hidden rounded-lg bg-muted">
-        {project.coverUrl ? (
+      <div className="size-[72px] shrink-0 overflow-hidden rounded-lg bg-muted">
+        {imageUrl ? (
           <img
-            src={project.coverUrl}
+            src={imageUrl}
             alt={project.title}
             className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />

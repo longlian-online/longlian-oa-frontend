@@ -29,3 +29,13 @@ test("取消裁剪结束请求，且不会返回原图供上传", async () => {
   await assertion;
   expect(getImageCropRequest()).toBeNull();
 });
+
+test("缩略图裁剪锁定方形且不允许上传原图", async () => {
+  const file = new File([], "thumb.png");
+  const pending = requestImageCrop(file, 1, { shape: "rect", allowOriginal: false });
+  const request = getImageCropRequest()!;
+  expect(request.shape).toBe("rect");
+  expect(request.allowOriginal).toBe(false);
+  completeImageCrop(request.id, file);
+  await pending;
+});

@@ -27,6 +27,7 @@ export interface ProjectDetailInfoVO {
   title: string;
   alias?: string;
   coverUrl?: string;
+  thumbnailUrl?: string;
   typeName: string;
   metadata?: string;
   description?: string;
@@ -57,6 +58,7 @@ export interface ProjectCreateDTO {
   metadata: string;
   description: string;
   coverFileId: string;
+  thumbnailFileId?: string;
 }
 
 export interface ProjectUpdateDTO {
@@ -65,6 +67,7 @@ export interface ProjectUpdateDTO {
   metadata: string;
   description: string;
   coverFileId?: string;
+  thumbnailFileId?: string;
   status?: ProjectStatus;
 }
 

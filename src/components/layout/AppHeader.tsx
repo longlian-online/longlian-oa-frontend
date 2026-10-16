@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type ReactElement } from
 import { Check, KeyRound, LogOut, Pencil, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 
+import { isOrganizationManagerRole } from "@/lib/organizationRole";
 import { getSessionSnapshot } from "@/lib/session";
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { logout } from "@/api/auth";
@@ -36,6 +37,7 @@ const navigationItems = [
 ];
 
 const ROLE_LABELS: Record<string, string> = {
+  ORG_OWNER: "组织所有者",
   ORG_ADMIN: "组织管理",
   ORG_USER: "平台用户",
 };
@@ -217,7 +219,7 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
 
       <nav aria-label="主导航" className="flex items-center gap-1">
         {navigationItems
-          .filter((item) => !item.adminOnly || role === "ORG_ADMIN")
+          .filter((item) => !item.adminOnly || isOrganizationManagerRole(role))
           .map(({ to, label }) => (
             <NavLink
               key={to}

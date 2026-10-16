@@ -1,5 +1,6 @@
 import { Navigate } from "react-router";
 
+import { isOrganizationManagerRole } from "@/lib/organizationRole";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface OrganizationAdminGuardProps {
@@ -11,7 +12,7 @@ export default function OrganizationAdminGuard({ children }: OrganizationAdminGu
 
   if (isLoading) return null;
 
-  if (role !== "ORG_ADMIN") {
+  if (!isOrganizationManagerRole(role)) {
     return <Navigate to="/dashboard/workshop" replace />;
   }
 

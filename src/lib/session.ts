@@ -1,5 +1,7 @@
 import type { AdminLoginVO, LoginVO } from "@/types/auth";
 
+import { isOrganizationManagerRole } from "@/lib/organizationRole";
+
 const TOKEN_KEY = "token";
 const USER_ID_KEY = "userId";
 const REFRESH_TOKEN_KEY = "refreshToken";
@@ -120,7 +122,7 @@ function usableOrgId(orgId: string | null | undefined): string | null {
 }
 
 export function isOrganizationAdmin(): boolean {
-  return getSessionRole() === "ORG_ADMIN";
+  return isOrganizationManagerRole(getSessionRole());
 }
 
 export interface SessionSnapshot {
