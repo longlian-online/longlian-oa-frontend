@@ -1,6 +1,7 @@
 import { BookOpen, type LucideIcon, Magnet } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 
+import { isOrganizationManagerRole } from "@/lib/organizationRole";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/utils";
 
@@ -92,7 +93,7 @@ function sidebarItems(pathname: string, isOrgAdmin: boolean): readonly SidebarIt
 export default function AppSidebar() {
   const { pathname } = useLocation();
   const { role } = useCurrentUser();
-  const items = sidebarItems(pathname, role === "ORG_ADMIN");
+  const items = sidebarItems(pathname, isOrganizationManagerRole(role));
 
   if (items.length === 0) return null;
 
