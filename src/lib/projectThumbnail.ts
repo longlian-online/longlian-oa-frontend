@@ -1,6 +1,3 @@
-export const THUMBNAIL_MAX_BYTES = 1024 * 1024;
-export const THUMBNAIL_SOURCE_MAX_BYTES = 10 * 1024 * 1024;
-
 export function projectThumbnailSrc(
   thumbnailUrl?: string | null,
   coverUrl?: string | null,
@@ -16,8 +13,8 @@ export async function fileFromPreview(url: string, fileName: string): Promise<Fi
   if (!response.ok) throw new Error("封面无法读取");
   const blob = await response.blob();
   const type = blob.type || "image/png";
-  const name = /\.(jpe?g|png|gif)$/i.test(fileName)
+  const name = /\.(jpe?g|png|gif|webp)$/i.test(fileName)
     ? fileName
-    : `cover.${type === "image/jpeg" ? "jpg" : type === "image/gif" ? "gif" : "png"}`;
+    : `cover.${type === "image/jpeg" ? "jpg" : type === "image/gif" ? "gif" : type === "image/webp" ? "webp" : "png"}`;
   return new File([blob], name, { type });
 }

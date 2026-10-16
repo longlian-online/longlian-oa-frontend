@@ -17,13 +17,9 @@ import { getStatusLabel } from "@/lib/projectStatus";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
-import { centerCropSquare } from "@/lib/imageCrop";
+import { centerCropSquare, PROJECT_IMAGE_MAX_BYTES } from "@/lib/imageCrop";
 import { requestImageCrop, UploadCancelledError } from "@/lib/imageCropRequest";
-import {
-  THUMBNAIL_MAX_BYTES,
-  THUMBNAIL_SOURCE_MAX_BYTES,
-  fileFromPreview,
-} from "@/lib/projectThumbnail";
+import { fileFromPreview } from "@/lib/projectThumbnail";
 
 import type { UploadedFileInfo } from "@/types/file";
 import type {
@@ -112,8 +108,8 @@ export default function CreateProject({ project }: CreateProjectProps) {
     const uploaded = await uploadFile(file, {
       bizType: "thumbnail",
       bizId: coverBizId,
-      accept: ["jpg", "jpeg", "png", "gif"],
-      maxSize: THUMBNAIL_MAX_BYTES,
+      accept: ["jpg", "jpeg", "png", "gif", "webp"],
+      maxSize: PROJECT_IMAGE_MAX_BYTES,
       skipCrop: true,
     });
     if (token !== thumbnailToken.current) return;
@@ -128,11 +124,6 @@ export default function CreateProject({ project }: CreateProjectProps) {
       const source = await fileFromPreview(previewUrl, fileName);
       const cropped = await centerCropSquare(source);
       if (token !== thumbnailToken.current) return;
-      if (cropped.size > THUMBNAIL_MAX_BYTES) {
-        $tip("从封面截取的缩略图超过 1MB，请手动裁剪或自行上传", "error");
-        setThumbnailFile(null);
-        return;
-      }
       await uploadPreparedThumbnail(cropped, "cover", token);
     } catch (error) {
       if (token !== thumbnailToken.current || error instanceof UploadCancelledError) return;
@@ -162,10 +153,6 @@ export default function CreateProject({ project }: CreateProjectProps) {
       const source = await fileFromPreview(coverFile.previewUrl, coverFile.fileName);
       const cropped = await requestImageCrop(source, 1, { shape: "rect", allowOriginal: false });
       if (token !== thumbnailToken.current) return;
-      if (cropped.size > THUMBNAIL_MAX_BYTES) {
-        $tip("缩略图不能超过 1MB，请缩小裁剪区域或换一张图", "error");
-        return;
-      }
       await uploadPreparedThumbnail(cropped, "cover", token);
     } catch (error) {
       if (error instanceof UploadCancelledError) return;
@@ -181,9 +168,8 @@ export default function CreateProject({ project }: CreateProjectProps) {
       const uploaded = await uploadFile(file, {
         bizType: "thumbnail",
         bizId: coverBizId,
-        accept: ["jpg", "jpeg", "png", "gif"],
-        maxSize: THUMBNAIL_MAX_BYTES,
-        maxSourceSize: THUMBNAIL_SOURCE_MAX_BYTES,
+        accept: ["jpg", "jpeg", "png", "gif", "webp"],
+        maxSize: PROJECT_IMAGE_MAX_BYTES,
       });
       if (token !== thumbnailToken.current) return;
       rememberThumbnailOrigin("custom");
@@ -318,17 +304,19 @@ export default function CreateProject({ project }: CreateProjectProps) {
               bizId={coverBizId}
               value={coverFile}
               title={isEditing ? "更换企划封面" : "上传企划封面"}
-              description={isEditing ? "不上传则保留原封面" : "推荐 2:3 竖版图片，最大 10MB"}
+              description={`${isEditing ? "不上传则保留原封面；" : "推荐 2:3 竖版图片；"}最大 10MB，超过 1MB 自动转 WebP`}
               imagePreview
-              accept={["jpg", "jpeg", "png", "gif"]}
-              maxSize={10 * 1024 * 1024}
+              accept={["jpg", "jpeg", "png", "gif", "webp"]}
+              maxSize={PROJECT_IMAGE_MAX_BYTES}
               fillHeight
               invalid={showInvalid && coverMissing}
               onChange={(file) => void handleCoverChange(file)}
             />
             <div className="mt-4 border-t pt-4">
               <h2 className="text-sm font-medium text-foreground">缩略图</h2>
-              <p className="mt-1 text-xs text-muted-foreground">1:1 · 最大 1MB</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                1:1 · 最大 10MB，超过 1MB 自动转 WebP
+              </p>
               <div className="mt-3 flex items-start gap-3">
                 <div className="size-24 shrink-0 overflow-hidden rounded-lg border bg-muted">
                   {thumbnailFile?.previewUrl ? (
@@ -378,7 +366,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
               <input
                 ref={thumbnailInputRef}
                 type="file"
-                accept=".jpg,.jpeg,.png,.gif"
+                accept=".jpg,.jpeg,.png,.gif,.webp"
                 className="hidden"
                 onChange={(event) => {
                   const file = event.target.files?.[0];

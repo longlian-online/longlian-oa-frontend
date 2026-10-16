@@ -258,8 +258,7 @@ test("缩略图裁剪为方形且不提供上传原图，已裁好的文件不�
     bizType: "thumbnail",
     bizId: "project",
     accept: ["png"],
-    maxSize: 1024 * 1024,
-    maxSourceSize: 10 * 1024 * 1024,
+    maxSize: 10 * 1024 * 1024,
   });
   expect(crop).toHaveBeenCalledWith(expect.any(File), 1, { shape: "rect", allowOriginal: false });
 
@@ -268,8 +267,58 @@ test("缩略图裁剪为方形且不提供上传原图，已裁好的文件不�
     bizType: "thumbnail",
     bizId: "project",
     accept: ["png"],
-    maxSize: 1024 * 1024,
+    maxSize: 10 * 1024 * 1024,
     skipCrop: true,
   });
   expect(crop).not.toHaveBeenCalled();
 });
+
+test.each(["cover", "thumbnail"] as const)(
+  "%s 原图超过 10MB 时裁剪前拒绝，不能通过裁剪绕过限制",
+  async (bizType) => {
+    create.mockClear();
+    crop.mockClear();
+    let upload: UseUploadFileResult["uploadFile"] | undefined;
+    function Probe(): null {
+      upload = useUploadFile().uploadFile;
+      return null;
+    }
+    renderToString(
+      <QueryClientProvider client={createQueryClient()}>
+        <Probe />
+      </QueryClientProvider>,
+    );
+    const oversized = new File([new Uint8Array(10 * 1024 * 1024 + 1)], "large.png", {
+      type: "image/png",
+    });
+    await expect(upload!(oversized, { bizType, bizId: "project" })).rejects.toThrow(
+      "文件大小不能超过 10.0MB",
+    );
+    expect(crop).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  },
+);
+
+test.each(["cover", "thumbnail"] as const)(
+  "%s 接受恰好 10MB 的 WebP 文件，不再限制缩略图为 1MB",
+  async (bizType) => {
+    create.mockResolvedValue({ fileId: "image-id", uploadUrl: "" });
+    let upload: UseUploadFileResult["uploadFile"] | undefined;
+    function Probe(): null {
+      upload = useUploadFile().uploadFile;
+      return null;
+    }
+    renderToString(
+      <QueryClientProvider client={createQueryClient()}>
+        <Probe />
+      </QueryClientProvider>,
+    );
+    const image = new File([new Uint8Array(10 * 1024 * 1024)], "large.webp", {
+      type: "image/webp",
+    });
+    const result = await upload!(image, { bizType, bizId: "project", skipCrop: true });
+    expect(result.fileSize).toBe(10 * 1024 * 1024);
+    expect(result.fileMime).toBe("image/webp");
+    if (result.previewUrl) URL.revokeObjectURL(result.previewUrl);
+  },
+);

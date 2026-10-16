@@ -5,6 +5,7 @@ import { createFileUpload } from "@/api/file";
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { $tip } from "@/components/tip";
 import { requestImageCrop, UploadCancelledError } from "@/lib/imageCropRequest";
+import { convertImageToWebp, PROJECT_IMAGE_MAX_BYTES, WEBP_THRESHOLD_BYTES } from "@/lib/imageCrop";
 import { getSessionSnapshot } from "@/lib/session";
 import { isScopeCurrent } from "@/lib/queryKeys";
 import { AuthExpiredError } from "@/lib/authError";
@@ -64,8 +65,6 @@ interface UploadFileOptions extends FileValidationOptions {
   bizId: string;
   /** 文件已经裁成目标比例时跳过裁剪窗。 */
   skipCrop?: boolean;
-  /** 裁剪前的原始文件上限；裁剪结果仍用 maxSize。 */
-  maxSourceSize?: number;
 }
 
 export interface UseUploadFileResult {
@@ -150,10 +149,15 @@ export function useUploadFile(): UseUploadFileResult {
   });
 
   const uploadFile = async (file: File, options: UploadFileOptions): Promise<UploadedFileInfo> => {
-    const sourceError = validateFile(file, {
+    const isProjectImage = options.bizType === "cover" || options.bizType === "thumbnail";
+    const validationOptions = {
       ...options,
-      maxSize: options.skipCrop ? options.maxSize : (options.maxSourceSize ?? options.maxSize),
-    });
+      maxSize: isProjectImage
+        ? Math.min(options.maxSize ?? PROJECT_IMAGE_MAX_BYTES, PROJECT_IMAGE_MAX_BYTES)
+        : options.maxSize,
+    };
+    const convertToWebp = isProjectImage && file.size > WEBP_THRESHOLD_BYTES;
+    const sourceError = validateFile(file, validationOptions);
     if (sourceError) {
       $tip(sourceError, "error");
       throw new Error(sourceError);
@@ -178,8 +182,16 @@ export function useUploadFile(): UseUploadFileResult {
                 file,
                 options.bizType === "avatar" ? 1 : options.bizType === "cover" ? 2 / 3 : undefined,
               );
-        const croppedValidationError = validateFile(file, options);
+        const croppedValidationError = validateFile(file, validationOptions);
         if (croppedValidationError) throw new Error(croppedValidationError);
+      }
+      if (isProjectImage && (convertToWebp || file.size > WEBP_THRESHOLD_BYTES)) {
+        file = await convertImageToWebp(file);
+        const convertedError = validateFile(file, {
+          maxSize: validationOptions.maxSize,
+          accept: ["webp"],
+        });
+        if (convertedError) throw new Error(convertedError);
       }
       ensureCurrent();
       const fileExt = getFileExt(file.name);

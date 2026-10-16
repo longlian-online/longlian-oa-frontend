@@ -50,7 +50,7 @@ interface CreateFileReqDTO {
   fileExt: string;
   fileSize: number;
   fileMime: string;
-  bizType: "avatar" | "cover" | "task_submit";
+  bizType: "avatar" | "cover" | "thumbnail" | "task_submit";
   bizId: string;
 }
 
@@ -66,6 +66,11 @@ interface ResourcCreateVO {
 
 1. 用户选择文件。
 2. 前端校验扩展名、MIME、大小。
+   - 封面与缩略图（创建、编辑、自定义上传及从封面截取）最大 10MB，1MB = 1024 × 1024 字节。
+   - 原图超过 10MB 时在裁剪、转换及申请上传资源前拒绝；裁剪结果和最终上传文件也不得超过 10MB。
+   - 原图或裁剪结果超过 1MB 时，上传前转换为 WebP；恰好 1MB 不转换，恰好 10MB 允许处理。已有 WebP 无需重复编码。
+   - 使用浏览器 Canvas 编码（质量 0.9），保留图片尺寸及透明度；GIF 转换后为静态图片。转换失败或浏览器不支持 WebP 编码时明确提示并终止上传，不回退上传原图。
+   - 上传资源申请的文件名、扩展名、MIME、大小及存储直传的正文、Content-Type 均采用处理后的文件。头像和任务附件不应用此 WebP 策略。
 3. 调用 `/common/file/upload`。
 4. 使用返回的 `uploadUrl` 上传到存储服务。
 5. 上传成功后返回 `fileId`。
