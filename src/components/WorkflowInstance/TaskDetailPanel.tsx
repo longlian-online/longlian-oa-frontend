@@ -33,9 +33,9 @@ interface TaskDetailActions {
 }
 
 interface TaskDetailPanelProps {
+  title: string;
   node: ItemTaskNodeVO;
   instance?: ItemTaskInstanceVO;
-
   actions?: TaskDetailActions;
 }
 
@@ -238,7 +238,7 @@ function TaskActions({
   );
 }
 
-export default function TaskDetailPanel({ node, instance, actions }: TaskDetailPanelProps) {
+export default function TaskDetailPanel({ title, node, instance, actions }: TaskDetailPanelProps) {
   const instanceId = node.taskStatus === null ? undefined : (node.taskInstanceId ?? instance?.id);
   const contextKey = `${instanceId}:${instance?.status}:${instance?.completedAt}`;
   const lifecycle = useRef(createItemLifecycle(contextKey));
@@ -339,16 +339,14 @@ export default function TaskDetailPanel({ node, instance, actions }: TaskDetailP
     <section className="rounded-xl border bg-card p-4 sm:p-5" aria-live="polite">
       {!instanceId ? (
         <>
-          <h2 className="break-words text-base font-semibold">{node.name} · 任务详情</h2>
+          <h2 className="break-words text-base font-semibold">{title}</h2>
           <p className="mt-3 text-sm text-muted-foreground">任务尚未解锁，完成前置阶段后可接取。</p>
         </>
       ) : (
         <>
           <header className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h2 className="break-words text-base font-semibold">
-                {detail?.task.name ?? node.name}
-              </h2>
+              <h2 className="break-words text-base font-semibold">{title}</h2>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span>第 {detail?.task.stage ?? node.sort} 阶段</span>
                 <span aria-hidden="true">·</span>
