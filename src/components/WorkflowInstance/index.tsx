@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { getUserId } from "@/lib/session";
+import { formatTaskTitle, slotPosition } from "@/lib/slotLabel";
 import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
 import { createItemLifecycle } from "./itemLifecycle";
 import { buildParticipantRoster } from "./participantRoster";
@@ -294,6 +295,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
         <div ref={detailPanelRef}>
           <TaskDetailPanel
             key={`${itemId}:${selectedNode.id}`}
+            title={formatTaskTitle(taskFlow.itemTitle, slotPosition(selectedNode, taskFlow.nodes))}
             node={selectedNode}
             instance={selectedInstance}
             actions={

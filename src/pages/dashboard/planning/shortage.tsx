@@ -5,6 +5,7 @@ import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Sparkles } from "lucide-re
 
 import { scopedKey } from "@/lib/queryKeys";
 import { projectThumbnailSrc } from "@/lib/projectThumbnail";
+import { formatSlotLabel } from "@/lib/slotLabel";
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { claimTask } from "@/api/workflowInstance";
 import {
@@ -284,9 +285,7 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
             {group.typeName}
           </Badge>
         </Link>
-        <span className="shrink-0 text-xs text-muted-foreground">
-          缺 {group.pendingCount} 人 · {group.itemCount} 个条目
-        </span>
+        <span className="shrink-0 text-xs text-muted-foreground">组缺 {group.pendingCount}</span>
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -334,48 +333,30 @@ interface PlazaTaskCardProps {
 
 function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
   const navigate = useNavigate();
+  const slotLabel = formatSlotLabel({
+    name: task.nodeName,
+    slotIndex: task.slotIndex,
+    slotTotal: task.slotTotal,
+    serialStep: task.serialStep,
+  });
 
   return (
     <div className="rounded-lg border bg-card p-3 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm">
-      <div className="flex items-center justify-between gap-2">
-        <span className="min-w-0 truncate text-sm font-medium text-foreground">
-          {task.nodeName}
-        </span>
-        <span className="shrink-0 text-xs text-muted-foreground">
-          第 {task.stageIndex}/{task.stageTotal} 步
-        </span>
-      </div>
+      <span className="block truncate text-sm font-medium text-foreground" title={slotLabel}>
+        {slotLabel}
+      </span>
       <Badge variant="outline" className="mt-1 text-xs font-normal">
         {task.isCurrentStage ? "当前阶段" : "后续阶段"}
       </Badge>
 
-      <div className="mt-1.5 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={() => navigate(`/dashboard/planning/${group.projectId}/items/${task.itemId}`)}
-          className="min-w-0 flex-1 truncate text-left text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
-          title={task.itemTitle}
-        >
-          {task.itemTitle}
-        </button>
-        <span className="flex shrink-0 items-center gap-1.5">
-          <span
-            className="flex items-center gap-0.5"
-            aria-label={`已占用 ${task.filledSlots} 槽，缺 ${task.pendingSlots} 人`}
-          >
-            {Array.from({ length: task.filledSlots }, (_, index) => (
-              <span key={`filled-${index}`} className="size-1.5 rounded-full bg-foreground/70" />
-            ))}
-            {Array.from({ length: task.pendingSlots }, (_, index) => (
-              <span
-                key={`pending-${index}`}
-                className="size-1.5 rounded-full border border-muted-foreground/50"
-              />
-            ))}
-          </span>
-          <span className="text-xs text-muted-foreground">缺{task.pendingSlots}</span>
-        </span>
-      </div>
+      <button
+        type="button"
+        onClick={() => navigate(`/dashboard/planning/${group.projectId}/items/${task.itemId}`)}
+        className="mt-1.5 block w-full truncate text-left text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
+        title={task.itemTitle}
+      >
+        {task.itemTitle}
+      </button>
 
       <div className="mt-2.5 flex items-center justify-between gap-2">
         <span className="text-xs text-muted-foreground">{waitLabel(task.createdAt)}</span>
