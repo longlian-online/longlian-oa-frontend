@@ -1,5 +1,8 @@
 import type { Area } from "react-easy-crop";
 
+export const PROJECT_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
+export const WEBP_THRESHOLD_BYTES = 1024 * 1024;
+
 interface CropOutput {
   name: string;
   type: string;
@@ -37,6 +40,30 @@ function loadImage(file: File): Promise<HTMLImageElement> {
       reject(new Error("图片无法读取"));
     };
     image.src = url;
+  });
+}
+
+export async function convertImageToWebp(file: File): Promise<File> {
+  if (file.type === "image/webp") return file;
+  const image = await loadImage(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("浏览器无法处理图片");
+  context.drawImage(image, 0, 0);
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (value) =>
+        value?.type === "image/webp"
+          ? resolve(value)
+          : reject(new Error("图片处理失败，请更换图片或浏览器后重试")),
+      "image/webp",
+      0.9,
+    );
+  });
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".webp", {
+    type: "image/webp",
   });
 }
 
