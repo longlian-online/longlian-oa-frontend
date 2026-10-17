@@ -13,8 +13,8 @@ export async function fileFromPreview(url: string, fileName: string): Promise<Fi
   if (!response.ok) throw new Error("封面无法读取");
   const blob = await response.blob();
   const type = blob.type || "image/png";
-  const name = /\.(jpe?g|png|gif|webp)$/i.test(fileName)
+  const name = /\.(jpe?g|png|gif|webp|avif)$/i.test(fileName)
     ? fileName
-    : `cover.${type === "image/jpeg" ? "jpg" : type === "image/gif" ? "gif" : type === "image/webp" ? "webp" : "png"}`;
+    : `cover.${type === "image/jpeg" ? "jpg" : type === "image/gif" ? "gif" : type === "image/webp" ? "webp" : type === "image/avif" ? "avif" : "png"}`;
   return new File([blob], name, { type });
 }

@@ -191,7 +191,7 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
       const uploadedFile = await uploadFile(file, {
         bizType: "avatar",
         bizId: user.id,
-        accept: ["jpg", "jpeg", "png", "gif"],
+        accept: ["jpg", "jpeg", "png", "gif", "avif"],
         maxSize: 5 * 1024 * 1024,
       });
       await updateProfile.mutateAsync({
@@ -252,7 +252,7 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
             ref={avatarInputRef}
             type="file"
             className="hidden"
-            accept=".jpg,.jpeg,.png,.gif"
+            accept=".jpg,.jpeg,.png,.gif,.avif"
             onChange={handleAvatarChange}
           />
           <button

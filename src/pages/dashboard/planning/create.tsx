@@ -108,7 +108,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
     const uploaded = await uploadFile(file, {
       bizType: "thumbnail",
       bizId: coverBizId,
-      accept: ["jpg", "jpeg", "png", "gif", "webp"],
+      accept: ["jpg", "jpeg", "png", "gif", "webp", "avif"],
       maxSize: PROJECT_IMAGE_MAX_BYTES,
       skipCrop: true,
     });
@@ -168,7 +168,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
       const uploaded = await uploadFile(file, {
         bizType: "thumbnail",
         bizId: coverBizId,
-        accept: ["jpg", "jpeg", "png", "gif", "webp"],
+        accept: ["jpg", "jpeg", "png", "gif", "webp", "avif"],
         maxSize: PROJECT_IMAGE_MAX_BYTES,
       });
       if (token !== thumbnailToken.current) return;
@@ -304,9 +304,9 @@ export default function CreateProject({ project }: CreateProjectProps) {
               bizId={coverBizId}
               value={coverFile}
               title={isEditing ? "更换企划封面" : "上传企划封面"}
-              description={`${isEditing ? "不上传则保留原封面；" : "推荐 2:3 竖版图片；"}最大 10MB，超过 1MB 自动转 WebP`}
+              description={`${isEditing ? "不上传则保留原封面；" : "推荐 2:3 竖版图片；"}最大 10MB`}
               imagePreview
-              accept={["jpg", "jpeg", "png", "gif", "webp"]}
+              accept={["jpg", "jpeg", "png", "gif", "webp", "avif"]}
               maxSize={PROJECT_IMAGE_MAX_BYTES}
               fillHeight
               invalid={showInvalid && coverMissing}
@@ -314,9 +314,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
             />
             <div className="mt-4 border-t pt-4">
               <h2 className="text-sm font-medium text-foreground">缩略图</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                1:1 · 最大 10MB，超过 1MB 自动转 WebP
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">1:1 · 最大 10MB</p>
               <div className="mt-3 flex items-start gap-3">
                 <div className="size-24 shrink-0 overflow-hidden rounded-lg border bg-muted">
                   {thumbnailFile?.previewUrl ? (
@@ -366,7 +364,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
               <input
                 ref={thumbnailInputRef}
                 type="file"
-                accept=".jpg,.jpeg,.png,.gif,.webp"
+                accept=".jpg,.jpeg,.png,.gif,.webp,.avif"
                 className="hidden"
                 onChange={(event) => {
                   const file = event.target.files?.[0];

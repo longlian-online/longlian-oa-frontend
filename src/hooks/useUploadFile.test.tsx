@@ -6,7 +6,9 @@ import { createQueryClient } from "@/lib/queryClient";
 import { saveSession } from "@/lib/session";
 import { $tip } from "@/components/tip";
 import { UploadCancelledError } from "@/lib/imageCropRequest";
-import { useUploadFile, type UseUploadFileResult } from "@/hooks/useUploadFile";
+import { useUploadFile } from "@/hooks/useUploadFile";
+import type { UseUploadFileResult } from "@/hooks/useUploadFile";
+import * as imageCrop from "@/lib/imageCrop";
 
 const { storageValues } = vi.hoisted(() => {
   const storageValues = new Map<string, string>();
@@ -33,6 +35,10 @@ vi.mock("@/lib/imageCropRequest", () => ({
 }));
 vi.mock("@/api/file", () => ({ createFileUpload: create }));
 vi.mock("@/components/tip", () => ({ $tip: vi.fn() }));
+vi.mock("@/lib/imageCrop", async (importOriginal) => {
+  const original = await importOriginal<typeof imageCrop>();
+  return { ...original, convertImageToWebp: vi.fn(original.convertImageToWebp) };
+});
 
 test("底层上传自动裁剪图片，并仅上传裁剪结果", async () => {
   const selected = new File(["selected"], "photo.png", { type: "image/png" });
@@ -320,5 +326,48 @@ test.each(["cover", "thumbnail"] as const)(
     expect(result.fileSize).toBe(10 * 1024 * 1024);
     expect(result.fileMime).toBe("image/webp");
     if (result.previewUrl) URL.revokeObjectURL(result.previewUrl);
+  },
+);
+
+test.each(["cover", "thumbnail"] as const)(
+  "%s 按转换前后大小选择上传文件，保留对应名称、类型和正文",
+  async (bizType) => {
+    let upload: UseUploadFileResult["uploadFile"] | undefined;
+    function Probe(): null {
+      upload = useUploadFile().uploadFile;
+      return null;
+    }
+    renderToString(
+      <QueryClientProvider client={createQueryClient()}>
+        <Probe />
+      </QueryClientProvider>,
+    );
+    const source = new File([new Uint8Array(1024 * 1024 + 1)], "cover.avif", {
+      type: "image/avif",
+    });
+    const transfer = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", transfer);
+    create.mockResolvedValue({ fileId: "image-id", uploadUrl: "https://storage.example/upload" });
+    for (const size of [source.size + 1, source.size - 1, source.size]) {
+      const converted = new File([new Uint8Array(size)], "cover.webp", { type: "image/webp" });
+      vi.mocked(imageCrop.convertImageToWebp).mockResolvedValueOnce(converted);
+      const expected = size > source.size ? source : converted;
+      const result = await upload!(source, { bizType, bizId: "project", skipCrop: true });
+      expect(create).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          fileName: expected.name,
+          fileExt: expected === source ? "avif" : "webp",
+          fileSize: expected.size,
+          fileMime: expected.type,
+        }),
+      );
+      expect(transfer).toHaveBeenLastCalledWith("https://storage.example/upload", {
+        method: "PUT",
+        headers: { "Content-Type": expected.type },
+        body: expected,
+      });
+      expect(result.fileMime).toBe(expected.type);
+      if (result.previewUrl) URL.revokeObjectURL(result.previewUrl);
+    }
   },
 );

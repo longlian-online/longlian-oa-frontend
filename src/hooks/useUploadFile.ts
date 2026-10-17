@@ -24,6 +24,7 @@ const DEFAULT_ACCEPT = [
   "png",
   "gif",
   "webp",
+  "avif",
   "bmp",
   "pdf",
   "doc",
@@ -54,6 +55,7 @@ const MIME_BY_EXT: Record<string, string[]> = {
   txt: ["text/plain"],
   csv: ["text/csv", "application/vnd.ms-excel"],
   webp: ["image/webp"],
+  avif: ["image/avif"],
   bmp: ["image/bmp"],
   zip: ["application/zip", "application/x-zip-compressed"],
   rar: ["application/vnd.rar", "application/x-rar-compressed"],
@@ -186,12 +188,15 @@ export function useUploadFile(): UseUploadFileResult {
         if (croppedValidationError) throw new Error(croppedValidationError);
       }
       if (isProjectImage && (convertToWebp || file.size > WEBP_THRESHOLD_BYTES)) {
-        file = await convertImageToWebp(file);
-        const convertedError = validateFile(file, {
-          maxSize: validationOptions.maxSize,
-          accept: ["webp"],
-        });
-        if (convertedError) throw new Error(convertedError);
+        const converted = await convertImageToWebp(file);
+        if (converted.size <= file.size) {
+          const convertedError = validateFile(converted, {
+            maxSize: validationOptions.maxSize,
+            accept: ["webp"],
+          });
+          if (convertedError) throw new Error(convertedError);
+          file = converted;
+        }
       }
       ensureCurrent();
       const fileExt = getFileExt(file.name);

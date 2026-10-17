@@ -57,7 +57,7 @@ export async function convertImageToWebp(file: File): Promise<File> {
       (value) =>
         value?.type === "image/webp"
           ? resolve(value)
-          : reject(new Error("图片转换 WebP 失败，请更换图片或浏览器后重试")),
+          : reject(new Error("图片处理失败，请更换图片或浏览器后重试")),
       "image/webp",
       0.9,
     );
