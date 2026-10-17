@@ -6,8 +6,8 @@ import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { MY_TASK_PAGE_SIZE as PAGE_SIZE, myTasksQuery } from "@/queries/workshop";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { formatSlotLabel, formatTaskTitle } from "@/lib/slotLabel";
 import type { MyTaskBucket, MyTaskSortDirection } from "@/types/myTask";
-
 function formatClaimedAt(value: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   if (!match) return "";
@@ -59,31 +59,41 @@ export function MyTaskColumn({ bucket, title, dotClassName, sortDirection }: MyT
         ) : (
           tasks.map((task) => {
             const action = submittable ? "去提交" : "看进度";
+            const titleText = formatTaskTitle(task.itemTitle, {
+              name: task.nodeName,
+              slotIndex: task.slotIndex,
+              slotTotal: task.slotTotal,
+              serialStep: task.serialStep,
+            });
+            const waitingText = task.waitingStageName
+              ? `等${formatSlotLabel({
+                  name: task.waitingStageName,
+                  slotIndex: task.waitingSlotIndex,
+                  slotTotal: task.waitingSlotTotal,
+                  serialStep: task.waitingSerialStep,
+                })}`
+              : "等待中";
             return (
               <button
                 key={task.instanceId}
                 type="button"
                 className="group flex w-full min-w-0 flex-col gap-0.5 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-muted/70"
-                aria-label={`${task.projectName} ${task.itemTitle} ${task.nodeName}，${action}`}
+                aria-label={`${titleText}，${task.projectName}，${action}`}
                 onClick={() =>
                   void navigate(`/dashboard/planning/${task.projectId}/items/${task.itemId}`)
                 }
               >
-                <span className="flex min-w-0 items-baseline gap-2">
-                  <span className="max-w-[45%] shrink-0 truncate text-sm font-medium text-foreground">
-                    {task.projectName}
-                  </span>
-                  <span className="min-w-0 truncate text-sm text-muted-foreground">
-                    {task.itemTitle} · {task.nodeName}
-                  </span>
+                <span className="min-w-0 truncate text-sm font-medium text-foreground">
+                  {titleText}
                 </span>
-                <span className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                <span className="flex min-w-0 items-center justify-end gap-2 text-xs text-muted-foreground">
                   {!submittable && (
-                    <span className="mr-auto truncate">
-                      {task.waitingStageName ? `等${task.waitingStageName}` : "等待中"}
+                    <span className="mr-auto inline-block max-w-full truncate rounded-full bg-[#fcede1] px-2.5 py-0.5 font-medium text-[#c45628] dark:bg-[#3a241c] dark:text-[#f3b08a]">
+                      {waitingText}
                     </span>
                   )}
-                  <span className="tabular-nums">{formatClaimedAt(task.claimedAt)}</span>
+                  <span className="min-w-0 truncate">{task.projectName}</span>
+                  <span className="shrink-0 tabular-nums">{formatClaimedAt(task.claimedAt)}</span>
                   <ChevronRight className="size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5" />
                 </span>
               </button>

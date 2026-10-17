@@ -18,9 +18,9 @@ import { cropImageFile } from "@/lib/imageCrop";
 function describeCrop(file: File, allowOriginal: boolean): string {
   const gif = file.name.toLowerCase().endsWith(".gif");
   if (!allowOriginal) {
-    return gif ? "GIF 裁剪后将保存为静态 PNG。请截取方形区域。" : "请截取方形区域后再上传。";
+    return gif ? "GIF 裁剪后将保存为静态图片。请截取方形区域。" : "请截取方形区域后再上传。";
   }
-  return gif ? "GIF 裁剪后将保存为静态 PNG，上传原图可保留动画。" : "也可以直接上传原图。";
+  return gif ? "GIF 裁剪后为静态图片。也可以直接上传原图。" : "也可以直接上传原图。";
 }
 
 interface ImageCropDialogProps {

@@ -116,9 +116,9 @@ function OrganizationSettingsContent() {
               bizId={organization?.id ?? getCurrentOrgId() ?? "organization"}
               value={avatarFile}
               title="上传组织头像"
-              description="支持 JPG、PNG、GIF，最大 5MB"
+              description="最大 5MB"
               imagePreview
-              accept={["jpg", "jpeg", "png", "gif"]}
+              accept={["jpg", "jpeg", "png", "gif", "avif"]}
               maxSize={5 * 1024 * 1024}
               className="[&>button]:min-h-56"
               onChange={setAvatarFile}

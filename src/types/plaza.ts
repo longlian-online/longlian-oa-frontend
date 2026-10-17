@@ -16,8 +16,13 @@ export interface PlazaTask {
   parallelTotal: number;
   /** 已被占用的并行槽数（已接取或已完成） */
   filledSlots: number;
-  /** 待接取并行槽数 */
   pendingSlots: number;
+  /** 本节点在所属阶段并行组中的位次，1 开始 */
+  slotIndex?: number | null;
+  /** 所属阶段的任务节点数 */
+  slotTotal?: number | null;
+  /** 同名跨阶段时的阶段位次；名称只出现在一个阶段时为空 */
+  serialStep?: number | null;
   /** 任务创建时间 "yyyy-MM-dd HH:mm:ss"（服务器本地时间） */
   createdAt: string;
 }

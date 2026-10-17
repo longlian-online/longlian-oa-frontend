@@ -18,10 +18,19 @@ export interface MyTaskInstanceVO {
   itemTitle: string;
   nodeName: string;
   stageSort: number;
+  /** 本节点在所属阶段并行组中的位次，1 开始 */
+  slotIndex?: number | null;
+  /** 所属阶段的任务节点数 */
+  slotTotal?: number | null;
+  /** 同名跨阶段时的阶段位次；名称只出现在一个阶段时为空 */
+  serialStep?: number | null;
   projectName: string;
   claimedAt: string;
   /** 仅 WAITING 桶返回 */
-  waitingStageName?: string;
+  waitingStageName?: string | null;
+  waitingSlotIndex?: number | null;
+  waitingSlotTotal?: number | null;
+  waitingSerialStep?: number | null;
 }
 
 export interface MyTaskPage {
