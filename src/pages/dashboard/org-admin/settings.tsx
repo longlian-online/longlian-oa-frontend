@@ -146,11 +146,11 @@ function OrganizationSettingsContent() {
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
-              组织简介
+              组织简介（选填）
               <Textarea
                 value={form.description}
                 maxLength={500}
-                placeholder="介绍一下你的组织"
+                placeholder="介绍一下你的组织，最多 500 个字符"
                 className="min-h-36 resize-y"
                 onChange={(event) =>
                   setForm((current) => ({ ...current, description: event.target.value }))
