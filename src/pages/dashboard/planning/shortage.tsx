@@ -18,6 +18,7 @@ import EmptyState from "@/components/EmptyState";
 import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
+import RemoteImage from "@/components/RemoteImage";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -265,10 +266,11 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
           className="group flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {imageUrl ? (
-            <img
+            <RemoteImage
               src={imageUrl}
               alt={group.title}
-              className="size-10 shrink-0 rounded-md border object-cover"
+              className="size-10 shrink-0 rounded-md border"
+              fallback={<span className="text-sm font-semibold">{group.title.slice(0, 2)}</span>}
             />
           ) : (
             <div className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-sm font-semibold text-muted-foreground">

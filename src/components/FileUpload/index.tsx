@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { FileUp, ImagePlus, Loader2, X } from "lucide-react";
 
+import RemoteImage from "@/components/RemoteImage";
 import { Button } from "@/components/ui/button";
 import { useUploadFile } from "@/hooks/useUploadFile";
 import { cn } from "@/lib/utils";
@@ -109,14 +110,15 @@ export default function FileUpload({
             bizType !== "avatar" && "overflow-hidden rounded-xl border bg-muted",
           )}
         >
-          <img
+          <RemoteImage
             src={value.previewUrl}
             alt={value.fileName}
+            fit={fillHeight ? "contain" : "cover"}
             className={cn(
-              "w-full object-cover",
-              fillHeight && "absolute inset-0 size-full object-contain",
+              "w-full",
+              fillHeight && "absolute inset-0 size-full",
               bizType === "avatar"
-                ? "aspect-square rounded-full border bg-muted"
+                ? "aspect-square rounded-full border"
                 : !fillHeight && "aspect-[2/3]",
             )}
           />

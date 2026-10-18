@@ -7,6 +7,7 @@ import { addProjectToWorkshop, removeProjectFromWorkshop } from "@/api/planning"
 import { projectDetailQuery } from "@/queries/planning";
 import ProjectItemSection from "@/components/ProjectItem";
 import ProjectMetadataTag from "@/components/ProjectMetadataTag";
+import RemoteImage from "@/components/RemoteImage";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -149,10 +150,11 @@ export default function ProjectDetail() {
           <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
             <div className="aspect-[2/3] bg-muted">
               {project.coverUrl ? (
-                <img
+                <RemoteImage
                   src={project.coverUrl}
                   alt={project.title}
-                  className="size-full object-cover"
+                  className="size-full"
+                  fallback="暂无封面"
                 />
               ) : (
                 <div className="flex size-full items-center justify-center text-muted-foreground">

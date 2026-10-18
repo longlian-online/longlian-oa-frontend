@@ -13,6 +13,7 @@ import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
 import ProjectMetadataTag from "@/components/ProjectMetadataTag";
+import RemoteImage from "@/components/RemoteImage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -216,10 +217,12 @@ function ProjectCard({ project }: ProjectCardProps) {
     >
       <div className="h-full w-[40%] shrink-0 overflow-hidden bg-muted">
         {project.coverUrl ? (
-          <img
+          <RemoteImage
             src={project.coverUrl}
             alt={project.title}
-            className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            className="size-full"
+            imgClassName="group-hover:scale-[1.03]"
+            fallback={<span className="text-2xl font-semibold">{project.title.slice(0, 2)}</span>}
           />
         ) : (
           <div className="flex size-full items-center justify-center text-2xl font-semibold text-muted-foreground">

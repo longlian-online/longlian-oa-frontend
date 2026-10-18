@@ -26,6 +26,7 @@ import EmptyState from "@/components/EmptyState";
 import OrganizationInviteDialog from "@/components/OrganizationInviteDialog";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
+import RemoteImage from "@/components/RemoteImage";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -283,10 +284,15 @@ function OrganizationMembersContent() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {member.avatarUrl ? (
-                            <img
+                            <RemoteImage
                               src={member.avatarUrl}
                               alt=""
-                              className="size-9 rounded-full object-cover"
+                              className="size-9 rounded-full"
+                              fallback={
+                                <span className="text-sm font-medium">
+                                  {memberName(member).slice(0, 1)}
+                                </span>
+                              }
                             />
                           ) : (
                             <div className="flex size-9 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
