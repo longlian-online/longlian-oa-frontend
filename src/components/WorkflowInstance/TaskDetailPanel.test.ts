@@ -1,7 +1,11 @@
 import { describe, expect, test } from "vite-plus/test";
 
 import type { TaskInstanceDetailVO, TaskSubmissionVersionVO } from "@/types/workflowInstance";
-import { submissionVersionAuthorLine, versionFromDetail } from "./TaskDetailPanel";
+import {
+  currentVersionOf,
+  submissionVersionAuthorLine,
+  versionFromDetail,
+} from "./TaskDetailPanel";
 
 function detail(
   submission: TaskInstanceDetailVO["submission"],
@@ -60,5 +64,34 @@ describe("submissionVersionAuthorLine", () => {
 
   test("未提交时不生成占位版本", () => {
     expect(versionFromDetail(detail({ state: "not_submitted", fields: [] }))).toEqual([]);
+  });
+});
+
+describe("currentVersionOf", () => {
+  const reset: TaskSubmissionVersionVO = {
+    versionNo: 1,
+    status: "RESET",
+    fields: [],
+    unreadable: false,
+  };
+  const rejected: TaskSubmissionVersionVO = { ...reset, versionNo: 2, status: "REJECTED" };
+  const submitted: TaskSubmissionVersionVO = { ...reset, versionNo: 3, status: "SUBMITTED" };
+
+  test("未提交时重置和打回历史都不是当前版本", () => {
+    expect(currentVersionOf("not_submitted", [reset])).toBeNull();
+    expect(currentVersionOf("not_submitted", [rejected, reset])).toBeNull();
+  });
+
+  test("详情未提交时不采用历史接口中的有效提交", () => {
+    expect(currentVersionOf("not_submitted", [submitted, reset])).toBeNull();
+  });
+
+  test("重新提交后只选择有效提交而不是失效历史", () => {
+    expect(currentVersionOf("submitted", [submitted, rejected, reset])).toBe(submitted);
+  });
+
+  test("没有有效提交版本时当前版本为空", () => {
+    expect(currentVersionOf("submitted", [rejected, reset])).toBeNull();
+    expect(currentVersionOf("submitted", [])).toBeNull();
   });
 });
