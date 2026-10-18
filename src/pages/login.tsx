@@ -114,7 +114,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <img
             src="/logo-full.webp"
-            alt="龙联 OA Logo"
+            alt="白箱"
             width={48}
             height={48}
             className="mb-4 h-12 w-12 object-contain"
