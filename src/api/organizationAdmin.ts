@@ -5,6 +5,8 @@ import type {
   JoinApplicationListDTO,
   JoinApplicationReviewDTO,
   JoinApplicationVO,
+  DeletionRequestReviewDTO,
+  DeletionRequestVO,
   MemberSubmitCountsVO,
   OrganizationBaseTaskCreateDTO,
   OrganizationBaseTaskListDTO,
@@ -88,6 +90,26 @@ export async function reviewJoinApplication(
   dto: JoinApplicationReviewDTO,
 ): Promise<void> {
   return orgAdminRequest(`/orgadmin/members/applications/${applicationId}/review`, {
+    method: "PUT",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function getDeletionRequests(
+  pageNum: number,
+  pageSize: number,
+): Promise<OrganizationPageResult<DeletionRequestVO>> {
+  return orgAdminRequest("/orgadmin/deletion-requests", {
+    method: "POST",
+    body: JSON.stringify({ pageNum, pageSize }),
+  });
+}
+
+export async function reviewDeletionRequest(
+  requestId: string,
+  dto: DeletionRequestReviewDTO,
+): Promise<void> {
+  return orgAdminRequest(`/orgadmin/deletion-requests/${requestId}/review`, {
     method: "PUT",
     body: JSON.stringify(dto),
   });

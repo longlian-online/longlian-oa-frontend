@@ -44,6 +44,17 @@ export async function deleteProjectItem(projectId: string, itemId: string): Prom
   });
 }
 
+export async function createItemDeletionRequest(
+  projectId: string,
+  itemId: string,
+  reason: string,
+): Promise<void> {
+  return request(`/projects/${projectId}/items/${itemId}/deletion-requests`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+}
+
 export async function getTaskTemplateOptions(): Promise<TaskTemplateOptionVO[]> {
   return request("/task-template/options");
 }

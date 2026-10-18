@@ -52,6 +52,11 @@ const orgAdminItems: readonly SidebarItem[] = [
     activePrefixes: ["/dashboard/org-admin/applications"],
   },
   {
+    to: "/dashboard/org-admin/deletion-requests",
+    label: "删除请求",
+    activePrefixes: ["/dashboard/org-admin/deletion-requests"],
+  },
+  {
     to: "/dashboard/org-admin/tasks",
     label: "原子任务",
     activePrefixes: ["/dashboard/org-admin/tasks"],

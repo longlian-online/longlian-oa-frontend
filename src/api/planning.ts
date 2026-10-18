@@ -72,3 +72,13 @@ export async function deleteProject(projectId: number | string): Promise<void> {
     method: "DELETE",
   });
 }
+
+export async function createProjectDeletionRequest(
+  projectId: number | string,
+  reason: string,
+): Promise<void> {
+  return request(`/projects/${projectId}/deletion-requests`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+}

@@ -1,4 +1,5 @@
 import {
+  getDeletionRequests,
   getJoinApplications,
   getOrganizationBaseTaskList,
   getOrganizationInfo,
@@ -11,6 +12,7 @@ import {
 import type { ApiQueryOptions } from "@/lib/apiQuery";
 import type { MemberListFilters } from "@/pages/dashboard/org-admin/memberListFilters";
 import type {
+  DeletionRequestVO,
   JoinApplicationVO,
   OrganizationBaseTaskVO,
   OrganizationInfoVO,
@@ -63,6 +65,15 @@ export function organizationApplicationsQuery(
         keyword: keyword || undefined,
         orderDir: "DESC",
       }),
+  };
+}
+
+export function organizationDeletionRequestsQuery(
+  page = 1,
+): ApiQueryOptions<OrganizationPageResult<DeletionRequestVO>> {
+  return {
+    key: ["deletionRequests", "management", page],
+    queryFn: () => getDeletionRequests(page, ORGANIZATION_ADMIN_PAGE_SIZE),
   };
 }
 

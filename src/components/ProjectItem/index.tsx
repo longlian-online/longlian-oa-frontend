@@ -2,7 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { ChevronRight, Loader2, Plus, Trash2, Workflow } from "lucide-react";
 
-import { createProjectItem, deleteProjectItem, getTaskTemplateOptions } from "@/api/projectItem";
+import {
+  createItemDeletionRequest,
+  createProjectItem,
+  deleteProjectItem,
+  getTaskTemplateOptions,
+} from "@/api/projectItem";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
@@ -17,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -103,6 +109,8 @@ export default function ProjectItemSection({
     setQuery((query) => ({ ...query, page: nextPage }));
   }
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [reasonItem, setReasonItem] = useState<ProjectItemListVO | null>(null);
+  const [reason, setReason] = useState("");
   const actionLock = useRef(false);
   const projectLifecycle = useRef({ id: projectId, generation: 0 });
   if (projectLifecycle.current.id !== projectId) {
@@ -143,6 +151,11 @@ export default function ProjectItemSection({
       ["workshop"],
       ["plaza"],
     ],
+  });
+  const requestMutation = useApiMutation({
+    mutationFn: (input: { itemId: string; reason: string }) =>
+      createItemDeletionRequest(projectId, input.itemId, input.reason),
+    invalidate: [["deletionRequests"]],
   });
   const items = itemsQuery.data?.list ?? [];
   const total = itemsQuery.data?.total ?? 0;
@@ -187,6 +200,11 @@ export default function ProjectItemSection({
   }
 
   async function handleDeleteItem(item: ProjectItemListVO): Promise<void> {
+    if (item.hasSubmittedTask) {
+      setReason("");
+      setReasonItem(item);
+      return;
+    }
     const confirmed = await confirm({
       title: "删除项目？",
       description: `删除后「${item.title}」的流程与任务记录将不可恢复。`,
@@ -204,6 +222,22 @@ export default function ProjectItemSection({
       }
     } catch {
       // Mutation 的最终失败由共享错误入口提示，保留当前草稿。
+    } finally {
+      actionLock.current = false;
+    }
+  }
+
+  async function handleSubmitItemDeletion(): Promise<void> {
+    const trimmed = reason.trim();
+    if (!reasonItem || !trimmed || actionLock.current) return;
+    actionLock.current = true;
+    try {
+      await requestMutation.mutateAsync({ itemId: reasonItem.id, reason: trimmed });
+      if (!isCurrent()) return;
+      setReasonItem(null);
+      $tip("已提交删除申请，请等待组织管理员审核", "success");
+    } catch {
+      // Mutation 的最终失败由共享错误入口提示，保留当前数据。
     } finally {
       actionLock.current = false;
     }
@@ -422,6 +456,32 @@ export default function ProjectItemSection({
             <Button disabled={!canCreate} onClick={() => void handleCreateItem()}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               创建
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={reasonItem !== null} onOpenChange={(open) => !open && setReasonItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>删除项目？</DialogTitle>
+            <DialogDescription>由于项目存在已提交任务，删除需要管理员审核</DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={reason}
+            maxLength={500}
+            placeholder="填写删除原因"
+            onChange={(event) => setReason(event.target.value)}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReasonItem(null)}>
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!reason.trim() || requestMutation.isPending}
+              onClick={() => void handleSubmitItemDeletion()}
+            >
+              提交申请
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -41,6 +41,7 @@ function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     if (segments[2] === "project-types") items.push({ label: "企划类型" });
     if (segments[2] === "members") items.push({ label: "成员" });
     if (segments[2] === "applications") items.push({ label: "入组申请" });
+    if (segments[2] === "deletion-requests") items.push({ label: "删除请求" });
     if (segments[2] === "tasks") items.push({ label: "原子任务" });
     if (segments[2] === "workflows") items.push({ label: "工作流" });
     if (segments[2] === "create") items.push({ label: "创建工作流" });
