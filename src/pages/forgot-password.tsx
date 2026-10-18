@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 const forgotPasswordSchema = z
   .object({
     email: z.string().email("请输入有效的邮箱地址"),
-    code: z.string().regex(/^[a-zA-Z0-9]{6}$/, "请输入 6 位验证码"),
+    code: z.string().regex(/^[A-Z0-9]{6}$/, "请输入 6 位大写字母或数字验证码"),
     password: z.string().min(6, "密码至少 6 位").max(20, "密码最多 20 位"),
     confirmPassword: z.string().min(1, "请再次输入新密码"),
   })
@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
     try {
       await reset.mutateAsync({
         email: data.email,
-        code: data.code.toUpperCase(),
+        code: data.code,
         password: data.password,
       });
       $tip("密码已重置，请使用新密码登录", "success");
@@ -124,10 +124,14 @@ export default function ForgotPasswordPage() {
               </div>
               <Input
                 id="code"
-                placeholder="请输入 6 位验证码"
+                placeholder="请输入 6 位大写字母或数字验证码"
                 maxLength={6}
-                className="h-11 uppercase"
+                className="h-11"
                 {...form.register("code")}
+                onChange={(event) => {
+                  event.target.value = event.target.value.toUpperCase();
+                  void form.register("code").onChange(event);
+                }}
               />
               {form.formState.errors.code && (
                 <p className="text-xs text-destructive">{form.formState.errors.code.message}</p>

@@ -37,7 +37,7 @@ const registerObjectSchema = z.object({
     .max(20, "用户名最多20个字符")
     .regex(/^[A-Za-z_]+$/, "用户名只能包含英文字母和下划线"),
   email: z.string().email("请输入有效的邮箱地址"),
-  code: z.string().length(6, "验证码为6位数字"),
+  code: z.string().regex(/^[A-Z0-9]{6}$/, "请输入 6 位大写字母或数字验证码"),
   password: z.string().min(6, "密码至少6个字符").max(20, "密码最多20个字符"),
   confirmPassword: z.string().min(6, "请确认密码"),
 });
@@ -315,10 +315,14 @@ export default function RegisterPage() {
               <div className="flex gap-2">
                 <Input
                   id="code"
-                  placeholder="请输入验证码"
+                  placeholder="请输入 6 位大写字母或数字验证码"
                   className="h-11"
                   maxLength={6}
                   {...form.register("code")}
+                  onChange={(event) => {
+                    event.target.value = event.target.value.toUpperCase();
+                    void form.register("code").onChange(event);
+                  }}
                 />
                 <Button
                   type="button"
