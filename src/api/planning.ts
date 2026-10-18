@@ -66,3 +66,19 @@ export async function removeProjectFromWorkshop(projectId: number | string): Pro
     method: "DELETE",
   });
 }
+
+export async function deleteProject(projectId: number | string): Promise<void> {
+  return request(`/projects/${projectId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function createProjectDeletionRequest(
+  projectId: number | string,
+  reason: string,
+): Promise<void> {
+  return request(`/projects/${projectId}/deletion-requests`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+}

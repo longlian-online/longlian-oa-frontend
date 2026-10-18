@@ -1,9 +1,26 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router";
-import { BarChart3, CirclePlus, Info, Link2, Loader2, Pencil, Share2, X } from "lucide-react";
+import {
+  BarChart3,
+  CirclePlus,
+  Info,
+  Link2,
+  Loader2,
+  Pencil,
+  Share2,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
-import { addProjectToWorkshop, removeProjectFromWorkshop } from "@/api/planning";
+import { scopedKey } from "@/lib/queryKeys";
+import {
+  addProjectToWorkshop,
+  createProjectDeletionRequest,
+  deleteProject,
+  removeProjectFromWorkshop,
+} from "@/api/planning";
 import { projectDetailQuery } from "@/queries/planning";
 import ProjectItemSection from "@/components/ProjectItem";
 import ProjectMetadataTag from "@/components/ProjectMetadataTag";
@@ -12,6 +29,15 @@ import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
 import { getStatusLabel } from "@/lib/projectStatus";
@@ -20,6 +46,7 @@ import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const confirm = useConfirm();
   const projectQuery = useApiQuery(projectDetailQuery(projectId));
   const project = projectQuery.data;
@@ -31,6 +58,18 @@ export default function ProjectDetail() {
   });
   const workshopLoading = workshopMutation.isPending;
   const workshopLock = useRef(false);
+  const deleteMutation = useApiMutation({
+    mutationFn: () => deleteProject(projectId!),
+    invalidate: [["projects", "list"], ["projects", "management"], ["workshop"], ["plaza"]],
+  });
+  const deleteLoading = deleteMutation.isPending;
+  const deleteLock = useRef(false);
+  const requestMutation = useApiMutation({
+    mutationFn: (reason: string) => createProjectDeletionRequest(projectId!, reason),
+    invalidate: [["deletionRequests"]],
+  });
+  const [reasonOpen, setReasonOpen] = useState(false);
+  const [reason, setReason] = useState("");
   if (projectQuery.isError && !project) {
     return (
       <div role="alert">
@@ -75,6 +114,50 @@ export default function ProjectDetail() {
       $tip("企划链接已复制", "success");
     } catch {
       $tip("复制链接失败，请手动复制当前地址", "error");
+    }
+  }
+
+  async function handleDelete(): Promise<void> {
+    if (deleteLock.current || !project || !projectId) return;
+    if (project.hasItems) {
+      setReason("");
+      setReasonOpen(true);
+      return;
+    }
+    const confirmed = await confirm({
+      title: "删除企划？",
+      description: `删除后「${project.title}」将不可恢复。`,
+      confirmText: "删除",
+    });
+    if (!confirmed || deleteLock.current) return;
+    deleteLock.current = true;
+    try {
+      await deleteMutation.mutateAsync();
+      await queryClient.invalidateQueries({
+        queryKey: scopedKey(["projects", "detail", projectId], "org"),
+        refetchType: "none",
+      });
+      $tip("企划已删除", "success");
+      void navigate("/dashboard/planning");
+    } catch {
+      /* 全局 Mutation 错误提示保留当前数据。 */
+    } finally {
+      deleteLock.current = false;
+    }
+  }
+
+  async function handleSubmitDeletionRequest(): Promise<void> {
+    const trimmed = reason.trim();
+    if (!trimmed || deleteLock.current) return;
+    deleteLock.current = true;
+    try {
+      await requestMutation.mutateAsync(trimmed);
+      setReasonOpen(false);
+      $tip("已提交删除申请，请等待组织管理员审核", "success");
+    } catch {
+      /* 全局 Mutation 错误提示保留当前数据。 */
+    } finally {
+      deleteLock.current = false;
     }
   }
 
@@ -142,8 +225,50 @@ export default function ProjectDetail() {
             <Share2 className="h-4 w-4" />
             分享
           </Button>
+          {project.isCreator && (
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={deleteLoading || requestMutation.isPending}
+              onClick={() => void handleDelete()}
+            >
+              {deleteLoading || requestMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              删除企划
+            </Button>
+          )}
         </div>
       </div>
+
+      <Dialog open={reasonOpen} onOpenChange={setReasonOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>删除企划？</DialogTitle>
+            <DialogDescription>由于企划中已存在项目，删除需要管理员审核</DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={reason}
+            maxLength={500}
+            placeholder="填写删除原因"
+            onChange={(event) => setReason(event.target.value)}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReasonOpen(false)}>
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!reason.trim() || requestMutation.isPending}
+              onClick={() => void handleSubmitDeletionRequest()}
+            >
+              提交申请
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="space-y-4">
