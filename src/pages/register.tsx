@@ -38,7 +38,7 @@ const registerObjectSchema = z.object({
     .string()
     .min(4, "用户名至少4个字符")
     .max(20, "用户名最多20个字符")
-    .regex(/^[A-Za-z_]+$/, "用户名只能包含英文字母和下划线"),
+    .regex(/^[A-Za-z0-9_]+$/, "用户名只能包含英文字母、数字和下划线"),
   email: z.string().email("请输入有效的邮箱地址"),
   code: z.string().regex(/^[A-Z0-9]{6}$/, "请输入 6 位大写字母或数字验证码"),
   password: z.string().min(6, "密码至少6个字符").max(20, "密码最多20个字符"),
@@ -294,7 +294,7 @@ export default function RegisterPage() {
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       id="username"
-                      placeholder="4-20位英文字母或下划线"
+                      placeholder="4-20位英文字母、数字或下划线"
                       className="pl-10 h-11"
                       {...form.register("username")}
                     />
