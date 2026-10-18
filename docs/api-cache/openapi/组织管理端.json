@@ -341,7 +341,7 @@
         "properties": {
           "orgRole": {
             "description": "组织角色",
-            "enum": ["ORG_ADMIN", "ORG_USER", "ORG_ADMIN", "ORG_USER"],
+            "enum": ["ORG_OWNER", "ORG_ADMIN", "ORG_USER", "ORG_ADMIN", "ORG_USER"],
             "type": "string"
           }
         },
@@ -374,7 +374,7 @@
             "type": "string"
           },
           "orgRole": {
-            "description": "组织内角色：ORG_ADMIN-管理员，ORG_USER-普通组员",
+            "description": "组织内角色：ORG_OWNER-所有者，ORG_ADMIN-管理员，ORG_USER-普通组员",
             "type": "string"
           },
           "status": {
@@ -1261,6 +1261,7 @@
     },
     "/orgadmin/members/{memberId}/role": {
       "patch": {
+        "description": "仅组织所有者可调整。不能修改所有者，也不能把成员设为所有者。",
         "operationId": "changeMemberRole",
         "parameters": [
           {

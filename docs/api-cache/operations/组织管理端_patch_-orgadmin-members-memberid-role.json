@@ -2,6 +2,7 @@
   "document": "组织管理端",
   "method": "PATCH",
   "operation": {
+    "description": "仅组织所有者可调整。不能修改所有者，也不能把成员设为所有者。",
     "operationId": "changeMemberRole",
     "parameters": [
       {

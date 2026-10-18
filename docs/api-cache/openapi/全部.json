@@ -372,18 +372,18 @@
         "description": "创建文件上传请求参数",
         "properties": {
           "bizType": {
-            "description": "业务类型(avatar/cover/task_submit)",
-            "pattern": "avatar|cover|task_submit",
+            "description": "业务类型(avatar/cover/thumbnail/task_submit)",
+            "pattern": "avatar|cover|thumbnail|task_submit",
             "type": "string"
           },
           "fileExt": {
             "description": "文件扩展名",
-            "pattern": "(?i)jpg|jpeg|png|gif|webp|bmp|pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv|zip|rar|7z",
+            "pattern": "(?i)jpg|jpeg|png|gif|webp|avif|bmp|pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv|zip|rar|7z",
             "type": "string"
           },
           "fileMime": {
             "description": "文件MIME类型",
-            "pattern": "(?i)image/(jpeg|png|gif|webp|bmp)|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.ms-powerpoint|application/vnd.openxmlformats-officedocument.presentationml.presentation|text/plain|text/csv|application/zip|application/x-zip-compressed|application/vnd.rar|application/x-rar-compressed|application/x-7z-compressed",
+            "pattern": "(?i)image/(jpeg|png|gif|webp|avif|bmp)|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.ms-powerpoint|application/vnd.openxmlformats-officedocument.presentationml.presentation|text/plain|text/csv|application/zip|application/x-zip-compressed|application/vnd.rar|application/x-rar-compressed|application/x-7z-compressed",
             "type": "string"
           },
           "fileName": {
@@ -682,6 +682,10 @@
             "description": "默认组织ID，不参与后续鉴权",
             "type": "string"
           },
+          "refreshToken": {
+            "description": "刷新凭证。只用于换发访问凭证，不能当作访问凭证",
+            "type": "string"
+          },
           "role": {
             "description": "默认组织内的角色，仅供展示。没有可用默认组织时为空",
             "type": "string"
@@ -759,13 +763,43 @@
             "description": "企划名",
             "type": "string"
           },
+          "serialStep": {
+            "description": "同名节点跨阶段时的阶段位次（1 开始）；名称只出现在一个阶段时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "slotIndex": {
+            "description": "本节点在所属阶段并行组中的位次（1 开始，按 parallelSort、节点 ID 排序）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "slotTotal": {
+            "description": "所属阶段的任务节点数",
+            "format": "int32",
+            "type": "integer"
+          },
           "stageSort": {
             "description": "阶段序号（节点 sort）",
             "format": "int32",
             "type": "integer"
           },
+          "waitingSerialStep": {
+            "description": "等待的前置节点同名跨阶段位次；非等待或名称不跨阶段时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingSlotIndex": {
+            "description": "等待的前置节点在其并行组中的位次；非等待时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingSlotTotal": {
+            "description": "等待的前置节点所属阶段的任务节点数；非等待时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
           "waitingStageName": {
-            "description": "等待的前置阶段名（sort 最大的未完成前置）；仅 WAITING 分组返回，否则为 null",
+            "description": "等待的前置节点名（sort 最大的未完成前置）；仅 WAITING 分组返回，否则为 null",
             "type": "string"
           }
         },
@@ -949,7 +983,7 @@
         "properties": {
           "orgRole": {
             "description": "组织角色",
-            "enum": ["ORG_ADMIN", "ORG_USER", "ORG_ADMIN", "ORG_USER"],
+            "enum": ["ORG_OWNER", "ORG_ADMIN", "ORG_USER", "ORG_ADMIN", "ORG_USER"],
             "type": "string"
           }
         },
@@ -982,7 +1016,7 @@
             "type": "string"
           },
           "orgRole": {
-            "description": "组织内角色：ORG_ADMIN-管理员，ORG_USER-普通组员",
+            "description": "组织内角色：ORG_OWNER-所有者，ORG_ADMIN-管理员，ORG_USER-普通组员",
             "type": "string"
           },
           "status": {
@@ -1359,6 +1393,10 @@
             },
             "type": "array"
           },
+          "thumbnailUrl": {
+            "description": "缩略图URL",
+            "type": "string"
+          },
           "title": {
             "description": "企划标题",
             "type": "string"
@@ -1410,6 +1448,21 @@
           },
           "pendingSlots": {
             "description": "待接取并行槽数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "serialStep": {
+            "description": "同名节点跨阶段时的阶段位次（1 开始）；名称只出现在一个阶段时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "slotIndex": {
+            "description": "本节点在所属阶段并行组中的位次（1 开始，按 parallelSort、节点 ID 排序）",
+            "format": "int32",
+            "type": "integer"
+          },
+          "slotTotal": {
+            "description": "所属阶段的任务节点数",
             "format": "int32",
             "type": "integer"
           },
@@ -1535,6 +1588,10 @@
             "example": "{\"tags\":[{\"key\":\"加急\",\"color\":\"amber\"},{\"key\":\"作者\",\"value\":\"smile_snow\",\"color\":\"blue\"}]}",
             "type": "string"
           },
+          "thumbnailFileId": {
+            "description": "缩略图文件ID；省略时不设置缩略图",
+            "type": "string"
+          },
           "title": {
             "description": "企划名",
             "type": "string"
@@ -1561,6 +1618,11 @@
           },
           "coverUrl": {
             "description": "封面图片URL",
+            "type": "string"
+          },
+          "createdAt": {
+            "description": "创建时间",
+            "format": "date-time",
             "type": "string"
           },
           "description": {
@@ -1596,6 +1658,10 @@
           "status": {
             "description": "企划状态",
             "enum": ["进行中", "已完成", "已归档"],
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "description": "缩略图URL",
             "type": "string"
           },
           "title": {
@@ -1700,8 +1766,8 @@
             "type": "string"
           },
           "status": {
-            "description": "项目状态筛选：IN_PROGRESS-进行中，COMPLETED-已完成；默认进行中",
-            "enum": ["IN_PROGRESS", "COMPLETED", "PUBLISHED"],
+            "description": "完成情况筛选：IN_PROGRESS-进行中（没有任务或存在未完成任务），COMPLETED-已完成（至少有一个任务且全部已完成）；默认进行中",
+            "enum": ["IN_PROGRESS", "COMPLETED"],
             "type": "string"
           }
         },
@@ -1734,11 +1800,6 @@
             "description": "进度百分比（0-100）",
             "format": "int32",
             "type": "integer"
-          },
-          "status": {
-            "description": "项目状态",
-            "enum": ["IN_PROGRESS", "COMPLETED", "PUBLISHED"],
-            "type": "string"
           },
           "title": {
             "description": "项目标题",
@@ -1976,12 +2037,27 @@
             "enum": ["进行中", "已完成", "已归档"],
             "type": "string"
           },
+          "thumbnailFileId": {
+            "description": "缩略图文件ID；省略时保留原缩略图",
+            "type": "string"
+          },
           "title": {
             "description": "企划名",
             "type": "string"
           }
         },
         "required": ["alias", "description", "metadata", "title"],
+        "type": "object"
+      },
+      "RefreshSessionDTO": {
+        "description": "刷新会话请求",
+        "properties": {
+          "refreshToken": {
+            "description": "登录时签发的刷新凭证",
+            "type": "string"
+          }
+        },
+        "required": ["refreshToken"],
         "type": "object"
       },
       "RegisterByInviteDTO": {
@@ -2123,6 +2199,20 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "SessionRefreshVO": {
+        "description": "刷新会话返回。只换发凭证，不改变当前组织。",
+        "properties": {
+          "refreshToken": {
+            "description": "新的刷新凭证",
+            "type": "string"
+          },
+          "token": {
+            "description": "新的访问凭证",
+            "type": "string"
           }
         },
         "type": "object"
@@ -2788,6 +2878,10 @@
             "description": "最近一次提交的昵称",
             "type": "string"
           },
+          "thumbnailUrl": {
+            "description": "缩略图URL",
+            "type": "string"
+          },
           "title": {
             "description": "企划名称",
             "type": "string"
@@ -3450,7 +3544,7 @@
     },
     "/app/projects/{projectId}/items": {
       "get": {
-        "description": "支持标题模糊搜索、状态筛选（进行中/已完成/已公布）与时间排序；默认展示进行中并按更新时间倒序",
+        "description": "支持标题模糊搜索、完成情况筛选与时间排序。进行中包含没有任务或仍有未完成任务的项目；已完成指至少有一个任务且全部任务已完成。默认展示进行中并按更新时间倒序",
         "operationId": "listProjectItems",
         "parameters": [
           {
@@ -3576,49 +3670,6 @@
           }
         },
         "summary": "删除项目",
-        "tags": ["项目相关接口"]
-      }
-    },
-    "/app/projects/{projectId}/items/{itemId}/publish": {
-      "patch": {
-        "description": "需项目中所有任务均已完成，存在未完成任务时拒绝公布",
-        "operationId": "publishProjectItem",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "sessionContext",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/SessionContext"
-            }
-          },
-          {
-            "description": "企划ID",
-            "in": "path",
-            "name": "projectId",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "description": "项目ID",
-            "in": "path",
-            "name": "itemId",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "summary": "公布项目",
         "tags": ["项目相关接口"]
       }
     },
@@ -3777,6 +3828,36 @@
           }
         },
         "summary": "密码登录",
+        "tags": ["用户会话接口"]
+      }
+    },
+    "/app/session/refresh": {
+      "post": {
+        "description": "用刷新凭证换发访问凭证。不改变当前组织。",
+        "operationId": "refresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshSessionDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionRefreshVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "刷新会话",
         "tags": ["用户会话接口"]
       }
     },
@@ -4382,7 +4463,7 @@
     },
     "/app/user/register/create-organization": {
       "post": {
-        "description": "使用超管生成的邀请码完成注册，并创建组织成为组织管理员",
+        "description": "使用超管生成的邀请码完成注册，并创建组织成为组织所有者",
         "operationId": "registerAndCreateOrganizationByInvite",
         "requestBody": {
           "content": {
@@ -4968,6 +5049,7 @@
     },
     "/orgadmin/members/{memberId}/role": {
       "patch": {
+        "description": "仅组织所有者可调整。不能修改所有者，也不能把成员设为所有者。",
         "operationId": "changeMemberRole",
         "parameters": [
           {
@@ -5814,10 +5896,6 @@
       "name": "管理员接口"
     },
     {
-      "description": "项目列表、创建编辑、发布",
-      "name": "项目相关接口"
-    },
-    {
       "description": "查看、手动触发定时任务",
       "name": "定时任务管理"
     },
@@ -5836,6 +5914,10 @@
     {
       "description": "用户端流程模板查询，提供创建项目时的模板下拉选项",
       "name": "流程模板接口"
+    },
+    {
+      "description": "项目列表、创建和删除",
+      "name": "项目相关接口"
     },
     {
       "description": "企划相关接口",

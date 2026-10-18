@@ -31,7 +31,11 @@ const registerObjectSchema = z.object({
   inviteCode: z.string().min(1, `${INVITE_CODE_LABELS.join}不能为空`),
   orgName: z.string().optional(),
   nickname: z.string().max(20, "昵称最多20个字符"),
-  username: z.string().min(4, "用户名至少4个字符").max(20, "用户名最多20个字符"),
+  username: z
+    .string()
+    .min(4, "用户名至少4个字符")
+    .max(20, "用户名最多20个字符")
+    .regex(/^[A-Za-z_]+$/, "用户名只能包含英文字母和下划线"),
   email: z.string().email("请输入有效的邮箱地址"),
   code: z.string().length(6, "验证码为6位数字"),
   password: z.string().min(6, "密码至少6个字符").max(20, "密码最多20个字符"),
@@ -273,7 +277,7 @@ export default function RegisterPage() {
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="username"
-                  placeholder="请输入用户名（4-20字符）"
+                  placeholder="4-20位英文字母或下划线"
                   className="pl-10 h-11"
                   {...form.register("username")}
                 />
