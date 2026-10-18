@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router";
 import {
   BarChart3,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { scopedKey } from "@/lib/queryKeys";
 import {
   addProjectToWorkshop,
   createProjectDeletionRequest,
@@ -43,6 +45,7 @@ import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const confirm = useConfirm();
   const projectQuery = useApiQuery(projectDetailQuery(projectId));
   const project = projectQuery.data;
@@ -56,7 +59,7 @@ export default function ProjectDetail() {
   const workshopLock = useRef(false);
   const deleteMutation = useApiMutation({
     mutationFn: () => deleteProject(projectId!),
-    invalidate: [["projects"], ["workshop"], ["plaza"]],
+    invalidate: [["projects", "list"], ["projects", "management"], ["workshop"], ["plaza"]],
   });
   const deleteLoading = deleteMutation.isPending;
   const deleteLock = useRef(false);
@@ -129,6 +132,10 @@ export default function ProjectDetail() {
     deleteLock.current = true;
     try {
       await deleteMutation.mutateAsync();
+      await queryClient.invalidateQueries({
+        queryKey: scopedKey(["projects", "detail", projectId], "org"),
+        refetchType: "none",
+      });
       $tip("企划已删除", "success");
       void navigate("/dashboard/planning");
     } catch {
