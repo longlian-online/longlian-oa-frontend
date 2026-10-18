@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Layers, Mail, User, Lock, Eye, EyeOff, Building2, Sparkles } from "lucide-react";
+import { Mail, User, Lock, Eye, EyeOff, Building2, Sparkles } from "lucide-react";
 
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { Button } from "@/components/ui/button";
@@ -168,9 +168,13 @@ export default function RegisterPage() {
       <div className="w-full max-w-[380px]">
         {/* Logo and Title */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4">
-            <Layers className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img
+            src="/logo-full.webp"
+            alt="白箱"
+            width={48}
+            height={48}
+            className="mb-4 h-12 w-12 object-contain"
+          />
           <h1 className="text-xl font-semibold text-foreground">注册</h1>
         </div>
 
