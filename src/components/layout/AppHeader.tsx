@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactElement } from "react";
 import { Check, KeyRound, LogOut, Pencil, UserRound } from "lucide-react";
-import { NavLink, useLocation, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { isOrganizationManagerRole } from "@/lib/organizationRole";
 import { getSessionSnapshot } from "@/lib/session";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { usePendingPathname } from "@/hooks/usePendingPathname";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTheme } from "@/hooks/useTheme";
 import { useUploadFile } from "@/hooks/useUploadFile";
@@ -58,7 +59,7 @@ interface AppHeaderProps {
 }
 
 export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactElement {
-  const { pathname } = useLocation();
+  const pathname = usePendingPathname();
   const navigate = useNavigate();
   const { user, role } = useCurrentUser();
   const { theme, setTheme } = useTheme();
@@ -221,21 +222,19 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
         {navigationItems
           .filter((item) => !item.adminOnly || isOrganizationManagerRole(role))
           .map(({ to, label }) => (
-            <NavLink
+            <Link
               key={to}
               to={to}
-              end
-              className={() =>
-                cn(
-                  "rounded-md px-3 py-1.5 text-sm transition-colors",
-                  isSubMenuActive(pathname, to)
-                    ? "bg-secondary text-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground",
-                )
-              }
+              aria-current={isSubMenuActive(pathname, to) ? "page" : undefined}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm transition-colors",
+                isSubMenuActive(pathname, to)
+                  ? "bg-secondary text-foreground font-medium"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
             >
               {label}
-            </NavLink>
+            </Link>
           ))}
       </nav>
 

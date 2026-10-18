@@ -1,16 +1,20 @@
-import { useEffect, useState, type ReactElement } from "react";
-import { Outlet, useLocation } from "react-router";
+import { useEffect, useRef, useState, type ReactElement } from "react";
+import { Outlet } from "react-router";
 import AppBreadcrumb from "./AppBreadcrumb";
 import AppHeader from "./AppHeader";
 import AppSidebar from "./AppSidebar";
 import PageTransition from "./PageTransition";
 import OrganizationSidebar from "@/components/layout/OrganizationSidebar";
+import PageLoading from "@/components/PageLoading";
 import { useOrganizationSwitcher } from "@/hooks/useOrganizationSwitcher";
+import { usePageLoadingVisible, usePendingPathname } from "@/hooks/usePendingPathname";
 import { cn } from "@/lib/utils";
 import { CurrentUserProvider } from "@/hooks/useCurrentUser";
 
 export default function AppLayout(): ReactElement {
-  const { pathname } = useLocation();
+  const pathname = usePendingPathname();
+  const showPageLoading = usePageLoadingVisible();
+  const mainRef = useRef<HTMLElement>(null);
   const isWorkshop = pathname.startsWith("/dashboard/workshop");
   const switcher = useOrganizationSwitcher();
   const [isOrganizationListOpen, setIsOrganizationListOpen] = useState(false);
@@ -19,6 +23,10 @@ export default function AppLayout(): ReactElement {
   useEffect(() => {
     setIsOrganizationListOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (showPageLoading) mainRef.current?.scrollTo(0, 0);
+  }, [showPageLoading]);
 
   return (
     <CurrentUserProvider>
@@ -43,11 +51,20 @@ export default function AppLayout(): ReactElement {
               <AppSidebar />
             )}
           </div>
-          <main className="min-w-0 flex-1 overflow-y-auto px-6 py-6 [scrollbar-gutter:stable]">
-            <AppBreadcrumb />
-            <PageTransition>
-              <Outlet />
-            </PageTransition>
+          <main
+            ref={mainRef}
+            className="min-w-0 flex-1 overflow-y-auto px-6 py-6 [scrollbar-gutter:stable]"
+          >
+            {showPageLoading ? (
+              <PageLoading message="页面加载中..." className="h-full" />
+            ) : (
+              <>
+                <AppBreadcrumb />
+                <PageTransition>
+                  <Outlet />
+                </PageTransition>
+              </>
+            )}
           </main>
         </div>
       </div>
