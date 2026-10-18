@@ -1,0 +1,34 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "description": "用刷新凭证换发访问凭证。不改变当前组织。",
+    "operationId": "refresh",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/RefreshSessionDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/SessionRefreshVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "刷新会话",
+    "tags": ["用户会话接口"]
+  },
+  "path": "/app/session/refresh",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

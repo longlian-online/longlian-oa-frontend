@@ -5,18 +5,18 @@
         "description": "创建文件上传请求参数",
         "properties": {
           "bizType": {
-            "description": "业务类型(avatar/cover/task_submit)",
-            "pattern": "avatar|cover|task_submit",
+            "description": "业务类型(avatar/cover/thumbnail/task_submit)",
+            "pattern": "avatar|cover|thumbnail|task_submit",
             "type": "string"
           },
           "fileExt": {
             "description": "文件扩展名",
-            "pattern": "(?i)jpg|jpeg|png|gif|webp|bmp|pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv|zip|rar|7z",
+            "pattern": "(?i)jpg|jpeg|png|gif|webp|avif|bmp|pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv|zip|rar|7z",
             "type": "string"
           },
           "fileMime": {
             "description": "文件MIME类型",
-            "pattern": "(?i)image/(jpeg|png|gif|webp|bmp)|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.ms-powerpoint|application/vnd.openxmlformats-officedocument.presentationml.presentation|text/plain|text/csv|application/zip|application/x-zip-compressed|application/vnd.rar|application/x-rar-compressed|application/x-7z-compressed",
+            "pattern": "(?i)image/(jpeg|png|gif|webp|avif|bmp)|application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.ms-excel|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.ms-powerpoint|application/vnd.openxmlformats-officedocument.presentationml.presentation|text/plain|text/csv|application/zip|application/x-zip-compressed|application/vnd.rar|application/x-rar-compressed|application/x-7z-compressed",
             "type": "string"
           },
           "fileName": {

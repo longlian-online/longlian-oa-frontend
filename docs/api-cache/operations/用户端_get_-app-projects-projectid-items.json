@@ -2,7 +2,7 @@
   "document": "用户端",
   "method": "GET",
   "operation": {
-    "description": "支持标题模糊搜索、状态筛选（进行中/已完成/已公布）与时间排序；默认展示进行中并按更新时间倒序",
+    "description": "支持标题模糊搜索、完成情况筛选与时间排序。进行中包含没有任务或仍有未完成任务的项目；已完成指至少有一个任务且全部任务已完成。默认展示进行中并按更新时间倒序",
     "operationId": "listProjectItems",
     "parameters": [
       {
