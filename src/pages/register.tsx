@@ -73,6 +73,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [mode, setMode] = useState<RegisterMode>("join");
+  const [isJoinSubmitted, setIsJoinSubmitted] = useState(false);
   // react-hook-form 只在首次渲染捕获 resolver，校验时通过 ref 判断当前模式。
   const modeRef = useRef(mode);
   modeRef.current = mode;
@@ -126,11 +127,12 @@ export default function RegisterPage() {
     try {
       if (mode === "create") {
         await createOrg.mutateAsync(data);
+        $tip("注册成功，请登录", "success");
+        void navigate("/login");
       } else {
         await joinOrg.mutateAsync(data);
+        setIsJoinSubmitted(true);
       }
-      $tip("注册成功，请登录", "success");
-      void navigate("/login");
     } catch {
       /* 共享 Mutation 负责错误提示。 */
     }
@@ -187,239 +189,256 @@ export default function RegisterPage() {
 
         {/* Register Card */}
         <div className="bg-card rounded-2xl border p-6 shadow-sm">
-          <Tabs value={mode} onValueChange={handleModeChange}>
-            <TabsList className="mb-6 grid w-full grid-cols-2">
-              <TabsTrigger value="join">加入组织</TabsTrigger>
-              <TabsTrigger value="create">创建组织</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <form
-            key={mode}
-            onSubmit={form.handleSubmit(onSubmit)}
-            className={cn("space-y-4", modePanelClassName)}
-          >
-            {/* 邀请码 */}
-            <div className="space-y-2">
-              <Label htmlFor="inviteCode" className="text-xs text-muted-foreground">
-                {INVITE_CODE_LABELS[mode]}
-              </Label>
-              <div className="flex gap-2">
-                <div className="relative min-w-0 flex-1">
-                  <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="inviteCode"
-                    placeholder={`请输入${INVITE_CODE_LABELS[mode]}`}
-                    className="h-11 pl-10"
-                    {...form.register("inviteCode", {
-                      onChange: () => setQueriedInvite(""),
-                    })}
-                  />
-                </div>
-                {mode === "join" && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11 shrink-0 px-3"
-                    onClick={handleQueryInviteInfo}
-                    disabled={isInviteLoading}
-                  >
-                    {isInviteLoading ? "查询中" : "查询"}
-                  </Button>
-                )}
-              </div>
-              {form.formState.errors.inviteCode && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.inviteCode.message}
-                </p>
-              )}
-              {mode === "join" && inviteInfo && (
-                <p className="text-xs text-muted-foreground">将加入：{inviteInfo.orgName}</p>
-              )}
+          {isJoinSubmitted ? (
+            <div role="status" className="space-y-3 text-center">
+              <h2 className="text-lg font-semibold text-foreground">申请已提交，等待审核</h2>
+              <p className="text-sm text-muted-foreground">请等待组织管理员审核，通过后再登录。</p>
             </div>
-
-            {/* 组织名称 */}
-            {mode === "create" && (
-              <div className="space-y-2">
-                <Label htmlFor="orgName" className="text-xs text-muted-foreground">
-                  组织
-                </Label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="orgName"
-                    placeholder="请输入组织名称"
-                    className="h-11 pl-10"
-                    {...form.register("orgName")}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* 昵称 */}
-            <div className="space-y-2">
-              <Label htmlFor="nickname" className="text-xs text-muted-foreground">
-                昵称
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="nickname"
-                  placeholder="请输入昵称"
-                  className="pl-10 h-11"
-                  {...form.register("nickname")}
-                />
-              </div>
-              {form.formState.errors.nickname && (
-                <p className="text-xs text-destructive">{form.formState.errors.nickname.message}</p>
-              )}
-            </div>
-
-            {/* 用户名 */}
-            <div className="space-y-2">
-              <Label htmlFor="username" className="text-xs text-muted-foreground">
-                用户名
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="username"
-                  placeholder="4-20位英文字母或下划线"
-                  className="pl-10 h-11"
-                  {...form.register("username")}
-                />
-              </div>
-              {form.formState.errors.username && (
-                <p className="text-xs text-destructive">{form.formState.errors.username.message}</p>
-              )}
-            </div>
-
-            {/* 邮箱 */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs text-muted-foreground">
-                邮箱
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="请输入邮箱"
-                  className="pl-10 h-11"
-                  {...form.register("email")}
-                />
-              </div>
-              {form.formState.errors.email && (
-                <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
-              )}
-            </div>
-
-            {/* 验证码 */}
-            <div className="space-y-2">
-              <Label htmlFor="code" className="text-xs text-muted-foreground">
-                验证码
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="code"
-                  placeholder="请输入 6 位大写字母或数字验证码"
-                  className="h-11"
-                  maxLength={6}
-                  {...form.register("code")}
-                  onChange={(event) => {
-                    event.target.value = event.target.value.toUpperCase();
-                    void form.register("code").onChange(event);
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-11 px-4 shrink-0"
-                  onClick={handleSendCode}
-                  disabled={countdown > 0 || sendCode.isPending}
-                >
-                  {countdown > 0 ? `${countdown}s` : "发送"}
-                </Button>
-              </div>
-              {form.formState.errors.code && (
-                <p className="text-xs text-destructive">{form.formState.errors.code.message}</p>
-              )}
-            </div>
-
-            {/* 密码 */}
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-xs text-muted-foreground">
-                密码
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="请输入密码（6-20字符）"
-                  className="pl-10 pr-10 h-11"
-                  {...form.register("password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {form.formState.errors.password && (
-                <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
-              )}
-            </div>
-
-            {/* 确认密码 */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-xs text-muted-foreground">
-                确认密码
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="请再次输入密码"
-                  className="pl-10 pr-10 h-11"
-                  {...form.register("confirmPassword")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-              {form.formState.errors.confirmPassword && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
-
-            <Button type="submit" className="w-full h-11 mt-2" disabled={isLoading}>
-              {isLoading ? "注册中..." : "注册"}
-            </Button>
-
-            <div className="text-center text-sm text-muted-foreground mt-4">
-              已有账号？{" "}
-              <button
-                type="button"
-                onClick={() => void navigate("/login")}
-                className="cursor-pointer text-primary hover:underline"
+          ) : (
+            <>
+              <Tabs value={mode} onValueChange={handleModeChange}>
+                <TabsList className="mb-6 grid w-full grid-cols-2">
+                  <TabsTrigger value="join">加入组织</TabsTrigger>
+                  <TabsTrigger value="create">创建组织</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <form
+                key={mode}
+                onSubmit={form.handleSubmit(onSubmit)}
+                className={cn("space-y-4", modePanelClassName)}
               >
-                去登录
-              </button>
-            </div>
-          </form>
+                {/* 邀请码 */}
+                <div className="space-y-2">
+                  <Label htmlFor="inviteCode" className="text-xs text-muted-foreground">
+                    {INVITE_CODE_LABELS[mode]}
+                  </Label>
+                  <div className="flex gap-2">
+                    <div className="relative min-w-0 flex-1">
+                      <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="inviteCode"
+                        placeholder={`请输入${INVITE_CODE_LABELS[mode]}`}
+                        className="h-11 pl-10"
+                        {...form.register("inviteCode", {
+                          onChange: () => setQueriedInvite(""),
+                        })}
+                      />
+                    </div>
+                    {mode === "join" && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 shrink-0 px-3"
+                        onClick={handleQueryInviteInfo}
+                        disabled={isInviteLoading}
+                      >
+                        {isInviteLoading ? "查询中" : "查询"}
+                      </Button>
+                    )}
+                  </div>
+                  {form.formState.errors.inviteCode && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.inviteCode.message}
+                    </p>
+                  )}
+                  {mode === "join" && inviteInfo && (
+                    <p className="text-xs text-muted-foreground">将加入：{inviteInfo.orgName}</p>
+                  )}
+                </div>
+
+                {/* 组织名称 */}
+                {mode === "create" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="orgName" className="text-xs text-muted-foreground">
+                      组织
+                    </Label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="orgName"
+                        placeholder="请输入组织名称"
+                        className="h-11 pl-10"
+                        {...form.register("orgName")}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* 昵称 */}
+                <div className="space-y-2">
+                  <Label htmlFor="nickname" className="text-xs text-muted-foreground">
+                    昵称
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="nickname"
+                      placeholder="请输入昵称"
+                      className="pl-10 h-11"
+                      {...form.register("nickname")}
+                    />
+                  </div>
+                  {form.formState.errors.nickname && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.nickname.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* 用户名 */}
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-xs text-muted-foreground">
+                    用户名
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="username"
+                      placeholder="4-20位英文字母或下划线"
+                      className="pl-10 h-11"
+                      {...form.register("username")}
+                    />
+                  </div>
+                  {form.formState.errors.username && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.username.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* 邮箱 */}
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-xs text-muted-foreground">
+                    邮箱
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="请输入邮箱"
+                      className="pl-10 h-11"
+                      {...form.register("email")}
+                    />
+                  </div>
+                  {form.formState.errors.email && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* 验证码 */}
+                <div className="space-y-2">
+                  <Label htmlFor="code" className="text-xs text-muted-foreground">
+                    验证码
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="code"
+                      placeholder="请输入 6 位大写字母或数字验证码"
+                      className="h-11"
+                      maxLength={6}
+                      {...form.register("code")}
+                      onChange={(event) => {
+                        event.target.value = event.target.value.toUpperCase();
+                        void form.register("code").onChange(event);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 px-4 shrink-0"
+                      onClick={handleSendCode}
+                      disabled={countdown > 0 || sendCode.isPending}
+                    >
+                      {countdown > 0 ? `${countdown}s` : "发送"}
+                    </Button>
+                  </div>
+                  {form.formState.errors.code && (
+                    <p className="text-xs text-destructive">{form.formState.errors.code.message}</p>
+                  )}
+                </div>
+
+                {/* 密码 */}
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-xs text-muted-foreground">
+                    密码
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="请输入密码（6-20字符）"
+                      className="pl-10 pr-10 h-11"
+                      {...form.register("password")}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {form.formState.errors.password && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.password.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* 确认密码 */}
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-xs text-muted-foreground">
+                    确认密码
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="请再次输入密码"
+                      className="pl-10 pr-10 h-11"
+                      {...form.register("confirmPassword")}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  {form.formState.errors.confirmPassword && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.confirmPassword.message}
+                    </p>
+                  )}
+                </div>
+
+                <Button type="submit" className="w-full h-11 mt-2" disabled={isLoading}>
+                  {isLoading ? "注册中..." : "注册"}
+                </Button>
+
+                <div className="text-center text-sm text-muted-foreground mt-4">
+                  已有账号？{" "}
+                  <button
+                    type="button"
+                    onClick={() => void navigate("/login")}
+                    className="cursor-pointer text-primary hover:underline"
+                  >
+                    去登录
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </div>
