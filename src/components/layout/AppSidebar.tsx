@@ -1,8 +1,9 @@
 import { BookOpen, type LucideIcon, Magnet } from "lucide-react";
-import { NavLink, useLocation } from "react-router";
+import { Link } from "react-router";
 
 import { isOrganizationManagerRole } from "@/lib/organizationRole";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { usePendingPathname } from "@/hooks/usePendingPathname";
 import { cn } from "@/lib/utils";
 
 interface SidebarItem {
@@ -96,7 +97,7 @@ function sidebarItems(pathname: string, isOrgAdmin: boolean): readonly SidebarIt
 }
 
 export default function AppSidebar() {
-  const { pathname } = useLocation();
+  const pathname = usePendingPathname();
   const { role } = useCurrentUser();
   const items = sidebarItems(pathname, isOrganizationManagerRole(role));
 
@@ -110,9 +111,10 @@ export default function AppSidebar() {
           const Icon = item.icon;
 
           return (
-            <NavLink
+            <Link
               key={item.to}
               to={item.to}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
                 isActive
@@ -122,7 +124,7 @@ export default function AppSidebar() {
             >
               {Icon && <Icon className="h-4 w-4 shrink-0" />}
               {item.label}
-            </NavLink>
+            </Link>
           );
         })}
       </nav>
