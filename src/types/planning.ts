@@ -37,6 +37,7 @@ export interface ProjectDetailInfoVO {
   pendingTaskCount: number;
   inWorkshop: boolean;
   isCreator: boolean;
+  hasItems: boolean;
   createdAt?: string;
 }
 

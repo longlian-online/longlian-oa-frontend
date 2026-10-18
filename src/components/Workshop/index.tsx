@@ -1,3 +1,4 @@
+import RemoteImage from "@/components/RemoteImage";
 import { Button } from "@/components/ui/button";
 import { projectThumbnailSrc } from "@/lib/projectThumbnail";
 import type { WorkshopProjectInfoVO } from "@/types/workshop";
@@ -31,10 +32,12 @@ export function WorkshopProjectCard({
     <article className="group flex min-w-0 items-start gap-3 rounded-xl border bg-card p-3 shadow-sm transition-colors hover:border-foreground/20">
       <div className="size-[72px] shrink-0 overflow-hidden rounded-lg bg-muted">
         {imageUrl ? (
-          <img
+          <RemoteImage
             src={imageUrl}
             alt={project.title}
-            className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            className="size-full"
+            imgClassName="group-hover:scale-[1.03]"
+            fallback={<span className="text-lg font-semibold">{project.title.slice(0, 1)}</span>}
           />
         ) : (
           <div className="flex size-full items-center justify-center text-lg font-semibold text-muted-foreground">

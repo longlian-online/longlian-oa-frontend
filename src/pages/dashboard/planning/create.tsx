@@ -6,6 +6,7 @@ import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { useUploadFile } from "@/hooks/useUploadFile";
 import { createProject, updateProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
+import RemoteImage from "@/components/RemoteImage";
 import ProjectMetadataEditor from "@/components/ProjectMetadataEditor";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -318,10 +319,11 @@ export default function CreateProject({ project }: CreateProjectProps) {
               <div className="mt-3 flex items-start gap-3">
                 <div className="size-24 shrink-0 overflow-hidden rounded-lg border bg-muted">
                   {thumbnailFile?.previewUrl ? (
-                    <img
+                    <RemoteImage
                       src={thumbnailFile.previewUrl}
                       alt="缩略图预览"
-                      className="size-full object-cover"
+                      className="size-full"
+                      fallback={<span className="text-xs">1:1</span>}
                     />
                   ) : (
                     <div className="flex size-full items-center justify-center text-xs text-muted-foreground">

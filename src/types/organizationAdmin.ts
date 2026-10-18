@@ -88,6 +88,23 @@ export interface OrganizationPageResult<T> {
   total: number;
 }
 
+export type DeletionTargetType = "PROJECT" | "ITEM";
+
+export interface DeletionRequestVO {
+  id: string;
+  targetType: DeletionTargetType;
+  targetId: string;
+  projectId: string;
+  title: string;
+  reason: string;
+  requesterName: string;
+  createdAt?: string;
+}
+
+export interface DeletionRequestReviewDTO {
+  status: "APPROVED" | "REJECTED";
+}
+
 export interface ProjectTypeListDTO {
   pageNum?: number;
   pageSize?: number;
