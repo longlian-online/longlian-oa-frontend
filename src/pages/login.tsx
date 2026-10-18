@@ -22,7 +22,7 @@ const passwordSchema = z.object({
 
 const codeSchema = z.object({
   email: z.string().email("请输入有效的邮箱地址"),
-  code: z.string().length(6, "验证码为6位数字"),
+  code: z.string().regex(/^[A-Z0-9]{6}$/, "请输入 6 位大写字母或数字验证码"),
 });
 
 type PasswordFormData = z.infer<typeof passwordSchema>;
@@ -232,10 +232,14 @@ export default function LoginPage() {
                   <div className="flex gap-2">
                     <Input
                       id="code"
-                      placeholder="请输入验证码"
+                      placeholder="请输入 6 位大写字母或数字验证码"
                       className="h-11"
                       maxLength={6}
                       {...codeForm.register("code")}
+                      onChange={(event) => {
+                        event.target.value = event.target.value.toUpperCase();
+                        void codeForm.register("code").onChange(event);
+                      }}
                     />
                     <Button
                       type="button"
