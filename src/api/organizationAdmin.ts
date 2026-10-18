@@ -99,18 +99,20 @@ export async function getDeletionRequests(
   pageNum: number,
   pageSize: number,
 ): Promise<OrganizationPageResult<DeletionRequestVO>> {
-  return orgAdminRequest("/orgadmin/deletion-requests", {
-    method: "POST",
-    body: JSON.stringify({ pageNum, pageSize }),
-  });
+  return orgAdminRequest(
+    withQuery("/orgadmin/deletion-requests", {
+      pageNum,
+      pageSize,
+    }),
+  );
 }
 
 export async function reviewDeletionRequest(
   requestId: string,
   dto: DeletionRequestReviewDTO,
 ): Promise<void> {
-  return orgAdminRequest(`/orgadmin/deletion-requests/${requestId}/review`, {
-    method: "PUT",
+  return orgAdminRequest(`/orgadmin/deletion-requests/${requestId}`, {
+    method: "PATCH",
     body: JSON.stringify(dto),
   });
 }
