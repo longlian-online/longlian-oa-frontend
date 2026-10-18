@@ -64,15 +64,12 @@ export function submissionVersionAuthorLine(
   return `${version.submitter?.nickname ?? "未知"} · ${version.submittedAt ?? "时间未知"}`;
 }
 
-function currentVersionOf(
+export function currentVersionOf(
   state: TaskInstanceDetailVO["submission"]["state"],
   versions: TaskSubmissionVersionVO[],
 ): TaskSubmissionVersionVO | null {
-  if (versions.length === 0) return null;
-  if (state === "submitted") {
-    return versions.find((version) => version.status === "SUBMITTED") ?? null;
-  }
-  return versions.find((version) => version.status === "RESET") ?? null;
+  if (state !== "submitted") return null;
+  return versions.find((version) => version.status === "SUBMITTED") ?? null;
 }
 
 export function versionFromDetail(detail: TaskInstanceDetailVO): TaskSubmissionVersionVO[] {

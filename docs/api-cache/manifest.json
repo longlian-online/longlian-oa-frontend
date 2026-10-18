@@ -1,14 +1,14 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-10-15T09:39:51.449Z",
+  "generatedAt": "2026-10-18T13:37:50.387Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "72cd81c96b34bcdcac4571257dd771f9fa81ab51d997e14612100339a00b02cb",
+      "sha256": "9e76fb40cacdefe6147718a67656363daa21010633eeac34bfea0bdb6f110082",
       "pathCount": 67,
       "operationCount": 81
     },
@@ -17,7 +17,7 @@
       "slug": "公共端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E5%85%AC%E5%85%B1%E7%AB%AF",
       "file": "openapi/公共端.json",
-      "sha256": "33bf13aef4f91f3a267ddbe8dbe3397beb899b31390e45743346ed2dd21559ca",
+      "sha256": "6e041bdbc9666cb90fad31cfa08d06db82cff58ddd42ef06ab82a3b0c254522c",
       "pathCount": 3,
       "operationCount": 4
     },
@@ -26,7 +26,7 @@
       "slug": "用户端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF",
       "file": "openapi/用户端.json",
-      "sha256": "1a0fd345514cd3c0e8a7469c4cef66de85c4131105f43cf57718b0e7e6c29c41",
+      "sha256": "e3cae2a8fc394fb1199e9b1216b5ff6cf23e7ce0e744fb4fd33740d5cfe022e2",
       "pathCount": 35,
       "operationCount": 41
     },
@@ -44,152 +44,12 @@
       "slug": "组织管理端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF",
       "file": "openapi/组织管理端.json",
-      "sha256": "d122d2c663f604f9c36402b1dd62ae3ad67f5bce918eaa097e98fe1003bab6e0",
+      "sha256": "e6d16292da9d68ade9c0a7130138870ec0370bcf4093146ac98b8f696a149f42",
       "pathCount": 21,
       "operationCount": 26
     }
   ],
   "operations": [
-    {
-      "id": "公共端_get_-common-file-local",
-      "document": "公共端",
-      "method": "GET",
-      "path": "/common/file/local",
-      "summary": "读取本地文件",
-      "tags": ["文件上传接口"],
-      "file": "operations/公共端_get_-common-file-local.json",
-      "sha256": "97716a98231166710457f44ef0d204b665b1b1c22a87313185e595f92e58805e"
-    },
-    {
-      "id": "公共端_put_-common-file-local",
-      "document": "公共端",
-      "method": "PUT",
-      "path": "/common/file/local",
-      "summary": "本地上传文件",
-      "tags": ["文件上传接口"],
-      "file": "operations/公共端_put_-common-file-local.json",
-      "sha256": "8d5328cbb14527d032c9028f8d151235b33678b3743334611916471a580fd3f4"
-    },
-    {
-      "id": "公共端_post_-common-file-upload",
-      "document": "公共端",
-      "method": "POST",
-      "path": "/common/file/upload",
-      "summary": "创建文件上传",
-      "tags": ["文件上传接口"],
-      "file": "operations/公共端_post_-common-file-upload.json",
-      "sha256": "c03c29722921cfbd2f392e713cf3feb334f3e59678e2223a055abac9b3525c08"
-    },
-    {
-      "id": "公共端_get_-common-system-info",
-      "document": "公共端",
-      "method": "GET",
-      "path": "/common/system/info",
-      "summary": "获取系统信息",
-      "tags": ["系统信息接口"],
-      "file": "operations/公共端_get_-common-system-info.json",
-      "sha256": "ff124343bb220fc202ac054bb7c2cdbe6f7a406fc6e2d431135e1f3bd8c0b929"
-    },
-    {
-      "id": "管理端_get_-admin-admins",
-      "document": "管理端",
-      "method": "GET",
-      "path": "/admin/admins/",
-      "summary": "分页查询管理员列表",
-      "tags": ["管理员接口"],
-      "file": "operations/管理端_get_-admin-admins.json",
-      "sha256": "c00ce1f74f1136f3d486edf4bec23b2b8163626cb1554418cec209c263da31b0"
-    },
-    {
-      "id": "管理端_post_-admin-admins",
-      "document": "管理端",
-      "method": "POST",
-      "path": "/admin/admins/",
-      "summary": "创建管理员",
-      "tags": ["管理员接口"],
-      "file": "operations/管理端_post_-admin-admins.json",
-      "sha256": "7038c26b0b40f5a966dfa4313da0bb1b7f52a8573ee21e1bf584a68ebefc9386"
-    },
-    {
-      "id": "管理端_delete_-admin-admins-id",
-      "document": "管理端",
-      "method": "DELETE",
-      "path": "/admin/admins/{id}",
-      "summary": "删除管理员",
-      "tags": ["管理员接口"],
-      "file": "operations/管理端_delete_-admin-admins-id.json",
-      "sha256": "ddd1912642a2c88aea293f763796969cda54fd4ed8d0641172e444513c590101"
-    },
-    {
-      "id": "管理端_get_-admin-organizations",
-      "document": "管理端",
-      "method": "GET",
-      "path": "/admin/organizations/",
-      "summary": "分页查询组织列表",
-      "tags": ["组织接口"],
-      "file": "operations/管理端_get_-admin-organizations.json",
-      "sha256": "a5a2a4930c7484a889f7d946791eba44abdff877b070785cf35692f95537d092"
-    },
-    {
-      "id": "管理端_patch_-admin-organizations-orgid-status",
-      "document": "管理端",
-      "method": "PATCH",
-      "path": "/admin/organizations/{orgId}/status",
-      "summary": "操作组织状态",
-      "tags": ["组织接口"],
-      "file": "operations/管理端_patch_-admin-organizations-orgid-status.json",
-      "sha256": "3eaa3e920ba7ed5cf6b1c9753f49f8839f160ee3254b4801a3ac8ec8ee72c599"
-    },
-    {
-      "id": "管理端_post_-admin-organizations-invite-codes-create-org",
-      "document": "管理端",
-      "method": "POST",
-      "path": "/admin/organizations/invite-codes/create-org",
-      "summary": "生成邀请码（超管）",
-      "tags": ["组织接口"],
-      "file": "operations/管理端_post_-admin-organizations-invite-codes-create-org.json",
-      "sha256": "4e540bd88874a8f4a6abe5512a4be81fecc90f3f6db1285574620184291e457d"
-    },
-    {
-      "id": "管理端_get_-admin-scheduled-tasks",
-      "document": "管理端",
-      "method": "GET",
-      "path": "/admin/scheduled-tasks/",
-      "summary": "列出所有已注册的定时任务",
-      "tags": ["定时任务管理"],
-      "file": "operations/管理端_get_-admin-scheduled-tasks.json",
-      "sha256": "0781c49c37f9044820c13549c06cd9ffd34adbc593e1cb640a56033fcf53902e"
-    },
-    {
-      "id": "管理端_post_-admin-scheduled-tasks-taskname-trigger",
-      "document": "管理端",
-      "method": "POST",
-      "path": "/admin/scheduled-tasks/{taskName}/trigger",
-      "summary": "手动触发定时任务",
-      "tags": ["定时任务管理"],
-      "file": "operations/管理端_post_-admin-scheduled-tasks-taskname-trigger.json",
-      "sha256": "23b0279c18ded9722bff56a740a287626f2fa416ba603b4c62efc04b271999a3"
-    },
-    {
-      "id": "管理端_delete_-admin-session",
-      "document": "管理端",
-      "method": "DELETE",
-      "path": "/admin/session",
-      "summary": "管理员登出",
-      "tags": ["管理员会话接口"],
-      "file": "operations/管理端_delete_-admin-session.json",
-      "sha256": "36eb6c6744059041a167c4354c70d5ff7d706490acb0b7514a50febe59183340"
-    },
-    {
-      "id": "管理端_post_-admin-session",
-      "document": "管理端",
-      "method": "POST",
-      "path": "/admin/session",
-      "summary": "管理员登录",
-      "tags": ["管理员会话接口"],
-      "file": "operations/管理端_post_-admin-session.json",
-      "sha256": "cb50be6e48307b19dea27a7d2d1150ebcd5f04a1ed5653114eb3c6fb0046b217"
-    },
     {
       "id": "全部_get_-admin-admins",
       "document": "全部",
@@ -348,7 +208,7 @@
       "summary": "分页查询项目列表",
       "tags": ["项目相关接口"],
       "file": "operations/全部_get_-app-projects-projectid-items.json",
-      "sha256": "ed4282f0da590b48a9490e81fc9f3c2edcef34f4c7857ff50923b23f21f34962"
+      "sha256": "36757e357a9ea2e8a4db2f6836d56a12cf2469a8eeed6fedb8eee8e6049fcf48"
     },
     {
       "id": "全部_post_-app-projects-projectid-items",
@@ -369,16 +229,6 @@
       "tags": ["项目相关接口"],
       "file": "operations/全部_delete_-app-projects-projectid-items-itemid.json",
       "sha256": "01513e11b7c760dc7c41d271a3b71010744ea30cdbb1a9934435fe3bb2a79334"
-    },
-    {
-      "id": "全部_patch_-app-projects-projectid-items-itemid-publish",
-      "document": "全部",
-      "method": "PATCH",
-      "path": "/app/projects/{projectId}/items/{itemId}/publish",
-      "summary": "公布项目",
-      "tags": ["项目相关接口"],
-      "file": "operations/全部_patch_-app-projects-projectid-items-itemid-publish.json",
-      "sha256": "d94e01f47fe816ac2516c162d9aef9769e5055d96e4b1f59551c608cf15f514c"
     },
     {
       "id": "全部_delete_-app-projects-projectid-workshop",
@@ -449,6 +299,16 @@
       "tags": ["用户会话接口"],
       "file": "operations/全部_post_-app-session-pwd.json",
       "sha256": "ad37e608a0e4531d568920b1851f8172f63da64e6bdeba9dcbd6ba4a8d2aa19b"
+    },
+    {
+      "id": "全部_post_-app-session-refresh",
+      "document": "全部",
+      "method": "POST",
+      "path": "/app/session/refresh",
+      "summary": "刷新会话",
+      "tags": ["用户会话接口"],
+      "file": "operations/全部_post_-app-session-refresh.json",
+      "sha256": "20fb4b1dae58f18778f0e02b415312536b07b7f6bd9cc8cd6f149f5dbb28f5c1"
     },
     {
       "id": "全部_get_-app-task-template-options",
@@ -628,7 +488,7 @@
       "summary": "通过邀请码注册并创建组织",
       "tags": ["用户接口"],
       "file": "operations/全部_post_-app-user-register-create-organization.json",
-      "sha256": "ade5af05ba40e05b93ebde07676d821c889a644fa7c0cc132598f9b0c7fdeee8"
+      "sha256": "3c039a0614c3c255da7314ca43516fc6b67e865daa223a764f613ddd2c893f3d"
     },
     {
       "id": "全部_post_-app-user-register-join-organization",
@@ -768,7 +628,7 @@
       "summary": "调整成员组织角色",
       "tags": ["组织成员管理"],
       "file": "operations/全部_patch_-orgadmin-members-memberid-role.json",
-      "sha256": "f2f556f34dc66d5753032511e11cc431e2a8716daca925c95eb3612817adb5ff"
+      "sha256": "b44fee2b6b52fbc9c7671712a830373b78d79efdda3d3fafc55f5a88bba1f438"
     },
     {
       "id": "全部_patch_-orgadmin-members-memberid-status",
@@ -1001,6 +861,46 @@
       "sha256": "3205d343d4a1e2a7cf7e4cf9ad39f9c9c1f3bc02dfc6f1b3ec57dbeefaa5f3d9"
     },
     {
+      "id": "公共端_get_-common-file-local",
+      "document": "公共端",
+      "method": "GET",
+      "path": "/common/file/local",
+      "summary": "读取本地文件",
+      "tags": ["文件上传接口"],
+      "file": "operations/公共端_get_-common-file-local.json",
+      "sha256": "97716a98231166710457f44ef0d204b665b1b1c22a87313185e595f92e58805e"
+    },
+    {
+      "id": "公共端_put_-common-file-local",
+      "document": "公共端",
+      "method": "PUT",
+      "path": "/common/file/local",
+      "summary": "本地上传文件",
+      "tags": ["文件上传接口"],
+      "file": "operations/公共端_put_-common-file-local.json",
+      "sha256": "8d5328cbb14527d032c9028f8d151235b33678b3743334611916471a580fd3f4"
+    },
+    {
+      "id": "公共端_post_-common-file-upload",
+      "document": "公共端",
+      "method": "POST",
+      "path": "/common/file/upload",
+      "summary": "创建文件上传",
+      "tags": ["文件上传接口"],
+      "file": "operations/公共端_post_-common-file-upload.json",
+      "sha256": "c03c29722921cfbd2f392e713cf3feb334f3e59678e2223a055abac9b3525c08"
+    },
+    {
+      "id": "公共端_get_-common-system-info",
+      "document": "公共端",
+      "method": "GET",
+      "path": "/common/system/info",
+      "summary": "获取系统信息",
+      "tags": ["系统信息接口"],
+      "file": "operations/公共端_get_-common-system-info.json",
+      "sha256": "ff124343bb220fc202ac054bb7c2cdbe6f7a406fc6e2d431135e1f3bd8c0b929"
+    },
+    {
       "id": "用户端_get_-app-item-itemid-flow",
       "document": "用户端",
       "method": "GET",
@@ -1058,7 +958,7 @@
       "summary": "分页查询项目列表",
       "tags": ["项目相关接口"],
       "file": "operations/用户端_get_-app-projects-projectid-items.json",
-      "sha256": "17289c872a4ac8e32ee7ef1b5faea08bd4462f75b100023ceb724216834c5fb7"
+      "sha256": "070b8adfff802e0b3c497ede5686ac3ebab3e8018ecf8b1757e762585ab2f059"
     },
     {
       "id": "用户端_post_-app-projects-projectid-items",
@@ -1079,16 +979,6 @@
       "tags": ["项目相关接口"],
       "file": "operations/用户端_delete_-app-projects-projectid-items-itemid.json",
       "sha256": "c01ab1f844e91f8794e379c1e70c975b8ff71f2b3abd16c72f1dc8e796d32a3e"
-    },
-    {
-      "id": "用户端_patch_-app-projects-projectid-items-itemid-publish",
-      "document": "用户端",
-      "method": "PATCH",
-      "path": "/app/projects/{projectId}/items/{itemId}/publish",
-      "summary": "公布项目",
-      "tags": ["项目相关接口"],
-      "file": "operations/用户端_patch_-app-projects-projectid-items-itemid-publish.json",
-      "sha256": "3cfa8d634f7d2fa7d0a2a7e08f5886ac658d58dcbeea2ec094d223dd5829b6c5"
     },
     {
       "id": "用户端_delete_-app-projects-projectid-workshop",
@@ -1159,6 +1049,16 @@
       "tags": ["用户会话接口"],
       "file": "operations/用户端_post_-app-session-pwd.json",
       "sha256": "9855fac425cae9b181871a22035f7343e7e7b98a2ef13ec47e5b6ecef5156185"
+    },
+    {
+      "id": "用户端_post_-app-session-refresh",
+      "document": "用户端",
+      "method": "POST",
+      "path": "/app/session/refresh",
+      "summary": "刷新会话",
+      "tags": ["用户会话接口"],
+      "file": "operations/用户端_post_-app-session-refresh.json",
+      "sha256": "f701e3433585193848b7906ac00a85a7ae348891527883ef4ee298a11ce6f48f"
     },
     {
       "id": "用户端_get_-app-task-template-options",
@@ -1338,7 +1238,7 @@
       "summary": "通过邀请码注册并创建组织",
       "tags": ["用户接口"],
       "file": "operations/用户端_post_-app-user-register-create-organization.json",
-      "sha256": "2e556c88b08c2e54f1acb1bf443c7a961bff8a19f7e21b98d4953db737ceff99"
+      "sha256": "cc1987bf49446463ff68dfc11f6abdffd65d4ca72336a95678a9be26dbb1ac8b"
     },
     {
       "id": "用户端_post_-app-user-register-join-organization",
@@ -1411,6 +1311,106 @@
       "sha256": "0d100515d5c45808b86f95bfb34ee20e59b254dbabcd0edf14cee3923fb0bf62"
     },
     {
+      "id": "管理端_get_-admin-admins",
+      "document": "管理端",
+      "method": "GET",
+      "path": "/admin/admins/",
+      "summary": "分页查询管理员列表",
+      "tags": ["管理员接口"],
+      "file": "operations/管理端_get_-admin-admins.json",
+      "sha256": "c00ce1f74f1136f3d486edf4bec23b2b8163626cb1554418cec209c263da31b0"
+    },
+    {
+      "id": "管理端_post_-admin-admins",
+      "document": "管理端",
+      "method": "POST",
+      "path": "/admin/admins/",
+      "summary": "创建管理员",
+      "tags": ["管理员接口"],
+      "file": "operations/管理端_post_-admin-admins.json",
+      "sha256": "7038c26b0b40f5a966dfa4313da0bb1b7f52a8573ee21e1bf584a68ebefc9386"
+    },
+    {
+      "id": "管理端_delete_-admin-admins-id",
+      "document": "管理端",
+      "method": "DELETE",
+      "path": "/admin/admins/{id}",
+      "summary": "删除管理员",
+      "tags": ["管理员接口"],
+      "file": "operations/管理端_delete_-admin-admins-id.json",
+      "sha256": "ddd1912642a2c88aea293f763796969cda54fd4ed8d0641172e444513c590101"
+    },
+    {
+      "id": "管理端_get_-admin-organizations",
+      "document": "管理端",
+      "method": "GET",
+      "path": "/admin/organizations/",
+      "summary": "分页查询组织列表",
+      "tags": ["组织接口"],
+      "file": "operations/管理端_get_-admin-organizations.json",
+      "sha256": "a5a2a4930c7484a889f7d946791eba44abdff877b070785cf35692f95537d092"
+    },
+    {
+      "id": "管理端_patch_-admin-organizations-orgid-status",
+      "document": "管理端",
+      "method": "PATCH",
+      "path": "/admin/organizations/{orgId}/status",
+      "summary": "操作组织状态",
+      "tags": ["组织接口"],
+      "file": "operations/管理端_patch_-admin-organizations-orgid-status.json",
+      "sha256": "3eaa3e920ba7ed5cf6b1c9753f49f8839f160ee3254b4801a3ac8ec8ee72c599"
+    },
+    {
+      "id": "管理端_post_-admin-organizations-invite-codes-create-org",
+      "document": "管理端",
+      "method": "POST",
+      "path": "/admin/organizations/invite-codes/create-org",
+      "summary": "生成邀请码（超管）",
+      "tags": ["组织接口"],
+      "file": "operations/管理端_post_-admin-organizations-invite-codes-create-org.json",
+      "sha256": "4e540bd88874a8f4a6abe5512a4be81fecc90f3f6db1285574620184291e457d"
+    },
+    {
+      "id": "管理端_get_-admin-scheduled-tasks",
+      "document": "管理端",
+      "method": "GET",
+      "path": "/admin/scheduled-tasks/",
+      "summary": "列出所有已注册的定时任务",
+      "tags": ["定时任务管理"],
+      "file": "operations/管理端_get_-admin-scheduled-tasks.json",
+      "sha256": "0781c49c37f9044820c13549c06cd9ffd34adbc593e1cb640a56033fcf53902e"
+    },
+    {
+      "id": "管理端_post_-admin-scheduled-tasks-taskname-trigger",
+      "document": "管理端",
+      "method": "POST",
+      "path": "/admin/scheduled-tasks/{taskName}/trigger",
+      "summary": "手动触发定时任务",
+      "tags": ["定时任务管理"],
+      "file": "operations/管理端_post_-admin-scheduled-tasks-taskname-trigger.json",
+      "sha256": "23b0279c18ded9722bff56a740a287626f2fa416ba603b4c62efc04b271999a3"
+    },
+    {
+      "id": "管理端_delete_-admin-session",
+      "document": "管理端",
+      "method": "DELETE",
+      "path": "/admin/session",
+      "summary": "管理员登出",
+      "tags": ["管理员会话接口"],
+      "file": "operations/管理端_delete_-admin-session.json",
+      "sha256": "36eb6c6744059041a167c4354c70d5ff7d706490acb0b7514a50febe59183340"
+    },
+    {
+      "id": "管理端_post_-admin-session",
+      "document": "管理端",
+      "method": "POST",
+      "path": "/admin/session",
+      "summary": "管理员登录",
+      "tags": ["管理员会话接口"],
+      "file": "operations/管理端_post_-admin-session.json",
+      "sha256": "cb50be6e48307b19dea27a7d2d1150ebcd5f04a1ed5653114eb3c6fb0046b217"
+    },
+    {
       "id": "组织管理端_post_-orgadmin-members",
       "document": "组织管理端",
       "method": "POST",
@@ -1438,7 +1438,7 @@
       "summary": "调整成员组织角色",
       "tags": ["组织成员管理"],
       "file": "operations/组织管理端_patch_-orgadmin-members-memberid-role.json",
-      "sha256": "76d54d89a442e9d739109a05c500902a701ef43552574f9a49ab5c8e4dc0e038"
+      "sha256": "aaf9dd1af86c372a4e2eee38005c66654d9d78f6a4b0f91cf28095f7920b040f"
     },
     {
       "id": "组织管理端_patch_-orgadmin-members-memberid-status",
