@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, ExternalLink, FileText, Loader2 } from "lucide-
 import { ApiError } from "@/api/apiError";
 import { getTaskInstanceDetail, getTaskSubmissionVersions } from "@/api/workflowInstance";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
+import RemoteImage from "@/components/RemoteImage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type {
@@ -105,12 +106,12 @@ function AttachmentCard({ attachment, opening, disabled, onOpen }: AttachmentCar
       aria-label={`${available ? "打开" : "暂不可用"}：${attachment.name}`}
     >
       {available && attachment.mediaType === "image" && !previewFailed ? (
-        <img
+        <RemoteImage
           src={attachment.readUrl}
           alt={attachment.name}
           loading="lazy"
           referrerPolicy="no-referrer"
-          className="size-16 shrink-0 rounded-lg border object-cover"
+          className="size-16 shrink-0 rounded-lg border"
           onError={() => setPreviewFailed(true)}
         />
       ) : (
@@ -348,7 +349,7 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
                 <span>第 {detail?.task.stage ?? node.sort} 阶段</span>
                 <span aria-hidden="true">·</span>
                 {assigneeAvatar && (
-                  <img src={assigneeAvatar} alt="" className="size-5 rounded-full object-cover" />
+                  <RemoteImage src={assigneeAvatar} alt="" className="size-5 rounded-full" />
                 )}
                 <span className="break-words">{assigneeName || "暂无执行人"}</span>
               </div>

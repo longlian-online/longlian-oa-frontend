@@ -6,6 +6,7 @@ import { reviewJoinApplication } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
+import RemoteImage from "@/components/RemoteImage";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -147,10 +148,11 @@ function OrganizationApplicationsContent() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {application.avatarUrl ? (
-                          <img
+                          <RemoteImage
                             src={application.avatarUrl}
                             alt=""
-                            className="size-9 rounded-full object-cover"
+                            className="size-9 rounded-full"
+                            fallback={<UserRound className="size-4" />}
                           />
                         ) : (
                           <div className="flex size-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
