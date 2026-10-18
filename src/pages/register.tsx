@@ -30,7 +30,10 @@ const INVITE_CODE_LABELS: Record<RegisterMode, string> = {
 const registerObjectSchema = z.object({
   inviteCode: z.string().min(1, `${INVITE_CODE_LABELS.join}不能为空`),
   orgName: z.string().optional(),
-  nickname: z.string().max(20, "昵称最多20个字符"),
+  nickname: z
+    .string()
+    .max(20, "昵称最多20个字符")
+    .refine((value) => value.trim().length > 0, "昵称不能为空"),
   username: z
     .string()
     .min(4, "用户名至少4个字符")
@@ -266,6 +269,9 @@ export default function RegisterPage() {
                   {...form.register("nickname")}
                 />
               </div>
+              {form.formState.errors.nickname && (
+                <p className="text-xs text-destructive">{form.formState.errors.nickname.message}</p>
+              )}
             </div>
 
             {/* 用户名 */}
