@@ -1,5 +1,14 @@
 import type { ReactNode } from "react";
-import { Bell, Building2, CalendarClock, LogOut, Network, UserRound, Users } from "lucide-react";
+import {
+  Bell,
+  Building2,
+  CalendarClock,
+  LogOut,
+  MonitorCog,
+  Network,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { Navigate, NavLink, useLocation, useNavigate } from "react-router";
 
 import { getSessionSnapshot } from "@/lib/session";
@@ -23,6 +32,7 @@ const navItems = [
   { to: "/admin/admins", label: "管理员", icon: Users },
   { to: "/admin/organizations", label: "组织", icon: Building2 },
   { to: "/admin/scheduled-tasks", label: "定时任务", icon: CalendarClock },
+  { to: "/admin/system-info", label: "系统信息", icon: MonitorCog },
 ] as const;
 
 export default function AdminLayout({ children, title, description }: AdminLayoutProps) {

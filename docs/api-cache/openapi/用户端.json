@@ -34,6 +34,19 @@
         "required": ["newPassword", "oldPassword"],
         "type": "object"
       },
+      "DeletionReasonDTO": {
+        "description": "删除申请",
+        "properties": {
+          "reason": {
+            "description": "删除原因",
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["reason"],
+        "type": "object"
+      },
       "EmailCodeDTO": {
         "description": "发送邮箱验证码请求参数",
         "properties": {
@@ -733,6 +746,10 @@
             "description": "企划简介",
             "type": "string"
           },
+          "hasItems": {
+            "description": "企划下是否仍有项目。为 true 时负责人不能删除该企划",
+            "type": "boolean"
+          },
           "id": {
             "description": "企划ID",
             "type": "string"
@@ -888,6 +905,10 @@
           "currentNodeName": {
             "description": "当前节点名称",
             "type": "string"
+          },
+          "hasSubmittedTask": {
+            "description": "是否存在状态为已提交的任务",
+            "type": "boolean"
           },
           "id": {
             "description": "项目ID",
@@ -1091,9 +1112,10 @@
             "type": "string"
           },
           "username": {
-            "description": "用户名",
+            "description": "用户名，4-20位，仅允许英文字母、数字和下划线",
             "maxLength": 20,
             "minLength": 4,
+            "pattern": "^[A-Za-z0-9_]+$",
             "type": "string"
           }
         },
@@ -1865,8 +1887,39 @@
       }
     },
     "/app/projects/{projectId}": {
+      "delete": {
+        "description": "仅企划负责人可删除。企划下仍有项目时请改为提交删除申请",
+        "operationId": "deleteProject",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "删除企划",
+        "tags": ["企划接口"]
+      },
       "get": {
-        "description": "返回企划详细信息、进度统计及当前用户权限标记。\nisCreator=true 时前端展示「编辑+分享」按钮；false 时展示「添加到工坊+分享」按钮\n",
+        "description": "返回企划详细信息、进度统计及当前用户权限标记。\nisCreator=true 时前端展示「编辑+删除+分享」按钮；存在项目时删除按钮禁用。false 时展示「添加到工坊+分享」按钮\n",
         "operationId": "getProjectDetail",
         "parameters": [
           {
@@ -1941,6 +1994,49 @@
           }
         },
         "summary": "编辑企划",
+        "tags": ["企划接口"]
+      }
+    },
+    "/app/projects/{projectId}/deletion-requests": {
+      "post": {
+        "description": "企划下已有项目时，由企划负责人填写原因后提交，组织管理员审核通过后软删除",
+        "operationId": "createProjectDeletionRequest",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletionReasonDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "提交企划删除申请",
         "tags": ["企划接口"]
       }
     },
@@ -2072,6 +2168,59 @@
           }
         },
         "summary": "删除项目",
+        "tags": ["项目相关接口"]
+      }
+    },
+    "/app/projects/{projectId}/items/{itemId}/deletion-requests": {
+      "post": {
+        "description": "项目存在已提交任务时，由企划负责人填写原因后提交，组织管理员审核通过后软删除",
+        "operationId": "createItemDeletionRequest",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "项目ID",
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletionReasonDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "提交项目删除申请",
         "tags": ["项目相关接口"]
       }
     },
