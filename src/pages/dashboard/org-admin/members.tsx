@@ -9,11 +9,7 @@ import {
   Users,
 } from "lucide-react";
 
-import {
-  canEditOrganizationMemberRole,
-  isOrganizationOwnerRole,
-  organizationMemberRoleLabel,
-} from "@/lib/organizationRole";
+import { canEditOrganizationMemberRole, organizationMemberRoleLabel } from "@/lib/organizationRole";
 import { getSessionSnapshot, saveCurrentOrganization } from "@/lib/session";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import {
@@ -174,11 +170,6 @@ function OrganizationMembersContent() {
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">成员管理</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isOrganizationOwnerRole(getSessionSnapshot().role)
-              ? "查看组织成员，管理成员状态与组织角色。"
-              : "查看组织成员，管理成员状态。"}
-          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <OrganizationInviteDialog />
