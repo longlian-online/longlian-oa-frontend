@@ -186,7 +186,6 @@ function OrganizationProjectTypesContent() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">企划类型</h1>
-          <p className="mt-1 text-sm text-muted-foreground">维护组织内可用的企划类型。</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <div className="relative w-64 max-w-full">
