@@ -2,6 +2,7 @@ import { request } from "@/api/request";
 import type {
   ItemTaskFlowVO,
   ItemTaskInstanceVO,
+  TaskClaimResultVO,
   TaskInstanceDetailVO,
   TaskRejectDTO,
   TaskSubmissionVersionVO,
@@ -30,7 +31,7 @@ export async function getTaskSubmissionVersions(
   return request(`/task/instance/${instanceId}/submissions`, { signal });
 }
 
-export async function claimTask(instanceId: string): Promise<void> {
+export async function claimTask(instanceId: string): Promise<TaskClaimResultVO> {
   return request(`/task/instance/${instanceId}/claim`, {
     method: "POST",
   });

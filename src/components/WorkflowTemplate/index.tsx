@@ -250,7 +250,7 @@ export function CreateWorkflowTemplateCard({ onClick }: CreateWorkflowTemplateCa
       </div>
       <div className="mt-3 text-sm font-medium leading-5 text-foreground">创建新流程</div>
       <div className="mt-1 text-xs leading-[18px] text-muted-foreground">
-        用原子任务组合一个流程模板
+        用任务组合一个流程模板
       </div>
     </button>
   );

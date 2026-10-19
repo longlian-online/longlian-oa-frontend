@@ -59,7 +59,7 @@ const orgAdminItems: readonly SidebarItem[] = [
   },
   {
     to: "/dashboard/org-admin/tasks",
-    label: "原子任务",
+    label: "任务",
     activePrefixes: ["/dashboard/org-admin/tasks"],
   },
   {
