@@ -1,0 +1,47 @@
+{
+  "document": "用户端",
+  "method": "POST",
+  "operation": {
+    "description": "企划下已有项目时，由企划负责人填写原因后提交，组织管理员审核通过后软删除",
+    "operationId": "createProjectDeletionRequest",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "企划ID",
+        "in": "path",
+        "name": "projectId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/DeletionReasonDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "提交企划删除申请",
+    "tags": ["企划接口"]
+  },
+  "path": "/app/projects/{projectId}/deletion-requests",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}
