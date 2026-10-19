@@ -100,12 +100,12 @@ export default function TipProvider() {
               typeClassName[tip.type],
             )}
           >
-            {icon}
-            <span className="truncate">{tip.message}</span>
+            {icon && <span className="flex shrink-0 items-center">{icon}</span>}
+            <span className="min-w-0 whitespace-pre-wrap break-words">{tip.message}</span>
             <button
               type="button"
               aria-label="关闭提示"
-              className="ml-1 rounded-md p-0.5 opacity-60 transition-opacity hover:opacity-100"
+              className="ml-1 shrink-0 rounded-md p-0.5 opacity-60 transition-opacity hover:opacity-100"
               onClick={() =>
                 setTips((currentTips) => currentTips.filter((item) => item.id !== tip.id))
               }
