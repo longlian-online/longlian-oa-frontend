@@ -1,5 +1,4 @@
 import { useMemo, useRef, useState } from "react";
-import { useLocation } from "react-router";
 import type { LucideIcon } from "lucide-react";
 import {
   ChevronDown,
@@ -63,7 +62,6 @@ const EMPTY_FORM: BaseTaskForm = {
 };
 
 function BaseTaskManagementContent() {
-  const { pathname } = useLocation();
   const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
@@ -260,11 +258,6 @@ function BaseTaskManagementContent() {
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">任务</h1>
-          {!pathname.startsWith("/dashboard/org-admin") && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              管理工作流可使用的基础节点，支持创建、编辑和启用或禁用。
-            </p>
-          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative w-64 max-w-full">
