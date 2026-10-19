@@ -60,9 +60,6 @@ function DeletionRequestsContent() {
     <div className="flex min-w-0 flex-col gap-4">
       <div>
         <h1 className="text-xl font-bold text-foreground">删除请求</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          审核企划负责人为仍有项目的企划，或仍有已提交任务的项目提交的删除申请。通过后软删除。
-        </p>
       </div>
       {listQuery.isError && !listQuery.data ? (
         <Button variant="outline" onClick={() => void listQuery.refetch()}>

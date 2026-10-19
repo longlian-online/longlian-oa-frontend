@@ -208,7 +208,7 @@ interface ProjectCardProps {
 }
 
 function ProjectCard({ project }: ProjectCardProps) {
-  const metadataTags = parseProjectMetadataTags(project.metadata).slice(0, 2);
+  const metadataTags = parseProjectMetadataTags(project.metadata);
 
   return (
     <Link
@@ -231,8 +231,8 @@ function ProjectCard({ project }: ProjectCardProps) {
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col p-4">
-        <div className="flex items-start justify-between gap-2">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col p-4">
+        <div className="flex shrink-0 items-start justify-between gap-2">
           <h3
             title={project.title}
             className="min-w-0 flex-1 truncate text-base font-semibold leading-6 text-foreground"
@@ -244,17 +244,20 @@ function ProjectCard({ project }: ProjectCardProps) {
           </Badge>
         </div>
 
-        <p className="mt-2 line-clamp-2 min-h-9 text-xs leading-[18px] text-muted-foreground">
+        <p className="mt-2 line-clamp-2 min-h-9 shrink-0 text-xs leading-[18px] text-muted-foreground">
           {project.description || "暂无简介"}
         </p>
 
-        <div className="mt-3 flex min-h-5 flex-wrap gap-1.5 overflow-hidden">
-          {metadataTags.map((tag, index) => (
-            <ProjectMetadataTag key={index} tag={tag} compact />
-          ))}
+        <div className="mt-3 min-h-0 flex-1 overflow-hidden [container-type:size]">
+          {/* 每行 1.5rem，行距 0.375rem；只保留可完整放下的标签行。 */}
+          <div className="flex max-h-[max(0px,calc(round(down,calc(100cqh+0.375rem),1.875rem)-0.375rem))] flex-wrap content-start items-start gap-1.5 overflow-hidden [&>*]:h-6">
+            {metadataTags.map((tag, index) => (
+              <ProjectMetadataTag key={index} tag={tag} compact />
+            ))}
+          </div>
         </div>
 
-        <div className="mt-auto flex items-center gap-2 pt-3">
+        <div className="mt-auto flex shrink-0 items-center gap-2 pt-3">
           <Avatar className="size-9">
             <AvatarImage src={project.creatorAvatarUrl} />
             <AvatarFallback className="text-[10px]">{project.title.charAt(0)}</AvatarFallback>

@@ -75,9 +75,6 @@ function OrganizationAdminWorkflowsContent() {
       <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">工作流</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            管理组织流程模板，创建项目时可直接绑定。
-          </p>
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-2">
