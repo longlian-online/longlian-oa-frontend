@@ -29,7 +29,9 @@ export default function SystemInfoPage(): ReactElement {
             aria-hidden="true"
             className="row-span-2 mt-0.5 size-5 text-muted-foreground"
           />
-          <CardTitle>龙联 OA 管理平台</CardTitle>
+          <CardTitle className="wrap-anywhere">
+            {query.data?.displayName?.trim() || "管理平台"}
+          </CardTitle>
           <CardDescription className="col-start-2">系统版本信息</CardDescription>
         </CardHeader>
         <Separator />
