@@ -215,7 +215,7 @@ function BaseTaskManagementContent() {
     saveLock.current = true;
     try {
       await saveMutation.mutateAsync(payload);
-      $tip(editingTask ? "原子任务已修改" : "原子任务已创建", "success");
+      $tip(editingTask ? "任务已修改" : "任务已创建", "success");
       setFormOpen(false);
       setForm(EMPTY_FORM);
       setEditingTask(null);
@@ -239,7 +239,7 @@ function BaseTaskManagementContent() {
     statusLock.current = true;
     try {
       await statusMutation.mutateAsync({ id: task.id, status: nextStatus });
-      $tip(nextStatus === "ENABLED" ? "原子任务已启用" : "原子任务已禁用", "success");
+      $tip(nextStatus === "ENABLED" ? "任务已启用" : "任务已禁用", "success");
     } catch {
       /* 保留已有列表。 */
     } finally {
@@ -257,7 +257,7 @@ function BaseTaskManagementContent() {
 
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">原子任务</h1>
+          <h1 className="text-xl font-bold text-foreground">任务</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             管理工作流可使用的基础节点，支持创建、编辑和启用或禁用。
           </p>
@@ -267,7 +267,7 @@ function BaseTaskManagementContent() {
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchText}
-              placeholder="搜索原子任务"
+              placeholder="搜索任务"
               className="pl-9"
               onChange={(event) => setSearchText(event.target.value)}
               onKeyDown={(event) => event.key === "Enter" && handleSearch()}
@@ -289,11 +289,11 @@ function BaseTaskManagementContent() {
           <Button onClick={() => void listQuery.refetch()}>重试</Button>
         </div>
       ) : loading ? (
-        <PageLoading message="正在加载原子任务..." />
+        <PageLoading message="正在加载任务..." />
       ) : tasks.length === 0 ? (
         <EmptyState
           icon={<Workflow className="size-5 text-muted-foreground" />}
-          title="暂无原子任务"
+          title="暂无任务"
           description="先创建翻译、审核、嵌字等任务，再去编排工作流。"
           action={<Button onClick={openCreate}>创建第一个任务</Button>}
         />
@@ -378,7 +378,7 @@ function BaseTaskManagementContent() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingTask ? "编辑原子任务" : "创建原子任务"}</DialogTitle>
+            <DialogTitle>{editingTask ? "编辑任务" : "创建任务"}</DialogTitle>
             <DialogDescription>
               {editingTask
                 ? "修改会影响所有引用模板及后续新建工作流；已有工作流保留名称和提交字段，图标同步更新。"

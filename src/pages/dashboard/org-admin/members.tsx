@@ -271,7 +271,7 @@ function OrganizationMembersContent() {
                   <TableHead>角色</TableHead>
                   <TableHead>入组时间</TableHead>
                   <TableHead>最近活跃</TableHead>
-                  <TableHead>原子任务提交数</TableHead>
+                  <TableHead>任务提交数</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead className="w-56 text-right">操作</TableHead>
                 </TableRow>
@@ -394,7 +394,7 @@ function OrganizationMembersContent() {
             <DialogTitle>
               {detailMember ? `${memberName(detailMember)}的提交统计` : "提交统计"}
             </DialogTitle>
-            <DialogDescription>查看该成员按原子任务汇总的提交次数。</DialogDescription>
+            <DialogDescription>查看该成员按任务定义汇总的提交次数。</DialogDescription>
           </DialogHeader>
           {detailQuery.isError && !detailQuery.data ? (
             <Button onClick={() => void detailQuery.refetch()}>加载失败，重试</Button>
