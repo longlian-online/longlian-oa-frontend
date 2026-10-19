@@ -12,7 +12,7 @@ import { createQueryClient } from "@/lib/queryClient";
 import { scopedKey } from "@/lib/queryKeys";
 import { clearSession, saveCurrentOrganization, saveSession } from "@/lib/session";
 import { itemFlowQuery, itemInstancesQuery, plazaListQuery } from "@/queries/planning";
-import TaskPlaza from "@/pages/dashboard/planning/shortage";
+import TaskPlaza from "@/pages/dashboard/task-plaza";
 
 import type TaskFlowViewer from "@/components/WorkflowInstance/TaskFlowViewer";
 import type { PageResult } from "@/types/planning";

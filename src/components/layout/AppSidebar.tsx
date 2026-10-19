@@ -11,8 +11,6 @@ interface SidebarItem {
   label: string;
   icon?: LucideIcon;
   activePrefixes: readonly string[];
-  /** 命中 activePrefixes 但同时命中这里的前缀时，视为未激活（用于更具体的兄弟页） */
-  excludedPrefixes?: readonly string[];
 }
 
 const planningItems: readonly SidebarItem[] = [
@@ -21,13 +19,12 @@ const planningItems: readonly SidebarItem[] = [
     label: "企划",
     icon: BookOpen,
     activePrefixes: ["/dashboard/planning"],
-    excludedPrefixes: ["/dashboard/planning/shortage"],
   },
   {
-    to: "/dashboard/planning/shortage",
+    to: "/dashboard/task-plaza",
     label: "任务大厅",
     icon: Magnet,
-    activePrefixes: ["/dashboard/planning/shortage"],
+    activePrefixes: ["/dashboard/task-plaza"],
   },
 ];
 
@@ -78,11 +75,6 @@ function isSidebarItemActive(pathname: string, item: SidebarItem): boolean {
   const matched = item.activePrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
-  if (matched && item.excludedPrefixes) {
-    return !item.excludedPrefixes.some(
-      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-    );
-  }
   if (matched) {
     return true;
   }
