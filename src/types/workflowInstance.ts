@@ -2,6 +2,10 @@ import type { TaskFormField, TaskSubmitValue } from "./task";
 
 export type TaskInstanceStatus = "PENDING" | "CLAIMED" | "COMPLETED";
 
+export interface TaskClaimResultVO {
+  autoJoinedProject: boolean;
+}
+
 export interface ItemTaskFlowVO {
   itemTitle: string;
   name: string;

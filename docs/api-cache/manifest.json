@@ -1,14 +1,14 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-10-19T03:18:43.533Z",
+  "generatedAt": "2026-10-19T10:19:56.673Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "bb74b7926c838bce06a432bdfe5a8975ddee79e7e33b41197726e1398e66d9a0",
+      "sha256": "3457d854c9408bcfbfcd94c5b1cc4792b0528303db0967806e63e8dc6637a64b",
       "pathCount": 71,
       "operationCount": 86
     },
@@ -17,7 +17,7 @@
       "slug": "公共端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E5%85%AC%E5%85%B1%E7%AB%AF",
       "file": "openapi/公共端.json",
-      "sha256": "6e041bdbc9666cb90fad31cfa08d06db82cff58ddd42ef06ab82a3b0c254522c",
+      "sha256": "b453041b2472a60ac3c656da63465b0a7441ddf7e4663c8b0ece78d854f5d4eb",
       "pathCount": 3,
       "operationCount": 4
     },
