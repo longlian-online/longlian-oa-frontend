@@ -50,6 +50,7 @@ const themeOptions = [
 ] as const;
 
 function isSubMenuActive(pathname: string, targetPath: string): boolean {
+  if (targetPath === "/dashboard/planning" && pathname === "/dashboard/task-plaza") return true;
   return pathname === targetPath || pathname.startsWith(`${targetPath}/`);
 }
 

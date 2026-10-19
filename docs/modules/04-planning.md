@@ -125,7 +125,7 @@ interface ProjectInfoVO {
 
 ## 任务大厅
 
-- 入口：`/dashboard/planning/shortage`，侧栏保留一个任务大厅入口。
+- 独立页面入口：`/dashboard/task-plaza`，在广场侧栏与企划平级，不属于企划子页面，不显示企划层级面包屑。
 - 页签“所有待接取”默认选中，显式请求 `stageScope=ALL`；“当前阶段”请求 `CURRENT`。
 - URL 查询参数 `stageScope` 保留刷新、分享及浏览器前进后退时的视图。
 - 切换视图重置到第一页并收起分组，保留搜索、企划类型和排序。

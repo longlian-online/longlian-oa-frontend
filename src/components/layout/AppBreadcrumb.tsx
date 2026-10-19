@@ -16,7 +16,6 @@ function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     const items: BreadcrumbItem[] = [{ label: "企划", to: "/dashboard/planning" }];
     if (!segments[2]) return items;
     if (segments[2] === "create") return [...items, { label: "创建企划" }];
-    if (segments[2] === "shortage") return [...items, { label: "任务大厅" }];
     if (segments[2] === "item") return [...items, { label: "项目详情" }];
 
     const projectPath = `/dashboard/planning/${segments[2]}`;
