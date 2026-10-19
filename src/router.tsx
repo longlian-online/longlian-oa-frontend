@@ -9,7 +9,10 @@ import { getSessionSnapshot } from "@/lib/session";
 import type { ComponentType } from "react";
 import type { LoaderFunction } from "react-router";
 
-const pages = import.meta.glob<{ default: ComponentType }>("/src/pages/**/*.tsx");
+const pages = import.meta.glob<{ default: ComponentType }>([
+  "/src/pages/**/*.tsx",
+  "!/src/pages/**/*.test.*",
+]);
 const loaders = import.meta.glob<{ loader: LoaderFunction }>("/src/routeLoaders/**/*.ts", {
   eager: true,
 });

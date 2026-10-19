@@ -5,6 +5,7 @@ export function fileRoutes() {
   return Pages({
     dirs: "src/pages",
     extensions: ["tsx"],
+    exclude: ["**/*.test.*"],
     extendRoute(route: ReactRoute) {
       const { element, ...rest } = route;
       return { ...rest, element: undefined, handle: element ? { page: element } : undefined };
