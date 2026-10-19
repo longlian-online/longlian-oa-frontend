@@ -29,7 +29,7 @@ function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
 
   if (segments[1] === "workshop") {
     const items: BreadcrumbItem[] = [{ label: "工坊", to: "/dashboard/workshop" }];
-    if (segments[2] === "tasks") items.push({ label: "原子任务" });
+    if (segments[2] === "tasks") items.push({ label: "任务" });
     if (segments[2] === "workflows") items.push({ label: "工作流" });
     if (segments[2] === "create") items.push({ label: "创建工作流" });
     return items;
@@ -42,7 +42,7 @@ function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     if (segments[2] === "members") items.push({ label: "成员" });
     if (segments[2] === "applications") items.push({ label: "入组申请" });
     if (segments[2] === "deletion-requests") items.push({ label: "删除请求" });
-    if (segments[2] === "tasks") items.push({ label: "原子任务" });
+    if (segments[2] === "tasks") items.push({ label: "任务" });
     if (segments[2] === "workflows") items.push({ label: "工作流" });
     if (segments[2] === "create") items.push({ label: "创建工作流" });
     if (segments[2] === "settings") items.push({ label: "组织设置" });
