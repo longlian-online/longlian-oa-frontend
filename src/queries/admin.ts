@@ -1,6 +1,8 @@
 import { getAdminList, getAdminOrganizations, getScheduledTasks } from "@/api/admin";
+import { getSystemInfo } from "@/api/system";
 import type { ApiQueryOptions } from "@/lib/apiQuery";
 import type { AdminPageResult, AdminVO, AdminOrganizationVO, ScheduledTaskVO } from "@/types/admin";
+import type { SystemInfoVO } from "@/types/system";
 
 export const ADMIN_PAGE_SIZE = 10;
 
@@ -31,4 +33,8 @@ export function adminOrganizationsQuery(
 
 export function scheduledTasksQuery(): ApiQueryOptions<ScheduledTaskVO[]> {
   return { key: ["scheduledTasks"], queryFn: getScheduledTasks, scope: "admin" };
+}
+
+export function systemInfoQuery(): ApiQueryOptions<SystemInfoVO> {
+  return { key: ["systemInfo"], queryFn: getSystemInfo, scope: "public" };
 }

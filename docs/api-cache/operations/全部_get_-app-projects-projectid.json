@@ -2,7 +2,7 @@
   "document": "全部",
   "method": "GET",
   "operation": {
-    "description": "返回企划详细信息、进度统计及当前用户权限标记。\nisCreator=true 时前端展示「编辑+分享」按钮；false 时展示「添加到工坊+分享」按钮\n",
+    "description": "返回企划详细信息、进度统计及当前用户权限标记。\nisCreator=true 时前端展示「编辑+删除+分享」按钮；存在项目时删除按钮禁用。false 时展示「添加到工坊+分享」按钮\n",
     "operationId": "getProjectDetail",
     "parameters": [
       {

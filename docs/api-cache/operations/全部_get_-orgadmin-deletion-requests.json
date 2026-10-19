@@ -1,0 +1,42 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "仅返回待审核申请，按申请时间倒序",
+    "operationId": "listDeletionRequests",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "query",
+        "name": "listDTO",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/DeletionRequestListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVODeletionRequestInfoVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询待审核删除申请",
+    "tags": ["删除申请"]
+  },
+  "path": "/orgadmin/deletion-requests",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

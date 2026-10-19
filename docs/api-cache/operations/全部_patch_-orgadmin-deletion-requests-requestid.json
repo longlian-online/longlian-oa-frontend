@@ -1,0 +1,47 @@
+{
+  "document": "全部",
+  "method": "PATCH",
+  "operation": {
+    "description": "通过后软删除对应企划或项目；拒绝则保留原数据",
+    "operationId": "reviewDeletionRequest",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "删除申请ID",
+        "in": "path",
+        "name": "requestId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/DeletionRequestReviewDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "审核删除申请",
+    "tags": ["删除申请"]
+  },
+  "path": "/orgadmin/deletion-requests/{requestId}",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

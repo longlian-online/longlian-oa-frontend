@@ -5,9 +5,17 @@ import { fileRoutes } from "./tools/fileRoutes.ts";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import type { Plugin, ProxyOptions } from "vite-plus";
+import { readFileSync } from "node:fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const { version } = JSON.parse(
+  readFileSync(new URL("./package.json", import.meta.url), "utf8"),
+) as {
+  version: string;
+};
+const buildTime = new Date().toISOString();
 
 function ignoreUnknownRequests(): Plugin {
   return {
@@ -45,6 +53,10 @@ const apiProxy: ProxyOptions = {
 };
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+    __APP_BUILD_TIME__: JSON.stringify(buildTime),
+  },
   fmt: {
     ignorePatterns: [".agents/skills/**"],
   },
