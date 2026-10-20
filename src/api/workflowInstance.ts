@@ -2,6 +2,7 @@ import { request } from "@/api/request";
 import type {
   ItemTaskFlowVO,
   ItemTaskInstanceVO,
+  TaskAbandonDTO,
   TaskClaimResultVO,
   TaskInstanceDetailVO,
   TaskRejectDTO,
@@ -37,9 +38,10 @@ export async function claimTask(instanceId: string): Promise<TaskClaimResultVO> 
   });
 }
 
-export async function abandonTask(instanceId: string): Promise<void> {
+export async function abandonTask(instanceId: string, dto: TaskAbandonDTO): Promise<void> {
   return request(`/task/instance/${instanceId}/abandon`, {
     method: "POST",
+    body: JSON.stringify(dto),
   });
 }
 
