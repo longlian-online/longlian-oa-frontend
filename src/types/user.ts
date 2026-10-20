@@ -1,7 +1,7 @@
 export interface UserInfoVO {
   id: string;
   username: string;
-  email: string;
+  email: string | null;
   nickname: string;
   avatarUrl?: string;
   defaultOrgId?: string;
@@ -29,4 +29,9 @@ export interface UpdateMyInfoDTO {
 export interface ChangePasswordDTO {
   oldPassword: string;
   newPassword: string;
+}
+
+export interface BindEmailDTO {
+  email: string;
+  code: string;
 }
