@@ -33,7 +33,12 @@ import TaskFlowViewer from "./TaskFlowViewer";
 import TaskSubmitPanel from "./TaskSubmitPanel";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 
-import type { ItemTaskInstanceVO, ItemTaskNodeVO, TaskSubmitDTO } from "@/types/workflowInstance";
+import type {
+  ItemTaskInstanceVO,
+  ItemTaskNodeVO,
+  TaskClaimResultVO,
+  TaskSubmitDTO,
+} from "@/types/workflowInstance";
 
 interface WorkflowInstanceProps {
   itemId: string;
@@ -88,9 +93,14 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
   const taskFlow = flowQuery.data;
   const instances = instancesQuery.data ?? [];
   const actionMutation = useApiMutation({
-    mutationFn: async ({ action }: { instanceId: string; action: () => Promise<void> }) => {
+    mutationFn: async ({
+      action,
+    }: {
+      instanceId: string;
+      action: () => Promise<void | TaskClaimResultVO>;
+    }): Promise<void | TaskClaimResultVO> => {
       try {
-        await action();
+        return await action();
       } catch (error) {
         if (!mounted.current) throw new DOMException("操作项目已切换", "AbortError");
         throw error;
@@ -147,15 +157,20 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
 
   async function runInstanceAction(
     instanceId: string,
-    action: () => Promise<void>,
+    action: () => Promise<void | TaskClaimResultVO>,
     successMessage: string,
   ): Promise<boolean> {
     if (!isCurrentLifecycle() || actionLock.current) return false;
     actionLock.current = true;
     try {
-      await actionMutation.mutateAsync({ instanceId, action });
+      const result = await actionMutation.mutateAsync({ instanceId, action });
       if (!isCurrentLifecycle()) return false;
-      $tip(successMessage, "success");
+      $tip(
+        result && result.autoJoinedProject === true
+          ? `${successMessage}，已自动加入该企划`
+          : successMessage,
+        "success",
+      );
       return isCurrentLifecycle();
     } catch {
       return false;

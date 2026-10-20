@@ -96,7 +96,6 @@ function OrganizationApplicationsContent() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">入组申请</h1>
-          <p className="mt-1 text-sm text-muted-foreground">审核用户加入当前组织的申请。</p>
         </div>
         <div className="flex gap-2">
           <div className="relative w-64 max-w-full">
