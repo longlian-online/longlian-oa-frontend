@@ -1,14 +1,14 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-10-19T10:19:56.673Z",
+  "generatedAt": "2026-10-20T01:32:57.111Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "3457d854c9408bcfbfcd94c5b1cc4792b0528303db0967806e63e8dc6637a64b",
+      "sha256": "2f3b39052db7ac8c77b77ad56a9e4ee83584eb4025fa28adb91116dba9622ece",
       "pathCount": 71,
       "operationCount": 86
     },
@@ -26,7 +26,7 @@
       "slug": "用户端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF",
       "file": "openapi/用户端.json",
-      "sha256": "8a55b532695a4374d9a7ecc464ea2a6f4527f09ea09974293aec222ba8c5b6c4",
+      "sha256": "6bb657c6f0cc336960b0e254c7c4a8bbf02d0c989974e9f340947c2c26d2f27b",
       "pathCount": 37,
       "operationCount": 44
     },
@@ -508,7 +508,7 @@
       "summary": "接取任务",
       "tags": ["任务实例接口"],
       "file": "operations/全部_post_-app-task-instance-instanceid-claim.json",
-      "sha256": "197d21e0f13e0d15f7feaac2b83a59d3d8605fa416fd483c3e4292714437f66f"
+      "sha256": "32bc57f5709b463237111000570e67ccc2501721573081ef2ce07b7ef7302602"
     },
     {
       "id": "全部_get_-app-task-instance-instanceid-detail",
@@ -1268,7 +1268,7 @@
       "summary": "接取任务",
       "tags": ["任务实例接口"],
       "file": "operations/用户端_post_-app-task-instance-instanceid-claim.json",
-      "sha256": "c626258ead78cce4b9f5fbb1a47a0ef451451f6775835b2b1cd21d5bfa6fe683"
+      "sha256": "f658f41ff842724d2e7d5bdb28d8f8d2822870301c7f78f98749578239280442"
     },
     {
       "id": "用户端_get_-app-task-instance-instanceid-detail",
