@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactElement } from "react";
-import { Check, KeyRound, LogOut, Pencil, UserRound } from "lucide-react";
+import { Check, KeyRound, LogOut, Mail, Pencil, UserRound } from "lucide-react";
+import { z } from "zod";
 import { Link, useNavigate } from "react-router";
 
 import { isOrganizationManagerRole } from "@/lib/organizationRole";
 import { getSessionSnapshot } from "@/lib/session";
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
-import { logout } from "@/api/auth";
-import { changePassword, getInviteInfo, joinOrganizationByInvite, updateMyInfo } from "@/api/user";
+import { logout, sendVerificationCode } from "@/api/auth";
+import {
+  bindEmail,
+  changePassword,
+  getInviteInfo,
+  joinOrganizationByInvite,
+  updateMyInfo,
+} from "@/api/user";
 import { $tip } from "@/components/tip";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -59,6 +66,9 @@ interface AppHeaderProps {
   onMore: () => void;
 }
 
+const bindEmailSchema = z.string().email("请输入有效的邮箱地址");
+const bindCodeSchema = z.string().regex(/^[A-Z0-9]{6}$/, "请输入 6 位大写字母或数字验证码");
+
 export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactElement {
   const pathname = usePendingPathname();
   const navigate = useNavigate();
@@ -96,6 +106,26 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
   const [newPassword, setNewPassword] = useState("");
   const passwordMutation = useApiMutation({ scope: "account", mutationFn: changePassword });
   const isChangingPassword = passwordMutation.isPending;
+  const [isBindEmailOpen, setIsBindEmailOpen] = useState(false);
+  const [bindEmailAddress, setBindEmailAddress] = useState("");
+  const [bindCode, setBindCode] = useState("");
+  const [bindErrors, setBindErrors] = useState<{ email?: string; code?: string }>({});
+  const [bindCountdown, setBindCountdown] = useState(0);
+  const bindCountdownTimer = useRef<number | undefined>(undefined);
+  const sendBindCode = useApiMutation({ scope: "account", mutationFn: sendVerificationCode });
+  const bindEmailMutation = useApiMutation({
+    scope: "account",
+    mutationFn: bindEmail,
+    invalidate: [["currentUser"]],
+  });
+  const isBindingEmail = bindEmailMutation.isPending;
+  const bindEmailReady = bindEmailSchema.safeParse(bindEmailAddress).success;
+
+  useEffect(() => {
+    return () => {
+      clearInterval(bindCountdownTimer.current);
+    };
+  }, []);
 
   useEffect((): void => {
     if (
@@ -167,6 +197,70 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
       setOldPassword("");
       setNewPassword("");
     }
+  };
+
+  const resetBindEmailForm = (): void => {
+    clearInterval(bindCountdownTimer.current);
+    bindCountdownTimer.current = undefined;
+    setBindEmailAddress("");
+    setBindCode("");
+    setBindErrors({});
+    setBindCountdown(0);
+  };
+
+  const handleBindDialogOpenChange = (open: boolean): void => {
+    setIsBindEmailOpen(open);
+    if (!open) resetBindEmailForm();
+  };
+
+  const handleSendBindCode = async (): Promise<void> => {
+    const parsed = bindEmailSchema.safeParse(bindEmailAddress);
+    if (!parsed.success) {
+      setBindErrors((current) => ({
+        ...current,
+        email: parsed.error.issues[0]?.message ?? "请输入有效的邮箱地址",
+      }));
+      return;
+    }
+    try {
+      await sendBindCode.mutateAsync({ email: parsed.data, businessType: "BIND_EMAIL" });
+    } catch {
+      return;
+    }
+    $tip("验证码已发送", "success");
+    setBindErrors((current) => ({ ...current, email: undefined }));
+    clearInterval(bindCountdownTimer.current);
+    setBindCountdown(60);
+    bindCountdownTimer.current = window.setInterval(() => {
+      setBindCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(bindCountdownTimer.current);
+          bindCountdownTimer.current = undefined;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleBindEmail = async (): Promise<void> => {
+    const parsedEmail = bindEmailSchema.safeParse(bindEmailAddress);
+    const parsedCode = bindCodeSchema.safeParse(bindCode);
+    if (!parsedEmail.success || !parsedCode.success) {
+      setBindErrors({
+        email: parsedEmail.success ? undefined : parsedEmail.error.issues[0]?.message,
+        code: parsedCode.success ? undefined : parsedCode.error.issues[0]?.message,
+      });
+      return;
+    }
+    try {
+      await bindEmailMutation.mutateAsync({ email: parsedEmail.data, code: parsedCode.data });
+    } catch {
+      return;
+    }
+    $tip("邮箱已绑定", "success");
+    setIsBindEmailOpen(false);
+    resetBindEmailForm();
   };
 
   const handleLogout = async (): Promise<void> => {
@@ -319,6 +413,16 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
                 ))}
               </div>
             </div>
+            {user && !user.email?.trim() ? (
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+                onClick={() => setIsBindEmailOpen(true)}
+              >
+                <Mail className="h-4 w-4" />
+                绑定邮箱
+              </Button>
+            ) : null}
             <Button
               variant="ghost"
               className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
@@ -445,6 +549,74 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
             </Button>
             <Button onClick={() => void handleChangePassword()} disabled={isChangingPassword}>
               {isChangingPassword ? "修改中..." : "修改密码"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBindEmailOpen} onOpenChange={handleBindDialogOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>绑定邮箱</DialogTitle>
+            <DialogDescription>
+              验证邮箱后即可使用验证码登录和找回密码。不绑定也可以继续使用。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="bind-email">邮箱</Label>
+              <Input
+                id="bind-email"
+                type="email"
+                value={bindEmailAddress}
+                autoComplete="email"
+                onChange={(event) => {
+                  setBindEmailAddress(event.target.value);
+                  setBindErrors((current) => ({ ...current, email: undefined }));
+                }}
+              />
+              {bindErrors.email ? (
+                <p className="text-xs text-destructive">{bindErrors.email}</p>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bind-code">验证码</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="bind-code"
+                  value={bindCode}
+                  maxLength={6}
+                  autoComplete="one-time-code"
+                  placeholder="请输入 6 位大写字母或数字验证码"
+                  onChange={(event) => {
+                    setBindCode(event.target.value.toUpperCase());
+                    setBindErrors((current) => ({ ...current, code: undefined }));
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void handleSendBindCode()}
+                  disabled={!bindEmailReady || bindCountdown > 0 || sendBindCode.isPending}
+                >
+                  {bindCountdown > 0 ? `${bindCountdown}s` : "发送"}
+                </Button>
+              </div>
+              {bindErrors.code ? (
+                <p className="text-xs text-destructive">{bindErrors.code}</p>
+              ) : null}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => handleBindDialogOpenChange(false)}
+              disabled={isBindingEmail}
+            >
+              取消
+            </Button>
+            <Button onClick={() => void handleBindEmail()} disabled={isBindingEmail}>
+              {isBindingEmail ? "绑定中..." : "绑定邮箱"}
             </Button>
           </DialogFooter>
         </DialogContent>
