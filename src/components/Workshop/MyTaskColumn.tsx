@@ -86,7 +86,6 @@ export function MyTaskColumn({
                 onClick={() => {
                   const params = new URLSearchParams({
                     taskInstanceId: task.instanceId,
-                    action: submittable ? "submit" : "progress",
                   });
                   void navigate(
                     `/dashboard/planning/${task.projectId}/items/${task.itemId}?${params}`,

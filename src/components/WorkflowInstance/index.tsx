@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy } from "lucide-react";
 
 import { abandonTask, claimTask, rejectTask, resetTask, submitTask } from "@/api/workflowInstance";
@@ -14,12 +14,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { getUserId } from "@/lib/session";
-import { formatSlotLabel, formatTaskTitle, slotPosition } from "@/lib/slotLabel";
+import { formatTaskTitle, slotPosition } from "@/lib/slotLabel";
 import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
 import { buildParticipantRoster } from "./participantRoster";
 import TaskDetailPanel from "./TaskDetailPanel";
-import { scrollTaskDetailIntoView } from "./scrollTaskDetailIntoView";
-import { findBlockingNode } from "./taskNavigation";
 import { canReset, canReject, canOwnerAct, type OwnerTaskAction } from "./taskPermissions";
 import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
 import TaskFlowViewer from "./TaskFlowViewer";
@@ -37,9 +35,6 @@ interface WorkflowInstanceProps {
   itemId: string;
   isProjectCreator: boolean;
   taskInstanceId?: string;
-  submitOnEntry?: boolean;
-  onSelectTask?: (instanceId?: string) => void;
-  onSubmitClose?: () => void;
 }
 
 function getSortedInstances(instances: ItemTaskInstanceVO[]): ItemTaskInstanceVO[] {
@@ -70,14 +65,7 @@ export default function WorkflowInstance(props: WorkflowInstanceProps) {
   return <ItemWorkflowInstance key={props.itemId} {...props} />;
 }
 
-function ItemWorkflowInstance({
-  itemId,
-  isProjectCreator,
-  taskInstanceId,
-  submitOnEntry,
-  onSelectTask,
-  onSubmitClose,
-}: WorkflowInstanceProps) {
+function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const currentUserId = getUserId();
   const mounted = useRef(true);
@@ -92,8 +80,6 @@ function ItemWorkflowInstance({
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const handledEntry = useRef<string | null>(null);
   const [entryError, setEntryError] = useState("");
-  const detailPanelRef = useRef<HTMLDivElement>(null);
-  const [detailScrollNonce, setDetailScrollNonce] = useState(0);
   const flowQuery = useApiQuery(itemFlowQuery(itemId));
   const instancesQuery = useApiQuery(itemInstancesQuery(itemId));
   const taskFlow = flowQuery.data;
@@ -150,15 +136,10 @@ function ItemWorkflowInstance({
       )
     : undefined;
 
-  const blockingNode = selectedNode
-    ? findBlockingNode(selectedNode, taskFlow?.nodes ?? [])
-    : undefined;
-
   useEffect(() => {
     if (!taskInstanceId || !taskFlow || !instancesQuery.data) return;
-    const entryKey = `${taskInstanceId}:${Boolean(submitOnEntry)}`;
-    if (handledEntry.current === entryKey) return;
-    handledEntry.current = entryKey;
+    if (handledEntry.current === taskInstanceId) return;
+    handledEntry.current = taskInstanceId;
     setSubmitTarget(null);
     const node = taskFlow.nodes.find((candidate) => candidate.taskInstanceId === taskInstanceId);
     const instance = instancesQuery.data.find((candidate) => candidate.id === taskInstanceId);
@@ -169,37 +150,12 @@ function ItemWorkflowInstance({
     }
     setSelectedNodeId(node.id);
     setEntryError("");
-    if (!submitOnEntry) return;
-    if (
-      instance.status !== "CLAIMED" ||
-      instance.assigneeId !== currentUserId ||
-      node.taskStatus === null
-    ) {
-      setEntryError("任务状态或执行人已变更，已定位原任务，请查看最新状态。");
-    } else if (!isNodeUnlocked(node, taskFlow.nodes)) {
-      setEntryError("前置阶段尚未完成，已定位当前任务及阻塞阶段。");
-    } else {
-      setSubmitTarget({ instance, node });
-    }
-  }, [taskInstanceId, submitOnEntry, taskFlow, instancesQuery.data, currentUserId]);
+  }, [taskInstanceId, taskFlow, instancesQuery.data]);
 
-  const selectNode = useCallback(
-    (nodeId: string) => {
-      setSelectedNodeId(nodeId);
-      setEntryError("");
-      setDetailScrollNonce((nonce) => nonce + 1);
-      onSelectTask?.(
-        taskFlow?.nodes.find((node) => node.id === nodeId)?.taskInstanceId ?? undefined,
-      );
-    },
-    [onSelectTask, taskFlow],
-  );
-
-  useLayoutEffect(() => {
-    const detail = detailPanelRef.current;
-    if (!detailScrollNonce || !selectedNodeId || !detail) return;
-    scrollTaskDetailIntoView(detail);
-  }, [detailScrollNonce, selectedNodeId]);
+  const selectNode = useCallback((nodeId: string) => {
+    setSelectedNodeId(nodeId);
+    setEntryError("");
+  }, []);
 
   async function runInstanceAction(
     instanceId: string,
@@ -403,20 +359,10 @@ function ItemWorkflowInstance({
           {entryError}
         </p>
       )}
-      {selectedNode && blockingNode && (
-        <p
-          className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm"
-          role="status"
-        >
-          当前任务：
-          {formatTaskTitle(taskFlow.itemTitle, slotPosition(selectedNode, taskFlow.nodes))}； 等
-          {formatSlotLabel(slotPosition(blockingNode, taskFlow.nodes))}完成后可提交。
-        </p>
-      )}
 
       <TaskFlowViewer
         selectedNodeId={selectedNodeId}
-        blockingNodeId={blockingNode?.id}
+        initialNodeId={taskFlow.nodes.find((node) => node.taskInstanceId === taskInstanceId)?.id}
         onSelectNode={selectNode}
         nodes={taskFlow.nodes}
         instances={sortedInstances}
@@ -429,7 +375,7 @@ function ItemWorkflowInstance({
       />
 
       {selectedNode ? (
-        <div ref={detailPanelRef}>
+        <div>
           <TaskDetailPanel
             key={`${itemId}:${selectedNode.id}`}
             title={formatTaskTitle(taskFlow.itemTitle, slotPosition(selectedNode, taskFlow.nodes))}
@@ -503,7 +449,6 @@ function ItemWorkflowInstance({
           onOpenChange={(open) => {
             if (!open) {
               setSubmitTarget(null);
-              onSubmitClose?.();
             }
           }}
           submitting={

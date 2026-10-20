@@ -14,7 +14,6 @@ import type {
 interface TaskNodeCardProps {
   node: ItemTaskNodeVO;
   label: string;
-  blocking?: boolean;
   instance?: ItemTaskInstanceVO;
   currentUserId?: string | null;
   selected: boolean;
@@ -51,7 +50,6 @@ function getNodeStyle(status?: TaskInstanceStatus | null) {
 export default function TaskNodeCard({
   node,
   label,
-  blocking,
   instance,
   currentUserId,
   selected,
@@ -75,7 +73,6 @@ export default function TaskNodeCard({
         "relative w-60 rounded-xl border bg-card p-3.5 shadow-sm",
         style.className,
         selected && "ring-2 ring-primary",
-        blocking && "border-amber-500 ring-1 ring-amber-500/50",
       )}
     >
       <button
@@ -99,9 +96,6 @@ export default function TaskNodeCard({
         </div>
         <h3 className="min-w-0 break-words text-sm font-semibold text-foreground">{label}</h3>
       </div>
-      {blocking && (
-        <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">阻塞前置</p>
-      )}
       <div className="mt-2 flex min-h-8 items-center gap-2">
         {instance?.assigneeNickname ? (
           <>

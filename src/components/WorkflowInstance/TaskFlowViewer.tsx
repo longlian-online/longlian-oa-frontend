@@ -29,7 +29,7 @@ interface TaskFlowViewerProps {
   currentUserId?: string | null;
   mutatingInstanceId?: string | null;
   selectedNodeId?: string | null;
-  blockingNodeId?: string;
+  initialNodeId?: string;
   onSelectNode: (nodeId: string) => void;
   onClaim: (instanceId: string) => void;
   onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
@@ -61,10 +61,9 @@ function findInstance(node: ItemTaskNodeVO, instances: ItemTaskInstanceVO[]) {
 interface StageTimelineProps {
   groups: NodeGroup[];
   currentStageSort?: number;
-  blockingStageSort?: number;
 }
 
-function StageTimeline({ groups, currentStageSort, blockingStageSort }: StageTimelineProps) {
+function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
   return (
     <div className="mt-4 overflow-x-auto pb-1">
       <ol className="flex min-w-max items-start px-1">
@@ -73,7 +72,6 @@ function StageTimeline({ groups, currentStageSort, blockingStageSort }: StageTim
           const stageName = Array.from(new Set(group.nodes.map((node) => node.name))).join(" / ");
           const isCompleted = completed === group.nodes.length;
           const isCurrent = group.sort === currentStageSort;
-          const isBlocking = group.sort === blockingStageSort;
           const previousGroup = groups[index - 1];
           const previousCompleted = previousGroup
             ? previousGroup.nodes.every((node) => node.taskStatus === "COMPLETED")
@@ -116,11 +114,6 @@ function StageTimeline({ groups, currentStageSort, blockingStageSort }: StageTim
               </span>
               <span className="mt-0.5 text-[11px] text-muted-foreground">
                 {completed}/{group.nodes.length} 完成
-                {isBlocking && (
-                  <span className="block font-medium text-amber-700 dark:text-amber-400">
-                    阻塞阶段
-                  </span>
-                )}
               </span>
             </li>
           );
@@ -134,7 +127,6 @@ type TaskFlowNode = Node<
   {
     node: ItemTaskNodeVO;
     label: string;
-    blocking: boolean;
     instance?: ItemTaskInstanceVO;
     currentUserId?: string | null;
     selected: boolean;
@@ -198,29 +190,18 @@ function centerStages(nodes: TaskFlowNode[]): TaskFlowNode[] {
   });
 }
 
-function FitInitialLayout({
-  selectedNodeId,
-  blockingNodeId,
-}: {
-  selectedNodeId?: string | null;
-  blockingNodeId?: string;
-}) {
+function FitInitialLayout({ nodeId }: { nodeId?: string }) {
   const initialized = useNodesInitialized();
   const { fitView } = useReactFlow();
-  const fitted = useRef<string | null>(null);
+  const fitted = useRef(false);
   useEffect(() => {
-    if (!initialized) return;
-    const target = `${selectedNodeId ?? "all"}:${blockingNodeId ?? ""}`;
-    if (fitted.current === target) return;
+    if (!initialized || fitted.current) return;
     const frame = requestAnimationFrame(() => {
-      fitted.current = target;
-      const nodes = selectedNodeId
-        ? [{ id: selectedNodeId }, ...(blockingNodeId ? [{ id: blockingNodeId }] : [])]
-        : undefined;
-      void fitView({ nodes, padding: 0.25, maxZoom: 1 });
+      fitted.current = true;
+      void fitView({ nodes: nodeId ? [{ id: nodeId }] : undefined, padding: 0.25, maxZoom: 1 });
     });
     return () => cancelAnimationFrame(frame);
-  }, [initialized, fitView, selectedNodeId, blockingNodeId]);
+  }, [initialized, fitView, nodeId]);
   return null;
 }
 
@@ -244,7 +225,6 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
               data: {
                 node,
                 label,
-                blocking: node.id === props.blockingNodeId,
                 instance,
                 currentUserId: props.currentUserId,
                 selected: node.id === props.selectedNodeId,
@@ -265,7 +245,6 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
       props.instances,
       props.currentUserId,
       props.selectedNodeId,
-      props.blockingNodeId,
       props.mutatingInstanceId,
       props.nodes,
       props.onSelectNode,
@@ -324,11 +303,7 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
           <Layers2 className="size-4 text-muted-foreground" />
           流程进度
         </div>
-        <StageTimeline
-          groups={groups}
-          currentStageSort={currentStageSort}
-          blockingStageSort={props.nodes.find((node) => node.id === props.blockingNodeId)?.sort}
-        />
+        <StageTimeline groups={groups} currentStageSort={currentStageSort} />
       </div>
       <div className="h-[520px] bg-muted/20">
         <ReactFlow<TaskFlowNode, Edge>
@@ -341,16 +316,13 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
           edgesReconnectable={false}
           elementsSelectable={false}
           deleteKeyCode={null}
-          minZoom={0.1}
+          minZoom={0.25}
           maxZoom={1.5}
           fitView
           fitViewOptions={{ padding: 0.18, maxZoom: 1 }}
           proOptions={{ hideAttribution: true }}
         >
-          <FitInitialLayout
-            selectedNodeId={props.selectedNodeId}
-            blockingNodeId={props.blockingNodeId}
-          />
+          <FitInitialLayout nodeId={props.initialNodeId} />
           <Controls
             showInteractive={false}
             className="overflow-hidden rounded-lg border border-border [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground [&>button>svg]:!fill-current"
