@@ -99,6 +99,7 @@ function flow(): ItemTaskFlowVO {
 function instances(): ItemTaskInstanceVO[] {
   return flow().nodes.map((node) => ({
     id: node.taskInstanceId!,
+    revision: claimed.has(node.taskInstanceId!) ? "1" : "0",
     name: node.name,
     status: claimed.has(node.taskInstanceId!) ? "CLAIMED" : "PENDING",
     sort: node.sort,
@@ -166,6 +167,12 @@ beforeEach((): void => {
       const result = (await response.clone().json()) as { code: number };
       if (result.code === 0) claimed.add(claim[1]!);
       return response;
+    }
+    const abandon = path.match(/^\/app\/task\/instance\/(\d+)\/abandon$/);
+    if (abandon && init?.method === "POST") {
+      expect(init.body).toBe(JSON.stringify({ expectedRevision: "1" }));
+      claimed.delete(abandon[1]!);
+      return ok(null);
     }
     if (path === "/app/task/instance/plaza") return ok(plaza());
     if (/^\/app\/item\/\d+\/flow$/.test(path)) return ok(flow());
@@ -238,7 +245,7 @@ function open(entry: Entry): HTMLButtonElement {
     render(<TaskPlaza />);
     return button("接取", entry === "大厅后续阶段" ? 1 : 0);
   }
-  render(<WorkflowInstance itemId="21" />);
+  render(<WorkflowInstance itemId="21" isProjectCreator={false} />);
   if (entry === "流程详情") {
     act(() => click(button("查看翻译任务详情")));
     return button("接取");
@@ -367,7 +374,28 @@ test("切换项目后旧流程接取响应不误报成功", async (): Promise<vo
   act(() => click(card));
   await vi.waitFor(() => expect(claimIds).toHaveLength(1));
   seed("22");
-  render(<WorkflowInstance itemId="22" />);
+  render(<WorkflowInstance itemId="22" isProjectCreator={false} />);
   await finish(ok({ autoJoinedProject: true }));
   expect(tip).not.toHaveBeenCalled();
+});
+
+test("接取成功后的本人放弃使用真实 revision 且无需原因，成功刷新接取入口", async (): Promise<void> => {
+  const target = open("流程详情");
+  act(() => click(target));
+  await vi.waitFor(() => expect(claimIds).toHaveLength(1));
+  await finish(ok({ autoJoinedProject: true }));
+  await vi.waitFor(() => expect(button("放弃")).toBeDefined());
+  act(() => click(button("放弃")));
+  await act(async () => {
+    const confirm = Array.from(document.querySelectorAll("[role='dialog'] button")).find(
+      (entry) => entry.textContent?.trim() === "放弃",
+    );
+    if (!(confirm instanceof HTMLButtonElement)) throw new Error("缺少放弃确认按钮");
+    click(confirm);
+  });
+  await vi.waitFor(() => expect(button("接取")).toBeDefined());
+  expect(
+    send.mock.calls.filter(([url]) => url.endsWith("/app/task/instance/11/abandon")),
+  ).toHaveLength(1);
+  expect(tip).toHaveBeenLastCalledWith("已放弃任务", "success");
 });
