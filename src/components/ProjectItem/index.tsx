@@ -34,13 +34,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
 import { PROJECT_ITEMS_PAGE_SIZE as PAGE_SIZE, projectItemsQuery } from "@/queries/planning";
-import { cn } from "@/lib/utils";
+import ProjectItemNodeList from "./ProjectItemNodeList";
 
-import type {
-  ProjectItemListVO,
-  ProjectItemNodeState,
-  ProjectItemNodeVO,
-} from "@/types/projectItem";
+import type { ProjectItemListVO } from "@/types/projectItem";
 
 interface ProjectItemSectionProps {
   projectId: string;
@@ -51,54 +47,6 @@ interface ProjectItemSectionProps {
 interface ProjectItemForm {
   title: string;
   taskTemplateId: string;
-}
-
-const NODE_LABELS: Record<ProjectItemNodeState, string> = {
-  COMPLETED: "完成",
-  IN_PROGRESS: "当前",
-  LOCKED: "锁定",
-};
-
-function sortNodes(nodes: ProjectItemNodeVO[]): ProjectItemNodeVO[] {
-  return [...nodes].sort((prev, next) => {
-    if (prev.sort !== next.sort) return prev.sort - next.sort;
-    return prev.parallelSort - next.parallelSort;
-  });
-}
-
-function ProjectItemNodeList({ nodes }: { nodes: ProjectItemNodeVO[] }) {
-  if (nodes.length === 0) {
-    return <p className="text-sm text-muted-foreground">暂无节点信息</p>;
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {sortNodes(nodes).map((node, index) => (
-        <div
-          key={`${node.sort}-${node.parallelSort}-${node.name}`}
-          className={cn(
-            "flex max-w-full items-center gap-1 rounded-md px-1.5 py-1 text-xs",
-            node.state === "IN_PROGRESS"
-              ? "bg-muted font-medium text-foreground"
-              : "text-muted-foreground",
-          )}
-        >
-          <span className="max-w-24 truncate">{node.name}</span>
-          {node.parallelCount > 1 && (
-            <span className="text-[10px] text-muted-foreground">+{node.parallelCount - 1}</span>
-          )}
-          <span className={cn("text-[10px]", node.state !== "IN_PROGRESS" && "sr-only")}>
-            {NODE_LABELS[node.state]}
-          </span>
-          {index < nodes.length - 1 && (
-            <span aria-hidden className="ml-1 text-border">
-              /
-            </span>
-          )}
-        </div>
-      ))}
-    </div>
-  );
 }
 
 export default function ProjectItemSection({
@@ -264,7 +212,8 @@ export default function ProjectItemSection({
           <div>
             <h2
               id="project-workspace-title"
-              className="flex items-center gap-2 text-base font-semibold text-foreground"
+              tabIndex={-1}
+              className="flex items-center gap-2 rounded-sm text-base font-semibold text-foreground outline-none data-[locate-highlight]:ring-2 data-[locate-highlight]:ring-ring data-[locate-highlight]:ring-offset-4"
             >
               <Workflow className="h-4 w-4 text-muted-foreground" />
               项目
