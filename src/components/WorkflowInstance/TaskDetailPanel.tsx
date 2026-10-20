@@ -19,6 +19,7 @@ import type {
 } from "@/types/workflowInstance";
 import { createItemLifecycle } from "./itemLifecycle";
 import { AttachmentOpenError, openTaskAttachment, type AttachmentPopup } from "./taskAttachments";
+import type { OwnerTaskAction } from "./taskPermissions";
 
 interface TaskDetailActions {
   currentUserId?: string | null;
@@ -26,6 +27,9 @@ interface TaskDetailActions {
   canSubmit: boolean;
   canReset: boolean;
   canReject: boolean;
+  canOwnerCancel: boolean;
+  canOwnerReject: boolean;
+  onOwnerAction: (action: OwnerTaskAction) => void;
   onClaim: () => void;
   onSubmit: () => void;
   onAbandon: () => void;
@@ -232,13 +236,33 @@ function TaskActions({
           打回
         </Button>
       )}
+      {actions.canOwnerCancel && (
+        <Button
+          size="sm"
+          variant="destructive"
+          disabled={actions.mutating}
+          onClick={() => actions.onOwnerAction("cancel")}
+        >
+          取消接取
+        </Button>
+      )}
+      {actions.canOwnerReject && (
+        <Button
+          size="sm"
+          variant="destructive"
+          disabled={actions.mutating}
+          onClick={() => actions.onOwnerAction("reject")}
+        >
+          负责人打回
+        </Button>
+      )}
     </div>
   );
 }
 
 export default function TaskDetailPanel({ title, node, instance, actions }: TaskDetailPanelProps) {
   const instanceId = node.taskStatus === null ? undefined : (node.taskInstanceId ?? instance?.id);
-  const contextKey = `${instanceId}:${instance?.status}:${instance?.completedAt}`;
+  const contextKey = `${instanceId}:${instance?.status}:${instance?.revision}:${instance?.completedAt}`;
   const lifecycle = useRef(createItemLifecycle(contextKey));
   lifecycle.current.switchTo(contextKey);
   const isCurrent = lifecycle.current.capture();

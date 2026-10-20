@@ -7,6 +7,7 @@ function instance(
   overrides: Partial<ItemTaskInstanceVO> & Pick<ItemTaskInstanceVO, "id">,
 ): ItemTaskInstanceVO {
   return {
+    revision: "0",
     name: "翻译",
     status: "CLAIMED",
     sort: 1,

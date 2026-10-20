@@ -23,6 +23,7 @@ export interface ItemTaskNodeVO {
 
 export interface ItemTaskInstanceVO {
   id: string;
+  revision: string;
   name: string;
   status: TaskInstanceStatus;
   sort: number;
@@ -91,4 +92,9 @@ export interface TaskSubmissionVersionVO {
 
 export interface TaskRejectDTO {
   reviewComment: string;
+}
+
+export interface TaskOwnerActionDTO {
+  expectedRevision: string;
+  reason: string;
 }

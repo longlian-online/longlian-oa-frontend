@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Copy } from "lucide-react";
 
-import { abandonTask, claimTask, rejectTask, resetTask, submitTask } from "@/api/workflowInstance";
+import {
+  abandonTask,
+  claimTask,
+  ownerCancelTask,
+  ownerRejectTask,
+  rejectTask,
+  resetTask,
+  submitTask,
+} from "@/api/workflowInstance";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,11 +24,11 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { getUserId } from "@/lib/session";
 import { formatTaskTitle, slotPosition } from "@/lib/slotLabel";
 import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
-import { createItemLifecycle } from "./itemLifecycle";
 import { buildParticipantRoster } from "./participantRoster";
 import TaskDetailPanel from "./TaskDetailPanel";
 import { scrollTaskDetailIntoView } from "./scrollTaskDetailIntoView";
-import { canReset, canReject } from "./taskPermissions";
+import { canReset, canReject, canOwnerAct, type OwnerTaskAction } from "./taskPermissions";
+import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
 import TaskFlowViewer from "./TaskFlowViewer";
 import TaskSubmitPanel from "./TaskSubmitPanel";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
@@ -29,6 +37,7 @@ import type { ItemTaskInstanceVO, ItemTaskNodeVO, TaskSubmitDTO } from "@/types/
 
 interface WorkflowInstanceProps {
   itemId: string;
+  isProjectCreator: boolean;
 }
 
 function getSortedInstances(instances: ItemTaskInstanceVO[]): ItemTaskInstanceVO[] {
@@ -55,12 +64,13 @@ function isNodeUnlocked(node: ItemTaskNodeVO, nodes: ItemTaskNodeVO[]): boolean 
     .every((candidate) => candidate.taskStatus === "COMPLETED");
 }
 
-export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
+export default function WorkflowInstance(props: WorkflowInstanceProps) {
+  return <ItemWorkflowInstance key={props.itemId} {...props} />;
+}
+
+function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const currentUserId = getUserId();
-  const lifecycle = useRef(createItemLifecycle(itemId));
-  lifecycle.current.switchTo(itemId);
-  const capturedLifecycle = lifecycle.current.capture();
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -68,7 +78,7 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
       mounted.current = false;
     };
   }, []);
-  const isCurrentLifecycle = (): boolean => mounted.current && capturedLifecycle();
+  const isCurrentLifecycle = (): boolean => mounted.current;
   const actionLock = useRef(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const detailPanelRef = useRef<HTMLDivElement>(null);
@@ -78,7 +88,14 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   const taskFlow = flowQuery.data;
   const instances = instancesQuery.data ?? [];
   const actionMutation = useApiMutation({
-    mutationFn: ({ action }: { instanceId: string; action: () => Promise<void> }) => action(),
+    mutationFn: async ({ action }: { instanceId: string; action: () => Promise<void> }) => {
+      try {
+        await action();
+      } catch (error) {
+        if (!mounted.current) throw new DOMException("操作项目已切换", "AbortError");
+        throw error;
+      }
+    },
     invalidate: [
       ["flow"],
       ["instances"],
@@ -97,6 +114,11 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
   } | null>(null);
   const [rejectTarget, setRejectTarget] = useState<ItemTaskInstanceVO | null>(null);
   const [rejectComment, setRejectComment] = useState("");
+  const [ownerTarget, setOwnerTarget] = useState<{
+    action: OwnerTaskAction;
+    instance: ItemTaskInstanceVO;
+    title: string;
+  } | null>(null);
   const sortedInstances = useMemo(() => getSortedInstances(instances), [instances]);
   const participantRoster = useMemo(
     () => (taskFlow ? buildParticipantRoster(taskFlow.itemTitle, instances) : ""),
@@ -111,13 +133,6 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
             instance.parallelSort === selectedNode.parallelSort,
       )
     : undefined;
-
-  useEffect(() => {
-    setSelectedNodeId(null);
-    setSubmitTarget(null);
-    setRejectTarget(null);
-    setRejectComment("");
-  }, [itemId]);
 
   const selectNode = useCallback((nodeId: string) => {
     setSelectedNodeId(nodeId);
@@ -194,6 +209,27 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
       setRejectTarget(null);
       setRejectComment("");
     }
+  }
+
+  async function handleOwnerAction(reason: string): Promise<boolean> {
+    if (!ownerTarget || !reason.trim() || reason.trim().length > 500) return false;
+    const { action, instance } = ownerTarget;
+    const current = instances.find((candidate) => candidate.id === instance.id);
+    if (
+      !current ||
+      current.revision !== instance.revision ||
+      !canOwnerAct(action, current, instances, isProjectCreator)
+    ) {
+      $tip("任务状态已变更或无操作权限，请刷新后重新操作", "error");
+      return false;
+    }
+    const dto = { expectedRevision: instance.revision, reason: reason.trim() };
+    return runInstanceAction(
+      instance.id,
+      () =>
+        action === "cancel" ? ownerCancelTask(instance.id, dto) : ownerRejectTask(instance.id, dto),
+      action === "cancel" ? "已取消接取" : "任务已打回",
+    );
   }
 
   async function handleAbandon(instanceId: string): Promise<void> {
@@ -311,6 +347,27 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
                       instances,
                       currentUserId,
                     ),
+                    canOwnerCancel: canOwnerAct(
+                      "cancel",
+                      selectedInstance,
+                      instances,
+                      isProjectCreator,
+                    ),
+                    canOwnerReject: canOwnerAct(
+                      "reject",
+                      selectedInstance,
+                      instances,
+                      isProjectCreator,
+                    ),
+                    onOwnerAction: (action) =>
+                      setOwnerTarget({
+                        action,
+                        instance: selectedInstance,
+                        title: formatTaskTitle(
+                          taskFlow.itemTitle,
+                          slotPosition(selectedNode, taskFlow.nodes),
+                        ),
+                      }),
                     onClaim: () =>
                       void runInstanceAction(
                         selectedInstance.id,
@@ -347,6 +404,17 @@ export default function WorkflowInstance({ itemId }: WorkflowInstanceProps) {
             actionMutation.variables?.instanceId === submitTarget.instance.id
           }
           onSubmit={handleSubmit}
+        />
+      )}
+
+      {ownerTarget && (
+        <OwnerTaskActionDialog
+          key={`${itemId}:${ownerTarget.instance.id}:${ownerTarget.action}:${ownerTarget.instance.revision}`}
+          action={ownerTarget.action}
+          instance={ownerTarget.instance}
+          taskTitle={ownerTarget.title}
+          onClose={() => setOwnerTarget(null)}
+          onConfirm={handleOwnerAction}
         />
       )}
 

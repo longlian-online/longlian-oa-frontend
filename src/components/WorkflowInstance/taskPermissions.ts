@@ -28,3 +28,22 @@ export function canReject(
     )
   );
 }
+
+export type OwnerTaskAction = "cancel" | "reject";
+
+export function canOwnerAct(
+  action: OwnerTaskAction,
+  instance: ItemTaskInstanceVO,
+  instances: ItemTaskInstanceVO[],
+  isProjectCreator: boolean,
+): boolean {
+  return (
+    isProjectCreator &&
+    typeof instance.revision === "string" &&
+    /^\d+$/.test(instance.revision) &&
+    instance.status === (action === "cancel" ? "CLAIMED" : "COMPLETED") &&
+    !instances.some(
+      (candidate) => candidate.sort > instance.sort && candidate.status === "COMPLETED",
+    )
+  );
+}
