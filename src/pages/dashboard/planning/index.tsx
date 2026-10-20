@@ -12,7 +12,7 @@ import EmptyState from "@/components/EmptyState";
 import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
-import ProjectMetadataTag from "@/components/ProjectMetadataTag";
+import ProjectCardTags from "@/components/ProjectCardTags";
 import RemoteImage from "@/components/RemoteImage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -213,7 +213,7 @@ function ProjectCard({ project }: ProjectCardProps) {
   return (
     <Link
       to={`/dashboard/planning/${project.id}?view=about`}
-      className="group flex aspect-[5/3] cursor-pointer overflow-hidden rounded-lg border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group flex aspect-[5/3] min-h-48 cursor-pointer overflow-hidden rounded-lg border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="h-full w-[40%] shrink-0 overflow-hidden bg-muted">
         {project.coverUrl ? (
@@ -248,14 +248,7 @@ function ProjectCard({ project }: ProjectCardProps) {
           {project.description || "暂无简介"}
         </p>
 
-        <div className="mt-3 min-h-0 flex-1 overflow-hidden [container-type:size]">
-          {/* 每行 1.5rem，行距 0.375rem；只保留可完整放下的标签行。 */}
-          <div className="flex max-h-[max(0px,calc(round(down,calc(100cqh+0.375rem),1.875rem)-0.375rem))] flex-wrap content-start items-start gap-1.5 overflow-hidden [&>*]:h-6">
-            {metadataTags.map((tag, index) => (
-              <ProjectMetadataTag key={index} tag={tag} compact />
-            ))}
-          </div>
-        </div>
+        <ProjectCardTags tags={metadataTags} />
 
         <div className="mt-auto flex shrink-0 items-center gap-2 pt-3">
           <Avatar className="size-9">

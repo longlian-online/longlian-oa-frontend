@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { ChevronRight, Loader2, Plus, Trash2, Workflow } from "lucide-react";
 
 import {
@@ -108,6 +108,7 @@ export default function ProjectItemSection({
 }: ProjectItemSectionProps) {
   const confirm = useConfirm();
   const navigate = useNavigate();
+  const location = useLocation();
   const [{ page, status, orderDir }, setQuery] = useState<{
     page: number;
     status: "IN_PROGRESS" | "COMPLETED" | "";
@@ -368,7 +369,9 @@ export default function ProjectItemSection({
                   <Button
                     variant="outline"
                     onClick={() =>
-                      void navigate(`/dashboard/planning/${projectId}/items/${item.id}`)
+                      void navigate(`/dashboard/planning/${projectId}/items/${item.id}`, {
+                        state: location.state,
+                      })
                     }
                   >
                     进入任务

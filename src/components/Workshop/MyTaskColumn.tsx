@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { ChevronRight } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
@@ -19,15 +18,20 @@ interface MyTaskColumnProps {
   title: string;
   dotClassName: string;
   sortDirection: MyTaskSortDirection;
+  page: number;
+  onPageChange: (page: number) => void;
 }
 
-export function MyTaskColumn({ bucket, title, dotClassName, sortDirection }: MyTaskColumnProps) {
+export function MyTaskColumn({
+  bucket,
+  title,
+  dotClassName,
+  sortDirection,
+  page,
+  onPageChange,
+}: MyTaskColumnProps) {
   const navigate = useNavigate();
-  const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    setPage(1);
-  }, [sortDirection]);
+  const location = useLocation();
 
   const tasksQuery = useApiQuery(myTasksQuery(bucket, page, sortDirection));
   const tasks = tasksQuery.data?.list ?? [];
@@ -79,9 +83,17 @@ export function MyTaskColumn({ bucket, title, dotClassName, sortDirection }: MyT
                 type="button"
                 className="group flex w-full min-w-0 flex-col gap-0.5 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-muted/70"
                 aria-label={`${titleText}，${task.projectName}，${action}`}
-                onClick={() =>
-                  void navigate(`/dashboard/planning/${task.projectId}/items/${task.itemId}`)
-                }
+                onClick={() => {
+                  const params = new URLSearchParams({
+                    taskInstanceId: task.instanceId,
+                  });
+                  void navigate(
+                    `/dashboard/planning/${task.projectId}/items/${task.itemId}?${params}`,
+                    {
+                      state: { workshopReturnTo: `${location.pathname}${location.search}` },
+                    },
+                  );
+                }}
               >
                 <span className="min-w-0 truncate text-sm font-medium text-foreground">
                   {titleText}
@@ -112,7 +124,7 @@ export function MyTaskColumn({ bucket, title, dotClassName, sortDirection }: MyT
             size="sm"
             className="h-6 px-2 text-xs"
             disabled={loading || page <= 1}
-            onClick={() => setPage(page - 1)}
+            onClick={() => onPageChange(page - 1)}
           >
             上一页
           </Button>
@@ -121,7 +133,7 @@ export function MyTaskColumn({ bucket, title, dotClassName, sortDirection }: MyT
             size="sm"
             className="h-6 px-2 text-xs"
             disabled={loading || page >= totalPages}
-            onClick={() => setPage(page + 1)}
+            onClick={() => onPageChange(page + 1)}
           >
             下一页
           </Button>

@@ -13,6 +13,7 @@ import type {
 
 interface TaskNodeCardProps {
   node: ItemTaskNodeVO;
+  label: string;
   instance?: ItemTaskInstanceVO;
   currentUserId?: string | null;
   selected: boolean;
@@ -48,6 +49,7 @@ function getNodeStyle(status?: TaskInstanceStatus | null) {
 
 export default function TaskNodeCard({
   node,
+  label,
   instance,
   currentUserId,
   selected,
@@ -75,7 +77,7 @@ export default function TaskNodeCard({
     >
       <button
         type="button"
-        aria-label={`查看${node.name}任务详情`}
+        aria-label={`查看${label}任务详情`}
         aria-pressed={selected}
         onClick={onSelect}
         className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -92,7 +94,7 @@ export default function TaskNodeCard({
         <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary/10 text-primary">
           <TaskIcon className="size-3.5" />
         </div>
-        <h3 className="truncate text-sm font-semibold text-foreground">{node.name}</h3>
+        <h3 className="min-w-0 break-words text-sm font-semibold text-foreground">{label}</h3>
       </div>
       <div className="mt-2 flex min-h-8 items-center gap-2">
         {instance?.assigneeNickname ? (
