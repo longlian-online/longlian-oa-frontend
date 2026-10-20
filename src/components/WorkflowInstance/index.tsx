@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy } from "lucide-react";
 
 import { abandonTask, claimTask, rejectTask, resetTask, submitTask } from "@/api/workflowInstance";
@@ -18,7 +18,6 @@ import { formatTaskTitle, slotPosition } from "@/lib/slotLabel";
 import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
 import { buildParticipantRoster } from "./participantRoster";
 import TaskDetailPanel from "./TaskDetailPanel";
-import { scrollTaskDetailIntoView } from "./scrollTaskDetailIntoView";
 import { canReset, canReject, canOwnerAct, type OwnerTaskAction } from "./taskPermissions";
 import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
 import TaskFlowViewer from "./TaskFlowViewer";
@@ -35,6 +34,7 @@ import type {
 interface WorkflowInstanceProps {
   itemId: string;
   isProjectCreator: boolean;
+  taskInstanceId?: string;
 }
 
 function getSortedInstances(instances: ItemTaskInstanceVO[]): ItemTaskInstanceVO[] {
@@ -65,7 +65,7 @@ export default function WorkflowInstance(props: WorkflowInstanceProps) {
   return <ItemWorkflowInstance key={props.itemId} {...props} />;
 }
 
-function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProps) {
+function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const currentUserId = getUserId();
   const mounted = useRef(true);
@@ -78,8 +78,8 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
   const isCurrentLifecycle = (): boolean => mounted.current;
   const actionLock = useRef(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const detailPanelRef = useRef<HTMLDivElement>(null);
-  const [detailScrollNonce, setDetailScrollNonce] = useState(0);
+  const handledEntry = useRef<string | null>(null);
+  const [entryError, setEntryError] = useState("");
   const flowQuery = useApiQuery(itemFlowQuery(itemId));
   const instancesQuery = useApiQuery(itemInstancesQuery(itemId));
   const taskFlow = flowQuery.data;
@@ -136,16 +136,26 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
       )
     : undefined;
 
+  useEffect(() => {
+    if (!taskInstanceId || !taskFlow || !instancesQuery.data) return;
+    if (handledEntry.current === taskInstanceId) return;
+    handledEntry.current = taskInstanceId;
+    setSubmitTarget(null);
+    const node = taskFlow.nodes.find((candidate) => candidate.taskInstanceId === taskInstanceId);
+    const instance = instancesQuery.data.find((candidate) => candidate.id === taskInstanceId);
+    if (!node || !instance) {
+      setSelectedNodeId(null);
+      setEntryError("指定任务不存在或已不可访问，请返回工坊查看最新待办。");
+      return;
+    }
+    setSelectedNodeId(node.id);
+    setEntryError("");
+  }, [taskInstanceId, taskFlow, instancesQuery.data]);
+
   const selectNode = useCallback((nodeId: string) => {
     setSelectedNodeId(nodeId);
-    setDetailScrollNonce((nonce) => nonce + 1);
+    setEntryError("");
   }, []);
-
-  useLayoutEffect(() => {
-    const detail = detailPanelRef.current;
-    if (!selectedNodeId || !detail) return;
-    scrollTaskDetailIntoView(detail);
-  }, [detailScrollNonce, selectedNodeId]);
 
   async function runInstanceAction(
     instanceId: string,
@@ -323,7 +333,10 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
       <header className="flex min-h-12 items-center gap-3 px-1">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">项目任务流</p>
-          <h1 className="truncate text-lg font-semibold text-foreground">{taskFlow.name}</h1>
+          <h1 className="break-words text-lg font-semibold text-foreground">
+            {taskFlow.itemTitle}
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">流程模板：{taskFlow.name}</p>
           {taskFlow.description && (
             <p className="mt-0.5 truncate text-sm text-muted-foreground">{taskFlow.description}</p>
           )}
@@ -341,8 +354,15 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
         </Button>
       </header>
 
+      {entryError && (
+        <p role="alert" className="rounded-lg border px-4 py-3 text-sm text-muted-foreground">
+          {entryError}
+        </p>
+      )}
+
       <TaskFlowViewer
         selectedNodeId={selectedNodeId}
+        initialNodeId={taskFlow.nodes.find((node) => node.taskInstanceId === taskInstanceId)?.id}
         onSelectNode={selectNode}
         nodes={taskFlow.nodes}
         instances={sortedInstances}
@@ -355,7 +375,7 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
       />
 
       {selectedNode ? (
-        <div ref={detailPanelRef}>
+        <div>
           <TaskDetailPanel
             key={`${itemId}:${selectedNode.id}`}
             title={formatTaskTitle(taskFlow.itemTitle, slotPosition(selectedNode, taskFlow.nodes))}
@@ -421,10 +441,15 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
           key={submitTarget.instance.id}
           open
           taskInstanceId={submitTarget.instance.id}
-          taskName={submitTarget.instance.name}
+          taskName={formatTaskTitle(
+            taskFlow.itemTitle,
+            slotPosition(submitTarget.node, taskFlow.nodes),
+          )}
           submitFields={submitTarget.node.submitFields}
           onOpenChange={(open) => {
-            if (!open) setSubmitTarget(null);
+            if (!open) {
+              setSubmitTarget(null);
+            }
           }}
           submitting={
             actionMutation.isPending &&
