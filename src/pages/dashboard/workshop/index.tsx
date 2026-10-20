@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { ArrowDownUp, ChevronRight, Search, Workflow } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
-import {
-  DEFAULT_TASK_SORT,
-  DEFAULT_WORKSHOP_SORT,
-  WORKSHOP_PAGE_SIZE as PAGE_SIZE,
-  workshopListQuery,
-} from "@/queries/workshop";
+import { WORKSHOP_PAGE_SIZE as PAGE_SIZE, workshopListQuery } from "@/queries/workshop";
 import EmptyState from "@/components/EmptyState";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
@@ -24,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { useWorkshopPosition } from "@/hooks/useWorkshopPosition";
+import { readWorkshopView } from "@/lib/workshopNavigation";
 import type { MyTaskSortDirection } from "@/types/myTask";
 import type { WorkshopProjectInfoVO, WorkshopSortBy } from "@/types/workshop";
 
@@ -40,14 +37,24 @@ const SORT_LABELS: Record<WorkshopSortBy, string> = {
 export default function WorkshopPage() {
   const navigate = useNavigate();
   const { projectTypes } = useProjectTypes();
-  const [keyword, setKeyword] = useState("");
-  const [searchText, setSearchText] = useState("");
-  const [selectedType, setSelectedType] = useState("all");
-  const [isMyCreated, setIsMyCreated] = useState(false);
-  const [taskSort, setTaskSort] = useState<MyTaskSortDirection>(DEFAULT_TASK_SORT);
-  const [sortBy, setSortBy] = useState<WorkshopSortBy>(DEFAULT_WORKSHOP_SORT);
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { keyword, selectedType, isMyCreated, taskSort, sortBy, page, submitPage, waitingPage } =
+    readWorkshopView(searchParams);
+  const [searchText, setSearchText] = useState(keyword);
   const [scrollState, setScrollState] = useState({ atStart: true, atEnd: false });
-  const [page, setPage] = useState(1);
+  const rootRef = useWorkshopPosition();
+
+  function updateView(values: Record<string, string | number | null>): void {
+    const next = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(values)) {
+      if (value === null || value === "" || value === 1) next.delete(key);
+      else next.set(key, String(value));
+    }
+    setSearchParams(next, { preventScrollReset: true });
+  }
+
+  useEffect(() => setSearchText(keyword), [keyword]);
 
   const listQuery = useApiQuery(
     workshopListQuery(page, keyword, selectedType, isMyCreated, sortBy),
@@ -75,20 +82,23 @@ export default function WorkshopPage() {
   }, [projectTypes]);
 
   function handleSearch(): void {
-    setKeyword(searchText.trim());
-    setPage(1);
+    updateView({ keyword: searchText.trim(), page: 1 });
   }
 
   function handleOpenWorkflow(project: WorkshopProjectInfoVO): void {
-    void navigate(`/dashboard/planning/${project.id}/items`);
+    void navigate(`/dashboard/planning/${project.id}/items`, {
+      state: { workshopReturnTo: `${location.pathname}${location.search}` },
+    });
   }
 
   function handleOpenProject(project: WorkshopProjectInfoVO): void {
-    void navigate(`/dashboard/planning/${project.id}`);
+    void navigate(`/dashboard/planning/${project.id}`, {
+      state: { workshopReturnTo: `${location.pathname}${location.search}` },
+    });
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
+    <div ref={rootRef} className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
       <h1 className="text-xl font-bold text-foreground">工坊</h1>
 
       <section className="flex min-w-0 flex-col gap-3">
@@ -98,7 +108,7 @@ export default function WorkshopPage() {
             value={taskSort}
             onValueChange={(value: string | null) => {
               if (value !== "ASC" && value !== "DESC") return;
-              setTaskSort(value);
+              updateView({ taskSort: value, submitPage: 1, waitingPage: 1 });
             }}
           >
             <SelectTrigger aria-label="待办排序" className="h-8 w-36 shrink-0">
@@ -120,12 +130,16 @@ export default function WorkshopPage() {
             title="可提交"
             dotClassName="bg-emerald-600"
             sortDirection={taskSort}
+            page={submitPage}
+            onPageChange={(next) => updateView({ submitPage: next })}
           />
           <MyTaskColumn
             bucket="WAITING"
             title="等待中"
             dotClassName="bg-amber-600"
             sortDirection={taskSort}
+            page={waitingPage}
+            onPageChange={(next) => updateView({ waitingPage: next })}
           />
         </div>
       </section>
@@ -142,8 +156,7 @@ export default function WorkshopPage() {
                 value !== "CREATED_ASC"
               )
                 return;
-              setSortBy(value);
-              setPage(1);
+              updateView({ sort: value, page: 1 });
             }}
           >
             <SelectTrigger aria-label="企划排序" className="h-8 w-36 shrink-0">
@@ -173,8 +186,7 @@ export default function WorkshopPage() {
                 className="shrink-0 whitespace-nowrap"
                 aria-pressed={selectedType === "all"}
                 onClick={() => {
-                  setSelectedType("all");
-                  setPage(1);
+                  updateView({ type: null, page: 1 });
                 }}
               >
                 所有类型
@@ -188,8 +200,7 @@ export default function WorkshopPage() {
                   className="shrink-0 whitespace-nowrap"
                   aria-pressed={selectedType === type.name}
                   onClick={() => {
-                    setSelectedType(type.name);
-                    setPage(1);
+                    updateView({ type: type.name, page: 1 });
                   }}
                 >
                   {type.name}
@@ -222,8 +233,7 @@ export default function WorkshopPage() {
             className="shrink-0 whitespace-nowrap"
             aria-pressed={isMyCreated}
             onClick={() => {
-              setIsMyCreated(!isMyCreated);
-              setPage(1);
+              updateView({ mine: isMyCreated ? null : "1", page: 1 });
             }}
           >
             我创建的
@@ -283,7 +293,7 @@ export default function WorkshopPage() {
                 pageSize={PAGE_SIZE}
                 total={total}
                 disabled={loading}
-                onPageChange={setPage}
+                onPageChange={(next) => updateView({ page: next })}
               />
             )}
           </>

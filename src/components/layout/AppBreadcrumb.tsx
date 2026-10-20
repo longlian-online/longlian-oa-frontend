@@ -2,13 +2,20 @@ import { ChevronRight } from "lucide-react";
 import { Link, useLocation } from "react-router";
 
 import { cn } from "@/lib/utils";
+import { useApiQuery } from "@/hooks/queries/useApiQuery";
+import { itemFlowQuery, projectDetailQuery } from "@/queries/planning";
+import { workshopReturnTo } from "@/lib/workshopNavigation";
 
 interface BreadcrumbItem {
   label: string;
   to?: string;
 }
 
-function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
+function getBreadcrumbItems(
+  pathname: string,
+  projectTitle?: string,
+  itemTitle?: string,
+): BreadcrumbItem[] {
   const segments = pathname.split("/").filter(Boolean);
   if (segments[0] !== "dashboard") return [];
 
@@ -19,9 +26,10 @@ function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     if (segments[2] === "item") return [...items, { label: "项目详情" }];
 
     const projectPath = `/dashboard/planning/${segments[2]}`;
-    items.push({ label: "企划详情", to: projectPath });
+    items.push({ label: projectTitle ?? "正在加载企划…", to: projectPath });
     if (segments[3] === "items") {
-      items.push({ label: segments[4] ? "项目任务流" : "项目列表" });
+      items.push({ label: "项目列表", to: `${projectPath}/items` });
+      if (segments[4]) items.push({ label: itemTitle ?? "正在加载项目…" });
     }
     return items;
   }
@@ -52,8 +60,19 @@ function getBreadcrumbItems(pathname: string): BreadcrumbItem[] {
 }
 
 export default function AppBreadcrumb() {
-  const { pathname } = useLocation();
-  const items = getBreadcrumbItems(pathname);
+  const location = useLocation();
+  const { pathname } = location;
+  const segments = pathname.split("/").filter(Boolean);
+  const projectId =
+    segments[1] === "planning" && segments[2] && !["create", "item"].includes(segments[2])
+      ? segments[2]
+      : undefined;
+  const itemId = projectId && segments[3] === "items" ? segments[4] : undefined;
+  const projectQuery = useApiQuery(projectDetailQuery(projectId));
+  const flowQuery = useApiQuery(itemFlowQuery(itemId ?? ""));
+  const items = getBreadcrumbItems(pathname, projectQuery.data?.title, flowQuery.data?.itemTitle);
+  const returnTo = workshopReturnTo(location.state);
+  if (returnTo && segments[1] === "planning") items.unshift({ label: "工坊", to: returnTo });
 
   if (items.length < 2) return null;
 
@@ -68,6 +87,7 @@ export default function AppBreadcrumb() {
               {item.to && !isLast ? (
                 <Link
                   to={item.to}
+                  state={location.state}
                   className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {item.label}

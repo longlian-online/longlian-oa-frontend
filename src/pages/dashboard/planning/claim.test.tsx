@@ -9,6 +9,7 @@ import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import WorkflowInstance from "@/components/WorkflowInstance";
 import TaskNodeCard from "@/components/WorkflowInstance/TaskNodeCard";
 import { createQueryClient } from "@/lib/queryClient";
+import { formatSlotLabel, slotPosition } from "@/lib/slotLabel";
 import { scopedKey } from "@/lib/queryKeys";
 import { clearSession, saveCurrentOrganization, saveSession } from "@/lib/session";
 import { itemFlowQuery, itemInstancesQuery, plazaListQuery } from "@/queries/planning";
@@ -38,6 +39,7 @@ vi.mock("@/components/WorkflowInstance/TaskFlowViewer", () => ({
         <TaskNodeCard
           key={node.id}
           node={node}
+          label={formatSlotLabel(slotPosition(node, props.nodes))}
           instance={props.instances.find((instance) => instance.id === node.taskInstanceId)}
           currentUserId={props.currentUserId}
           selected={props.selectedNodeId === node.id}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   applyNodeChanges,
   Controls,
@@ -19,6 +19,7 @@ import "@xyflow/react/dist/style.css";
 import { Check, Layers2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { formatSlotLabel, slotPosition } from "@/lib/slotLabel";
 import type { ItemTaskInstanceVO, ItemTaskNodeVO } from "@/types/workflowInstance";
 import TaskNodeCard from "./TaskNodeCard";
 
@@ -28,6 +29,7 @@ interface TaskFlowViewerProps {
   currentUserId?: string | null;
   mutatingInstanceId?: string | null;
   selectedNodeId?: string | null;
+  initialNodeId?: string;
   onSelectNode: (nodeId: string) => void;
   onClaim: (instanceId: string) => void;
   onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
@@ -124,6 +126,7 @@ function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
 type TaskFlowNode = Node<
   {
     node: ItemTaskNodeVO;
+    label: string;
     instance?: ItemTaskInstanceVO;
     currentUserId?: string | null;
     selected: boolean;
@@ -187,14 +190,18 @@ function centerStages(nodes: TaskFlowNode[]): TaskFlowNode[] {
   });
 }
 
-function FitInitialLayout() {
+function FitInitialLayout({ nodeId }: { nodeId?: string }) {
   const initialized = useNodesInitialized();
   const { fitView } = useReactFlow();
+  const fitted = useRef(false);
   useEffect(() => {
-    if (!initialized) return;
-    const frame = requestAnimationFrame(() => void fitView({ padding: 0.18, maxZoom: 1 }));
+    if (!initialized || fitted.current) return;
+    const frame = requestAnimationFrame(() => {
+      fitted.current = true;
+      void fitView({ nodes: nodeId ? [{ id: nodeId }] : undefined, padding: 0.25, maxZoom: 1 });
+    });
     return () => cancelAnimationFrame(frame);
-  }, [initialized, fitView]);
+  }, [initialized, fitView, nodeId]);
   return null;
 }
 
@@ -209,13 +216,15 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
         groups.flatMap((group) =>
           group.nodes.map((node) => {
             const instance = findInstance(node, props.instances);
+            const label = formatSlotLabel(slotPosition(node, props.nodes));
             return {
               id: node.id,
               type: "task" as const,
               position: { x: 0, y: 0 },
-              ariaLabel: `${node.name}，阶段 ${node.sort}`,
+              ariaLabel: `${label}，阶段 ${node.sort}`,
               data: {
                 node,
+                label,
                 instance,
                 currentUserId: props.currentUserId,
                 selected: node.id === props.selectedNodeId,
@@ -313,7 +322,7 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
           fitViewOptions={{ padding: 0.18, maxZoom: 1 }}
           proOptions={{ hideAttribution: true }}
         >
-          <FitInitialLayout />
+          <FitInitialLayout nodeId={props.initialNodeId} />
           <Controls
             showInteractive={false}
             className="overflow-hidden rounded-lg border border-border [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground [&>button>svg]:!fill-current"
