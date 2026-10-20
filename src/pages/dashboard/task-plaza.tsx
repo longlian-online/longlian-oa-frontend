@@ -5,6 +5,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { ArrowUpDown, ChevronDown, ChevronUp, Info, Filter, Sparkles } from "lucide-react";
 
 import { scopedKey } from "@/lib/queryKeys";
+import { cn } from "@/lib/utils";
 import { projectThumbnailSrc } from "@/lib/projectThumbnail";
 import { formatSlotLabel } from "@/lib/slotLabel";
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
@@ -168,10 +169,17 @@ export default function TaskPlaza() {
 
       <div role="group" aria-label="任务阶段范围" className="flex gap-4 border-b pb-2">
         {(["ALL", "CURRENT"] as const).map((scope) => (
-          <div key={scope} className="flex items-center gap-0.5">
+          <div
+            key={scope}
+            className={cn(
+              "flex items-center rounded-lg pr-0.5",
+              stageScope === scope && "bg-secondary",
+            )}
+          >
             <Button
               aria-pressed={stageScope === scope}
-              variant={stageScope === scope ? "secondary" : "ghost"}
+              variant="ghost"
+              className="pr-0"
               onClick={() => {
                 const next = new URLSearchParams(searchParams);
                 next.set("stageScope", scope);
