@@ -212,7 +212,7 @@ function ProjectCard({ project }: ProjectCardProps) {
 
   return (
     <Link
-      to={`/dashboard/planning/${project.id}`}
+      to={`/dashboard/planning/${project.id}?view=about`}
       className="group flex aspect-[5/3] min-h-48 cursor-pointer overflow-hidden rounded-lg border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="h-full w-[40%] shrink-0 overflow-hidden bg-muted">
