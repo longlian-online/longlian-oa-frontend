@@ -32,7 +32,10 @@ jobs:
           CNB_GIT_TOKEN: ${{ secrets.CNB_GIT_TOKEN }}
         run: |
           set -euo pipefail
-          : "${CNB_GIT_TOKEN:?CNB_GIT_TOKEN is required}"
+          if [[ -z "${CNB_GIT_TOKEN}" ]]; then
+            echo "CNB_GIT_TOKEN 未配置，跳过 CNB 代码同步。"
+            exit 0
+          fi
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git remote add cnb "https://cnb:${CNB_GIT_TOKEN}@cnb.cool/longlian.online/longlian-oa-frontend.git"
           git push --no-force cnb 'refs/heads/*:refs/heads/*'
