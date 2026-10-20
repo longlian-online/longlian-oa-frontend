@@ -106,11 +106,15 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-async function render(itemId = "item", isProjectCreator = true): Promise<void> {
+async function render(
+  itemId = "item",
+  isProjectCreator = true,
+  entry: { taskInstanceId?: string; submitOnEntry?: boolean } = {},
+): Promise<void> {
   await act(async () =>
     root?.render(
       <QueryClientProvider client={client}>
-        <WorkflowInstance itemId={itemId} isProjectCreator={isProjectCreator} />
+        <WorkflowInstance itemId={itemId} isProjectCreator={isProjectCreator} {...entry} />
       </QueryClientProvider>,
     ),
   );
@@ -364,3 +368,63 @@ test("an open next-stage rejection cannot act on a refreshed revision and retain
   expect(api.rejectTask).not.toHaveBeenCalled();
   expect(document.querySelector("textarea")?.value).toBe("保留旧版本意见");
 });
+
+async function mountEntry(taskInstanceId: string, submitOnEntry = false): Promise<void> {
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+  await render("item", false, { taskInstanceId, submitOnEntry });
+  await vi.waitFor(() => expect(document.querySelector("h2")).not.toBeNull());
+}
+
+test("submission entry targets the exact parallel instance without asking the user to select a node", async () => {
+  tasks = [1, 2, 3].map((index) =>
+    task({ id: `slot${index}`, parallelSort: index, assigneeId: "creator" }),
+  );
+  api.submitTask.mockImplementation(async (id: string) => {
+    tasks = tasks.map((entry) => (entry.id === id ? { ...entry, status: "COMPLETED" } : entry));
+  });
+  await mountEntry("slot2", true);
+  expect(document.querySelector("[role='dialog']")?.textContent).toContain("第一话 · 翻译 · 2/3");
+  const submit = [...document.querySelectorAll("[role='dialog'] button")].find(
+    (button) => button.textContent === "提交",
+  );
+  await act(async () => (submit as HTMLButtonElement).click());
+  await vi.waitFor(() => expect(document.querySelector("[role='dialog']")).toBeNull());
+  expect(api.submitTask).toHaveBeenCalledExactlyOnceWith("slot2", { values: {} });
+  expect(tasks.map((entry) => entry.status)).toEqual(["CLAIMED", "COMPLETED", "CLAIMED"]);
+  expect(document.querySelector("h2")?.textContent).toBe("第一话 · 翻译 · 2/3");
+});
+
+test("closing an entry form retains the selected slot and query refresh does not reopen it", async () => {
+  tasks = [task({ assigneeId: "creator" })];
+  await mountEntry("target", true);
+  await act(async () => findButton("取消")?.click());
+  await act(async () => {
+    await client.invalidateQueries();
+  });
+  expect(document.querySelector("[role='dialog']")).toBeNull();
+  expect(document.querySelector("h2")?.textContent).toBe("第一话 · 翻译");
+  expect(api.submitTask).not.toHaveBeenCalled();
+});
+
+test("a stale submittable entry remains on its task and exposes the current blocker instead of a form", async () => {
+  tasks = [task({ id: "blocker" }), task({ sort: 2, assigneeId: "creator" })];
+  await mountEntry("target", true);
+  expect(document.querySelector("h2")?.textContent).toBe("第一话 · 翻译（第 2 步）");
+  expect(document.querySelector("[role='status']")?.textContent).toContain("等翻译（第 1 步）");
+  expect(document.querySelector("[role='dialog']")).toBeNull();
+  expect(findButton("放弃")).toBeDefined();
+});
+
+test.each(["CLAIMED", "COMPLETED"] as const)(
+  "a %s entry cannot open a submission form for another assignee",
+  async (status) => {
+    tasks = [task({ status })];
+    await mountEntry("target", true);
+    expect(document.querySelector("h2")?.textContent).toBe("第一话 · 翻译");
+    expect(document.querySelector("[role='alert']")).not.toBeNull();
+    expect(document.querySelector("[role='dialog']")).toBeNull();
+    expect(api.submitTask).not.toHaveBeenCalled();
+  },
+);

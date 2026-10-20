@@ -13,6 +13,8 @@ import type {
 
 interface TaskNodeCardProps {
   node: ItemTaskNodeVO;
+  label: string;
+  blocking?: boolean;
   instance?: ItemTaskInstanceVO;
   currentUserId?: string | null;
   selected: boolean;
@@ -48,6 +50,8 @@ function getNodeStyle(status?: TaskInstanceStatus | null) {
 
 export default function TaskNodeCard({
   node,
+  label,
+  blocking,
   instance,
   currentUserId,
   selected,
@@ -71,11 +75,12 @@ export default function TaskNodeCard({
         "relative w-60 rounded-xl border bg-card p-3.5 shadow-sm",
         style.className,
         selected && "ring-2 ring-primary",
+        blocking && "border-amber-500 ring-1 ring-amber-500/50",
       )}
     >
       <button
         type="button"
-        aria-label={`查看${node.name}任务详情`}
+        aria-label={`查看${label}任务详情`}
         aria-pressed={selected}
         onClick={onSelect}
         className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -92,8 +97,11 @@ export default function TaskNodeCard({
         <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary/10 text-primary">
           <TaskIcon className="size-3.5" />
         </div>
-        <h3 className="truncate text-sm font-semibold text-foreground">{node.name}</h3>
+        <h3 className="min-w-0 break-words text-sm font-semibold text-foreground">{label}</h3>
       </div>
+      {blocking && (
+        <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">阻塞前置</p>
+      )}
       <div className="mt-2 flex min-h-8 items-center gap-2">
         {instance?.assigneeNickname ? (
           <>

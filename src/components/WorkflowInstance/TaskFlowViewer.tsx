@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   applyNodeChanges,
   Controls,
@@ -19,6 +19,7 @@ import "@xyflow/react/dist/style.css";
 import { Check, Layers2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { formatSlotLabel, slotPosition } from "@/lib/slotLabel";
 import type { ItemTaskInstanceVO, ItemTaskNodeVO } from "@/types/workflowInstance";
 import TaskNodeCard from "./TaskNodeCard";
 
@@ -28,6 +29,7 @@ interface TaskFlowViewerProps {
   currentUserId?: string | null;
   mutatingInstanceId?: string | null;
   selectedNodeId?: string | null;
+  blockingNodeId?: string;
   onSelectNode: (nodeId: string) => void;
   onClaim: (instanceId: string) => void;
   onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
@@ -59,9 +61,10 @@ function findInstance(node: ItemTaskNodeVO, instances: ItemTaskInstanceVO[]) {
 interface StageTimelineProps {
   groups: NodeGroup[];
   currentStageSort?: number;
+  blockingStageSort?: number;
 }
 
-function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
+function StageTimeline({ groups, currentStageSort, blockingStageSort }: StageTimelineProps) {
   return (
     <div className="mt-4 overflow-x-auto pb-1">
       <ol className="flex min-w-max items-start px-1">
@@ -70,6 +73,7 @@ function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
           const stageName = Array.from(new Set(group.nodes.map((node) => node.name))).join(" / ");
           const isCompleted = completed === group.nodes.length;
           const isCurrent = group.sort === currentStageSort;
+          const isBlocking = group.sort === blockingStageSort;
           const previousGroup = groups[index - 1];
           const previousCompleted = previousGroup
             ? previousGroup.nodes.every((node) => node.taskStatus === "COMPLETED")
@@ -112,6 +116,11 @@ function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
               </span>
               <span className="mt-0.5 text-[11px] text-muted-foreground">
                 {completed}/{group.nodes.length} 完成
+                {isBlocking && (
+                  <span className="block font-medium text-amber-700 dark:text-amber-400">
+                    阻塞阶段
+                  </span>
+                )}
               </span>
             </li>
           );
@@ -124,6 +133,8 @@ function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
 type TaskFlowNode = Node<
   {
     node: ItemTaskNodeVO;
+    label: string;
+    blocking: boolean;
     instance?: ItemTaskInstanceVO;
     currentUserId?: string | null;
     selected: boolean;
@@ -187,14 +198,29 @@ function centerStages(nodes: TaskFlowNode[]): TaskFlowNode[] {
   });
 }
 
-function FitInitialLayout() {
+function FitInitialLayout({
+  selectedNodeId,
+  blockingNodeId,
+}: {
+  selectedNodeId?: string | null;
+  blockingNodeId?: string;
+}) {
   const initialized = useNodesInitialized();
   const { fitView } = useReactFlow();
+  const fitted = useRef<string | null>(null);
   useEffect(() => {
     if (!initialized) return;
-    const frame = requestAnimationFrame(() => void fitView({ padding: 0.18, maxZoom: 1 }));
+    const target = `${selectedNodeId ?? "all"}:${blockingNodeId ?? ""}`;
+    if (fitted.current === target) return;
+    const frame = requestAnimationFrame(() => {
+      fitted.current = target;
+      const nodes = selectedNodeId
+        ? [{ id: selectedNodeId }, ...(blockingNodeId ? [{ id: blockingNodeId }] : [])]
+        : undefined;
+      void fitView({ nodes, padding: 0.25, maxZoom: 1 });
+    });
     return () => cancelAnimationFrame(frame);
-  }, [initialized, fitView]);
+  }, [initialized, fitView, selectedNodeId, blockingNodeId]);
   return null;
 }
 
@@ -209,13 +235,16 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
         groups.flatMap((group) =>
           group.nodes.map((node) => {
             const instance = findInstance(node, props.instances);
+            const label = formatSlotLabel(slotPosition(node, props.nodes));
             return {
               id: node.id,
               type: "task" as const,
               position: { x: 0, y: 0 },
-              ariaLabel: `${node.name}，阶段 ${node.sort}`,
+              ariaLabel: `${label}，阶段 ${node.sort}`,
               data: {
                 node,
+                label,
+                blocking: node.id === props.blockingNodeId,
                 instance,
                 currentUserId: props.currentUserId,
                 selected: node.id === props.selectedNodeId,
@@ -236,6 +265,7 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
       props.instances,
       props.currentUserId,
       props.selectedNodeId,
+      props.blockingNodeId,
       props.mutatingInstanceId,
       props.nodes,
       props.onSelectNode,
@@ -294,7 +324,11 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
           <Layers2 className="size-4 text-muted-foreground" />
           流程进度
         </div>
-        <StageTimeline groups={groups} currentStageSort={currentStageSort} />
+        <StageTimeline
+          groups={groups}
+          currentStageSort={currentStageSort}
+          blockingStageSort={props.nodes.find((node) => node.id === props.blockingNodeId)?.sort}
+        />
       </div>
       <div className="h-[520px] bg-muted/20">
         <ReactFlow<TaskFlowNode, Edge>
@@ -307,13 +341,16 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
           edgesReconnectable={false}
           elementsSelectable={false}
           deleteKeyCode={null}
-          minZoom={0.25}
+          minZoom={0.1}
           maxZoom={1.5}
           fitView
           fitViewOptions={{ padding: 0.18, maxZoom: 1 }}
           proOptions={{ hideAttribution: true }}
         >
-          <FitInitialLayout />
+          <FitInitialLayout
+            selectedNodeId={props.selectedNodeId}
+            blockingNodeId={props.blockingNodeId}
+          />
           <Controls
             showInteractive={false}
             className="overflow-hidden rounded-lg border border-border [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground [&>button>svg]:!fill-current"

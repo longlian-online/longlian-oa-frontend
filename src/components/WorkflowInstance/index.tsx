@@ -14,11 +14,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { getUserId } from "@/lib/session";
-import { formatTaskTitle, slotPosition } from "@/lib/slotLabel";
+import { formatSlotLabel, formatTaskTitle, slotPosition } from "@/lib/slotLabel";
 import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
 import { buildParticipantRoster } from "./participantRoster";
 import TaskDetailPanel from "./TaskDetailPanel";
 import { scrollTaskDetailIntoView } from "./scrollTaskDetailIntoView";
+import { findBlockingNode } from "./taskNavigation";
 import { canReset, canReject, canOwnerAct, type OwnerTaskAction } from "./taskPermissions";
 import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
 import TaskFlowViewer from "./TaskFlowViewer";
@@ -35,6 +36,10 @@ import type {
 interface WorkflowInstanceProps {
   itemId: string;
   isProjectCreator: boolean;
+  taskInstanceId?: string;
+  submitOnEntry?: boolean;
+  onSelectTask?: (instanceId?: string) => void;
+  onSubmitClose?: () => void;
 }
 
 function getSortedInstances(instances: ItemTaskInstanceVO[]): ItemTaskInstanceVO[] {
@@ -65,7 +70,14 @@ export default function WorkflowInstance(props: WorkflowInstanceProps) {
   return <ItemWorkflowInstance key={props.itemId} {...props} />;
 }
 
-function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProps) {
+function ItemWorkflowInstance({
+  itemId,
+  isProjectCreator,
+  taskInstanceId,
+  submitOnEntry,
+  onSelectTask,
+  onSubmitClose,
+}: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const currentUserId = getUserId();
   const mounted = useRef(true);
@@ -78,6 +90,8 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
   const isCurrentLifecycle = (): boolean => mounted.current;
   const actionLock = useRef(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const handledEntry = useRef<string | null>(null);
+  const [entryError, setEntryError] = useState("");
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const [detailScrollNonce, setDetailScrollNonce] = useState(0);
   const flowQuery = useApiQuery(itemFlowQuery(itemId));
@@ -136,14 +150,54 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
       )
     : undefined;
 
-  const selectNode = useCallback((nodeId: string) => {
-    setSelectedNodeId(nodeId);
-    setDetailScrollNonce((nonce) => nonce + 1);
-  }, []);
+  const blockingNode = selectedNode
+    ? findBlockingNode(selectedNode, taskFlow?.nodes ?? [])
+    : undefined;
+
+  useEffect(() => {
+    if (!taskInstanceId || !taskFlow || !instancesQuery.data) return;
+    const entryKey = `${taskInstanceId}:${Boolean(submitOnEntry)}`;
+    if (handledEntry.current === entryKey) return;
+    handledEntry.current = entryKey;
+    setSubmitTarget(null);
+    const node = taskFlow.nodes.find((candidate) => candidate.taskInstanceId === taskInstanceId);
+    const instance = instancesQuery.data.find((candidate) => candidate.id === taskInstanceId);
+    if (!node || !instance) {
+      setSelectedNodeId(null);
+      setEntryError("指定任务不存在或已不可访问，请返回工坊查看最新待办。");
+      return;
+    }
+    setSelectedNodeId(node.id);
+    setEntryError("");
+    if (!submitOnEntry) return;
+    if (
+      instance.status !== "CLAIMED" ||
+      instance.assigneeId !== currentUserId ||
+      node.taskStatus === null
+    ) {
+      setEntryError("任务状态或执行人已变更，已定位原任务，请查看最新状态。");
+    } else if (!isNodeUnlocked(node, taskFlow.nodes)) {
+      setEntryError("前置阶段尚未完成，已定位当前任务及阻塞阶段。");
+    } else {
+      setSubmitTarget({ instance, node });
+    }
+  }, [taskInstanceId, submitOnEntry, taskFlow, instancesQuery.data, currentUserId]);
+
+  const selectNode = useCallback(
+    (nodeId: string) => {
+      setSelectedNodeId(nodeId);
+      setEntryError("");
+      setDetailScrollNonce((nonce) => nonce + 1);
+      onSelectTask?.(
+        taskFlow?.nodes.find((node) => node.id === nodeId)?.taskInstanceId ?? undefined,
+      );
+    },
+    [onSelectTask, taskFlow],
+  );
 
   useLayoutEffect(() => {
     const detail = detailPanelRef.current;
-    if (!selectedNodeId || !detail) return;
+    if (!detailScrollNonce || !selectedNodeId || !detail) return;
     scrollTaskDetailIntoView(detail);
   }, [detailScrollNonce, selectedNodeId]);
 
@@ -323,7 +377,10 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
       <header className="flex min-h-12 items-center gap-3 px-1">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">项目任务流</p>
-          <h1 className="truncate text-lg font-semibold text-foreground">{taskFlow.name}</h1>
+          <h1 className="break-words text-lg font-semibold text-foreground">
+            {taskFlow.itemTitle}
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">流程模板：{taskFlow.name}</p>
           {taskFlow.description && (
             <p className="mt-0.5 truncate text-sm text-muted-foreground">{taskFlow.description}</p>
           )}
@@ -341,8 +398,25 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
         </Button>
       </header>
 
+      {entryError && (
+        <p role="alert" className="rounded-lg border px-4 py-3 text-sm text-muted-foreground">
+          {entryError}
+        </p>
+      )}
+      {selectedNode && blockingNode && (
+        <p
+          className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm"
+          role="status"
+        >
+          当前任务：
+          {formatTaskTitle(taskFlow.itemTitle, slotPosition(selectedNode, taskFlow.nodes))}； 等
+          {formatSlotLabel(slotPosition(blockingNode, taskFlow.nodes))}完成后可提交。
+        </p>
+      )}
+
       <TaskFlowViewer
         selectedNodeId={selectedNodeId}
+        blockingNodeId={blockingNode?.id}
         onSelectNode={selectNode}
         nodes={taskFlow.nodes}
         instances={sortedInstances}
@@ -421,10 +495,16 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
           key={submitTarget.instance.id}
           open
           taskInstanceId={submitTarget.instance.id}
-          taskName={submitTarget.instance.name}
+          taskName={formatTaskTitle(
+            taskFlow.itemTitle,
+            slotPosition(submitTarget.node, taskFlow.nodes),
+          )}
           submitFields={submitTarget.node.submitFields}
           onOpenChange={(open) => {
-            if (!open) setSubmitTarget(null);
+            if (!open) {
+              setSubmitTarget(null);
+              onSubmitClose?.();
+            }
           }}
           submitting={
             actionMutation.isPending &&

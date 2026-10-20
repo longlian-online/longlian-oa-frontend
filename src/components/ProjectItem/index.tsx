@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { ChevronRight, Loader2, Plus, Trash2, Workflow } from "lucide-react";
 
 import {
@@ -100,6 +100,7 @@ export default function ProjectItemSection({
 }: ProjectItemSectionProps) {
   const confirm = useConfirm();
   const navigate = useNavigate();
+  const location = useLocation();
   const [{ page, status, orderDir }, setQuery] = useState<{
     page: number;
     status: "IN_PROGRESS" | "COMPLETED" | "";
@@ -259,7 +260,9 @@ export default function ProjectItemSection({
               size="sm"
               aria-label="查看项目列表"
               title="查看项目列表"
-              onClick={() => void navigate(`/dashboard/planning/${projectId}/items`)}
+              onClick={() =>
+                void navigate(`/dashboard/planning/${projectId}/items`, { state: location.state })
+              }
             >
               详细
               <ChevronRight data-icon="inline-end" />
@@ -379,7 +382,9 @@ export default function ProjectItemSection({
                     className="h-7 gap-1 px-1 text-xs"
                     onClick={(event) => {
                       event.stopPropagation();
-                      void navigate(`/dashboard/planning/${projectId}/items/${item.id}`);
+                      void navigate(`/dashboard/planning/${projectId}/items/${item.id}`, {
+                        state: location.state,
+                      });
                     }}
                   >
                     查看任务流
