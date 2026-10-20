@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { ChevronRight, Loader2, Plus, Trash2, Workflow } from "lucide-react";
 
@@ -45,7 +45,7 @@ import type {
 interface ProjectItemSectionProps {
   projectId: string;
   isCreator?: boolean;
-  showDetailLink?: boolean;
+  renderHeader?: (onCreate: () => void) => ReactNode;
 }
 
 interface ProjectItemForm {
@@ -72,21 +72,29 @@ function ProjectItemNodeList({ nodes }: { nodes: ProjectItemNodeVO[] }) {
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap items-center gap-2">
       {sortNodes(nodes).map((node, index) => (
         <div
           key={`${node.sort}-${node.parallelSort}-${node.name}`}
           className={cn(
-            "flex max-w-full items-center gap-1 text-xs",
-            node.state === "IN_PROGRESS" ? "font-medium text-foreground" : "text-muted-foreground",
+            "flex max-w-full items-center gap-1 rounded-md px-1.5 py-1 text-xs",
+            node.state === "IN_PROGRESS"
+              ? "bg-muted font-medium text-foreground"
+              : "text-muted-foreground",
           )}
         >
           <span className="max-w-24 truncate">{node.name}</span>
           {node.parallelCount > 1 && (
             <span className="text-[10px] text-muted-foreground">+{node.parallelCount - 1}</span>
           )}
-          <span className="sr-only">{NODE_LABELS[node.state]}</span>
-          {index < nodes.length - 1 && <span className="ml-0.5 text-border">/</span>}
+          <span className={cn("text-[10px]", node.state !== "IN_PROGRESS" && "sr-only")}>
+            {NODE_LABELS[node.state]}
+          </span>
+          {index < nodes.length - 1 && (
+            <span aria-hidden className="ml-1 text-border">
+              /
+            </span>
+          )}
         </div>
       ))}
     </div>
@@ -96,7 +104,7 @@ function ProjectItemNodeList({ nodes }: { nodes: ProjectItemNodeVO[] }) {
 export default function ProjectItemSection({
   projectId,
   isCreator = false,
-  showDetailLink = false,
+  renderHeader,
 }: ProjectItemSectionProps) {
   const confirm = useConfirm();
   const navigate = useNavigate();
@@ -244,248 +252,246 @@ export default function ProjectItemSection({
   }
 
   return (
-    <section>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-3">
-        <div>
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <Workflow className="h-4 w-4 text-muted-foreground" />
-            项目
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {showDetailLink && (
-            <Button
-              variant="ghost"
-              size="sm"
-              aria-label="查看项目列表"
-              title="查看项目列表"
-              onClick={() => void navigate(`/dashboard/planning/${projectId}/items`)}
+    <>
+      {renderHeader?.(openCreateDialog)}
+      <section
+        id="project-workspace"
+        aria-labelledby="project-workspace-title"
+        className="scroll-mt-6"
+      >
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-3">
+          <div>
+            <h2
+              id="project-workspace-title"
+              className="flex items-center gap-2 text-base font-semibold text-foreground"
             >
-              详细
-              <ChevronRight data-icon="inline-end" />
-            </Button>
-          )}
-          {isCreator && (
-            <Button size="sm" onClick={openCreateDialog}>
-              <Plus className="h-4 w-4" />
-              创建项目
-            </Button>
-          )}
-        </div>
-      </div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <Tabs
-          value={status || "ALL"}
-          onValueChange={(value) => {
-            if (value === "IN_PROGRESS" || value === "COMPLETED" || value === "ALL") {
-              setQuery((query) => ({ ...query, status: value === "ALL" ? "" : value, page: 1 }));
-            }
-          }}
-        >
-          <TabsList variant="line" aria-label="项目完成情况">
-            <TabsTrigger value="IN_PROGRESS">进行中</TabsTrigger>
-            <TabsTrigger value="COMPLETED">已完成</TabsTrigger>
-            <TabsTrigger value="ALL">全部</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <Select
-          value={orderDir}
-          onValueChange={(value) => {
-            if (value === "ASC" || value === "DESC") {
-              setQuery((query) => ({ ...query, orderDir: value, page: 1 }));
-            }
-          }}
-        >
-          <SelectTrigger size="sm" aria-label="发布时间排序">
-            <SelectValue>{orderDir === "ASC" ? "最早发布" : "最新发布"}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ASC">最早发布</SelectItem>
-            <SelectItem value="DESC">最新发布</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {loading ? (
-        <div className="flex min-h-40 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          正在加载项目...
-        </div>
-      ) : itemsQuery.isError && !itemsQuery.data ? (
-        <div className="py-8 text-center">
-          <p>项目加载失败</p>
-          <Button onClick={() => void itemsQuery.refetch()}>重新加载</Button>
-        </div>
-      ) : items.length === 0 ? (
-        <EmptyState
-          icon={<Workflow className="h-5 w-5 text-muted-foreground" />}
-          title="暂无项目"
-          description="创建项目后，成员就可以围绕流程节点推进任务。"
-          className="min-h-44"
-          action={
-            isCreator ? (
+              <Workflow className="h-4 w-4 text-muted-foreground" />
+              项目
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {isCreator && !renderHeader && (
               <Button size="sm" onClick={openCreateDialog}>
                 <Plus className="h-4 w-4" />
                 创建项目
               </Button>
-            ) : null
-          }
-        />
-      ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {items.map((item) => (
-            <article
-              key={item.id}
-              className="flex flex-col rounded-xl border bg-card p-4 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-3">
+            )}
+          </div>
+        </div>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <Tabs
+            value={status || "ALL"}
+            onValueChange={(value) => {
+              if (value === "IN_PROGRESS" || value === "COMPLETED" || value === "ALL") {
+                setQuery((query) => ({ ...query, status: value === "ALL" ? "" : value, page: 1 }));
+              }
+            }}
+          >
+            <TabsList variant="line" aria-label="项目完成情况">
+              <TabsTrigger value="IN_PROGRESS">进行中</TabsTrigger>
+              <TabsTrigger value="COMPLETED">已完成</TabsTrigger>
+              <TabsTrigger value="ALL">全部</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Select
+            value={orderDir}
+            onValueChange={(value) => {
+              if (value === "ASC" || value === "DESC") {
+                setQuery((query) => ({ ...query, orderDir: value, page: 1 }));
+              }
+            }}
+          >
+            <SelectTrigger size="sm" aria-label="发布时间排序">
+              <SelectValue>{orderDir === "ASC" ? "最早发布" : "最新发布"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ASC">最早发布</SelectItem>
+              <SelectItem value="DESC">最新发布</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {loading ? (
+          <div className="flex min-h-40 items-center justify-center text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            正在加载项目...
+          </div>
+        ) : itemsQuery.isError && !itemsQuery.data ? (
+          <div className="py-8 text-center">
+            <p>项目加载失败</p>
+            <Button onClick={() => void itemsQuery.refetch()}>重新加载</Button>
+          </div>
+        ) : items.length === 0 ? (
+          <EmptyState
+            icon={<Workflow className="h-5 w-5 text-muted-foreground" />}
+            title="暂无项目"
+            description="创建项目后，成员就可以围绕流程节点推进任务。"
+            className="min-h-44"
+            action={
+              isCreator ? (
+                <Button size="sm" onClick={openCreateDialog}>
+                  <Plus className="h-4 w-4" />
+                  创建项目
+                </Button>
+              ) : null
+            }
+          />
+        ) : (
+          <div className="flex flex-col divide-y border-y">
+            {items.map((item) => (
+              <article
+                key={item.id}
+                className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_auto] lg:items-center"
+              >
                 <div className="min-w-0">
-                  <h3 className="truncate text-base font-semibold text-foreground">{item.title}</h3>
+                  <h3 className="break-words text-base font-semibold text-foreground">
+                    {item.title}
+                  </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
                     当前阶段：{item.currentNodeName || "尚未开始"}
                   </p>
                 </div>
-                {isCreator && (
-                  <div className="flex shrink-0 items-center gap-1">
+                <div className="flex min-w-0 flex-col gap-3 sm:col-span-2 sm:row-start-2 lg:col-span-1 lg:row-start-auto">
+                  <ProjectItemNodeList nodes={item.nodes} />
+                  <div className="flex items-center gap-3">
+                    <Progress
+                      value={item.progressPercent}
+                      aria-label={`${item.title}进度`}
+                      className="flex-1"
+                    />
+                    <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
+                      {item.progressPercent}%
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-2 sm:col-start-2 sm:row-start-1 lg:col-start-3">
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      void navigate(`/dashboard/planning/${projectId}/items/${item.id}`)
+                    }
+                  >
+                    进入任务
+                    <ChevronRight data-icon="inline-end" />
+                  </Button>
+                  {isCreator && (
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      aria-label="删除项目"
+                      aria-label={`删除项目：${item.title}`}
                       title="删除项目"
                       className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       disabled={mutatingItemId === item.id}
                       onClick={() => void handleDeleteItem(item)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 />
                     </Button>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 border-t pt-3">
-                <div className="flex items-center gap-3">
-                  <Progress value={item.progressPercent} className="h-1.5 flex-1" />
-                  <span className="w-10 text-right text-xs font-medium text-muted-foreground">
-                    {item.progressPercent}%
-                  </span>
-                </div>
-                <div className="mt-3">
-                  <ProjectItemNodeList nodes={item.nodes} />
-                </div>
-                <div className="mt-3 flex justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1 px-1 text-xs"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      void navigate(`/dashboard/planning/${projectId}/items/${item.id}`);
-                    }}
-                  >
-                    查看任务流
-                    <ChevronRight data-icon="inline-end" />
-                  </Button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-
-      <PaginationBar
-        page={page}
-        pageSize={PAGE_SIZE}
-        total={total}
-        disabled={loading}
-        className="pt-4"
-        onPageChange={setPage}
-      />
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>创建项目</DialogTitle>
-            <DialogDescription>
-              项目必须绑定一个流程模板，创建后会生成对应任务流。
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">项目名</label>
-              <Input
-                placeholder="例如：第一话翻译"
-                value={form.title}
-                onChange={(event) => setForm({ ...form, title: event.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">流程模板</label>
-              <Select
-                value={form.taskTemplateId}
-                onValueChange={(value: string | null) =>
-                  setForm({ ...form, taskTemplateId: value || "" })
-                }
-                disabled={templateLoading}
-              >
-                <SelectTrigger className="w-full" disabled={templateLoading}>
-                  {templateLoading ? (
-                    <span className="flex flex-1 items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      正在加载模板
-                    </span>
-                  ) : (
-                    <SelectValue placeholder="选择流程模板" />
                   )}
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map((template) => (
-                    <SelectItem key={template.id} value={String(template.id)}>
-                      {template.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                </div>
+              </article>
+            ))}
           </div>
+        )}
 
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setDialogOpen(false)}>
-              取消
-            </Button>
-            <Button disabled={!canCreate} onClick={() => void handleCreateItem()}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              创建
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={reasonItem !== null} onOpenChange={(open) => !open && setReasonItem(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>删除项目？</DialogTitle>
-            <DialogDescription>由于项目存在已提交任务，删除需要管理员审核</DialogDescription>
-          </DialogHeader>
-          <Textarea
-            value={reason}
-            maxLength={500}
-            placeholder="填写删除原因"
-            onChange={(event) => setReason(event.target.value)}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReasonItem(null)}>
-              取消
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={!reason.trim() || requestMutation.isPending}
-              onClick={() => void handleSubmitItemDeletion()}
-            >
-              提交申请
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </section>
+        <PaginationBar
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={total}
+          disabled={loading}
+          className="pt-4"
+          onPageChange={setPage}
+        />
+
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>创建项目</DialogTitle>
+              <DialogDescription>
+                项目必须绑定一个流程模板，创建后会生成对应任务流。
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">项目名</label>
+                <Input
+                  placeholder="例如：第一话翻译"
+                  value={form.title}
+                  onChange={(event) => setForm({ ...form, title: event.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">流程模板</label>
+                <Select
+                  value={form.taskTemplateId}
+                  onValueChange={(value: string | null) =>
+                    setForm({ ...form, taskTemplateId: value || "" })
+                  }
+                  disabled={templateLoading}
+                >
+                  <SelectTrigger className="w-full" disabled={templateLoading}>
+                    {templateLoading ? (
+                      <span className="flex flex-1 items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        正在加载模板
+                      </span>
+                    ) : (
+                      <SelectValue placeholder="选择流程模板" />
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((template) => (
+                      <SelectItem key={template.id} value={String(template.id)}>
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setDialogOpen(false)}>
+                取消
+              </Button>
+              <Button disabled={!canCreate} onClick={() => void handleCreateItem()}>
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                创建
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={reasonItem !== null} onOpenChange={(open) => !open && setReasonItem(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>删除项目？</DialogTitle>
+              <DialogDescription>由于项目存在已提交任务，删除需要管理员审核</DialogDescription>
+            </DialogHeader>
+            <Textarea
+              value={reason}
+              maxLength={500}
+              placeholder="填写删除原因"
+              onChange={(event) => setReason(event.target.value)}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setReasonItem(null)}>
+                取消
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={!reason.trim() || requestMutation.isPending}
+                onClick={() => void handleSubmitItemDeletion()}
+              >
+                提交申请
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </section>
+    </>
   );
 }

@@ -1,14 +1,14 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-10-20T01:58:11.571Z",
+  "generatedAt": "2026-10-20T09:55:16.276Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "2f3b39052db7ac8c77b77ad56a9e4ee83584eb4025fa28adb91116dba9622ece",
+      "sha256": "9bc4b2f99dce3112e94d747461346ebe3d5157e6561f535c718faa240f6da805",
       "pathCount": 71,
       "operationCount": 86
     },
@@ -26,7 +26,7 @@
       "slug": "用户端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF",
       "file": "openapi/用户端.json",
-      "sha256": "6bb657c6f0cc336960b0e254c7c4a8bbf02d0c989974e9f340947c2c26d2f27b",
+      "sha256": "f42d45a3bc1a823f10da96baccb7efa75a28536381aef8e5380ee33b78ced228",
       "pathCount": 37,
       "operationCount": 44
     },
@@ -498,7 +498,7 @@
       "summary": "放弃任务",
       "tags": ["任务实例接口"],
       "file": "operations/全部_post_-app-task-instance-instanceid-abandon.json",
-      "sha256": "bb6cbe5a4acf4238a84949a3792ccffb6fdffb862bfca321ccc3e065f3ec8769"
+      "sha256": "b302e25168039487a94d7114192113a76a2a55ead233da32c463386781d051a2"
     },
     {
       "id": "全部_post_-app-task-instance-instanceid-claim",
@@ -528,7 +528,7 @@
       "summary": "打回任务",
       "tags": ["任务实例接口"],
       "file": "operations/全部_post_-app-task-instance-instanceid-reject.json",
-      "sha256": "4928135a6d3c62b1a28e1f1b9559f9feddf73634641b7a4d748c1786c3a49809"
+      "sha256": "33d6ad626d396eeadd2d8368d9b203a641d727b47b53948932019bd6ce18ed28"
     },
     {
       "id": "全部_post_-app-task-instance-instanceid-reset",
@@ -1258,7 +1258,7 @@
       "summary": "放弃任务",
       "tags": ["任务实例接口"],
       "file": "operations/用户端_post_-app-task-instance-instanceid-abandon.json",
-      "sha256": "cc96bec552f1bdb54b5a53888a10b1f2acc90bb50eb579809e28d512d95a661f"
+      "sha256": "d76fb9010e81a305ef3984692702be12af7f12a9ee5a05b7cb56b1773e686a84"
     },
     {
       "id": "用户端_post_-app-task-instance-instanceid-claim",
@@ -1288,7 +1288,7 @@
       "summary": "打回任务",
       "tags": ["任务实例接口"],
       "file": "operations/用户端_post_-app-task-instance-instanceid-reject.json",
-      "sha256": "47233f3e51937fb034acfcc514294ff2b9d9b51e7bac9ab9e4089a9fc2d16883"
+      "sha256": "948419c7e0d1a2a0e350c2484da4ddc11db9424a8e14198906b14facaddbc065"
     },
     {
       "id": "用户端_post_-app-task-instance-instanceid-reset",

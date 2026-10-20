@@ -2,7 +2,7 @@
   "document": "全部",
   "method": "POST",
   "operation": {
-    "description": "下一阶段执行人可将已完成（COMPLETED）的任务打回，任务恢复为 CLAIMED 状态，提交记录标记为 REJECTED，需填写打回意见",
+    "description": "企划创建人或下一阶段执行人可将已完成任务打回，保留接取人与提交历史。须匹配 revision 并填写打回意见，且后续阶段没有完成任务",
     "operationId": "rejectTask",
     "parameters": [
       {

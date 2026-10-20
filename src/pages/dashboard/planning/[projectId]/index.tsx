@@ -1,13 +1,16 @@
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
+import { Menu } from "@base-ui/react/menu";
 import {
-  BarChart3,
+  ArrowDown,
+  BookOpen,
+  ChevronDown,
   CirclePlus,
-  Info,
-  Link2,
+  Ellipsis,
   Loader2,
   Pencil,
+  Plus,
   Share2,
   Trash2,
   X,
@@ -46,6 +49,9 @@ import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const browseView = searchParams.get("view") === "about";
+  const infoRef = useRef<HTMLDetailsElement>(null);
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const projectQuery = useApiQuery(projectDetailQuery(projectId));
@@ -128,6 +134,7 @@ export default function ProjectDetail() {
       title: "删除企划？",
       description: `删除后「${project.title}」将不可恢复。`,
       confirmText: "删除",
+      variant: "destructive",
     });
     if (!confirmed || deleteLock.current) return;
     deleteLock.current = true;
@@ -173,75 +180,173 @@ export default function ProjectDetail() {
   const statusLabel = getStatusLabel(project.status);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-      <div className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-semibold tracking-tight text-foreground">
-                {project.title}
-              </h1>
-              <Badge variant="outline">{statusLabel}</Badge>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+      <ProjectItemSection
+        key={projectId}
+        projectId={projectId!}
+        isCreator={project.isCreator}
+        renderHeader={(onCreate) => (
+          <header className="flex flex-col gap-5 border-b pb-6">
+            <div className="flex flex-wrap items-start justify-between gap-5">
+              <div className="flex min-w-0 flex-1 items-center gap-4">
+                <div className="flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
+                  {project.coverUrl ? (
+                    <RemoteImage
+                      src={project.coverUrl}
+                      alt={project.title}
+                      className="size-full"
+                      fallback={<BookOpen className="size-5" />}
+                    />
+                  ) : (
+                    <BookOpen className="size-5" />
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="break-words text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                      {project.title}
+                    </h1>
+                    <Badge variant="outline">{statusLabel}</Badge>
+                  </div>
+                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                    <span>{project.typeName}</span>
+                    {project.alias && <span>· {project.alias}</span>}
+                    {(project.isCreator || project.inWorkshop) && (
+                      <span>· {project.isCreator ? "负责人" : "已加入"}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {project.isCreator ? (
+                  <>
+                    <Button onClick={onCreate}>
+                      <Plus data-icon="inline-start" />
+                      创建项目
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => void navigate(`/dashboard/planning/${project.id}/edit`)}
+                    >
+                      <Pencil data-icon="inline-start" />
+                      编辑资料
+                    </Button>
+                  </>
+                ) : project.inWorkshop ? (
+                  <Button nativeButton={false} render={<a href="#project-workspace" />}>
+                    查看项目
+                    <ArrowDown data-icon="inline-end" />
+                  </Button>
+                ) : (
+                  <Button disabled={workshopLoading} onClick={handleToggleWorkshop}>
+                    {workshopLoading ? <Loader2 className="animate-spin" /> : <CirclePlus />}
+                    加入企划
+                  </Button>
+                )}
+                {(browseView || !project.inWorkshop) && !project.isCreator && (
+                  <Button
+                    variant="ghost"
+                    nativeButton={false}
+                    render={<a href="#project-info" />}
+                    onClick={() => {
+                      if (infoRef.current) infoRef.current.open = true;
+                    }}
+                  >
+                    了解作品
+                  </Button>
+                )}
+                <Menu.Root>
+                  <Menu.Trigger render={<Button variant="ghost" />}>
+                    更多
+                    <Ellipsis data-icon="inline-end" />
+                  </Menu.Trigger>
+                  <Menu.Portal>
+                    <Menu.Positioner align="end" sideOffset={6}>
+                      <Menu.Popup className="min-w-40 rounded-lg border bg-popover p-1 text-sm text-popover-foreground shadow-md outline-none">
+                        <Menu.Group>
+                          <Menu.Item
+                            className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none data-highlighted:bg-muted"
+                            onClick={() => void handleShare()}
+                          >
+                            <Share2 className="size-4" />
+                            分享企划
+                          </Menu.Item>
+                          {project.isCreator && !project.inWorkshop && (
+                            <Menu.Item
+                              disabled={workshopLoading}
+                              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none data-disabled:opacity-50 data-highlighted:bg-muted"
+                              onClick={() => void handleToggleWorkshop()}
+                            >
+                              <CirclePlus className="size-4" />
+                              加入企划
+                            </Menu.Item>
+                          )}
+                          {!project.isCreator && project.inWorkshop && (
+                            <Menu.Item
+                              disabled={workshopLoading}
+                              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none data-disabled:opacity-50 data-highlighted:bg-muted"
+                              onClick={() => void handleToggleWorkshop()}
+                            >
+                              <X className="size-4" />
+                              退出企划
+                            </Menu.Item>
+                          )}
+                        </Menu.Group>
+                        {project.isCreator && (
+                          <>
+                            <Menu.Separator className="my-1 h-px bg-border" />
+                            <Menu.Group>
+                              <Menu.Item
+                                disabled={deleteLoading || requestMutation.isPending}
+                                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-destructive outline-none data-disabled:opacity-50 data-highlighted:bg-destructive/10"
+                                onClick={() => void handleDelete()}
+                              >
+                                <Trash2 className="size-4" />
+                                删除企划
+                              </Menu.Item>
+                            </Menu.Group>
+                          </>
+                        )}
+                      </Menu.Popup>
+                    </Menu.Positioner>
+                  </Menu.Portal>
+                </Menu.Root>
+              </div>
             </div>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {project.alias || project.typeName}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {project.isCreator && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void navigate(`/dashboard/planning/${project.id}/edit`)}
-            >
-              <Pencil className="h-4 w-4" />
-              编辑
-            </Button>
-          )}
-          {!(project.isCreator && project.inWorkshop) && (
-            <Button
-              variant={project.inWorkshop ? "secondary" : "default"}
-              size="sm"
-              disabled={workshopLoading}
-              onClick={handleToggleWorkshop}
-            >
-              {workshopLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : project.inWorkshop ? (
-                <X className="h-4 w-4" />
-              ) : (
-                <CirclePlus className="h-4 w-4" />
-              )}
-              {project.inWorkshop ? "退出企划" : "加入企划"}
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground"
-            onClick={() => void handleShare()}
-          >
-            <Share2 className="h-4 w-4" />
-            分享
-          </Button>
-          {project.isCreator && (
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={deleteLoading || requestMutation.isPending}
-              onClick={() => void handleDelete()}
-            >
-              {deleteLoading || requestMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-              删除企划
-            </Button>
-          )}
-        </div>
-      </div>
+            {browseView && project.description && (
+              <p className="line-clamp-2 max-w-3xl text-sm leading-7 text-muted-foreground">
+                {project.description}
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">整体进度</span>
+                <span className="font-medium tabular-nums">{project.progressPercent}%</span>
+                <Progress
+                  value={project.progressPercent}
+                  aria-label="企划整体进度"
+                  className="w-24"
+                />
+              </div>
+              <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
+                <span>企划任务</span>
+                <span>
+                  待提交{" "}
+                  <span className="font-medium tabular-nums text-foreground">
+                    {project.claimedTaskCount}
+                  </span>
+                </span>
+                <span>
+                  待接取{" "}
+                  <span className="font-medium tabular-nums text-foreground">
+                    {project.pendingTaskCount}
+                  </span>
+                </span>
+              </p>
+            </div>
+          </header>
+        )}
+      />
 
       <Dialog open={reasonOpen} onOpenChange={setReasonOpen}>
         <DialogContent>
@@ -270,104 +375,93 @@ export default function ProjectDetail() {
         </DialogContent>
       </Dialog>
 
-      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="space-y-4">
-          <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-            <div className="aspect-[2/3] bg-muted">
+      <section aria-labelledby="project-info-title" className="border-t pt-6">
+        <details
+          key={`${projectId}-${browseView}`}
+          ref={infoRef}
+          id="project-info"
+          open={browseView}
+          className="peer group scroll-mt-6"
+        >
+          <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 rounded-md py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            <h2 id="project-info-title" className="text-base font-semibold">
+              关于作品
+            </h2>
+            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+              <span className="group-open:hidden">展开完整资料</span>
+              <span className="hidden group-open:inline">收起资料</span>
+              <ChevronDown className="size-4 transition-transform group-open:rotate-180 motion-reduce:transition-none" />
+            </span>
+          </summary>
+          <div className="mt-5 grid items-start gap-6 sm:grid-cols-[minmax(0,1fr)_180px]">
+            <div className="flex min-w-0 flex-col gap-5">
+              {project.description && (
+                <p className="whitespace-pre-wrap break-words text-sm leading-7">
+                  {project.description}
+                </p>
+              )}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2" aria-label="作品标签">
+                  {tags.map((tag, index) => (
+                    <ProjectMetadataTag key={index} tag={tag} />
+                  ))}
+                </div>
+              )}
+              <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-5 gap-y-3 text-sm">
+                <dt className="text-muted-foreground">类型</dt>
+                <dd>{project.typeName}</dd>
+                {project.alias && (
+                  <>
+                    <dt className="text-muted-foreground">别名</dt>
+                    <dd className="break-words">{project.alias}</dd>
+                  </>
+                )}
+                <dt className="text-muted-foreground">状态</dt>
+                <dd>{statusLabel}</dd>
+                <dt className="text-muted-foreground">工坊</dt>
+                <dd>{project.inWorkshop ? "已加入" : "未加入"}</dd>
+                <dt className="text-muted-foreground">创建时间</dt>
+                <dd>{formatDate(project.createdAt)}</dd>
+              </dl>
+            </div>
+            <div className="aspect-[2/3] w-full max-w-64 overflow-hidden rounded-lg bg-muted">
               {project.coverUrl ? (
                 <RemoteImage
                   src={project.coverUrl}
-                  alt={project.title}
+                  alt={`${project.title}完整封面`}
                   className="size-full"
+                  fit="contain"
+                  loading="lazy"
                   fallback="暂无封面"
                 />
               ) : (
-                <div className="flex size-full items-center justify-center text-muted-foreground">
+                <div className="flex size-full items-center justify-center text-sm text-muted-foreground">
                   暂无封面
                 </div>
               )}
             </div>
           </div>
-
-          <section className="rounded-xl border bg-card p-4 shadow-sm">
-            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              基础信息
-            </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">类型</span>
-                <span className="font-medium text-foreground">{project.typeName}</span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">状态</span>
-                <span className="font-medium text-foreground">{statusLabel}</span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">工坊</span>
-                <span className="font-medium text-foreground">
-                  {project.inWorkshop ? "已添加" : "未添加"}
+        </details>
+        <div className="mt-3 flex flex-col gap-3 peer-open:hidden">
+          {project.description && (
+            <p className="line-clamp-2 text-sm leading-7 text-muted-foreground">
+              {project.description}
+            </p>
+          )}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2" aria-label="作品标签摘要">
+              {tags.slice(0, 4).map((tag, index) => (
+                <ProjectMetadataTag key={index} tag={tag} />
+              ))}
+              {tags.length > 4 && (
+                <span className="self-center text-xs text-muted-foreground">
+                  另有 {tags.length - 4} 个标签，展开查看
                 </span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">创建时间</span>
-                <span className="font-medium text-foreground">{formatDate(project.createdAt)}</span>
-              </div>
+              )}
             </div>
-          </section>
-        </aside>
-
-        <main className="space-y-4">
-          <section className="rounded-xl border bg-card p-5 shadow-sm">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-lg bg-muted/40 p-4">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <BarChart3 className="h-3.5 w-3.5" />
-                  进度
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-semibold">{project.progressPercent}%</span>
-                  <Progress value={project.progressPercent} className="h-1.5 flex-1" />
-                </div>
-              </div>
-              <div className="rounded-lg bg-muted/40 p-4">
-                <div className="text-xs text-muted-foreground">待提交</div>
-                <div className="mt-2 text-2xl font-semibold">{project.claimedTaskCount}</div>
-              </div>
-              <div className="rounded-lg bg-muted/40 p-4">
-                <div className="text-xs text-muted-foreground">待接取</div>
-                <div className="mt-2 text-2xl font-semibold">{project.pendingTaskCount}</div>
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-xl border bg-card p-5 shadow-sm">
-            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-              <Link2 className="h-4 w-4 text-muted-foreground" />
-              简介
-            </div>
-            <p className="text-sm leading-7 text-foreground">{project.description || "暂无简介"}</p>
-          </section>
-
-          <section className="rounded-xl border bg-card p-5 shadow-sm">
-            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              标签
-            </div>
-            {tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag, index) => (
-                  <ProjectMetadataTag key={index} tag={tag} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">暂无标签</p>
-            )}
-          </section>
-
-          <ProjectItemSection projectId={projectId!} isCreator={project.isCreator} showDetailLink />
-        </main>
-      </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
