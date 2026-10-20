@@ -137,11 +137,11 @@ export default function TaskPlaza() {
     if (claimLocks.current.has(instanceId)) return;
     claimLocks.current.add(instanceId);
     try {
-      await claimMutation.mutateAsync(instanceId);
-      $tip(
-        isCurrentStage ? "接取成功，可在任务详情中提交" : "接取成功，等待前置阶段完成后再提交",
-        "success",
-      );
+      const result = await claimMutation.mutateAsync(instanceId);
+      const message = isCurrentStage
+        ? "接取成功，可在任务详情中提交"
+        : "接取成功，等待前置阶段完成后再提交";
+      $tip(result.autoJoinedProject === true ? `${message}，已自动加入该企划` : message, "success");
     } catch {
       /* 错误由共享 Mutation 处理。 */
     } finally {

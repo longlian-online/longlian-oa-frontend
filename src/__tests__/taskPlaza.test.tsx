@@ -5,7 +5,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, useLocation, useNavigate } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
-import TaskPlaza from "@/pages/dashboard/planning/shortage";
+import TaskPlaza from "@/pages/dashboard/task-plaza";
 import { saveSession, clearSession } from "@/lib/session";
 import type { PlazaProjectGroup } from "@/types/plaza";
 
@@ -61,7 +61,7 @@ async function mount(search = "?keep=1"): Promise<void> {
   await act(async () => {
     root.render(
       <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={[`/dashboard/planning/shortage${search}`]}>
+        <MemoryRouter initialEntries={[`/dashboard/task-plaza${search}`]}>
           <TaskPlaza />
           <LocationProbe />
         </MemoryRouter>

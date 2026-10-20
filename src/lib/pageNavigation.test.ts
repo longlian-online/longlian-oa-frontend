@@ -17,8 +17,8 @@ test("loading another pathname switches focus and marks a page change", (): void
 });
 
 test("loading a nested pathname is still a page change", (): void => {
-  const navigation = { state: "loading", location: { pathname: "/dashboard/planning/shortage" } };
-  expect(pendingPathname(current, navigation)).toBe("/dashboard/planning/shortage");
+  const navigation = { state: "loading", location: { pathname: "/dashboard/planning/create" } };
+  expect(pendingPathname(current, navigation)).toBe("/dashboard/planning/create");
   expect(isPathnameNavigation(current, navigation)).toBe(true);
 });
 
