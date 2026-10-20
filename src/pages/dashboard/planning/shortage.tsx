@@ -1,7 +1,8 @@
+import { Popover } from "@base-ui/react/popover";
 import { useMutationState } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useId, useRef, useState, type ReactElement } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { ArrowUpDown, ChevronDown, ChevronUp, Filter, Sparkles } from "lucide-react";
+import { ArrowUpDown, ChevronDown, ChevronUp, Info, Filter, Sparkles } from "lucide-react";
 
 import { scopedKey } from "@/lib/queryKeys";
 import { projectThumbnailSrc } from "@/lib/projectThumbnail";
@@ -43,6 +44,44 @@ const sortOptions = [
 ] as const;
 
 const DAY_MS = 86_400_000;
+
+interface StageScopeHelpProps {
+  label: string;
+  children: string;
+}
+
+function StageScopeHelp({ label, children }: StageScopeHelpProps): ReactElement {
+  const [open, setOpen] = useState(false);
+  const triggerId = useId();
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen} triggerId={open ? triggerId : null}>
+      <Popover.Trigger
+        id={triggerId}
+        onFocus={(event) => {
+          if (event.currentTarget.matches(":focus-visible")) setOpen(true);
+        }}
+        openOnHover
+        delay={150}
+        closeDelay={100}
+        aria-label={`${label}说明`}
+        render={<Button variant="ghost" size="icon-sm" className="text-muted-foreground" />}
+      >
+        <Info aria-hidden="true" />
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner side="bottom" sideOffset={6}>
+          <Popover.Popup
+            initialFocus={false}
+            className="max-w-[min(18rem,calc(100vw-2rem))] rounded-lg border bg-popover p-3 text-sm text-popover-foreground shadow-md outline-none"
+          >
+            <Popover.Title className="sr-only">{label}说明</Popover.Title>
+            <Popover.Description>{children}</Popover.Description>
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
 
 export default function TaskPlaza() {
   const navigate = useNavigate();
@@ -127,21 +166,26 @@ export default function TaskPlaza() {
         )}
       </div>
 
-      <div role="tablist" aria-label="任务阶段范围" className="flex gap-2 border-b pb-2">
+      <div role="group" aria-label="任务阶段范围" className="flex gap-4 border-b pb-2">
         {(["ALL", "CURRENT"] as const).map((scope) => (
-          <Button
-            key={scope}
-            role="tab"
-            aria-selected={stageScope === scope}
-            variant={stageScope === scope ? "secondary" : "ghost"}
-            onClick={() => {
-              const next = new URLSearchParams(searchParams);
-              next.set("stageScope", scope);
-              setSearchParams(next);
-            }}
-          >
-            {scope === "ALL" ? "所有待接取" : "当前阶段"}
-          </Button>
+          <div key={scope} className="flex items-center gap-0.5">
+            <Button
+              aria-pressed={stageScope === scope}
+              variant={stageScope === scope ? "secondary" : "ghost"}
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.set("stageScope", scope);
+                setSearchParams(next);
+              }}
+            >
+              {scope === "ALL" ? "全部阶段" : "当前阶段"}
+            </Button>
+            <StageScopeHelp label={scope === "ALL" ? "全部阶段" : "当前阶段"}>
+              {scope === "ALL"
+                ? "展示所有阶段的待接取任务；后续阶段可提前接取，需等前置阶段完成后才能提交成果。"
+                : "仅展示当前阶段的待接取任务，接取后即可提交成果。"}
+            </StageScopeHelp>
+          </div>
         ))}
       </div>
 
