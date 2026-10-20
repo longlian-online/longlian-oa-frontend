@@ -226,8 +226,10 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
     }
   }
 
-  async function handleOwnerAction(reason: string): Promise<boolean> {
-    if (!ownerTarget || !reason.trim() || reason.trim().length > 500) return false;
+  async function handleOwnerAction(reason?: string): Promise<boolean> {
+    if (!ownerTarget) return false;
+    if (ownerTarget.action === "reject" && (!reason?.trim() || reason.trim().length > 500))
+      return false;
     const { action, instance } = ownerTarget;
     const current = instances.find((candidate) => candidate.id === instance.id);
     if (
@@ -242,10 +244,10 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
       instance.id,
       () =>
         action === "cancel"
-          ? abandonTask(instance.id, { expectedRevision: instance.revision, reason: reason.trim() })
+          ? abandonTask(instance.id, { expectedRevision: instance.revision })
           : rejectTask(instance.id, {
               expectedRevision: instance.revision,
-              reviewComment: reason.trim(),
+              reviewComment: reason!.trim(),
             }),
       action === "cancel" ? "已取消接取" : "任务已打回",
     );

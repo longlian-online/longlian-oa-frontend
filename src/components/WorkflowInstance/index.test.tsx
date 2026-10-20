@@ -162,12 +162,11 @@ test("owner cancellation refreshes task actions, while parallel completion and a
   expect(findButton("提交")).toBeUndefined();
   await act(async () => findButton("取消接取")?.click());
   expect(document.body.textContent).toContain("小明");
-  await fillReason("  协调重新分配  ");
+  expect(document.querySelector("textarea")).toBeNull();
   await act(async () => findButton("确认取消接取")?.click());
   await vi.waitFor(() => expect(findButton("接取")).toBeDefined());
   expect(api.abandonTask).toHaveBeenCalledWith("target", {
     expectedRevision: "9007199254740993",
-    reason: "协调重新分配",
   });
   expect(document.querySelector("textarea")).toBeNull();
   await act(async () => findButton("选择parallel")?.click());
@@ -200,7 +199,6 @@ test("owner rejection failure retains reason and target; retry uses the shared r
 test("stale open dialog cannot act on an ABA replacement, even with the same status and assignee", async () => {
   await mount();
   await act(async () => findButton("取消接取")?.click());
-  await fillReason("取消原因");
   tasks = [task({ revision: "9007199254740995" })];
   await act(async () => {
     await client.invalidateQueries();
@@ -213,7 +211,8 @@ test("stale open dialog cannot act on an ABA replacement, even with the same sta
   });
   await act(async () => findButton("确认取消接取")?.click());
   expect(api.abandonTask).not.toHaveBeenCalled();
-  expect(document.querySelector("textarea")?.value).toBe("取消原因");
+  expect(findButton("确认取消接取")).toBeDefined();
+  expect(document.querySelector("textarea")).toBeNull();
   expect(document.querySelector("[role='alert']")).not.toBeNull();
 });
 
@@ -280,7 +279,6 @@ test.each(["success", "failure"] as const)(
     const notify = vi.spyOn(notificationService, "notify");
     await mount();
     await act(async () => findButton("取消接取")?.click());
-    await fillReason("旧项目操作");
     await act(async () => findButton("确认取消接取")?.click());
     expect(api.abandonTask).toHaveBeenCalledTimes(1);
     await render("another-item");
@@ -289,12 +287,12 @@ test.each(["success", "failure"] as const)(
     await vi.waitFor(() => expect(findButton("选择target")).toBeDefined());
     await act(async () => findButton("选择target")?.click());
     await act(async () => findButton("取消接取")?.click());
-    await fillReason("新项目原因");
     await act(async () => {
       if (outcome === "success") resolve();
       else reject(new Error("旧项目请求失败"));
     });
-    expect(document.querySelector("textarea")?.value).toBe("新项目原因");
+    expect(findButton("确认取消接取")).toBeDefined();
+    expect(document.querySelector("textarea")).toBeNull();
     expect($tip).not.toHaveBeenCalled();
     expect(notify).not.toHaveBeenCalled();
     await act(async () => findButton("确认取消接取")?.click());
@@ -304,14 +302,14 @@ test.each(["success", "failure"] as const)(
   },
 );
 
-test("revoked creator capability prevents confirmation without losing the reason", async () => {
+test("revoked creator capability prevents confirmation and keeps the dialog open", async () => {
   await mount();
   await act(async () => findButton("取消接取")?.click());
-  await fillReason("保留说明");
   await render("item", false);
   await act(async () => findButton("确认取消接取")?.click());
   expect(api.abandonTask).not.toHaveBeenCalled();
-  expect(document.querySelector("textarea")?.value).toBe("保留说明");
+  expect(findButton("确认取消接取")).toBeDefined();
+  expect(document.querySelector("textarea")).toBeNull();
   expect(document.querySelector("[role='alert']")).not.toBeNull();
 });
 

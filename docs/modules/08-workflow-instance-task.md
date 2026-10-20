@@ -81,7 +81,7 @@ src/
 - 切换节点、关闭详情或任务操作刷新时，取消旧请求和待打开窗口，避免展示或打开旧任务的内容。
 - 任务流返回 `itemTitle`（项目名称）与 `name`（任务流名称）。复制参与名单使用 `itemTitle` 作为标题行，按阶段顺序把人名与任务名聚合为纯文本；没有执行人的任务不参与聚合，全部任务都没有执行人时无可复制内容。
 - 本次为前后端同时切换的新协议，不保留旧字符串接口、旧数据转换或原始 JSON 展示入口。
-- `POST /app/task/instance/{instanceId}/abandon` 请求为 `{ expectedRevision: string, reason?: string }`。
+- `POST /app/task/instance/{instanceId}/abandon` 请求为 `{ expectedRevision: string }`。
 - `POST /app/task/instance/{instanceId}/reject` 请求为 `{ expectedRevision: string, reviewComment: string }`。两种操作均传列表返回的字符串 revision，不发送客户端授权标识。
 
 ## 状态规则

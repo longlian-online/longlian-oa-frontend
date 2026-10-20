@@ -101,5 +101,4 @@ export interface TaskRejectDTO {
 
 export interface TaskAbandonDTO {
   expectedRevision: string;
-  reason?: string;
 }

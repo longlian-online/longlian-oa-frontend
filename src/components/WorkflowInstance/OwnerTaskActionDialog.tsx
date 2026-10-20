@@ -18,7 +18,7 @@ interface OwnerTaskActionDialogProps {
   instance: ItemTaskInstanceVO;
   taskTitle: string;
   onClose: () => void;
-  onConfirm: (reason: string) => Promise<boolean>;
+  onConfirm: (reason?: string) => Promise<boolean>;
 }
 
 export default function OwnerTaskActionDialog({
@@ -33,7 +33,7 @@ export default function OwnerTaskActionDialog({
   const [failed, setFailed] = useState(false);
   const lock = useRef(false);
   const trimmed = reason.trim();
-  const valid = trimmed.length > 0 && trimmed.length <= 500;
+  const valid = action === "cancel" || (trimmed.length > 0 && trimmed.length <= 500);
   const label = action === "cancel" ? "取消接取" : "负责人打回";
 
   function close(): void {
@@ -46,7 +46,7 @@ export default function OwnerTaskActionDialog({
     setSubmitting(true);
     setFailed(false);
     try {
-      const succeeded = await onConfirm(trimmed);
+      const succeeded = action === "cancel" ? await onConfirm() : await onConfirm(trimmed);
       if (succeeded) onClose();
       else setFailed(true);
     } catch {
@@ -72,26 +72,31 @@ export default function OwnerTaskActionDialog({
             成果历史与操作记录保留；不会回滚其他任务，后续仅接取的任务保持不变。
           </DialogDescription>
         </DialogHeader>
-        <label htmlFor="owner-task-reason" className="text-sm font-medium">
-          操作原因（必填）
-        </label>
-        <Textarea
-          id="owner-task-reason"
-          value={reason}
-          disabled={submitting}
-          aria-invalid={trimmed.length > 500}
-          aria-describedby="owner-task-reason-help"
-          placeholder="请输入操作原因，1–500 字"
-          className="min-h-28 resize-none"
-          onChange={(event) => setReason(event.target.value)}
-        />
-        <p id="owner-task-reason-help" className="text-xs text-muted-foreground">
-          去除首尾空白后 {trimmed.length}/500 字
-          {trimmed.length > 500 ? "，原因不能超过 500 字" : ""}
-        </p>
+        {action === "reject" && (
+          <>
+            <label htmlFor="owner-task-reason" className="text-sm font-medium">
+              操作原因（必填）
+            </label>
+            <Textarea
+              id="owner-task-reason"
+              value={reason}
+              disabled={submitting}
+              aria-invalid={trimmed.length > 500}
+              aria-describedby="owner-task-reason-help"
+              placeholder="请输入操作原因，1–500 字"
+              className="min-h-28 resize-none"
+              onChange={(event) => setReason(event.target.value)}
+            />
+            <p id="owner-task-reason-help" className="text-xs text-muted-foreground">
+              去除首尾空白后 {trimmed.length}/500 字
+              {trimmed.length > 500 ? "，原因不能超过 500 字" : ""}
+            </p>
+          </>
+        )}
         {failed && (
           <p role="alert" className="text-sm text-destructive">
-            操作未完成，原因已保留。请查看错误提示；若任务已变更，请取消并刷新后重新操作。
+            操作未完成，{action === "reject" ? "原因已保留。" : ""}
+            请查看错误提示；若任务已变更，请取消并刷新后重新操作。
           </p>
         )}
         <DialogFooter>
