@@ -1,4 +1,4 @@
-export type EmailCodeBusinessType = "LOGIN" | "REGISTER" | "FORGOT_PASSWORD";
+export type EmailCodeBusinessType = "LOGIN" | "REGISTER" | "FORGOT_PASSWORD" | "BIND_EMAIL";
 
 export interface LoginByPwdDTO {
   username: string;

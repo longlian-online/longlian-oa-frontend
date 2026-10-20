@@ -2,6 +2,7 @@ import { request } from "@/api/request";
 
 import type { JoinByInviteCodeDTO, InviteInfoVO } from "@/types/auth";
 import type {
+  BindEmailDTO,
   ChangePasswordDTO,
   OrganizationSimpleInfoVO,
   OrgIdDTO,
@@ -36,6 +37,13 @@ export async function updateMyInfo(dto: UpdateMyInfoDTO): Promise<void> {
 export async function changePassword(dto: ChangePasswordDTO): Promise<void> {
   await request("/user/password", {
     method: "PATCH",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function bindEmail(dto: BindEmailDTO): Promise<void> {
+  await request("/user/email", {
+    method: "PUT",
     body: JSON.stringify(dto),
   });
 }
