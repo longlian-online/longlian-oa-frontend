@@ -8,6 +8,7 @@
     "api:update": "node tools/api-cache.mjs update",
     "dev": "vp dev",
     "build": "tsc && vp build",
+    "release:package": "node tools/release-package.mjs",
     "preview": "vp preview",
     "prepare": "vp config",
     "postinstall": "git config core.hooksPath .githooks"

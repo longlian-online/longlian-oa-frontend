@@ -1,0 +1,39 @@
+# 把 GitHub 的分支与 tag 单向同步到 CNB。
+# 仓库级 Secret：
+#   CNB_GIT_TOKEN  仅用于 Git HTTPS 推送，用户名固定为 cnb，需仓库读写权限。
+name: Sync to CNB
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cnb-git-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync Git repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Push branches and tags
+        env:
+          CNB_GIT_TOKEN: ${{ secrets.CNB_GIT_TOKEN }}
+        run: |
+          set -euo pipefail
+          : "${CNB_GIT_TOKEN:?CNB_GIT_TOKEN is required}"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git remote add cnb "https://cnb:${CNB_GIT_TOKEN}@cnb.cool/longlian.online/longlian-oa-frontend.git"
+          git push --no-force cnb 'refs/heads/*:refs/heads/*'
+          git push --no-force cnb 'refs/tags/v*.*.*:refs/tags/v*.*.*'
