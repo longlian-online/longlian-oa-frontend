@@ -16,8 +16,6 @@ const api = vi.hoisted(() => ({
   getItemTaskInstances: vi.fn(),
   getTaskInstanceDetail: vi.fn(),
   getTaskSubmissionVersions: vi.fn(),
-  ownerCancelTask: vi.fn(),
-  ownerRejectTask: vi.fn(),
   abandonTask: vi.fn(),
   claimTask: vi.fn(),
   rejectTask: vi.fn(),
@@ -95,8 +93,8 @@ beforeEach(() => {
     };
   });
   api.getTaskSubmissionVersions.mockResolvedValue([]);
-  api.ownerCancelTask.mockResolvedValue(undefined);
-  api.ownerRejectTask.mockResolvedValue(undefined);
+  api.abandonTask.mockResolvedValue(undefined);
+  api.rejectTask.mockResolvedValue(undefined);
 });
 
 afterEach(async () => {
@@ -153,7 +151,7 @@ test("owner cancellation refreshes task actions, while parallel completion and a
     task({ id: "parallel", status: "COMPLETED", parallelSort: 2 }),
     task({ id: "later", sort: 3, assigneeId: "creator" }),
   );
-  api.ownerCancelTask.mockImplementation(async () => {
+  api.abandonTask.mockImplementation(async () => {
     tasks = tasks.map((entry) =>
       entry.id === "target"
         ? { ...entry, status: "PENDING", assigneeId: undefined, revision: "9007199254740994" }
@@ -167,7 +165,7 @@ test("owner cancellation refreshes task actions, while parallel completion and a
   await fillReason("  协调重新分配  ");
   await act(async () => findButton("确认取消接取")?.click());
   await vi.waitFor(() => expect(findButton("接取")).toBeDefined());
-  expect(api.ownerCancelTask).toHaveBeenCalledWith("target", {
+  expect(api.abandonTask).toHaveBeenCalledWith("target", {
     expectedRevision: "9007199254740993",
     reason: "协调重新分配",
   });
@@ -181,11 +179,9 @@ test("owner cancellation refreshes task actions, while parallel completion and a
   expect(document.body.textContent).toContain("等待前置阶段完成");
 });
 
-test("owner rejection failure retains reason and target; retry succeeds without calling legacy reject", async () => {
+test("owner rejection failure retains reason and target; retry uses the shared reject endpoint", async () => {
   tasks = [task({ status: "COMPLETED" })];
-  api.ownerRejectTask
-    .mockRejectedValueOnce(new Error("任务已变更"))
-    .mockResolvedValueOnce(undefined);
+  api.rejectTask.mockRejectedValueOnce(new Error("任务已变更")).mockResolvedValueOnce(undefined);
   await mount();
   await act(async () => findButton("负责人打回")?.click());
   await fillReason(" 请补全缺失页面 ");
@@ -193,12 +189,11 @@ test("owner rejection failure retains reason and target; retry succeeds without 
   expect(document.querySelector("[role='alert']")?.textContent).toContain("原因已保留");
   expect(document.querySelector("textarea")?.value).toBe(" 请补全缺失页面 ");
   await act(async () => findButton("确认负责人打回")?.click());
-  expect(api.ownerRejectTask).toHaveBeenCalledTimes(2);
-  expect(api.ownerRejectTask).toHaveBeenLastCalledWith("target", {
+  expect(api.rejectTask).toHaveBeenCalledTimes(2);
+  expect(api.rejectTask).toHaveBeenLastCalledWith("target", {
     expectedRevision: "9007199254740993",
-    reason: "请补全缺失页面",
+    reviewComment: "请补全缺失页面",
   });
-  expect(api.rejectTask).not.toHaveBeenCalled();
   expect(document.querySelector("textarea")).toBeNull();
 });
 
@@ -217,7 +212,7 @@ test("stale open dialog cannot act on an ABA replacement, even with the same sta
     expect(api.getItemTaskInstances.mock.calls.length).toBeGreaterThan(1);
   });
   await act(async () => findButton("确认取消接取")?.click());
-  expect(api.ownerCancelTask).not.toHaveBeenCalled();
+  expect(api.abandonTask).not.toHaveBeenCalled();
   expect(document.querySelector("textarea")?.value).toBe("取消原因");
   expect(document.querySelector("[role='alert']")).not.toBeNull();
 });
@@ -242,7 +237,7 @@ test("missing server revision cannot expose a command", async () => {
   expect(findButton("取消接取")).toBeUndefined();
 });
 
-test("legacy next-stage reject remains separate for a noncreator", async () => {
+test("next-stage reject uses the shared endpoint with its captured revision for a noncreator", async () => {
   tasks = [task({ status: "COMPLETED" }), task({ id: "next", sort: 3, assigneeId: "creator" })];
   await mount(false);
   expect(findButton("负责人打回")).toBeUndefined();
@@ -257,8 +252,10 @@ test("legacy next-stage reject remains separate for a noncreator", async () => {
       throw new Error("Missing legacy reject confirmation");
     submit.click();
   });
-  expect(api.rejectTask).toHaveBeenCalledWith("target", { reviewComment: "旧路径意见" });
-  expect(api.ownerRejectTask).not.toHaveBeenCalled();
+  expect(api.rejectTask).toHaveBeenCalledWith("target", {
+    expectedRevision: "9007199254740993",
+    reviewComment: "旧路径意见",
+  });
 });
 
 test("a later claimed task stays assigned but cannot submit while its predecessor is unfinished", async () => {
@@ -279,13 +276,13 @@ test.each(["success", "failure"] as const)(
       resolve = done;
       reject = fail;
     });
-    api.ownerCancelTask.mockReturnValueOnce(pending).mockResolvedValueOnce(undefined);
+    api.abandonTask.mockReturnValueOnce(pending).mockResolvedValueOnce(undefined);
     const notify = vi.spyOn(notificationService, "notify");
     await mount();
     await act(async () => findButton("取消接取")?.click());
     await fillReason("旧项目操作");
     await act(async () => findButton("确认取消接取")?.click());
-    expect(api.ownerCancelTask).toHaveBeenCalledTimes(1);
+    expect(api.abandonTask).toHaveBeenCalledTimes(1);
     await render("another-item");
     await render("item");
     expect(document.querySelector("textarea")).toBeNull();
@@ -301,7 +298,7 @@ test.each(["success", "failure"] as const)(
     expect($tip).not.toHaveBeenCalled();
     expect(notify).not.toHaveBeenCalled();
     await act(async () => findButton("确认取消接取")?.click());
-    expect(api.ownerCancelTask).toHaveBeenCalledTimes(2);
+    expect(api.abandonTask).toHaveBeenCalledTimes(2);
     expect(document.querySelector("textarea")).toBeNull();
     notify.mockRestore();
   },
@@ -313,7 +310,59 @@ test("revoked creator capability prevents confirmation without losing the reason
   await fillReason("保留说明");
   await render("item", false);
   await act(async () => findButton("确认取消接取")?.click());
-  expect(api.ownerCancelTask).not.toHaveBeenCalled();
+  expect(api.abandonTask).not.toHaveBeenCalled();
   expect(document.querySelector("textarea")?.value).toBe("保留说明");
   expect(document.querySelector("[role='alert']")).not.toBeNull();
+});
+
+test.each([true, false])(
+  "self abandon without a reason is preserved (creator: %s)",
+  async (creator) => {
+    tasks = [task({ assigneeId: "creator" })];
+    await mount(creator);
+    await act(async () => findButton("放弃")?.click());
+    expect(api.abandonTask).toHaveBeenCalledExactlyOnceWith("target", {
+      expectedRevision: "9007199254740993",
+    });
+  },
+);
+
+test("any later completion also hides next-stage rejection, while a parallel completion does not", async () => {
+  tasks = [
+    task({ status: "COMPLETED" }),
+    task({ id: "parallel", parallelSort: 2, status: "COMPLETED" }),
+    task({ id: "next", sort: 3, assigneeId: "creator" }),
+  ];
+  await mount(false);
+  expect(findButton("打回")).toBeDefined();
+  tasks.push(task({ id: "farther", sort: 9, status: "COMPLETED" }));
+  await act(async () => {
+    await client.invalidateQueries();
+  });
+  await vi.waitFor(() => expect(findButton("打回")).toBeUndefined());
+});
+
+test("an open next-stage rejection cannot act on a refreshed revision and retains its comment", async () => {
+  tasks = [task({ status: "COMPLETED" }), task({ id: "next", sort: 3, assigneeId: "creator" })];
+  await mount(false);
+  await act(async () => findButton("打回")?.click());
+  await fillReason("保留旧版本意见");
+  tasks = tasks.map((entry) =>
+    entry.id === "target"
+      ? { ...entry, revision: "9007199254740995", assigneeNickname: "刷新后的小明" }
+      : entry,
+  );
+  await act(async () => {
+    await client.invalidateQueries();
+  });
+  await vi.waitFor(() => expect(document.body.textContent).toContain("刷新后的小明"));
+  await act(async () => {
+    const submit = [...document.querySelectorAll("[role='dialog'] button")].find(
+      (entry) => entry.textContent === "打回",
+    );
+    if (!(submit instanceof HTMLButtonElement)) throw new Error("Missing reject confirmation");
+    submit.click();
+  });
+  expect(api.rejectTask).not.toHaveBeenCalled();
+  expect(document.querySelector("textarea")?.value).toBe("保留旧版本意见");
 });

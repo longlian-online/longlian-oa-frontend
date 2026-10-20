@@ -2,10 +2,10 @@ import { request } from "@/api/request";
 import type {
   ItemTaskFlowVO,
   ItemTaskInstanceVO,
+  TaskAbandonDTO,
   TaskClaimResultVO,
   TaskInstanceDetailVO,
   TaskRejectDTO,
-  TaskOwnerActionDTO,
   TaskSubmissionVersionVO,
   TaskSubmitDTO,
 } from "@/types/workflowInstance";
@@ -38,9 +38,10 @@ export async function claimTask(instanceId: string): Promise<TaskClaimResultVO> 
   });
 }
 
-export async function abandonTask(instanceId: string): Promise<void> {
+export async function abandonTask(instanceId: string, dto: TaskAbandonDTO): Promise<void> {
   return request(`/task/instance/${instanceId}/abandon`, {
     method: "POST",
+    body: JSON.stringify(dto),
   });
 }
 
@@ -61,19 +62,5 @@ export async function rejectTask(instanceId: string, dto: TaskRejectDTO): Promis
 export async function resetTask(instanceId: string): Promise<void> {
   return request(`/task/instance/${instanceId}/reset`, {
     method: "POST",
-  });
-}
-
-export async function ownerCancelTask(instanceId: string, dto: TaskOwnerActionDTO): Promise<void> {
-  return request(`/task/instance/${instanceId}/owner-cancel`, {
-    method: "POST",
-    body: JSON.stringify(dto),
-  });
-}
-
-export async function ownerRejectTask(instanceId: string, dto: TaskOwnerActionDTO): Promise<void> {
-  return request(`/task/instance/${instanceId}/owner-reject`, {
-    method: "POST",
-    body: JSON.stringify(dto),
   });
 }

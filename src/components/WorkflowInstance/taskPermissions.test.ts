@@ -49,6 +49,17 @@ describe("task permissions", () => {
     ).toBe(true);
     expect(canReject(task("a", 5, "COMPLETED"), nodes, [], "me")).toBe(false);
   });
+  test("reject shares the later-completion guard and requires a server revision", () => {
+    const completed = task("a", 1, "COMPLETED", "other");
+    const next = task("next", 3, "CLAIMED");
+    expect(canReject(completed, nodes, [next, task("parallel", 1, "COMPLETED")], "me")).toBe(true);
+    expect(canReject(completed, nodes, [next, task("farther", 9, "COMPLETED")], "me")).toBe(false);
+    for (const revision of [undefined, "", "-1", "1.5", " 0 "]) {
+      expect(canReject({ ...completed, revision: revision as string }, nodes, [next], "me")).toBe(
+        false,
+      );
+    }
+  });
 });
 
 describe("project creator task permissions", () => {

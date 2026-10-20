@@ -95,10 +95,11 @@ export interface TaskSubmissionVersionVO {
 }
 
 export interface TaskRejectDTO {
+  expectedRevision: string;
   reviewComment: string;
 }
 
-export interface TaskOwnerActionDTO {
+export interface TaskAbandonDTO {
   expectedRevision: string;
-  reason: string;
+  reason?: string;
 }

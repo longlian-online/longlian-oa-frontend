@@ -1,15 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Copy } from "lucide-react";
 
-import {
-  abandonTask,
-  claimTask,
-  ownerCancelTask,
-  ownerRejectTask,
-  rejectTask,
-  resetTask,
-  submitTask,
-} from "@/api/workflowInstance";
+import { abandonTask, claimTask, rejectTask, resetTask, submitTask } from "@/api/workflowInstance";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
@@ -208,16 +200,24 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
   }
 
   async function handleReject(): Promise<void> {
+    const current = instances.find((candidate) => candidate.id === rejectTarget?.id);
     if (
       !rejectTarget ||
+      !current ||
+      current.revision !== rejectTarget.revision ||
       !rejectComment.trim() ||
-      !canReject(rejectTarget, taskFlow?.nodes ?? [], instances, currentUserId)
+      rejectComment.trim().length > 500 ||
+      !canReject(current, taskFlow?.nodes ?? [], instances, currentUserId)
     )
       return;
 
     const succeeded = await runInstanceAction(
       rejectTarget.id,
-      () => rejectTask(rejectTarget.id, { reviewComment: rejectComment.trim() }),
+      () =>
+        rejectTask(rejectTarget.id, {
+          expectedRevision: rejectTarget.revision,
+          reviewComment: rejectComment.trim(),
+        }),
       "任务已打回",
     );
     if (succeeded) {
@@ -238,23 +238,33 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
       $tip("任务状态已变更或无操作权限，请刷新后重新操作", "error");
       return false;
     }
-    const dto = { expectedRevision: instance.revision, reason: reason.trim() };
     return runInstanceAction(
       instance.id,
       () =>
-        action === "cancel" ? ownerCancelTask(instance.id, dto) : ownerRejectTask(instance.id, dto),
+        action === "cancel"
+          ? abandonTask(instance.id, { expectedRevision: instance.revision, reason: reason.trim() })
+          : rejectTask(instance.id, {
+              expectedRevision: instance.revision,
+              reviewComment: reason.trim(),
+            }),
       action === "cancel" ? "已取消接取" : "任务已打回",
     );
   }
 
   async function handleAbandon(instanceId: string): Promise<void> {
+    const instance = instances.find((candidate) => candidate.id === instanceId);
+    if (!instance) return;
     const confirmed = await confirm({
       title: "放弃任务？",
       description: "放弃后任务会回到待接取状态，其他成员可以重新接取。",
       confirmText: "放弃",
     });
     if (!confirmed) return;
-    await runInstanceAction(instanceId, () => abandonTask(instanceId), "已放弃任务");
+    await runInstanceAction(
+      instanceId,
+      () => abandonTask(instanceId, { expectedRevision: instance.revision }),
+      "已放弃任务",
+    );
   }
 
   async function handleReset(instanceId: string): Promise<void> {
@@ -450,7 +460,11 @@ function ItemWorkflowInstance({ itemId, isProjectCreator }: WorkflowInstanceProp
             </Button>
             <Button
               variant="destructive"
-              disabled={!rejectComment.trim() || actionMutation.isPending}
+              disabled={
+                !rejectComment.trim() ||
+                rejectComment.trim().length > 500 ||
+                actionMutation.isPending
+              }
               onClick={() => void handleReject()}
             >
               打回
