@@ -2,6 +2,8 @@
 # 仓库级 Secret：
 #   GIT_PASSWORD       CNB 代码同步令牌，用户名固定为 cnb，需仓库读写权限。
 #   CNB_RELEASE_TOKEN  CNB Release 与附件令牌，需 repo-release:rw。
+# 仓库级 Variable：
+#   VITE_API_BASE_URL  构建时写入前端的后端接口地址。
 name: Publish frontend package
 
 on:
@@ -53,7 +55,15 @@ jobs:
         run: vp install --frozen-lockfile --ignore-scripts
 
       - name: Build
-        run: vp run --no-cache build
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$VITE_API_BASE_URL" ]]; then
+            echo "需要在 Actions Variables 配置 VITE_API_BASE_URL"
+            exit 1
+          fi
+          vp run --no-cache build
 
       - name: Package
         id: names
