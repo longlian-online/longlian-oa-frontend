@@ -3,7 +3,7 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { mkdir, readdir, rm, stat, utimes, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, stat, utimes, writeFile } from "node:fs/promises";
 
 import { join, relative, sep } from "node:path";
 import process from "node:process";
@@ -15,10 +15,14 @@ const OUTPUT_DIR = "release";
 const execFileAsync = promisify(execFile);
 const EPOCH = new Date(0);
 const ARCHIVE_PREFIX = "longlian-oa-frontend";
-const tag = process.env.APP_VERSION || "";
-
-if (!/^v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(tag)) {
-  throw new Error("APP_VERSION 必须是稳定语义版本标签，例如 v1.2.3。");
+const { version } = JSON.parse(await readFile("package.json", "utf8"));
+if (!/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(version)) {
+  throw new Error("package.json version 必须是稳定语义版本，例如 1.2.3。");
+}
+const tag = `v${version}`;
+const actualTag = process.env.GITHUB_REF_NAME || process.env.TAG;
+if (actualTag && actualTag !== tag) {
+  throw new Error(`标签 ${actualTag} 与 package.json version ${version} 不一致。`);
 }
 
 const archiveName = `${ARCHIVE_PREFIX}-${tag}.zip`;

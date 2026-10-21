@@ -24,7 +24,7 @@ describe("admin dev-server proxy matching", () => {
 const runFile = promisify(execFile);
 
 describe("release package", () => {
-  test("embeds the tag version and packages dist deterministically", async () => {
+  test("packages the package.json version deterministically", async () => {
     const root = await mkdtemp(join(tmpdir(), "frontend-release-"));
     const first = join(root, "first");
     const second = join(root, "second");
@@ -42,9 +42,22 @@ describe("release package", () => {
       expect(listing.stdout).toBe("index.html\nassets/\nassets/app.js\n");
       const extracted = join(root, "extracted");
       await runFile("unzip", ["-q", firstResult.archivePath, "-d", extracted]);
-      expect(await readFile(join(extracted, "index.html"), "utf8")).toContain(
-        "__APP_VERSION__:v1.2.3",
-      );
+      expect(await readFile(join(extracted, "index.html"), "utf8")).toContain("1.2.3");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("rejects a tag that differs from package.json", async () => {
+    const root = await mkdtemp(join(tmpdir(), "frontend-release-"));
+    try {
+      await writeDist(root, new Date(0));
+      await expect(
+        runFile(process.execPath, [join(process.cwd(), "tools/release-package.mjs")], {
+          cwd: root,
+          env: { ...process.env, GITHUB_REF_NAME: "v9.9.9" },
+        }),
+      ).rejects.toThrow("标签 v9.9.9 与 package.json version 1.2.3 不一致。");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -53,7 +66,8 @@ describe("release package", () => {
 
 async function writeDist(root: string, modifiedAt: Date) {
   await mkdir(join(root, "dist", "assets"), { recursive: true });
-  await writeFile(join(root, "dist", "index.html"), "<html>__APP_VERSION__:v1.2.3</html>");
+  await writeFile(join(root, "package.json"), JSON.stringify({ version: "1.2.3" }));
+  await writeFile(join(root, "dist", "index.html"), "<html>1.2.3</html>");
   await writeFile(join(root, "dist", "assets", "app.js"), "console.log(1)\n");
   await utimes(join(root, "dist", "index.html"), modifiedAt, modifiedAt);
   await utimes(join(root, "dist", "assets", "app.js"), modifiedAt, modifiedAt);
@@ -62,7 +76,7 @@ async function writeDist(root: string, modifiedAt: Date) {
 async function packageRelease(root: string) {
   await runFile(process.execPath, [join(process.cwd(), "tools/release-package.mjs")], {
     cwd: root,
-    env: { ...process.env, APP_VERSION: "v1.2.3" },
+    env: { ...process.env, GITHUB_REF_NAME: "v1.2.3" },
   });
   const archivePath = join(root, "release", "longlian-oa-frontend-v1.2.3.zip");
   const archive = await readFile(archivePath);
