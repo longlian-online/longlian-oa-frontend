@@ -36,6 +36,8 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          version=$(node -p 'require("./package.json").version')
+          [[ "$TAG" == "v$version" ]]
           git fetch origin main
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main
 
@@ -51,18 +53,14 @@ jobs:
         run: vp install --frozen-lockfile --ignore-scripts
 
       - name: Build
-        env:
-          APP_VERSION: ${{ github.ref_name }}
         run: vp run --no-cache build
 
       - name: Package
         id: names
-        env:
-          APP_VERSION: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           node tools/release-package.mjs
-          archive="longlian-oa-frontend-${APP_VERSION}.zip"
+          archive="longlian-oa-frontend-${GITHUB_REF_NAME}.zip"
           {
             echo "archive=${archive}"
             echo "checksum=${archive}.sha256"
