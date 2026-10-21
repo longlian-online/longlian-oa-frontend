@@ -69,6 +69,7 @@ export default function ProjectItemSection({
   const [reasonItem, setReasonItem] = useState<ProjectItemListVO | null>(null);
   const [reason, setReason] = useState("");
   const actionLock = useRef(false);
+  const createSucceeded = useRef(false);
   const projectLifecycle = useRef({ id: projectId, generation: 0 });
   if (projectLifecycle.current.id !== projectId) {
     projectLifecycle.current = {
@@ -127,17 +128,18 @@ export default function ProjectItemSection({
   });
 
   const canCreate = useMemo(
-    () => Boolean(form.title.trim() && form.taskTemplateId && !saving),
-    [form.taskTemplateId, form.title, saving],
+    () => Boolean(dialogOpen && form.title.trim() && form.taskTemplateId && !saving),
+    [dialogOpen, form.taskTemplateId, form.title, saving],
   );
 
   function openCreateDialog(): void {
+    createSucceeded.current = false;
     setForm({ title: "", taskTemplateId: "" });
     setDialogOpen(true);
   }
 
   async function handleCreateItem(): Promise<void> {
-    if (!canCreate || actionLock.current) return;
+    if (!canCreate || actionLock.current || createSucceeded.current) return;
     actionLock.current = true;
 
     try {
@@ -146,6 +148,8 @@ export default function ProjectItemSection({
         taskTemplateId: form.taskTemplateId,
       });
       if (!isCurrent()) return;
+      // 成功后直到下次打开表单都不再提交，避免关闭动画仍能接收第二次点击。
+      createSucceeded.current = true;
       $tip("项目已创建", "success");
       setDialogOpen(false);
       setPage(1);
