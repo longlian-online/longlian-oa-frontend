@@ -18,6 +18,8 @@ import type {
 } from "@/types/file";
 
 const DEFAULT_MAX_SIZE = 50 * 1024 * 1024;
+const ARCHIVE_MAX_SIZE = 500 * 1024 * 1024;
+const ARCHIVE_EXTENSIONS: Record<string, true> = { zip: true, rar: true, "7z": true };
 const DEFAULT_ACCEPT = [
   "jpg",
   "jpeg",
@@ -95,8 +97,9 @@ function formatFileSize(size: number): string {
 
 export function validateFile(file: File, options: FileValidationOptions): string | null {
   const accept = options.accept ?? DEFAULT_ACCEPT;
-  const maxSize = options.maxSize ?? DEFAULT_MAX_SIZE;
   const fileExt = getFileExt(file.name);
+  const maxSize =
+    options.maxSize ?? (ARCHIVE_EXTENSIONS[fileExt] ? ARCHIVE_MAX_SIZE : DEFAULT_MAX_SIZE);
   const fileMime = normalizeMimeType(file, fileExt);
 
   if (!fileExt || !accept.map((item) => item.toLowerCase()).includes(fileExt)) {

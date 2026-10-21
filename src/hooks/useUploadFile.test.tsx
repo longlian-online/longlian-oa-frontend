@@ -371,3 +371,100 @@ test.each(["cover", "thumbnail"] as const)(
     }
   },
 );
+
+function fileWithSize(name: string, type: string, size: number): File {
+  const file = new File(["x"], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+  return file;
+}
+
+function mountUpload(): UseUploadFileResult["uploadFile"] {
+  let upload: UseUploadFileResult["uploadFile"] | undefined;
+  function Probe(): null {
+    upload = useUploadFile().uploadFile;
+    return null;
+  }
+  renderToString(
+    <QueryClientProvider client={createQueryClient()}>
+      <Probe />
+    </QueryClientProvider>,
+  );
+  if (!upload) throw new Error("upload hook did not mount");
+  return upload;
+}
+
+const ORDINARY_LIMIT = 50 * 1024 * 1024;
+const ARCHIVE_LIMIT = 500 * 1024 * 1024;
+
+test.each(["pack.zip", "backup.rar", "archive.7z", "PACK.ZIP"])(
+  "%s 在 50MB 以上、500MB 以内可以上传",
+  async (name) => {
+    create.mockClear();
+    create.mockResolvedValue({ fileId: "archive-id", uploadUrl: "" });
+    const upload = mountUpload();
+    const file = fileWithSize(
+      name,
+      name.toLowerCase().endsWith(".rar")
+        ? "application/vnd.rar"
+        : name.toLowerCase().endsWith(".7z")
+          ? "application/x-7z-compressed"
+          : "application/zip",
+      ORDINARY_LIMIT + 1,
+    );
+    const result = await upload(file, { bizType: "task_submit", bizId: "task" });
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ fileSize: ORDINARY_LIMIT + 1 }));
+    expect(result.fileSize).toBe(ORDINARY_LIMIT + 1);
+  },
+);
+
+test("压缩包恰好 500MB 可以上传，超过 1 字节被拒绝", async () => {
+  create.mockClear();
+  create.mockResolvedValue({ fileId: "archive-id", uploadUrl: "" });
+  const upload = mountUpload();
+  await upload(fileWithSize("pack.zip", "application/zip", ARCHIVE_LIMIT), {
+    bizType: "task_submit",
+    bizId: "task",
+  });
+  expect(create).toHaveBeenCalledWith(expect.objectContaining({ fileSize: ARCHIVE_LIMIT }));
+
+  create.mockClear();
+  await expect(
+    upload(fileWithSize("pack.zip", "application/zip", ARCHIVE_LIMIT + 1), {
+      bizType: "task_submit",
+      bizId: "task",
+    }),
+  ).rejects.toThrow("文件大小不能超过 500.0MB");
+  expect(create).not.toHaveBeenCalled();
+});
+
+test("非压缩包超过 50MB 被拒绝，恰好 50MB 可以上传", async () => {
+  create.mockClear();
+  create.mockResolvedValue({ fileId: "pdf-id", uploadUrl: "" });
+  const upload = mountUpload();
+  await expect(
+    upload(fileWithSize("notes.pdf", "application/pdf", ORDINARY_LIMIT + 1), {
+      bizType: "task_submit",
+      bizId: "task",
+    }),
+  ).rejects.toThrow("文件大小不能超过 50.0MB");
+  expect(create).not.toHaveBeenCalled();
+
+  await upload(fileWithSize("notes.pdf", "application/pdf", ORDINARY_LIMIT), {
+    bizType: "task_submit",
+    bizId: "task",
+  });
+  expect(create).toHaveBeenCalledWith(expect.objectContaining({ fileSize: ORDINARY_LIMIT }));
+});
+
+test("调用方传入的更小上限仍然限制压缩包", async () => {
+  create.mockClear();
+  const upload = mountUpload();
+  await expect(
+    upload(fileWithSize("pack.zip", "application/zip", 4), {
+      bizType: "task_submit",
+      bizId: "task",
+      maxSize: 3,
+    }),
+  ).rejects.toThrow("文件大小不能超过");
+  expect(create).not.toHaveBeenCalled();
+});
