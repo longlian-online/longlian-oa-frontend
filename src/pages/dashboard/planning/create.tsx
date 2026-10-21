@@ -231,6 +231,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
         await updateMutation.mutateAsync({
           title: formData.title.trim(),
           alias: formData.alias.trim() || formData.title.trim(),
+          typeId: formData.typeId,
           description: formData.description.trim(),
           metadata: JSON.stringify({ tags: submittedTags }),
           coverFileId: coverFile?.fileId || undefined,

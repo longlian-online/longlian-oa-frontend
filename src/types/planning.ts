@@ -65,6 +65,7 @@ export interface ProjectCreateDTO {
 export interface ProjectUpdateDTO {
   title: string;
   alias: string;
+  typeId: string;
   metadata: string;
   description: string;
   coverFileId?: string;
