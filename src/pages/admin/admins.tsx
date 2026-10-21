@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Loader2, Plus, Trash2, UserRound } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import { createAdmin, deleteAdmin } from "@/api/admin";
 import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
@@ -41,7 +42,7 @@ export default function AdminsPage() {
     Awaited<ReturnType<typeof deleteAdmin>>,
     Parameters<typeof deleteAdmin>
   >({ mutationFn: (args) => deleteAdmin(...args), invalidate: [["adminAdmins"]], scope: "admin" });
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQuery();
   const saving = createAdminMutation.isPending || deleteAdminMutation.isPending;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<AdminCreateDTO>({ username: "", password: "" });

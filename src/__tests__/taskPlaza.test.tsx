@@ -165,6 +165,7 @@ test("切换阶段仍回到第一页并收起分组，说明操作不重置列�
   await click("下一页");
   await waitFor((): void => {
     expect(requests.at(-1)?.searchParams.get("pageNum")).toBe("2");
+    expect(container.querySelector("output")?.textContent).toBe("?keep=1&page=2");
     expect(container.textContent).toContain("展开全部 7 项");
   });
   await click("展开全部 7 项");
@@ -178,9 +179,16 @@ test("切换阶段仍回到第一页并收起分组，说明操作不重置列�
     expect(requests.at(-1)?.searchParams.get("pageNum")).toBe("1");
     expect(requests.at(-1)?.searchParams.get("stageScope")).toBe("CURRENT");
     expect(requests.at(-1)?.searchParams.get("sortBy")).toBe("WAIT");
+    expect(container.querySelector("output")?.textContent).toBe("?keep=1&stageScope=CURRENT");
   });
   await waitFor((): void => expect(container.textContent).toContain("展开全部 7 项"));
   expect(container.textContent).not.toContain("任务6");
+  await click("后退");
+  await waitFor((): void => {
+    expect(container.querySelector("output")?.textContent).toBe("?keep=1&page=2");
+    expect(button("全部阶段").getAttribute("aria-pressed")).toBe("true");
+    expect(button("当前阶段").getAttribute("aria-pressed")).toBe("false");
+  });
 });
 
 test("键盘聚焦显示说明，Escape 关闭且不抢走焦点，离焦关闭", async (): Promise<void> => {

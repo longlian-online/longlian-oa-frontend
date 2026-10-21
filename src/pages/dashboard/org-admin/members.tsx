@@ -12,6 +12,7 @@ import {
 import { canEditOrganizationMemberRole, organizationMemberRoleLabel } from "@/lib/organizationRole";
 import { getSessionSnapshot, saveCurrentOrganization } from "@/lib/session";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import {
   changeMemberRole,
   changeMemberStatus,
@@ -89,7 +90,7 @@ function OrganizationMembersContent() {
     mutationFn: (args) => changeMemberStatus(...args),
     invalidate: [["members"], ["applications"], ["memberSubmitCounts"], ["currentUser"]],
   });
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQuery();
   const mutatingId = changeMemberStatusMutation.isPending
     ? String(changeMemberStatusMutation.variables?.[0] ?? "new")
     : null;

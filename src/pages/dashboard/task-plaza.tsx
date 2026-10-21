@@ -8,6 +8,7 @@ import { scopedKey } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
 import { projectThumbnailSrc } from "@/lib/projectThumbnail";
 import { formatSlotLabel } from "@/lib/slotLabel";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { claimTask } from "@/api/workflowInstance";
 import {
@@ -88,23 +89,18 @@ export default function TaskPlaza() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const stageScope = plazaStageScope(searchParams);
-  const [previousScope, setPreviousScope] = useState(stageScope);
+  const [pageNum, setPageNum] = usePageQuery();
   const { projectTypes } = useProjectTypes();
   const [keyword, setKeyword] = useState("");
   const [submittedKeyword, setSubmittedKeyword] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [sortBy, setSortBy] = useState<PlazaSortBy>(DEFAULT_SORT);
-  const [pageNum, setPageNum] = useState(1);
   const session = useSessionSnapshot();
   const pendingClaims = useMutationState({
     filters: { mutationKey: scopedKey(["claimTask"], "org", session), status: "pending" },
     select: (mutation): string => String(mutation.state.variables),
   });
   const claiming = new Set(pendingClaims);
-  if (previousScope !== stageScope) {
-    setPreviousScope(stageScope);
-    setPageNum(1);
-  }
 
   const listQuery = useApiQuery(
     plazaListQuery(stageScope, pageNum, submittedKeyword, selectedType, sortBy),
@@ -181,8 +177,10 @@ export default function TaskPlaza() {
               variant="ghost"
               className="pr-0"
               onClick={() => {
+                if (scope === stageScope) return;
                 const next = new URLSearchParams(searchParams);
                 next.set("stageScope", scope);
+                next.delete("page");
                 setSearchParams(next);
               }}
             >

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CheckCircle2, Edit3, Loader2, Plus, Search, Trash2, XCircle } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import {
   changeProjectTypeStatus,
   createOrganizationProjectType,
@@ -72,7 +73,7 @@ function OrganizationProjectTypesContent() {
   });
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQuery();
   const mutatingId =
     (changeProjectTypeStatusMutation.isPending
       ? String(changeProjectTypeStatusMutation.variables?.[0] ?? "new")

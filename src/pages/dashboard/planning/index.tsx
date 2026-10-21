@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { Clock, Filter, FolderOpen, Plus } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import {
   DEFAULT_PROJECT_TIME_SORT as DEFAULT_TIME_SORT,
   PLANNING_PAGE_SIZE as PAGE_SIZE,
@@ -43,7 +44,7 @@ export default function Planning() {
   const [submittedKeyword, setSubmittedKeyword] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [timeSort, setTimeSort] = useState(DEFAULT_TIME_SORT);
-  const [pageNum, setPageNum] = useState(1);
+  const [pageNum, setPageNum] = usePageQuery();
 
   const listQuery = useApiQuery(
     projectListQuery(pageNum, submittedKeyword, selectedType, timeSort),
@@ -208,11 +209,13 @@ interface ProjectCardProps {
 }
 
 function ProjectCard({ project }: ProjectCardProps) {
+  const location = useLocation();
   const metadataTags = parseProjectMetadataTags(project.metadata);
 
   return (
     <Link
       to={`/dashboard/planning/${project.id}?view=about`}
+      state={{ planningListReturnTo: `/dashboard/planning${location.search}` }}
       className="group flex aspect-[5/3] min-h-48 cursor-pointer overflow-hidden rounded-lg border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="h-full w-[40%] shrink-0 overflow-hidden bg-muted">

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router";
 import { Check, Clock3, ExternalLink, Loader2, X } from "lucide-react";
 
@@ -18,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import { formatDate } from "@/lib/format";
 import {
   ORGANIZATION_ADMIN_PAGE_SIZE as PAGE_SIZE,
@@ -33,7 +33,7 @@ function targetPath(request: DeletionRequestVO): string {
 }
 
 function DeletionRequestsContent() {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQuery();
   const listQuery = useApiQuery(organizationDeletionRequestsQuery(page));
   const requests = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;

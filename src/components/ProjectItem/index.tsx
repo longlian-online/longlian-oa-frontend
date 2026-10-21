@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import { useConfirm } from "@/hooks/useConfirm";
 import { PROJECT_ITEMS_PAGE_SIZE as PAGE_SIZE, projectItemsQuery } from "@/queries/planning";
 import ProjectItemNodeList from "./ProjectItemNodeList";
@@ -57,14 +58,11 @@ export default function ProjectItemSection({
   const confirm = useConfirm();
   const navigate = useNavigate();
   const location = useLocation();
-  const [{ page, status, orderDir }, setQuery] = useState<{
-    page: number;
+  const [page, setPage] = usePageQuery();
+  const [{ status, orderDir }, setQuery] = useState<{
     status: "IN_PROGRESS" | "COMPLETED" | "";
     orderDir: "ASC" | "DESC";
-  }>({ page: 1, status: "IN_PROGRESS", orderDir: "DESC" });
-  function setPage(nextPage: number): void {
-    setQuery((query) => ({ ...query, page: nextPage }));
-  }
+  }>({ status: "IN_PROGRESS", orderDir: "DESC" });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reasonItem, setReasonItem] = useState<ProjectItemListVO | null>(null);
   const [reason, setReason] = useState("");
@@ -237,7 +235,8 @@ export default function ProjectItemSection({
             value={status || "ALL"}
             onValueChange={(value) => {
               if (value === "IN_PROGRESS" || value === "COMPLETED" || value === "ALL") {
-                setQuery((query) => ({ ...query, status: value === "ALL" ? "" : value, page: 1 }));
+                setQuery((query) => ({ ...query, status: value === "ALL" ? "" : value }));
+                setPage(1);
               }
             }}
           >
@@ -251,7 +250,8 @@ export default function ProjectItemSection({
             value={orderDir}
             onValueChange={(value) => {
               if (value === "ASC" || value === "DESC") {
-                setQuery((query) => ({ ...query, orderDir: value, page: 1 }));
+                setQuery((query) => ({ ...query, orderDir: value }));
+                setPage(1);
               }
             }}
           >
