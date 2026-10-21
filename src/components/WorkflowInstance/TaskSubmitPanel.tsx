@@ -88,7 +88,8 @@ export default function TaskSubmitPanel({
           <DialogTitle>提交任务：{taskName}</DialogTitle>
         </DialogHeader>
 
-        <fieldset disabled={submitting} className="max-h-[60vh] space-y-3 overflow-y-auto">
+        {/* fieldset 默认 min-inline-size: min-content，超长文件名会把弹窗撑出边界 */}
+        <fieldset disabled={submitting} className="min-w-0 max-h-[60vh] space-y-3 overflow-y-auto">
           {submitFields.length === 0 ? (
             <div className="rounded-xl bg-secondary/60 p-4 text-sm text-muted-foreground">
               该任务没有额外提交字段，确认后会直接提交。
@@ -98,7 +99,10 @@ export default function TaskSubmitPanel({
               const value = values[field.key];
               const textValue = typeof value === "string" ? value : "";
               return (
-                <div key={field.key} className="flex flex-col gap-2 text-sm text-foreground">
+                <div
+                  key={field.key}
+                  className="flex min-w-0 flex-col gap-2 text-sm text-foreground"
+                >
                   <label htmlFor={`task-field-${field.key}`}>
                     {field.label}
                     {field.required && <span className="ml-1 text-destructive">*</span>}

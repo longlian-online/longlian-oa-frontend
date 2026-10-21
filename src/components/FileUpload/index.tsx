@@ -90,7 +90,9 @@ export default function FileUpload({
   return (
     <div
       className={cn(
-        fillHeight ? "flex min-h-[340px] flex-1 flex-col gap-3" : "space-y-3",
+        fillHeight
+          ? "flex min-h-[340px] min-w-0 flex-1 flex-col gap-3"
+          : "w-full min-w-0 space-y-3",
         className,
       )}
     >
@@ -168,10 +170,13 @@ export default function FileUpload({
       )}
 
       {value && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border bg-background/60 px-3 py-2">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">{value.fileName}</p>
-          </div>
+        <div className="flex w-full min-w-0 items-center gap-3 rounded-lg border bg-background/60 px-3 py-2">
+          <p
+            className="min-w-0 flex-1 truncate text-sm font-medium text-foreground"
+            title={value.fileName}
+          >
+            {value.fileName}
+          </p>
           <Button type="button" variant="ghost" size="icon-sm" onClick={() => onChange(null)}>
             <X className="h-4 w-4" />
           </Button>
