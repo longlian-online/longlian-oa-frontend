@@ -831,6 +831,7 @@ sort=5: 发布
 
 - `baseTaskId`：原子任务 ID。
 - `name`：任务名称。
+- `baseTaskIcon`：可选的 Lucide 图标标识。未返回或无法识别时按任务名称匹配默认图标。
 - `submitFields`：结构化提交字段定义数组，包含 `key`、`label`、`type`、`required`、`options`。
 - `sort`：步骤顺序。
 - `parallelSort`：并行组内顺序。

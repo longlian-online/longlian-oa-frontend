@@ -7,6 +7,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Trash2,
   Workflow,
   X,
 } from "lucide-react";
@@ -15,10 +16,11 @@ import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import {
   changeBaseTaskStatus,
   createOrganizationBaseTask,
+  deleteOrganizationBaseTask,
   updateOrganizationBaseTask,
 } from "@/api/organizationAdmin";
-import EmptyState from "@/components/EmptyState";
 import BaseTaskFieldsEditor from "@/components/BaseTaskFieldsEditor";
+import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
@@ -35,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useConfirm } from "@/hooks/useConfirm";
 import { cn } from "@/lib/utils";
 import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
 import { BASE_TASK_PAGE_SIZE as PAGE_SIZE, organizationBaseTasksQuery } from "@/queries/workshop";
@@ -62,6 +65,7 @@ const EMPTY_FORM: BaseTaskForm = {
 };
 
 function BaseTaskManagementContent() {
+  const confirm = useConfirm();
   const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
@@ -95,7 +99,15 @@ function BaseTaskManagementContent() {
     invalidate: [["baseTasks"], ["templates"], ["templateOptions"]],
   });
   const saving = saveMutation.isPending;
-  const mutatingId = statusMutation.isPending ? statusMutation.variables?.id : null;
+  const deleteMutation = useApiMutation({
+    mutationFn: (id: string) => deleteOrganizationBaseTask(id),
+    invalidate: [["baseTasks"], ["templates"], ["templateOptions"]],
+  });
+  const mutatingId = deleteMutation.isPending
+    ? deleteMutation.variables
+    : statusMutation.isPending
+      ? statusMutation.variables?.id
+      : null;
   function handleSearch(): void {
     setKeyword(searchText.trim());
     setPage(1);
@@ -247,6 +259,27 @@ function BaseTaskManagementContent() {
     }
   }
 
+  async function handleDelete(task: OrganizationBaseTaskVO): Promise<void> {
+    const taskName = task.name ?? "未命名任务";
+    const confirmed = await confirm({
+      title: "删除原子任务？",
+      description: `删除后「${taskName}」将不可恢复。已被任务模板或项目任务节点引用的任务不能删除，请改为禁用。`,
+      confirmText: "删除",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
+    try {
+      await deleteMutation.mutateAsync(task.id);
+      $tip("原子任务已删除", "success");
+      if (tasks.length === 1 && page > 1) {
+        setPage(page - 1);
+      }
+    } catch {
+      /* 共享 Mutation 显示错误，并保留已有列表。 */
+    }
+  }
+
   return (
     <div className="flex min-w-0 flex-col gap-4">
       {listQuery.isFetching && listQuery.data && (
@@ -325,7 +358,7 @@ function BaseTaskManagementContent() {
                     <div className="text-xs text-muted-foreground">
                       已被 {task.refCount} 个模板引用
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
@@ -350,6 +383,26 @@ function BaseTaskManagementContent() {
                           <Loader2 data-icon="inline-start" className="animate-spin" />
                         )}
                         {task.status === "ENABLED" ? "禁用" : "启用"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        aria-label={`删除${taskName}`}
+                        title={
+                          task.refCount > 0
+                            ? "该任务已被任务模板或项目任务节点引用，请改为禁用"
+                            : "删除原子任务"
+                        }
+                        disabled={mutatingId === task.id || task.refCount > 0}
+                        onClick={() => void handleDelete(task)}
+                      >
+                        {mutatingId === task.id ? (
+                          <Loader2 data-icon="inline-start" className="animate-spin" />
+                        ) : (
+                          <Trash2 data-icon="inline-start" />
+                        )}
+                        删除
                       </Button>
                     </div>
                   </div>
