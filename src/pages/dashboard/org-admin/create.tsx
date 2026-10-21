@@ -69,7 +69,9 @@ function OrganizationAdminCreateWorkflowContent() {
   const [nodes, setNodes] = useState<WorkflowEditorNode[]>([]);
   const loadingBaseTasks = baseQuery.isLoading;
   const loadingTemplate = templateQuery.isLoading;
-  const saving = saveMutation.isPending;
+  const [saveSucceeded, setSaveSucceeded] = useState(false);
+  const saving = saveMutation.isPending || saveSucceeded;
+  const saveLock = useRef(false);
 
   const canSave = Boolean(
     formData.name.trim() &&
@@ -91,43 +93,52 @@ function OrganizationAdminCreateWorkflowContent() {
   }, [templateQuery.data, templateId, session.appScope, session.orgId]);
 
   async function handleSave(): Promise<void> {
+    if (saveLock.current || saving) return;
+    if (!formData.name.trim()) {
+      $tip("请输入流程名", "error");
+      return;
+    }
+
+    if (nodes.length === 0) {
+      $tip("请至少添加一个任务节点", "error");
+      return;
+    }
+
+    const validation = validateEditorNodes(nodes, baseTasks);
+    if (!validation.valid) {
+      $tip(validation.errors[0] || "工作流配置不完整", "error");
+      return;
+    }
+
+    const payload: OrganizationTaskTemplateCreateDTO = {
+      name: formData.name.trim(),
+      description: formData.description.trim() || undefined,
+      nodes: toCreateNodes(nodes).map(({ baseTaskId, sort, parallelSort }) => ({
+        baseTaskId,
+        sort,
+        parallelSort,
+      })),
+    };
+
+    saveLock.current = true;
+    let succeeded = false;
     try {
-      if (!formData.name.trim()) {
-        $tip("请输入流程名", "error");
-        return;
-      }
-
-      if (nodes.length === 0) {
-        $tip("请至少添加一个任务节点", "error");
-        return;
-      }
-
-      const validation = validateEditorNodes(nodes, baseTasks);
-      if (!validation.valid) {
-        $tip(validation.errors[0] || "工作流配置不完整", "error");
-        return;
-      }
-
-      const payload: OrganizationTaskTemplateCreateDTO = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        nodes: toCreateNodes(nodes).map(({ baseTaskId, sort, parallelSort }) => ({
-          baseTaskId,
-          sort,
-          parallelSort,
-        })),
-      };
-
       if (templateId) {
         await saveMutation.mutateAsync(payload);
+        succeeded = true;
+        setSaveSucceeded(true);
         $tip("流程模板已更新", "success");
       } else {
         await saveMutation.mutateAsync(payload);
+        succeeded = true;
+        setSaveSucceeded(true);
         $tip("流程模板已创建", "success");
       }
       void navigate("/dashboard/org-admin/workflows");
     } catch {
       /* QueryClient 统一显示最终错误，草稿保留。 */
+    } finally {
+      if (!succeeded) saveLock.current = false;
     }
   }
 
@@ -182,9 +193,14 @@ function OrganizationAdminCreateWorkflowContent() {
 }
 
 export default function OrganizationAdminCreateWorkflowPage() {
+  const session = useSessionSnapshot();
+  const [searchParams] = useSearchParams();
+  const templateId = searchParams.get("templateId");
   return (
     <OrganizationAdminGuard>
-      <OrganizationAdminCreateWorkflowContent />
+      <OrganizationAdminCreateWorkflowContent
+        key={`${session.appScope}:${session.orgId}:${templateId ?? "new"}`}
+      />
     </OrganizationAdminGuard>
   );
 }

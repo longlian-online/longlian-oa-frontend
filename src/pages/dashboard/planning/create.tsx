@@ -52,7 +52,8 @@ export default function CreateProject({ project }: CreateProjectProps) {
     mutationFn: (payload: ProjectUpdateDTO) => updateProject(project!.id, payload),
     invalidate: [["projects"], ["workshop"], ["plaza"]],
   });
-  const loading = createMutation.isPending || updateMutation.isPending;
+  const [saveSucceeded, setSaveSucceeded] = useState(false);
+  const loading = createMutation.isPending || updateMutation.isPending || saveSucceeded;
   const [showInvalid, setShowInvalid] = useState(false);
   const [formData, setFormData] = useState({
     title: project?.title ?? "",
@@ -224,6 +225,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
     }
 
     submitLock.current = true;
+    let succeeded = false;
     try {
       if (isEditing && project) {
         await updateMutation.mutateAsync({
@@ -238,6 +240,8 @@ export default function CreateProject({ project }: CreateProjectProps) {
               ? formData.status
               : undefined,
         });
+        succeeded = true;
+        setSaveSucceeded(true);
         $tip("企划已更新", "success");
         void navigate(`/dashboard/planning/${project.id}`);
       } else if (coverFile) {
@@ -250,13 +254,15 @@ export default function CreateProject({ project }: CreateProjectProps) {
           thumbnailFileId: thumbnailFile?.fileId || undefined,
           metadata: JSON.stringify({ tags: submittedTags }),
         });
+        succeeded = true;
+        setSaveSucceeded(true);
         $tip("企划创建成功", "success");
         void navigate("/dashboard/planning");
       }
     } catch {
       /* 保留表单，由共享 Mutation 提示错误。 */
     } finally {
-      submitLock.current = false;
+      if (!succeeded) submitLock.current = false;
     }
   }
 
