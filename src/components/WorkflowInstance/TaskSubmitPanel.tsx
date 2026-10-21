@@ -118,7 +118,7 @@ export default function TaskSubmitPanel({
                       bizId={taskInstanceId}
                       value={uploads[field.key] ?? null}
                       title={`上传${field.label}`}
-                      description="支持图片、文档或压缩包"
+                      description="图片和文档不超过 50MB，压缩包不超过 500MB"
                       onChange={(file) => {
                         if (submittingLock.current) return;
                         setUploads((current) => ({ ...current, [field.key]: file }));
