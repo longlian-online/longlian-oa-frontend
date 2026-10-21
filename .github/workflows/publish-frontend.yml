@@ -1,6 +1,6 @@
 # 推送稳定版本 tag 后构建一次前端，并发布同一份 ZIP 到 GitHub 与 CNB。
 # 仓库级 Secret：
-#   CNB_GIT_TOKEN      Git 同步令牌，用户名固定为 cnb，需仓库读写权限。
+#   GIT_PASSWORD       CNB 代码同步令牌，用户名固定为 cnb，需仓库读写权限。
 #   CNB_RELEASE_TOKEN  CNB Release 与附件令牌，需 repo-release:rw。
 name: Publish frontend package
 
@@ -129,6 +129,8 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Download package
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
@@ -142,16 +144,15 @@ jobs:
           cd release
           sha256sum --check --strict "${{ needs.package.outputs.checksum }}"
 
-      - name: Sync tag to CNB
+      - name: Sync to CNB Repository
+        uses: docker://tencentcom/git-sync@sha256:b7c4672616ddea5b89948dcd034610b29d37d8430e74b4bc83b421c963c25f77 # latest
         env:
-          CNB_GIT_TOKEN: ${{ secrets.CNB_GIT_TOKEN }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          : "${CNB_GIT_TOKEN:?CNB_GIT_TOKEN is required}"
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git remote add cnb "https://cnb:${CNB_GIT_TOKEN}@cnb.cool/longlian.online/longlian-oa-frontend.git"
-          git push --no-force cnb "refs/tags/${TAG}:refs/tags/${TAG}"
+          PLUGIN_TARGET_URL: "https://cnb.cool/longlian.online/longlian-oa-frontend.git"
+          PLUGIN_AUTH_TYPE: "https"
+          PLUGIN_USERNAME: "cnb"
+          PLUGIN_PASSWORD: ${{ secrets.GIT_PASSWORD }}
+          PLUGIN_FORCE: "false"
+          PLUGIN_PUSH_TAGS: "true"
 
       - name: Publish CNB release
         env:
