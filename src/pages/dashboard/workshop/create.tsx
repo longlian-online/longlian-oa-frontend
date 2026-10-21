@@ -53,7 +53,8 @@ function CreateWorkflowPageContent() {
         : createWorkshopTaskTemplate(payload),
     invalidate: [["templates"], ["templateOptions"]],
   });
-  const saving = saveMutation.isPending;
+  const [saveSucceeded, setSaveSucceeded] = useState(false);
+  const saving = saveMutation.isPending || saveSucceeded;
   const canSave = Boolean(
     formData.name.trim() && nodes.length > 0 && !saving && baseTasksQuery.data,
   );
@@ -85,19 +86,24 @@ function CreateWorkflowPageContent() {
     };
 
     saveLock.current = true;
+    let succeeded = false;
     try {
       if (editingTemplate) {
         await saveMutation.mutateAsync(payload);
+        succeeded = true;
+        setSaveSucceeded(true);
         $tip("流程模板已更新", "success");
       } else {
         await saveMutation.mutateAsync(payload);
+        succeeded = true;
+        setSaveSucceeded(true);
         $tip("流程模板已创建", "success");
       }
       void navigate("/dashboard/workshop/workflows");
     } catch {
       /* 失败保留画板草稿。 */
     } finally {
-      saveLock.current = false;
+      if (!succeeded) saveLock.current = false;
     }
   }
 
