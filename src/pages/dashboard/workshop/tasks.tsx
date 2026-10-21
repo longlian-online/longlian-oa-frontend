@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import {
   changeBaseTaskStatus,
   createOrganizationBaseTask,
@@ -66,7 +67,7 @@ const EMPTY_FORM: BaseTaskForm = {
 
 function BaseTaskManagementContent() {
   const confirm = useConfirm();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQuery();
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
   const [formOpen, setFormOpen] = useState(false);

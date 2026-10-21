@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { Menu } from "@base-ui/react/menu";
 import {
   BookOpen,
@@ -48,6 +48,7 @@ import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const browseView = searchParams.get("view") === "about";
@@ -233,7 +234,11 @@ export default function ProjectDetail() {
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() => void navigate(`/dashboard/planning/${project.id}/edit`)}
+                        onClick={() =>
+                          void navigate(`/dashboard/planning/${project.id}/edit`, {
+                            state: location.state,
+                          })
+                        }
                       >
                         <Pencil data-icon="inline-start" />
                         编辑资料

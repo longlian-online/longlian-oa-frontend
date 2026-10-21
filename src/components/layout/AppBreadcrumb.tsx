@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { itemFlowQuery, projectDetailQuery } from "@/queries/planning";
 import { workshopReturnTo } from "@/lib/workshopNavigation";
+import { planningListReturnTo } from "@/lib/pageQuery";
 
 interface BreadcrumbItem {
   label: string;
@@ -71,9 +72,14 @@ export default function AppBreadcrumb() {
   const projectQuery = useApiQuery(projectDetailQuery(projectId));
   const flowQuery = useApiQuery(itemFlowQuery(itemId ?? ""));
   const items = getBreadcrumbItems(pathname, projectQuery.data?.title, flowQuery.data?.itemTitle);
+  const listReturn = planningListReturnTo(location.state);
+  if (listReturn && segments[1] === "planning") {
+    const index = items.findIndex((item) => item.to === "/dashboard/planning");
+    const current = items[index];
+    if (current) items[index] = { ...current, to: listReturn };
+  }
   const returnTo = workshopReturnTo(location.state);
   if (returnTo && segments[1] === "planning") items.unshift({ label: "工坊", to: returnTo });
-
   if (items.length < 2) return null;
 
   return (

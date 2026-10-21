@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Check, Clock3, Loader2, Search, UserRound, X } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import { reviewJoinApplication } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
@@ -52,7 +53,7 @@ function OrganizationApplicationsContent() {
   });
   const [searchText, setSearchText] = useState("");
   const [keyword, setKeyword] = useState("");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQuery();
   const [reviewing, setReviewing] = useState<JoinApplicationVO | null>(null);
   const [reviewAction, setReviewAction] = useState<ReviewAction>("APPROVED");
   const [reviewRemark, setReviewRemark] = useState("");

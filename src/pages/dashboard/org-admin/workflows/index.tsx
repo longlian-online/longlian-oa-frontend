@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Loader2, Search, Workflow } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import { changeTaskTemplateStatus } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
@@ -23,7 +24,7 @@ import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
 function OrganizationAdminWorkflowsContent() {
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQuery();
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
   const listQuery = useApiQuery(organizationTemplatesQuery(keyword, page));

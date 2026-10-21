@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Ban, CheckCircle2, FolderOpen, Loader2, Search } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import { changeProjectStatus } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
@@ -46,7 +47,7 @@ function OrganizationAdminProjectsContent() {
   });
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQuery();
   const mutatingId = changeProjectStatusMutation.isPending
     ? String(changeProjectStatusMutation.variables?.[0] ?? "new")
     : null;

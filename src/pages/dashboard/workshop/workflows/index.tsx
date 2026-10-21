@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Loader2, Search, Workflow } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import { WORKFLOW_PAGE_SIZE as PAGE_SIZE, workflowListQuery } from "@/queries/workshop";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
@@ -14,7 +15,7 @@ import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 
 function WorkshopWorkflowsPageContent() {
   const navigate = useNavigate();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQuery();
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
 

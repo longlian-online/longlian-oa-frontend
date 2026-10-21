@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Ban, Building2, CheckCircle2, Copy, KeyRound, Loader2 } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import { changeAdminOrganizationStatus, createOrganizationInviteCode } from "@/api/admin";
 import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
@@ -50,7 +51,7 @@ export default function AdminOrganizationsPage() {
     invalidate: [["adminOrganizations"]],
     scope: "admin",
   });
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQuery();
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
   const invite = createOrganizationInviteCodeMutation.data;
