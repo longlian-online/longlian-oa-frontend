@@ -54,7 +54,7 @@ const apiProxy: ProxyOptions = {
 
 export default defineConfig({
   define: {
-    __APP_VERSION__: JSON.stringify(version),
+    __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || version),
     __APP_BUILD_TIME__: JSON.stringify(buildTime),
   },
   fmt: {

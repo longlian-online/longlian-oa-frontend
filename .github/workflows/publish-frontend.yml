@@ -1,0 +1,164 @@
+# 推送稳定版本 tag 后构建一次前端，并发布同一份 ZIP 到 GitHub 与 CNB。
+# 仓库级 Secret：
+#   GIT_PASSWORD       CNB 代码同步令牌，用户名固定为 cnb，需仓库读写权限。
+#   CNB_RELEASE_TOKEN  CNB Release 与附件令牌，需 repo-release:rw。
+name: Publish frontend package
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Build package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      archive: ${{ steps.names.outputs.archive }}
+      checksum: ${{ steps.names.outputs.checksum }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Validate release tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Set up Vite+
+        uses: voidzero-dev/setup-vp@6eb3ef76e48ad5aca2d217e4ee277786b3865699 # v0.3.1
+        with:
+          node-version: "24.21.0"
+          version: "0.1.14"
+          cache: true
+          run-install: false
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile --ignore-scripts
+
+      - name: Build
+        env:
+          APP_VERSION: ${{ github.ref_name }}
+        run: vp run --no-cache build
+
+      - name: Package
+        id: names
+        env:
+          APP_VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          node tools/release-package.mjs
+          archive="longlian-oa-frontend-${APP_VERSION}.zip"
+          {
+            echo "archive=${archive}"
+            echo "checksum=${archive}.sha256"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: frontend-release
+          path: release/
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+  github-release:
+    name: Publish GitHub Release
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Download package
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: frontend-release
+          path: release
+
+      - name: Verify checksum
+        run: |
+          set -euo pipefail
+          cd release
+          sha256sum --check --strict "${{ needs.package.outputs.checksum }}"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          ARCHIVE: ${{ needs.package.outputs.archive }}
+          CHECKSUM: ${{ needs.package.outputs.checksum }}
+        run: |
+          set -euo pipefail
+          notes="$(printf '%s\n' \
+            '前端静态站点构建包。' \
+            '' \
+            "- 提交：\`${GITHUB_SHA}\`" \
+            '- ZIP 解压后根目录为 `index.html`。' \
+            '- 使用同名 `.sha256` 文件校验 ZIP。')"
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --notes "$notes" \
+            "release/${ARCHIVE}" \
+            "release/${CHECKSUM}"
+
+  cnb-release:
+    name: Publish CNB Release
+    needs: [package, github-release]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout release tooling
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Download package
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: frontend-release
+          path: release
+
+      - name: Verify checksum
+        run: |
+          set -euo pipefail
+          cd release
+          sha256sum --check --strict "${{ needs.package.outputs.checksum }}"
+
+      - name: Sync to CNB Repository
+        uses: docker://tencentcom/git-sync@sha256:b7c4672616ddea5b89948dcd034610b29d37d8430e74b4bc83b421c963c25f77 # latest
+        env:
+          PLUGIN_TARGET_URL: "https://cnb.cool/longlian.online/longlian-oa-frontend.git"
+          PLUGIN_AUTH_TYPE: "https"
+          PLUGIN_USERNAME: "cnb"
+          PLUGIN_PASSWORD: ${{ secrets.GIT_PASSWORD }}
+          PLUGIN_FORCE: "false"
+          PLUGIN_PUSH_TAGS: "true"
+
+      - name: Publish CNB release
+        env:
+          CNB_TOKEN: ${{ secrets.CNB_RELEASE_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+          ARCHIVE: ${{ needs.package.outputs.archive }}
+          CHECKSUM: ${{ needs.package.outputs.checksum }}
+        run: node tools/cnb-release.mjs "release/${ARCHIVE}" "release/${CHECKSUM}"
