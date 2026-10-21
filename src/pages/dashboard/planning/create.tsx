@@ -288,8 +288,8 @@ export default function CreateProject({ project }: CreateProjectProps) {
         </Button>
       </div>
 
-      <div className="grid items-start justify-center gap-4 lg:items-stretch lg:grid-cols-[280px_minmax(0,720px)]">
-        <aside className="lg:flex">
+      <div className="grid items-start justify-center gap-4 lg:grid-cols-[280px_minmax(0,720px)]">
+        <aside>
           <section className="flex w-full flex-col rounded-xl border bg-card p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <div>
