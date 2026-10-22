@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -314,10 +315,10 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
 
   return (
     <section>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <Link
           to={`/dashboard/planning/${group.projectId}`}
-          className="group flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group flex min-w-0 flex-1 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-3"
         >
           {imageUrl ? (
             <RemoteImage
@@ -346,7 +347,7 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
           <nav aria-label={`${group.title}任务分页`} className="flex shrink-0 items-center gap-1">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="icon-sm"
               aria-label="上一页任务"
               disabled={currentPage === 1}
@@ -354,16 +355,30 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
             >
               <ChevronLeft aria-hidden="true" />
             </Button>
-            <span
-              className="min-w-10 text-center text-xs tabular-nums text-muted-foreground"
-              aria-live="polite"
-              aria-atomic="true"
+            <Select
+              value={String(currentPage)}
+              onValueChange={(value: string | null): void => {
+                if (value !== null) setPage(Number(value));
+              }}
             >
-              {currentPage} / {totalPages}
-            </span>
+              <SelectTrigger aria-label="选择任务页码" title="选择页码，快速跳转" className="w-20">
+                <SelectValue aria-live="polite" aria-atomic="true">
+                  {currentPage} / {totalPages}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end" alignItemWithTrigger={false}>
+                <SelectGroup>
+                  {Array.from({ length: totalPages }, (_, index) => (
+                    <SelectItem key={index + 1} value={String(index + 1)}>
+                      第 {index + 1} 页
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="icon-sm"
               aria-label="下一页任务"
               disabled={currentPage === totalPages}

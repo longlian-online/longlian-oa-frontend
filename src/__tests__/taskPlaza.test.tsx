@@ -145,6 +145,19 @@ function visibleTaskNames(projectId: string): string[] {
   );
 }
 
+async function chooseTaskPage(projectId: string, page: number): Promise<void> {
+  await click("选择任务页码", section(projectId));
+  let option: HTMLElement | undefined;
+  await waitFor((): void => {
+    option = Array.from(document.body.querySelectorAll<HTMLElement>('[role="option"]')).find(
+      (element): boolean => element.textContent?.trim() === `第 ${page} 页`,
+    );
+    expect(option).toBeDefined();
+  });
+  await act(async (): Promise<void> => option!.focus());
+  await act(async (): Promise<void> => option!.click());
+}
+
 test("切换阶段重置企划和任务页码，说明操作保留任务页码", async (): Promise<void> => {
   groups = [makeGroup("21", 7)];
   await mount();
@@ -207,6 +220,28 @@ test("企划独立翻页，末页只展示剩余任务，单页不显示分页",
   expect(visibleTaskNames("21")).toEqual(
     groups[0]!.tasks.slice(6, 12).map((task): string => task.nodeName),
   );
+});
+
+test("选择页码直接跳转，其他企划和企划列表页码保持不变", async (): Promise<void> => {
+  groups = [makeGroup("21", 19), makeGroup("22", 7)];
+  await mount("?keep=1&page=2");
+  await waitFor((): void =>
+    expect(visibleTaskNames("21")).toEqual(
+      groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
+    ),
+  );
+  await chooseTaskPage("21", 4);
+  expect(visibleTaskNames("21")).toEqual(["21任务18"]);
+  expect(button("下一页任务", section("21")).disabled).toBe(true);
+  expect(visibleTaskNames("22")).toEqual(
+    groups[1]!.tasks.slice(0, 6).map((task): string => task.nodeName),
+  );
+  expect(container.querySelector("output")?.textContent).toBe("?keep=1&page=2");
+  await chooseTaskPage("21", 1);
+  expect(visibleTaskNames("21")).toEqual(
+    groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
+  );
+  expect(button("上一页任务", section("21")).disabled).toBe(true);
 });
 
 test("刷新后末页任务减少时回退到有效页，任务恢复后不跳回旧页", async (): Promise<void> => {
