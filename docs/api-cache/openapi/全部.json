@@ -337,6 +337,25 @@
         },
         "type": "object"
       },
+      "BindEmailDTO": {
+        "description": "绑定邮箱请求参数",
+        "properties": {
+          "code": {
+            "description": "6位字母或数字邮箱验证码",
+            "example": "A1B2C3",
+            "pattern": "^[A-Z0-9]{6}$",
+            "type": "string"
+          },
+          "email": {
+            "description": "邮箱",
+            "example": "bind@example.com",
+            "pattern": "^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z0-9]{2,6}$",
+            "type": "string"
+          }
+        },
+        "required": ["code", "email"],
+        "type": "object"
+      },
       "ChangePasswordDTO": {
         "description": "修改密码请求参数",
         "properties": {
@@ -395,7 +414,7 @@
           "fileSize": {
             "description": "文件大小(字节)",
             "format": "int64",
-            "maximum": 52428800,
+            "maximum": 524288000,
             "type": "integer"
           }
         },
@@ -490,8 +509,8 @@
         "description": "发送邮箱验证码请求参数",
         "properties": {
           "businessType": {
-            "description": "业务类型 LOGIN-登录 REGISTER-注册 FORGOT_PASSWORD-忘记密码",
-            "enum": ["LOGIN", "REGISTER", "FORGOT_PASSWORD"],
+            "description": "业务类型 LOGIN-登录 REGISTER-注册 FORGOT_PASSWORD-忘记密码 BIND_EMAIL-绑定邮箱",
+            "enum": ["LOGIN", "REGISTER", "FORGOT_PASSWORD", "BIND_EMAIL"],
             "type": "string"
           },
           "email": {
@@ -1144,7 +1163,7 @@
             "type": "string"
           },
           "orderDir": {
-            "description": "排序方式，默认入组时间倒序",
+            "description": "排序方式，默认入组时间倒序；入组时间相同时按成员ID同方向排序",
             "enum": ["DESC", "ASC"],
             "type": "string"
           },
@@ -2158,6 +2177,10 @@
           },
           "title": {
             "description": "企划名",
+            "type": "string"
+          },
+          "typeId": {
+            "description": "企划类型ID；省略时保留原类型",
             "type": "string"
           }
         },
@@ -4640,6 +4663,39 @@
         "tags": ["用户接口"]
       }
     },
+    "/app/user/email": {
+      "put": {
+        "description": "已登录且尚未绑定邮箱的用户，使用邮箱验证码绑定邮箱",
+        "operationId": "bindEmail",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindEmailDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "绑定邮箱",
+        "tags": ["用户接口"]
+      }
+    },
     "/app/user/organizations": {
       "get": {
         "description": "查询用户加入的组织列表",
@@ -5237,7 +5293,7 @@
     },
     "/orgadmin/members": {
       "post": {
-        "description": "仅返回已通过审核的成员，默认按入组时间倒序",
+        "description": "仅返回已通过审核的成员，默认按入组时间、成员ID倒序；升序时两者均升序，保证数据未变更时跨页不重复、不遗漏",
         "operationId": "listMembers",
         "parameters": [
           {

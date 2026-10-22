@@ -15,6 +15,25 @@
         },
         "type": "object"
       },
+      "BindEmailDTO": {
+        "description": "绑定邮箱请求参数",
+        "properties": {
+          "code": {
+            "description": "6位字母或数字邮箱验证码",
+            "example": "A1B2C3",
+            "pattern": "^[A-Z0-9]{6}$",
+            "type": "string"
+          },
+          "email": {
+            "description": "邮箱",
+            "example": "bind@example.com",
+            "pattern": "^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z0-9]{2,6}$",
+            "type": "string"
+          }
+        },
+        "required": ["code", "email"],
+        "type": "object"
+      },
       "ChangePasswordDTO": {
         "description": "修改密码请求参数",
         "properties": {
@@ -51,8 +70,8 @@
         "description": "发送邮箱验证码请求参数",
         "properties": {
           "businessType": {
-            "description": "业务类型 LOGIN-登录 REGISTER-注册 FORGOT_PASSWORD-忘记密码",
-            "enum": ["LOGIN", "REGISTER", "FORGOT_PASSWORD"],
+            "description": "业务类型 LOGIN-登录 REGISTER-注册 FORGOT_PASSWORD-忘记密码 BIND_EMAIL-绑定邮箱",
+            "enum": ["LOGIN", "REGISTER", "FORGOT_PASSWORD", "BIND_EMAIL"],
             "type": "string"
           },
           "email": {
@@ -1065,6 +1084,10 @@
           },
           "title": {
             "description": "企划名",
+            "type": "string"
+          },
+          "typeId": {
+            "description": "企划类型ID；省略时保留原类型",
             "type": "string"
           }
         },
@@ -2940,6 +2963,39 @@
           }
         },
         "summary": "更新当前用户信息",
+        "tags": ["用户接口"]
+      }
+    },
+    "/app/user/email": {
+      "put": {
+        "description": "已登录且尚未绑定邮箱的用户，使用邮箱验证码绑定邮箱",
+        "operationId": "bindEmail",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindEmailDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "绑定邮箱",
         "tags": ["用户接口"]
       }
     },
