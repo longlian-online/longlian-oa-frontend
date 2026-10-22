@@ -9,6 +9,7 @@ import {
   getTaskTemplateOptions,
 } from "@/api/projectItem";
 import EmptyState from "@/components/EmptyState";
+import FilterSelectContent from "@/components/FilterSelectContent";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -258,10 +259,10 @@ export default function ProjectItemSection({
             <SelectTrigger size="sm" aria-label="发布时间排序">
               <SelectValue>{orderDir === "ASC" ? "最早发布" : "最新发布"}</SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <FilterSelectContent>
               <SelectItem value="ASC">最早发布</SelectItem>
               <SelectItem value="DESC">最新发布</SelectItem>
-            </SelectContent>
+            </FilterSelectContent>
           </Select>
         </div>
 

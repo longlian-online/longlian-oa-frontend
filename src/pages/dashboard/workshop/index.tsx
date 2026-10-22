@@ -5,19 +5,14 @@ import { ArrowDownUp, ChevronRight, Search, Workflow } from "lucide-react";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { WORKSHOP_PAGE_SIZE as PAGE_SIZE, workshopListQuery } from "@/queries/workshop";
 import EmptyState from "@/components/EmptyState";
+import FilterSelectContent from "@/components/FilterSelectContent";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
 import { WorkshopProjectCard } from "@/components/Workshop";
 import { MyTaskColumn } from "@/components/Workshop/MyTaskColumn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 import { useWorkshopPosition } from "@/hooks/useWorkshopPosition";
 import { readWorkshopView } from "@/lib/workshopNavigation";
@@ -115,13 +110,13 @@ export default function WorkshopPage() {
               <ArrowDownUp className="mr-1.5 h-3.5 w-3.5" />
               <SelectValue>{TASK_SORT_LABELS[taskSort]}</SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <FilterSelectContent>
               {Object.entries(TASK_SORT_LABELS).map(([value, label]) => (
                 <SelectItem key={value} value={value}>
                   {label}
                 </SelectItem>
               ))}
-            </SelectContent>
+            </FilterSelectContent>
           </Select>
         </div>
         <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
@@ -163,13 +158,13 @@ export default function WorkshopPage() {
               <ArrowDownUp className="mr-1.5 h-3.5 w-3.5" />
               <SelectValue>{SORT_LABELS[sortBy]}</SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <FilterSelectContent>
               {Object.entries(SORT_LABELS).map(([value, label]) => (
                 <SelectItem key={value} value={value}>
                   {label}
                 </SelectItem>
               ))}
-            </SelectContent>
+            </FilterSelectContent>
           </Select>
         </div>
         <div className="flex min-w-0 items-center gap-2">

@@ -20,6 +20,7 @@ import {
   type OrgMemberRole,
 } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
+import FilterSelectContent from "@/components/FilterSelectContent";
 import OrganizationInviteDialog from "@/components/OrganizationInviteDialog";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
@@ -230,10 +231,10 @@ function OrganizationMembersContent() {
             <SelectTrigger className="w-28" aria-label="排序方式">
               <SelectValue>{filters.orderDir === "ASC" ? "正序" : "倒序"}</SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <FilterSelectContent>
               <SelectItem value="DESC">倒序</SelectItem>
               <SelectItem value="ASC">正序</SelectItem>
-            </SelectContent>
+            </FilterSelectContent>
           </Select>
         </div>
       </div>

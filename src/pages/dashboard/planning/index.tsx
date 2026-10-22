@@ -10,6 +10,7 @@ import {
   projectListQuery,
 } from "@/queries/planning";
 import EmptyState from "@/components/EmptyState";
+import FilterSelectContent from "@/components/FilterSelectContent";
 import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
@@ -18,13 +19,7 @@ import RemoteImage from "@/components/RemoteImage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 
@@ -96,13 +91,13 @@ export default function Planning() {
                   )?.label ?? "时间"}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <FilterSelectContent>
                 {timeSortOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </FilterSelectContent>
             </Select>
             <Select
               value={selectedType}
@@ -122,14 +117,14 @@ export default function Planning() {
                       selectedType)}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <FilterSelectContent>
                 <SelectItem value="all">所有类型</SelectItem>
                 {projectTypes.map((type) => (
                   <SelectItem key={type.id} value={type.name}>
                     {type.name}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </FilterSelectContent>
             </Select>
           </>
         }
