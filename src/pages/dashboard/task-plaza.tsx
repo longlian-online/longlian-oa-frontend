@@ -2,7 +2,7 @@ import { Popover } from "@base-ui/react/popover";
 import { useMutationState } from "@tanstack/react-query";
 import { useId, useRef, useState, type ReactElement } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { ArrowUpDown, ChevronDown, ChevronUp, Info, Filter, Sparkles } from "lucide-react";
+import { ArrowUpDown, ChevronLeft, ChevronRight, Info, Filter, Sparkles } from "lucide-react";
 
 import { scopedKey } from "@/lib/queryKeys";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ import {
   plazaStageScope,
 } from "@/queries/planning";
 import EmptyState from "@/components/EmptyState";
+import FilterSelectContent from "@/components/FilterSelectContent";
 import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
@@ -28,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -36,8 +38,7 @@ import { useProjectTypes } from "@/hooks/useProjectTypes";
 
 import type { PlazaProjectGroup, PlazaSortBy, PlazaTask } from "@/types/plaza";
 
-/** 分组默认展示的任务数，超出需手动展开 */
-const COLLAPSED_TASK_LIMIT = 6;
+const TASK_PAGE_SIZE = 6;
 
 const sortOptions = [
   { value: "WAIT", label: "等待最久" },
@@ -217,13 +218,13 @@ export default function TaskPlaza() {
                   {sortOptions.find((option) => option.value === sortBy)?.label ?? "排序"}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <FilterSelectContent>
                 {sortOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </FilterSelectContent>
             </Select>
             <Select
               value={selectedType}
@@ -243,14 +244,14 @@ export default function TaskPlaza() {
                       selectedType)}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <FilterSelectContent>
                 <SelectItem value="all">所有类型</SelectItem>
                 {projectTypes.map((type) => (
                   <SelectItem key={type.id} value={type.name}>
                     {type.name}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </FilterSelectContent>
             </Select>
           </>
         }
@@ -302,18 +303,23 @@ interface ProjectGroupSectionProps {
   onClaim: (instanceId: string, isCurrentStage: boolean) => void;
 }
 
-function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionProps) {
-  const [expanded, setExpanded] = useState(false);
-  const hasMore = group.tasks.length > COLLAPSED_TASK_LIMIT;
-  const visibleTasks = expanded ? group.tasks : group.tasks.slice(0, COLLAPSED_TASK_LIMIT);
+function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionProps): ReactElement {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(group.tasks.length / TASK_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  if (page !== currentPage) setPage(currentPage);
+  const visibleTasks = group.tasks.slice(
+    (currentPage - 1) * TASK_PAGE_SIZE,
+    currentPage * TASK_PAGE_SIZE,
+  );
   const imageUrl = projectThumbnailSrc(group.thumbnailUrl, group.coverUrl);
 
   return (
     <section>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <Link
           to={`/dashboard/planning/${group.projectId}`}
-          className="group flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group flex min-w-0 flex-1 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-3"
         >
           {imageUrl ? (
             <RemoteImage
@@ -338,6 +344,59 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
           </Badge>
         </Link>
         <span className="shrink-0 text-xs text-muted-foreground">组缺 {group.pendingCount}</span>
+        {totalPages > 1 && (
+          <nav aria-label={`${group.title}任务分页`} className="flex shrink-0 items-center gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              aria-label="上一页任务"
+              disabled={currentPage === 1}
+              onClick={() => setPage(currentPage - 1)}
+            >
+              <ChevronLeft aria-hidden="true" />
+            </Button>
+            <Select
+              value={String(currentPage)}
+              onValueChange={(value: string | null): void => {
+                if (value !== null) setPage(Number(value));
+              }}
+            >
+              <SelectTrigger
+                aria-label="选择任务页码"
+                title="选择页码，快速跳转"
+                className="min-w-20"
+              >
+                <SelectValue aria-live="polite" aria-atomic="true">
+                  {currentPage} / {totalPages}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent
+                align="end"
+                alignItemWithTrigger={false}
+                className="max-h-[min(16rem,var(--available-height))]"
+              >
+                <SelectGroup>
+                  {Array.from({ length: totalPages }, (_, index) => (
+                    <SelectItem key={index + 1} value={String(index + 1)}>
+                      第 {index + 1} 页
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              aria-label="下一页任务"
+              disabled={currentPage === totalPages}
+              onClick={() => setPage(currentPage + 1)}
+            >
+              <ChevronRight aria-hidden="true" />
+            </Button>
+          </nav>
+        )}
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -351,27 +410,6 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
           />
         ))}
       </div>
-
-      {hasMore && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-muted-foreground -ml-1 mt-2 hover:text-foreground"
-          onClick={() => setExpanded((prev) => !prev)}
-        >
-          {expanded ? (
-            <>
-              <ChevronUp className="size-4" />
-              收起
-            </>
-          ) : (
-            <>
-              <ChevronDown className="size-4" />
-              展开全部 {group.tasks.length} 项
-            </>
-          )}
-        </Button>
-      )}
     </section>
   );
 }
