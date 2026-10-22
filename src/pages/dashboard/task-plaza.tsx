@@ -361,12 +361,20 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
                 if (value !== null) setPage(Number(value));
               }}
             >
-              <SelectTrigger aria-label="选择任务页码" title="选择页码，快速跳转" className="w-20">
+              <SelectTrigger
+                aria-label="选择任务页码"
+                title="选择页码，快速跳转"
+                className="min-w-20"
+              >
                 <SelectValue aria-live="polite" aria-atomic="true">
                   {currentPage} / {totalPages}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent align="end" alignItemWithTrigger={false}>
+              <SelectContent
+                align="end"
+                alignItemWithTrigger={false}
+                className="max-h-[min(16rem,var(--available-height))]"
+              >
                 <SelectGroup>
                   {Array.from({ length: totalPages }, (_, index) => (
                     <SelectItem key={index + 1} value={String(index + 1)}>
