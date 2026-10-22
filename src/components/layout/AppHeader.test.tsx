@@ -357,6 +357,30 @@ test("点击追加 5 条，重开仅取一次新首批，不重拉旧页", async
   expect(requests("/app/notifications/status")).toBe(1);
 });
 
+test("较新的已读通知排在未读后面，标已读后立即后移", async (): Promise<void> => {
+  inboxRows = makeRows(3).map((row, index) => ({
+    ...row,
+    source: null,
+    thumbnailUrl: null,
+    id: String(3 - index),
+    createdAt: ["2026-10-22 13:00:00", "2026-10-22 12:00:00", "2026-10-22 09:00:00"][index],
+    readAt: index === 0 ? "2026-10-22 13:10:00" : null,
+  }));
+  await enableInbox();
+  await openInbox(3);
+  expect(rowButtons().map((button) => button.textContent?.includes("未读"))).toEqual([
+    true,
+    true,
+    false,
+  ]);
+  await click(rowButtons()[0]);
+  await vi.waitFor(() =>
+    expect(rowButtons().filter((button) => button.textContent?.includes("未读"))).toHaveLength(1),
+  );
+  expect(rowButtons()[0].textContent).toContain("未读");
+  expect(requests("/app/notifications")).toBe(1);
+});
+
 test("铃铛外部点击 Escape 关闭，Escape 归还焦点", async (): Promise<void> => {
   await enableInbox();
   await openInbox();
@@ -610,7 +634,11 @@ test("已读期间禁用仍可继续分页的按钮，首批计数与状态一�
   await act(async () =>
     write.resolve(json({ id: inboxRows[0].id, readAt: "2026-10-22 13:00:00" })),
   );
-  await vi.waitFor(() => expect(rowButtons()[0].textContent).not.toContain("未读"));
+  await vi.waitFor(() =>
+    expect(rowButtons().at(-1)?.textContent).toContain("通知关联内容已不可访问"),
+  );
+  expect(rowButtons().at(-1)?.textContent).not.toContain("未读");
+  expect(rowButtons()[0].textContent).toContain("未读");
   const data = client.getQueryData<{ pages: { unreadCount: number }[] }>(
     scopedKey(["notifications"], "org"),
   );

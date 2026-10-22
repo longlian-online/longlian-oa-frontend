@@ -15,7 +15,11 @@ export async function getNotifications(
   cursor: NotificationCursor | null,
 ): Promise<NotificationPageVO> {
   const query = cursor
-    ? `?${new URLSearchParams({ beforeCreatedAt: cursor.createdAt, beforeId: cursor.id })}`
+    ? `?${new URLSearchParams({
+        beforeCreatedAt: cursor.createdAt,
+        beforeId: cursor.id,
+        beforeUnread: String(cursor.unread),
+      })}`
     : "";
   return request(`/notifications${query}`);
 }

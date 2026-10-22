@@ -1,16 +1,16 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-10-22T15:35:08.470Z",
+  "generatedAt": "2026-10-22T17:31:57.165Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "c713a841d80a671a358090c4cd5451ec986ede824b2569b1257b6ab601536347",
-      "pathCount": 72,
-      "operationCount": 87
+      "sha256": "ecf996d7127bbd38ab8ff706494303f19e9f45e46adc7f55a2a86e65ff57c192",
+      "pathCount": 76,
+      "operationCount": 91
     },
     {
       "name": "公共端",
@@ -26,9 +26,9 @@
       "slug": "用户端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF",
       "file": "openapi/用户端.json",
-      "sha256": "1fbcd85234a6da041bb4fa746321ab9900b3cf2f798513b32cd98a2f21c04b02",
-      "pathCount": 38,
-      "operationCount": 45
+      "sha256": "4d8ea36fdd06c23781662c1682909da14df7993dd26bbce49fbc10a34139be6c",
+      "pathCount": 42,
+      "operationCount": 49
     },
     {
       "name": "管理端",
@@ -58,7 +58,7 @@
       "summary": "分页查询管理员列表",
       "tags": ["管理员接口"],
       "file": "operations/全部_get_-admin-admins.json",
-      "sha256": "ef6f799e0e2970359bfc488fcecd1dda93e9e832ce92406d79f4cfdd4f55a13c"
+      "sha256": "59940d3f232e2192efc61751c68405bca8cbd89d2e895882c0b1d4f64c58b19d"
     },
     {
       "id": "全部_post_-admin-admins",
@@ -159,6 +159,46 @@
       "tags": ["项目任务流接口"],
       "file": "operations/全部_get_-app-item-itemid-flow.json",
       "sha256": "ac3b2fdc5af15c33e2adced73dee079d30fb6926bc0bcf96c6b58862a31a200a"
+    },
+    {
+      "id": "全部_get_-app-notifications",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/notifications",
+      "summary": "按游标读取最新 20 条通知及当前来源内容",
+      "tags": ["站内通知接口"],
+      "file": "operations/全部_get_-app-notifications.json",
+      "sha256": "38ea4d13447104335653750ba49a739cdfcfb7fc1e16d7af9f321b4fb931ff8a"
+    },
+    {
+      "id": "全部_put_-app-notifications-id-read",
+      "document": "全部",
+      "method": "PUT",
+      "path": "/app/notifications/{id}/read",
+      "summary": "标记当前收件箱的单条通知已读",
+      "tags": ["站内通知接口"],
+      "file": "operations/全部_put_-app-notifications-id-read.json",
+      "sha256": "f900c1f76e13c366d63f1f1fccfa961a8887d612ff3d58d55f37c2ae260bfafe"
+    },
+    {
+      "id": "全部_put_-app-notifications-read-all",
+      "document": "全部",
+      "method": "PUT",
+      "path": "/app/notifications/read-all",
+      "summary": "将当前组织完整收件箱全部标为已读",
+      "tags": ["站内通知接口"],
+      "file": "operations/全部_put_-app-notifications-read-all.json",
+      "sha256": "18d3006a4b11938b269307e0cbe1b42da3264c599c59fff86957c1596bd3aeb4"
+    },
+    {
+      "id": "全部_get_-app-notifications-status",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/notifications/status",
+      "summary": "检查当前收件箱是否有未读通知",
+      "tags": ["站内通知接口"],
+      "file": "operations/全部_get_-app-notifications-status.json",
+      "sha256": "db1fcd81c84626576b331690dd1a992648aec525755877b9877b3871b1d6284e"
     },
     {
       "id": "全部_get_-app-projects",
@@ -969,6 +1009,46 @@
       "tags": ["项目任务流接口"],
       "file": "operations/用户端_get_-app-item-itemid-flow.json",
       "sha256": "e1be84473adfdd27e7fa1ad96e3db95b71ff3097f7c42bf32b96e31af7ccb52d"
+    },
+    {
+      "id": "用户端_get_-app-notifications",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/notifications",
+      "summary": "按游标读取最新 20 条通知及当前来源内容",
+      "tags": ["站内通知接口"],
+      "file": "operations/用户端_get_-app-notifications.json",
+      "sha256": "a745583e837abcc9e1185090707b7c680850e6b6b975f032f2f6b66726d72e54"
+    },
+    {
+      "id": "用户端_put_-app-notifications-id-read",
+      "document": "用户端",
+      "method": "PUT",
+      "path": "/app/notifications/{id}/read",
+      "summary": "标记当前收件箱的单条通知已读",
+      "tags": ["站内通知接口"],
+      "file": "operations/用户端_put_-app-notifications-id-read.json",
+      "sha256": "d529fdf82fdce600f6e82635e578590a019d4d81f6e4b45b59157cc9c14c02b8"
+    },
+    {
+      "id": "用户端_put_-app-notifications-read-all",
+      "document": "用户端",
+      "method": "PUT",
+      "path": "/app/notifications/read-all",
+      "summary": "将当前组织完整收件箱全部标为已读",
+      "tags": ["站内通知接口"],
+      "file": "operations/用户端_put_-app-notifications-read-all.json",
+      "sha256": "64ddcf34a8b9d531c3be6f77adc4f9e88b77dc6130660349a9eaf5fb2466fe5b"
+    },
+    {
+      "id": "用户端_get_-app-notifications-status",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/notifications/status",
+      "summary": "检查当前收件箱是否有未读通知",
+      "tags": ["站内通知接口"],
+      "file": "operations/用户端_get_-app-notifications-status.json",
+      "sha256": "82d2ca7c0aa872920b1d9d4c208b6e68fd9477106916921c70dd8b7b6c6a5912"
     },
     {
       "id": "用户端_get_-app-projects",
