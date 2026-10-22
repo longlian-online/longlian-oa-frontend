@@ -36,6 +36,7 @@ export type NotificationVO = NotificationRecord &
 export interface NotificationCursor {
   createdAt: string;
   id: string;
+  unread: boolean;
 }
 
 export interface NotificationPageVO {

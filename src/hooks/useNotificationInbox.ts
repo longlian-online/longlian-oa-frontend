@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import {
   useInfiniteQuery,
   useQuery,
@@ -48,6 +49,7 @@ export function useNotificationInbox(): UseInfiniteQueryResult<
 > {
   const session = useSessionSnapshot();
   const client = useQueryClient();
+  const listedUnread = useRef(new Map<string, boolean>());
   return useInfiniteQuery({
     ...manualRefresh,
     gcTime: 0,
@@ -61,6 +63,10 @@ export function useNotificationInbox(): UseInfiniteQueryResult<
         () => getNotifications(pageParam),
         signal,
       );
+      const boundary = page.list.at(-1);
+      if (boundary) {
+        listedUnread.current.set(`${boundary.createdAt}\0${boundary.id}`, boundary.readAt === null);
+      }
       if (pageParam === null && !signal.aborted && isScopeCurrent("org", session)) {
         client.setQueryData<NotificationStatusVO>(
           scopedKey(["notificationStatus"], "org", session),
@@ -73,7 +79,10 @@ export function useNotificationInbox(): UseInfiniteQueryResult<
     },
     getNextPageParam: (lastPage): NotificationCursor | undefined => {
       const last = lastPage.list.at(-1);
-      return lastPage.hasNext && last ? { createdAt: last.createdAt, id: last.id } : undefined;
+      if (!lastPage.hasNext || !last) return undefined;
+      const unread =
+        listedUnread.current.get(`${last.createdAt}\0${last.id}`) ?? last.readAt === null;
+      return { createdAt: last.createdAt, id: last.id, unread };
     },
   });
 }

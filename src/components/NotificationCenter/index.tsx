@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { useNotificationInbox, useNotificationStatus } from "@/hooks/useNotificationInbox";
 import {
+  compareNotifications,
   formatNotificationTime,
   notificationPresentation,
   notificationTarget,
@@ -39,7 +40,9 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
   const [now] = useState(() => Date.now());
   const key = scopedKey(["notifications"], "org", session);
   const unreadCount = inbox.data?.pages[0]?.unreadCount ?? 0;
-  const rows = inbox.data?.pages.flatMap((page) => page.list) ?? [];
+  const rows = [...(inbox.data?.pages.flatMap((page) => page.list) ?? [])].sort(
+    compareNotifications,
+  );
   const busy = reading || inbox.isFetchingNextPage;
 
   function patchRead(id: string | null, readAt: string, captured: InboxData | undefined): void {
@@ -185,7 +188,7 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
                     <button
                       type="button"
                       disabled={busy}
-                      className="flex w-full cursor-pointer items-start gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring disabled:cursor-wait"
+                      className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring disabled:cursor-wait"
                       onClick={() => void openNotification(row)}
                     >
                       <span

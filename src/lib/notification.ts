@@ -60,3 +60,13 @@ export function formatNotificationTime(value: string, now: number = Date.now()):
   if (date.getTime() >= yesterday.getTime()) return "昨天";
   return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
+
+export function compareNotifications(left: NotificationVO, right: NotificationVO): number {
+  const unread = Number(right.readAt === null) - Number(left.readAt === null);
+  if (unread !== 0) return unread;
+  if (left.createdAt !== right.createdAt) return left.createdAt < right.createdAt ? 1 : -1;
+  const leftId = BigInt(left.id);
+  const rightId = BigInt(right.id);
+  if (leftId === rightId) return 0;
+  return leftId < rightId ? 1 : -1;
+}
