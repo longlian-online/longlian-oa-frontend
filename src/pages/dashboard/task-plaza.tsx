@@ -18,6 +18,7 @@ import {
   plazaStageScope,
 } from "@/queries/planning";
 import EmptyState from "@/components/EmptyState";
+import FilterSelectContent from "@/components/FilterSelectContent";
 import FilterToolbar from "@/components/FilterToolbar";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
@@ -25,13 +26,7 @@ import RemoteImage from "@/components/RemoteImage";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 
 import type { PlazaProjectGroup, PlazaSortBy, PlazaTask } from "@/types/plaza";
@@ -217,13 +212,13 @@ export default function TaskPlaza() {
                   {sortOptions.find((option) => option.value === sortBy)?.label ?? "排序"}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <FilterSelectContent>
                 {sortOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </FilterSelectContent>
             </Select>
             <Select
               value={selectedType}
@@ -243,14 +238,14 @@ export default function TaskPlaza() {
                       selectedType)}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <FilterSelectContent>
                 <SelectItem value="all">所有类型</SelectItem>
                 {projectTypes.map((type) => (
                   <SelectItem key={type.id} value={type.name}>
                     {type.name}
                   </SelectItem>
                 ))}
-              </SelectContent>
+              </FilterSelectContent>
             </Select>
           </>
         }
