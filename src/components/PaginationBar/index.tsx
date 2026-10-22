@@ -21,15 +21,28 @@ function getPaginationItems(currentPage: number, totalPages: number): Pagination
     return Array.from({ length: totalPages }, (_, index) => index + 1);
   }
 
-  if (currentPage <= 3) {
-    return [1, 2, 3, "gap", totalPages - 1, totalPages];
+  const items: PaginationItem[] = [1];
+  const start = Math.max(2, Math.min(currentPage - 1, totalPages - 2));
+  const end = Math.min(totalPages - 1, Math.max(3, currentPage + 1));
+
+  if (start === 3) {
+    items.push(2);
+  } else if (start > 3) {
+    items.push("gap");
   }
 
-  if (currentPage >= totalPages - 2) {
-    return [1, "gap", totalPages - 2, totalPages - 1, totalPages];
+  for (let page = start; page <= end; page += 1) {
+    items.push(page);
   }
 
-  return [1, "gap", currentPage - 1, currentPage, currentPage + 1, "gap", totalPages];
+  if (end === totalPages - 2) {
+    items.push(totalPages - 1);
+  } else if (end < totalPages - 2) {
+    items.push("gap");
+  }
+
+  items.push(totalPages);
+  return items;
 }
 
 export default function PaginationBar({
