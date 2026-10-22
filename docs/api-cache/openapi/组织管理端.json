@@ -484,7 +484,7 @@
             "type": "string"
           },
           "orderDir": {
-            "description": "排序方式，默认入组时间倒序",
+            "description": "排序方式，默认入组时间倒序；入组时间相同时按成员ID同方向排序",
             "enum": ["DESC", "ASC"],
             "type": "string"
           },
@@ -1239,7 +1239,7 @@
     },
     "/orgadmin/members": {
       "post": {
-        "description": "仅返回已通过审核的成员，默认按入组时间倒序",
+        "description": "仅返回已通过审核的成员，默认按入组时间、成员ID倒序；升序时两者均升序，保证数据未变更时跨页不重复、不遗漏",
         "operationId": "listMembers",
         "parameters": [
           {
