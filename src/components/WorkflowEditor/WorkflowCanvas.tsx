@@ -12,6 +12,7 @@ import {
 import { Layers2, LocateFixed } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import WorkflowViewportControls from "@/components/WorkflowViewportControls";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
 import { buildDragPreviewScene } from "./dragPreview";
 import WorkflowNode, { type WorkflowFlowNode } from "./WorkflowNode";
@@ -254,12 +255,12 @@ export default function WorkflowCanvas({
   return (
     <section className="relative h-[520px] overflow-hidden rounded-xl border bg-card">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex h-12 items-center justify-between border-b bg-card px-4">
-        <span className="flex items-center gap-2 text-sm font-medium">
+        <span className="flex shrink-0 items-center gap-2 text-sm font-medium">
           <Layers2 className="size-4 text-muted-foreground" />
           流程阶段
         </span>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
+          <span className="hidden text-xs text-muted-foreground md:inline">
             拖入节点中心并行，拖到左侧或列间插入阶段
           </span>
           <Badge variant="outline">{nodes.length} 个节点</Badge>
@@ -272,6 +273,11 @@ export default function WorkflowCanvas({
         nodeTypes={NODE_TYPES}
         minZoom={0.55}
         maxZoom={1.35}
+        panOnScroll
+        zoomOnScroll={false}
+        zoomOnPinch
+        panOnDrag
+        preventScrolling
         fitView
         fitViewOptions={{ padding: 0.18 }}
         nodesConnectable={false}
@@ -290,7 +296,9 @@ export default function WorkflowCanvas({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         className="bg-muted/20 pt-12"
-      />
+      >
+        <WorkflowViewportControls />
+      </ReactFlow>
     </section>
   );
 }

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   applyNodeChanges,
-  Controls,
   Handle,
   MarkerType,
   Position,
@@ -18,6 +17,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { Check, Layers2 } from "lucide-react";
 
+import WorkflowViewportControls from "@/components/WorkflowViewportControls";
 import { cn } from "@/lib/utils";
 import { formatSlotLabel, slotPosition } from "@/lib/slotLabel";
 import type { ItemTaskInstanceVO, ItemTaskNodeVO } from "@/types/workflowInstance";
@@ -318,15 +318,17 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
           deleteKeyCode={null}
           minZoom={0.25}
           maxZoom={1.5}
+          panOnScroll
+          zoomOnScroll={false}
+          zoomOnPinch
+          panOnDrag
+          preventScrolling
           fitView
           fitViewOptions={{ padding: 0.18, maxZoom: 1 }}
           proOptions={{ hideAttribution: true }}
         >
           <FitInitialLayout nodeId={props.initialNodeId} />
-          <Controls
-            showInteractive={false}
-            className="overflow-hidden rounded-lg border border-border [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground [&>button>svg]:!fill-current"
-          />
+          <WorkflowViewportControls />
         </ReactFlow>
       </div>
     </section>
