@@ -1,0 +1,33 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "operationId": "status",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "session",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/NotificationStatusVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "检查当前收件箱是否有未读通知",
+    "tags": ["站内通知接口"]
+  },
+  "path": "/app/notifications/status",
+  "sourceUrl": "http://127.0.0.1:11003/v3/api-docs"
+}

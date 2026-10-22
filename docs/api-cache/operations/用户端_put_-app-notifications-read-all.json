@@ -1,0 +1,33 @@
+{
+  "document": "用户端",
+  "method": "PUT",
+  "operation": {
+    "operationId": "readAll",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "session",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/NotificationReadAllVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "将当前组织完整收件箱全部标为已读",
+    "tags": ["站内通知接口"]
+  },
+  "path": "/app/notifications/read-all",
+  "sourceUrl": "http://127.0.0.1:11003/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

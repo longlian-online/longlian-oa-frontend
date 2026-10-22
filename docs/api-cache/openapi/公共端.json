@@ -28,7 +28,7 @@
           "fileSize": {
             "description": "文件大小(字节)",
             "format": "int64",
-            "maximum": 52428800,
+            "maximum": 524288000,
             "type": "integer"
           }
         },
@@ -265,7 +265,7 @@
   "servers": [
     {
       "description": "Configured server URL",
-      "url": "https://sit.neo.oa.api.longlian.online/"
+      "url": "http://127.0.0.1:11003"
     }
   ],
   "tags": [

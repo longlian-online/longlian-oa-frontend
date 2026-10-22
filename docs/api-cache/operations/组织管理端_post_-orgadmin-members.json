@@ -2,7 +2,7 @@
   "document": "组织管理端",
   "method": "POST",
   "operation": {
-    "description": "仅返回已通过审核的成员，默认按入组时间倒序",
+    "description": "仅返回已通过审核的成员，默认按入组时间、成员ID倒序；升序时两者均升序，保证数据未变更时跨页不重复、不遗漏",
     "operationId": "listMembers",
     "parameters": [
       {
@@ -40,5 +40,5 @@
     "tags": ["组织成员管理"]
   },
   "path": "/orgadmin/members",
-  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
+  "sourceUrl": "http://127.0.0.1:11003/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
 }

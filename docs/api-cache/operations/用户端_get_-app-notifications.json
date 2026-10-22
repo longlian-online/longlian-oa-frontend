@@ -1,0 +1,41 @@
+{
+  "document": "用户端",
+  "method": "GET",
+  "operation": {
+    "operationId": "list",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "session",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "query",
+        "name": "dto",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/NotificationListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/NotificationPageVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "按游标读取最新 20 条通知及当前来源内容",
+    "tags": ["站内通知接口"]
+  },
+  "path": "/app/notifications",
+  "sourceUrl": "http://127.0.0.1:11003/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}
