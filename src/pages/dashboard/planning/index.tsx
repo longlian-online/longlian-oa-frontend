@@ -32,6 +32,10 @@ const timeSortOptions = [
   { value: "UPDATE-ASC", label: "最早更新" },
 ] as const;
 
+// 单卡至少 20rem（min-h-48 × 5/3），最多 4 列。更宽时拉高卡片，而不是继续加列。
+const PROJECT_CARD_GRID_CLASS =
+  "grid min-w-0 grid-cols-[repeat(auto-fill,minmax(min(100%,max(20rem,calc((100%_-_3rem)_/_4))),1fr))] gap-4";
+
 export default function Planning() {
   const navigate = useNavigate();
   const { projectTypes } = useProjectTypes();
@@ -140,9 +144,9 @@ export default function Planning() {
       ) : (
         <>
           {projects.length === 0 ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              <CreateProjectCard />
-              <div className="md:col-span-1 lg:col-span-2 xl:col-span-3">
+            <div className="@container">
+              <div className="grid min-w-0 gap-4 @min-[41rem]:grid-cols-[20rem_minmax(0,1fr)]">
+                <CreateProjectCard />
                 <EmptyState
                   icon={<FolderOpen className="h-5 w-5 text-muted-foreground" />}
                   title="还没有企划"
@@ -158,7 +162,7 @@ export default function Planning() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className={PROJECT_CARD_GRID_CLASS}>
               {pageNum === 1 && <CreateProjectCard />}
               {projects.map((project) => (
                 <ProjectCard key={project.id} project={project} />
