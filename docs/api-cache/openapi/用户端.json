@@ -443,23 +443,6 @@
         },
         "type": "object"
       },
-      "NotificationContentVO": {
-        "properties": {
-          "label": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "targetPath": {
-            "type": "string"
-          },
-          "thumbnailUrl": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "NotificationListDTO": {
         "properties": {
           "beforeCreatedAt": {
@@ -512,6 +495,30 @@
         },
         "type": "object"
       },
+      "NotificationSourceVO": {
+        "description": "已授权来源的当前基础数据；来源不可访问时为 null",
+        "nullable": true,
+        "properties": {
+          "itemId": {
+            "description": "项目ID",
+            "type": "string"
+          },
+          "itemTitle": {
+            "type": "string"
+          },
+          "projectId": {
+            "description": "企划ID",
+            "type": "string"
+          },
+          "projectTitle": {
+            "type": "string"
+          },
+          "taskSlot": {
+            "$ref": "#/components/schemas/NotificationTaskSlotVO"
+          }
+        },
+        "type": "object"
+      },
       "NotificationStatusVO": {
         "properties": {
           "hasUnread": {
@@ -520,11 +527,31 @@
         },
         "type": "object"
       },
+      "NotificationTaskSlotVO": {
+        "description": "任务来源的当前槽位结构；项目完成通知为 null",
+        "nullable": true,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "serialStep": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "slotIndex": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "slotTotal": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "NotificationVO": {
         "properties": {
-          "content": {
-            "$ref": "#/components/schemas/NotificationContentVO"
-          },
           "createdAt": {
             "example": "2026-10-22 12:00:00",
             "type": "string"
@@ -533,13 +560,23 @@
             "type": "string"
           },
           "kind": {
+            "enum": ["TASK_READY", "ITEM_COMPLETED"],
             "type": "string"
           },
           "readAt": {
             "example": "2026-10-22 12:00:00",
+            "nullable": true,
             "type": "string"
           },
+          "source": {
+            "$ref": "#/components/schemas/NotificationSourceVO"
+          },
           "sourceId": {
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "description": "当前页已授权图片读取链接，无可读图片时为 null",
+            "nullable": true,
             "type": "string"
           }
         },

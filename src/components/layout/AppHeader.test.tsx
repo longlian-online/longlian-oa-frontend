@@ -224,22 +224,31 @@ function json(data: unknown, code: number = 0): Response {
 }
 
 function makeRows(count: number): NotificationVO[] {
-  return Array.from(
-    { length: count },
-    (_, index): NotificationVO => ({
+  return Array.from({ length: count }, (_, index): NotificationVO => {
+    const record = {
       id: String(9000000000000000000n - BigInt(index)),
-      kind: index % 2 ? "ITEM_COMPLETED" : "TASK_READY",
       sourceId: String(index + 1),
       createdAt: "2026-10-22 12:00:00",
       readAt: null,
-      content: {
-        label: "事件",
-        message: `通知内容 ${index + 1}`,
-        targetPath: null,
-        thumbnailUrl: `https://image.example/${index + 1}.webp`,
-      },
-    }),
-  );
+      thumbnailUrl: `https://image.example/${index + 1}.webp`,
+    };
+    const source = {
+      projectId: "11",
+      projectTitle: "企划名称",
+      itemId: "22",
+      itemTitle: `项目名称 ${index + 1}`,
+    };
+    return index % 2
+      ? { ...record, kind: "ITEM_COMPLETED", source: { ...source, taskSlot: null } }
+      : {
+          ...record,
+          kind: "TASK_READY",
+          source: {
+            ...source,
+            taskSlot: { name: "翻译", slotIndex: 2, slotTotal: 3, serialStep: 2 },
+          },
+        };
+  });
 }
 
 async function defaultServe(url: URL, options: RequestInit): Promise<Response> {
@@ -428,7 +437,6 @@ test("旧 false 状态不能回退列表建立的红点", async (): Promise<void
 
 test("已读失败不改 UI 或导航，成功先更新缓存再导航", async (): Promise<void> => {
   inboxRows = makeRows(1);
-  inboxRows[0].content.targetPath = "/dashboard/announcements/7?view=full";
   let failed = true;
   serve = (url, options): Promise<Response> =>
     options.method === "PUT" && failed
@@ -446,7 +454,7 @@ test("已读失败不改 UI 或导航，成功先更新缓存再导航", async (
   await click(rowButtons()[0]);
   await vi.waitFor(() =>
     expect(document.querySelector("[data-testid='location']")?.textContent).toBe(
-      "/dashboard/announcements/7?view=full",
+      "/dashboard/planning/11/items/22?taskInstanceId=1",
     ),
   );
   expect(document.querySelector("[role='dialog']")).toBeNull();
@@ -454,12 +462,10 @@ test("已读失败不改 UI 或导航，成功先更新缓存再导航", async (
   expect(requests("/app/notifications")).toBe(1);
 });
 
-test.each([null, "//evil.example", "https://evil.example", "/admin", "/dashboard/../../login"])(
-  "不可信或空目标 %j 仅标已读保留列表",
-  async (target): Promise<void> => {
-    inboxRows = makeRows(1);
-    inboxRows[0].kind = "ANNOUNCEMENT";
-    inboxRows[0].content.targetPath = target;
+test.each(["TASK_READY", "ITEM_COMPLETED"] as const)(
+  "来源失效的 %s 仅标已读并保留列表",
+  async (kind): Promise<void> => {
+    inboxRows = [{ ...makeRows(1)[0], kind, source: null, thumbnailUrl: null }];
     await enableInbox();
     await openInbox(1);
     await click(rowButtons()[0]);
@@ -517,7 +523,7 @@ test("关闭取消列表，快速重开不复用旧响应或图片", async (): P
   await click(bell());
   expect(signal.aborted).toBe(true);
   inboxRows = makeRows(1);
-  inboxRows[0].content.thumbnailUrl = "https://image.example/new.webp";
+  inboxRows[0].thumbnailUrl = "https://image.example/new.webp";
   await openInbox(1);
   await act(async () => old.resolve(json({ list: makeRows(20), hasNext: true, unreadCount: 25 })));
   expect(rowButtons()).toHaveLength(1);
@@ -529,7 +535,6 @@ test("关闭取消列表，快速重开不复用旧响应或图片", async (): P
 test("切身份立即关闭，仅查询新状态，旧已读结果不污染或导航", async (): Promise<void> => {
   const write = deferred<Response>();
   inboxRows = makeRows(1);
-  inboxRows[0].content.targetPath = "/dashboard/announcements/7";
   serve = (url, options): Promise<Response> =>
     options.method === "PUT" ? write.promise : defaultServe(url, options);
   await enableInbox();
@@ -594,6 +599,7 @@ test("组织切换关闭面板，旧列表响应不能更新新组织状态", as
 
 test("已读期间禁用仍可继续分页的按钮，首批计数与状态一起减少", async (): Promise<void> => {
   const write = deferred<Response>();
+  inboxRows[0] = { ...inboxRows[0], source: null, thumbnailUrl: null };
   serve = (url, options): Promise<Response> =>
     options.method === "PUT" ? write.promise : defaultServe(url, options);
   await enableInbox();
@@ -613,4 +619,19 @@ test("已读期间禁用仍可继续分页的按钮，首批计数与状态一�
     hasUnread: true,
   });
   expect(requests("/app/notifications")).toBe(1);
+});
+
+test("项目完成通知由基础来源数据生成项目路由", async (): Promise<void> => {
+  inboxRows = [makeRows(2)[1]];
+  await enableInbox();
+  await openInbox(1);
+  expect(rowButtons()[0].textContent).toContain("企划名称");
+  expect(rowButtons()[0].textContent).toContain("项目名称 2");
+  await click(rowButtons()[0]);
+  await vi.waitFor(() =>
+    expect(document.querySelector("[data-testid='location']")?.textContent).toBe(
+      "/dashboard/planning/11/items/22",
+    ),
+  );
+  expect(document.querySelector("[role='dialog']")).toBeNull();
 });

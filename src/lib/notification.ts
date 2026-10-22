@@ -1,3 +1,37 @@
+import { formatSlotLabel } from "@/lib/slotLabel";
+import type { NotificationVO } from "@/types/notifications";
+
+interface NotificationPresentation {
+  label: string;
+  message: string;
+  targetPath: string | null;
+}
+
+const NOTIFICATION_LABELS: Record<NotificationVO["kind"], string> = {
+  TASK_READY: "可以开始",
+  ITEM_COMPLETED: "项目完成",
+};
+
+export function notificationPresentation(notification: NotificationVO): NotificationPresentation {
+  const label = NOTIFICATION_LABELS[notification.kind];
+  if (notification.source === null) {
+    return { label, message: "通知关联内容已不可访问", targetPath: null };
+  }
+  const source = notification.source;
+  const title = `「${source.projectTitle} · ${source.itemTitle}」`;
+  const itemPath = `/dashboard/planning/${source.projectId}/items/${source.itemId}`;
+  switch (notification.kind) {
+    case "TASK_READY":
+      return {
+        label,
+        message: `${title}的前置步骤已完成，你接取的「${formatSlotLabel(notification.source.taskSlot)}」可以开始了。`,
+        targetPath: `${itemPath}?taskInstanceId=${notification.sourceId}`,
+      };
+    case "ITEM_COMPLETED":
+      return { label, message: `${title}的全部任务已完成。`, targetPath: itemPath };
+  }
+}
+
 export function notificationTarget(value: string | null): string | null {
   if (!value?.startsWith("/dashboard/") || /[\\\s]|:\/\//.test(value)) return null;
   try {

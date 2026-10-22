@@ -2,21 +2,36 @@ export interface NotificationStatusVO {
   hasUnread: boolean;
 }
 
-export interface NotificationContentVO {
-  label: string;
-  message: string;
-  targetPath: string | null;
-  thumbnailUrl: string | null;
+export interface NotificationTaskSlotVO {
+  name: string;
+  slotIndex: number;
+  slotTotal: number;
+  serialStep: number | null;
 }
 
-export interface NotificationVO {
+interface NotificationSourceVO {
+  projectId: string;
+  projectTitle: string;
+  itemId: string;
+  itemTitle: string;
+}
+
+interface NotificationRecord {
   id: string;
-  kind: string;
   sourceId: string;
   createdAt: string;
   readAt: string | null;
-  content: NotificationContentVO;
+  thumbnailUrl: string | null;
 }
+
+export type NotificationVO = NotificationRecord &
+  (
+    | {
+        kind: "TASK_READY";
+        source: (NotificationSourceVO & { taskSlot: NotificationTaskSlotVO }) | null;
+      }
+    | { kind: "ITEM_COMPLETED"; source: (NotificationSourceVO & { taskSlot: null }) | null }
+  );
 
 export interface NotificationCursor {
   createdAt: string;
