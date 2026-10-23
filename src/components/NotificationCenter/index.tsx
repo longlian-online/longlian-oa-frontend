@@ -4,6 +4,7 @@ import { Bell } from "lucide-react";
 import { useNavigate } from "react-router";
 
 import { markAllNotificationsRead, markNotificationRead } from "@/api/notifications";
+import EmailNotificationToggle from "@/components/NotificationCenter/EmailNotificationToggle";
 import RemoteImage from "@/components/RemoteImage";
 import { Button } from "@/components/ui/button";
 import { useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
@@ -151,6 +152,7 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
         <h2 id={`${panelId}-title`} className="text-sm font-medium text-foreground">
           通知
         </h2>
+        <EmailNotificationToggle />
         <Button
           variant="ghost"
           size="xs"

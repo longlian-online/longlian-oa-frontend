@@ -24,6 +24,7 @@ import { notificationService } from "@/services/notification";
 import type { NotificationVO } from "@/types/notifications";
 import type { UseOrganizationSwitcherResult } from "@/hooks/useOrganizationSwitcher";
 import type { UserInfoVO } from "@/types/user";
+import type * as UserApi from "@/api/user";
 
 const { bindEmail, sendVerificationCode, currentUser } = vi.hoisted(() => ({
   bindEmail: vi.fn(async () => undefined),
@@ -34,7 +35,8 @@ const { bindEmail, sendVerificationCode, currentUser } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@/api/user", () => ({
+vi.mock("@/api/user", async (importOriginal) => ({
+  ...(await importOriginal<typeof UserApi>()),
   bindEmail,
   changePassword: vi.fn(),
   getInviteInfo: vi.fn(),
@@ -252,6 +254,7 @@ function makeRows(count: number): NotificationVO[] {
 }
 
 async function defaultServe(url: URL, options: RequestInit): Promise<Response> {
+  if (url.pathname === "/app/user/config") return json({ config: {} });
   if (url.pathname === "/app/notifications/status")
     return json({ hasUnread: inboxRows.some((row) => row.readAt === null) });
   if (options.method === "PUT") {

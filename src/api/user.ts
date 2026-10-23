@@ -3,16 +3,36 @@ import { request } from "@/api/request";
 import type { JoinByInviteCodeDTO, InviteInfoVO } from "@/types/auth";
 import type {
   BindEmailDTO,
+  UserConfigVO,
   ChangePasswordDTO,
   OrganizationSimpleInfoVO,
   OrgIdDTO,
   UpdateMyInfoDTO,
+  UpdateUserConfigDTO,
   UserInfoVO,
   UserOrgSwitchVO,
 } from "@/types/user";
 
 export async function getCurrentUser(): Promise<UserInfoVO> {
   return request("/user/");
+}
+
+export async function getUserConfig(): Promise<UserConfigVO> {
+  return request("/user/config");
+}
+
+export async function replaceUserConfig(dto: UpdateUserConfigDTO): Promise<void> {
+  await request("/user/config", {
+    method: "PUT",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function patchUserConfig(dto: UpdateUserConfigDTO): Promise<void> {
+  await request("/user/config", {
+    method: "PATCH",
+    body: JSON.stringify(dto),
+  });
 }
 
 export async function getUserOrganizations(): Promise<OrganizationSimpleInfoVO[]> {

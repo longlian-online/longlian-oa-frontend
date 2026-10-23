@@ -35,3 +35,13 @@ export interface BindEmailDTO {
   email: string;
   code: string;
 }
+
+export type UserConfig = Record<string, unknown>;
+
+export interface UserConfigVO {
+  config: UserConfig;
+}
+
+export interface UpdateUserConfigDTO {
+  config: UserConfig;
+}
