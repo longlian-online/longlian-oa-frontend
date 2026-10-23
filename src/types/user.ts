@@ -35,3 +35,11 @@ export interface BindEmailDTO {
   email: string;
   code: string;
 }
+
+export interface EmailNotificationsVO {
+  enabled: boolean;
+}
+
+export interface UpdateEmailNotificationsDTO {
+  enabled: boolean;
+}

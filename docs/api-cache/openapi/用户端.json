@@ -452,6 +452,9 @@
           "beforeId": {
             "format": "int64",
             "type": "integer"
+          },
+          "beforeUnread": {
+            "type": "boolean"
           }
         },
         "type": "object"
