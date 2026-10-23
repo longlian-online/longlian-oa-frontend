@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { loginByPassword, loginByCode, sendVerificationCode } from "@/api/auth";
 import { $tip } from "@/components/tip";
 import { saveSession } from "@/lib/session";
+import { loginResumePath } from "@/lib/externalEntry";
 import { cn } from "@/lib/utils";
 
 const passwordSchema = z.object({
@@ -30,6 +31,7 @@ type CodeFormData = z.infer<typeof codeSchema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const passwordLogin = useApiMutation({ scope: "public", mutationFn: loginByPassword });
   const codeLogin = useApiMutation({ scope: "public", mutationFn: loginByCode });
   const sendCode = useApiMutation({ scope: "public", mutationFn: sendVerificationCode });
@@ -67,7 +69,7 @@ export default function LoginPage() {
       const result = await passwordLogin.mutateAsync(data);
       saveSession(result);
       $tip("登录成功", "success");
-      void navigate("/dashboard/planning");
+      void navigate(loginResumePath(searchParams.get("next")) ?? "/dashboard/planning", { replace: true });
     } catch {
       /* 共享 Mutation 负责错误提示。 */
     }
@@ -78,7 +80,7 @@ export default function LoginPage() {
       const result = await codeLogin.mutateAsync(data);
       saveSession(result);
       $tip("登录成功", "success");
-      void navigate("/dashboard/planning");
+      void navigate(loginResumePath(searchParams.get("next")) ?? "/dashboard/planning", { replace: true });
     } catch {
       /* 共享 Mutation 负责错误提示。 */
     }
