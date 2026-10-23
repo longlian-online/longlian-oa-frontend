@@ -2,15 +2,15 @@ import { useId, useState, type ReactElement } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Info, LoaderCircle, RotateCw } from "lucide-react";
 
-import { getEmailNotifications, updateEmailNotifications } from "@/api/user";
+import { getUserConfig, patchUserConfig } from "@/api/user";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useApiMutation, useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { isScopeCurrent, scopedKey } from "@/lib/queryKeys";
-import type { EmailNotificationsVO, UpdateEmailNotificationsDTO } from "@/types/user";
+import type { UpdateUserConfigDTO, UserConfigVO } from "@/types/user";
 
-const EMAIL_NOTIFICATIONS_KEY = ["emailNotifications"];
+const USER_CONFIG_KEY = ["userConfig"];
 
 export default function EmailNotificationToggle(): ReactElement {
   const id = useId();
@@ -18,21 +18,23 @@ export default function EmailNotificationToggle(): ReactElement {
   const client = useQueryClient();
   const [helpOpen, setHelpOpen] = useState(false);
   const preference = useApiQuery({
-    key: EMAIL_NOTIFICATIONS_KEY,
-    queryFn: getEmailNotifications,
+    key: USER_CONFIG_KEY,
+    queryFn: getUserConfig,
     scope: "account",
     staleTime: 0,
     refetchOnMount: true,
   });
   const save = useApiMutation({
-    key: EMAIL_NOTIFICATIONS_KEY,
+    key: USER_CONFIG_KEY,
     scope: "account",
-    mutationFn: async (dto: UpdateEmailNotificationsDTO): Promise<void> => {
-      await updateEmailNotifications(dto);
+    mutationFn: async (dto: UpdateUserConfigDTO): Promise<void> => {
+      await patchUserConfig(dto);
       if (isScopeCurrent("account", session)) {
-        client.setQueryData<EmailNotificationsVO>(
-          scopedKey(EMAIL_NOTIFICATIONS_KEY, "account", session),
-          { enabled: dto.enabled },
+        client.setQueryData<UserConfigVO>(
+          scopedKey(USER_CONFIG_KEY, "account", session),
+          (current) => ({
+            config: { ...current?.config, ...dto.config },
+          }),
         );
       }
     },
@@ -70,9 +72,11 @@ export default function EmailNotificationToggle(): ReactElement {
         <Switch
           aria-labelledby={`${id}-label`}
           aria-busy={save.isPending}
-          checked={preference.data.enabled}
+          checked={preference.data.config.emailNotificationsEnabled !== false}
           disabled={preference.isFetching || save.isPending}
-          onCheckedChange={(enabled) => save.mutate({ enabled })}
+          onCheckedChange={(enabled) =>
+            save.mutate({ config: { emailNotificationsEnabled: enabled } })
+          }
         />
       ) : (
         <span

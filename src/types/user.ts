@@ -36,10 +36,12 @@ export interface BindEmailDTO {
   code: string;
 }
 
-export interface EmailNotificationsVO {
-  enabled: boolean;
+export type UserConfig = Record<string, unknown>;
+
+export interface UserConfigVO {
+  config: UserConfig;
 }
 
-export interface UpdateEmailNotificationsDTO {
-  enabled: boolean;
+export interface UpdateUserConfigDTO {
+  config: UserConfig;
 }

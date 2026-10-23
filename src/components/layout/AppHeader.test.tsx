@@ -254,7 +254,7 @@ function makeRows(count: number): NotificationVO[] {
 }
 
 async function defaultServe(url: URL, options: RequestInit): Promise<Response> {
-  if (url.pathname === "/app/user/config/email-notifications") return json({ enabled: true });
+  if (url.pathname === "/app/user/config") return json({ config: {} });
   if (url.pathname === "/app/notifications/status")
     return json({ hasUnread: inboxRows.some((row) => row.readAt === null) });
   if (options.method === "PUT") {
