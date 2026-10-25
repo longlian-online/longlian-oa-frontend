@@ -2,6 +2,23 @@ export type ProjectItemListFilter = "IN_PROGRESS" | "COMPLETED";
 
 export type ProjectItemNodeState = "COMPLETED" | "IN_PROGRESS" | "LOCKED";
 
+export type ProjectItemSortBy =
+  | "MANUAL"
+  | "CREATED_ASC"
+  | "CREATED_DESC"
+  | "UPDATED_ASC"
+  | "UPDATED_DESC";
+
+export interface ProjectItemOrderEntryVO {
+  id: string;
+  title: string;
+}
+
+export interface ProjectItemReorderDTO {
+  expectedItemIds: string[];
+  itemIds: string[];
+}
+
 export interface ProjectItemCreateDTO {
   title: string;
   taskTemplateId: string;
@@ -12,8 +29,7 @@ export interface ProjectItemListDTO {
   pageSize?: number;
   keyword?: string;
   status?: ProjectItemListFilter | "";
-  sortByTime?: "CREATE" | "UPDATE";
-  orderDir?: "ASC" | "DESC";
+  sortBy?: ProjectItemSortBy;
 }
 
 export interface ProjectItemListVO {

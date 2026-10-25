@@ -4,6 +4,8 @@ import type {
   ProjectItemCreateDTO,
   ProjectItemListDTO,
   ProjectItemListVO,
+  ProjectItemOrderEntryVO,
+  ProjectItemReorderDTO,
   TaskTemplateOptionVO,
 } from "@/types/projectItem";
 
@@ -38,9 +40,17 @@ export async function createProjectItem(
   });
 }
 
-export async function deleteProjectItem(projectId: string, itemId: string): Promise<void> {
-  return request(`/projects/${projectId}/items/${itemId}`, {
-    method: "DELETE",
+export async function getProjectItemOrder(projectId: string): Promise<ProjectItemOrderEntryVO[]> {
+  return request(`/projects/${projectId}/items/order`);
+}
+
+export async function reorderProjectItems(
+  projectId: string,
+  dto: ProjectItemReorderDTO,
+): Promise<void> {
+  return request(`/projects/${projectId}/items/order`, {
+    method: "PUT",
+    body: JSON.stringify(dto),
   });
 }
 

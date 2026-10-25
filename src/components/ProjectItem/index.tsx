@@ -5,7 +5,6 @@ import { ChevronRight, Loader2, Plus, Trash2, Workflow } from "lucide-react";
 import {
   createItemDeletionRequest,
   createProjectItem,
-  deleteProjectItem,
   getTaskTemplateOptions,
 } from "@/api/projectItem";
 import EmptyState from "@/components/EmptyState";
@@ -34,11 +33,11 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
-import { useConfirm } from "@/hooks/useConfirm";
 import { PROJECT_ITEMS_PAGE_SIZE as PAGE_SIZE, projectItemsQuery } from "@/queries/planning";
 import ProjectItemNodeList from "./ProjectItemNodeList";
+import ProjectItemOrderDialog from "./ProjectItemOrderDialog";
 
-import type { ProjectItemListVO } from "@/types/projectItem";
+import type { ProjectItemListVO, ProjectItemSortBy } from "@/types/projectItem";
 
 interface ProjectItemSectionProps {
   projectId: string;
@@ -56,14 +55,14 @@ export default function ProjectItemSection({
   isCreator = false,
   renderHeader,
 }: ProjectItemSectionProps) {
-  const confirm = useConfirm();
   const navigate = useNavigate();
   const location = useLocation();
   const [page, setPage] = usePageQuery();
-  const [{ status, orderDir }, setQuery] = useState<{
+  const [{ status, sortBy }, setQuery] = useState<{
     status: "IN_PROGRESS" | "COMPLETED" | "";
-    orderDir: "ASC" | "DESC";
-  }>({ status: "IN_PROGRESS", orderDir: "DESC" });
+    sortBy: ProjectItemSortBy;
+  }>({ status: "IN_PROGRESS", sortBy: "MANUAL" });
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reasonItem, setReasonItem] = useState<ProjectItemListVO | null>(null);
   const [reason, setReason] = useState("");
@@ -86,7 +85,7 @@ export default function ProjectItemSection({
   }, []);
   const isCurrent = (): boolean =>
     mounted.current && projectLifecycle.current.generation === generation;
-  const itemsQuery = useApiQuery(projectItemsQuery(projectId, page, status, orderDir));
+  const itemsQuery = useApiQuery(projectItemsQuery(projectId, page, status, sortBy));
   const templatesQuery = useApiQuery({
     key: ["templateOptions"],
     queryFn: getTaskTemplateOptions,
@@ -96,18 +95,6 @@ export default function ProjectItemSection({
   const createMutation = useApiMutation({
     mutationFn: (dto: ProjectItemForm) => createProjectItem(projectId, dto),
     invalidate: [["items"], ["projects"], ["workshop"], ["plaza"]],
-  });
-  const deleteMutation = useApiMutation({
-    mutationFn: (id: string) => deleteProjectItem(projectId, id),
-    invalidate: [
-      ["items"],
-      ["projects"],
-      ["flow"],
-      ["instances"],
-      ["taskDetail"],
-      ["workshop"],
-      ["plaza"],
-    ],
   });
   const requestMutation = useApiMutation({
     mutationFn: (input: { itemId: string; reason: string }) =>
@@ -120,7 +107,6 @@ export default function ProjectItemSection({
   const loading = itemsQuery.isLoading;
   const templateLoading = templatesQuery.isLoading;
   const saving = createMutation.isPending;
-  const mutatingItemId = deleteMutation.isPending ? deleteMutation.variables : null;
   const [form, setForm] = useState<ProjectItemForm>({
     title: "",
     taskTemplateId: "",
@@ -152,34 +138,6 @@ export default function ProjectItemSection({
       $tip("项目已创建", "success");
       setDialogOpen(false);
       setPage(1);
-    } catch {
-      // Mutation 的最终失败由共享错误入口提示，保留当前草稿。
-    } finally {
-      actionLock.current = false;
-    }
-  }
-
-  async function handleDeleteItem(item: ProjectItemListVO): Promise<void> {
-    if (item.hasSubmittedTask) {
-      setReason("");
-      setReasonItem(item);
-      return;
-    }
-    const confirmed = await confirm({
-      title: "删除项目？",
-      description: `删除后「${item.title}」的流程与任务记录将不可恢复。`,
-      confirmText: "删除",
-    });
-    if (!confirmed || actionLock.current) return;
-    actionLock.current = true;
-
-    try {
-      await deleteMutation.mutateAsync(item.id);
-      if (!isCurrent()) return;
-      $tip("项目已删除", "success");
-      if (items.length === 1 && page > 1) {
-        setPage(page - 1);
-      }
     } catch {
       // Mutation 的最终失败由共享错误入口提示，保留当前草稿。
     } finally {
@@ -223,6 +181,11 @@ export default function ProjectItemSection({
             </h2>
           </div>
           <div className="flex items-center gap-2">
+            {isCreator && (
+              <Button size="sm" variant="outline" onClick={() => setOrderDialogOpen(true)}>
+                调整顺序
+              </Button>
+            )}
             {isCreator && !renderHeader && (
               <Button size="sm" onClick={openCreateDialog}>
                 <Plus className="h-4 w-4" />
@@ -248,20 +211,27 @@ export default function ProjectItemSection({
             </TabsList>
           </Tabs>
           <Select
-            value={orderDir}
+            value={sortBy}
             onValueChange={(value) => {
-              if (value === "ASC" || value === "DESC") {
-                setQuery((query) => ({ ...query, orderDir: value }));
+              if (value === "MANUAL" || value === "CREATED_ASC" || value === "CREATED_DESC") {
+                setQuery((query) => ({ ...query, sortBy: value }));
                 setPage(1);
               }
             }}
           >
-            <SelectTrigger size="sm" aria-label="发布时间排序">
-              <SelectValue>{orderDir === "ASC" ? "最早发布" : "最新发布"}</SelectValue>
+            <SelectTrigger size="sm" aria-label="项目排序">
+              <SelectValue>
+                {sortBy === "MANUAL"
+                  ? "自定义"
+                  : sortBy === "CREATED_ASC"
+                    ? "最早发布"
+                    : "最新发布"}
+              </SelectValue>
             </SelectTrigger>
             <FilterSelectContent>
-              <SelectItem value="ASC">最早发布</SelectItem>
-              <SelectItem value="DESC">最新发布</SelectItem>
+              <SelectItem value="MANUAL">自定义</SelectItem>
+              <SelectItem value="CREATED_ASC">最早发布</SelectItem>
+              <SelectItem value="CREATED_DESC">最新发布</SelectItem>
             </FilterSelectContent>
           </Select>
         </div>
@@ -331,15 +301,18 @@ export default function ProjectItemSection({
                     进入任务
                     <ChevronRight data-icon="inline-end" />
                   </Button>
-                  {isCreator && (
+                  {isCreator && item.hasSubmittedTask && (
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={`删除项目：${item.title}`}
-                      title="删除项目"
+                      aria-label={`申请删除项目：${item.title}`}
+                      title="申请删除项目"
                       className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                      disabled={mutatingItemId === item.id}
-                      onClick={() => void handleDeleteItem(item)}
+                      disabled={requestMutation.isPending}
+                      onClick={() => {
+                        setReason("");
+                        setReasonItem(item);
+                      }}
                     >
                       <Trash2 />
                     </Button>
@@ -358,6 +331,20 @@ export default function ProjectItemSection({
           className="pt-4"
           onPageChange={setPage}
         />
+
+        {isCreator && (
+          <ProjectItemOrderDialog
+            key={projectId}
+            projectId={projectId}
+            open={orderDialogOpen}
+            onOpenChange={setOrderDialogOpen}
+            onSaved={() => {
+              setQuery((query) => ({ ...query, sortBy: "MANUAL" }));
+              setPage(1);
+              setOrderDialogOpen(false);
+            }}
+          />
+        )}
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent>

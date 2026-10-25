@@ -1618,6 +1618,21 @@
         },
         "type": "object"
       },
+      "PatchUserConfigDTO": {
+        "description": "部分更新当前用户配置",
+        "properties": {
+          "config": {
+            "additionalProperties": {
+              "description": "仅包含本次修改的配置字段；值为 null 时删除该字段",
+              "type": "object"
+            },
+            "description": "仅包含本次修改的配置字段；值为 null 时删除该字段",
+            "type": "object"
+          }
+        },
+        "required": ["config"],
+        "type": "object"
+      },
       "Person": {
         "description": "打回人，仅 REJECTED 存在",
         "properties": {
@@ -3079,6 +3094,36 @@
           }
         },
         "required": ["nickname"],
+        "type": "object"
+      },
+      "UpdateUserConfigDTO": {
+        "description": "更新当前用户配置",
+        "properties": {
+          "config": {
+            "additionalProperties": {
+              "description": "完整用户配置对象",
+              "type": "object"
+            },
+            "description": "完整用户配置对象",
+            "type": "object"
+          }
+        },
+        "required": ["config"],
+        "type": "object"
+      },
+      "UserConfigVO": {
+        "description": "当前用户配置",
+        "properties": {
+          "config": {
+            "additionalProperties": {
+              "description": "完整用户配置，未配置时为空对象",
+              "type": "object"
+            },
+            "description": "完整用户配置，未配置时为空对象",
+            "type": "object"
+          }
+        },
+        "required": ["config"],
         "type": "object"
       },
       "UserInfoVO": {
@@ -4935,6 +4980,98 @@
           }
         },
         "summary": "更新当前用户信息",
+        "tags": ["用户接口"]
+      }
+    },
+    "/app/user/config": {
+      "get": {
+        "description": "返回完整用户配置，未配置时为空对象。无需选择组织",
+        "operationId": "getConfig",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserConfigVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "获取当前用户配置",
+        "tags": ["用户接口"]
+      },
+      "patch": {
+        "description": "只更新请求中出现的配置字段；值为 null 时删除该字段，其他字段保持不变。无需选择组织",
+        "operationId": "patchConfig",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchUserConfigDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "部分更新当前用户配置",
+        "tags": ["用户接口"]
+      },
+      "put": {
+        "description": "用请求中的完整配置对象替换当前用户配置。无需选择组织",
+        "operationId": "replaceConfig",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserConfigDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "整体替换当前用户配置",
         "tags": ["用户接口"]
       }
     },
