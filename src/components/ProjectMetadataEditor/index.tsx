@@ -1,5 +1,5 @@
-import { useId, useState } from "react";
-import { ArrowDown, ArrowUp, Plus, Tags, X } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, ChevronDown, Plus, Tags, X } from "lucide-react";
 
 import ProjectMetadataTag, {
   PROJECT_METADATA_TAG_COLOR_LABELS,
@@ -76,6 +76,18 @@ function TagColorSelect({ color, label, onChange, disabled }: TagColorSelectProp
   );
 }
 
+function fuzzyMatch(name: string, keyword: string): boolean {
+  if (!keyword) return true;
+  const source = name.toLocaleLowerCase();
+  let index = 0;
+  for (const char of keyword) {
+    index = source.indexOf(char, index);
+    if (index < 0) return false;
+    index += 1;
+  }
+  return true;
+}
+
 export default function ProjectMetadataEditor({
   tags,
   draft,
@@ -86,7 +98,8 @@ export default function ProjectMetadataEditor({
   presetsStatus = "ready",
 }: ProjectMetadataEditorProps) {
   const [showInput, setShowInput] = useState(false);
-  const [presetQuery, setPresetQuery] = useState("");
+  const [presetMenuOpen, setPresetMenuOpen] = useState(false);
+  const presetFieldRef = useRef<HTMLDivElement>(null);
   const inputId = useId();
   const missingKey = Boolean(draft.value.trim() && !draft.key.trim());
 
@@ -98,17 +111,17 @@ export default function ProjectMetadataEditor({
       { id: crypto.randomUUID(), key, value: draft.value.trim(), color: draft.color },
     ]);
     onDraftChange({ key: "", value: "" });
-    setPresetQuery("");
+    setPresetMenuOpen(false);
     setShowInput(false);
   }
 
   function closeInput(): void {
     onDraftChange({ key: "", value: "" });
-    setPresetQuery("");
+    setPresetMenuOpen(false);
     setShowInput(false);
   }
 
-  function handlePickPreset(presetId: string | null): void {
+  function handlePickPreset(presetId: string): void {
     const preset = presets.find((item) => item.id === presetId);
     if (!preset || disabled) return;
     onDraftChange({
@@ -116,18 +129,28 @@ export default function ProjectMetadataEditor({
       key: preset.name,
       color: normalizeProjectMetadataTagColor(preset.color),
     });
+    setPresetMenuOpen(false);
   }
 
-  const presetKeyword = presetQuery.trim().toLocaleLowerCase();
-  const visiblePresets = presets.filter((preset) =>
-    preset.name.toLocaleLowerCase().includes(presetKeyword),
-  );
+  const presetKeyword = draft.key.trim().toLocaleLowerCase();
+  const visiblePresets = presets.filter((preset) => fuzzyMatch(preset.name, presetKeyword));
   const emptyPresetMessage =
-    presetsStatus === "error"
-      ? "暂时无法加载预制标签"
-      : presets.length === 0
-        ? "暂无预制标签"
-        : "没有匹配的标签";
+    presetsStatus === "loading"
+      ? "正在加载预制标签"
+      : presetsStatus === "error"
+        ? "暂时无法加载预制标签"
+        : presets.length === 0
+          ? "暂无预制标签"
+          : "没有匹配的标签";
+
+  useEffect(() => {
+    if (!presetMenuOpen) return;
+    function handlePointerDown(event: PointerEvent): void {
+      if (!presetFieldRef.current?.contains(event.target as Node)) setPresetMenuOpen(false);
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [presetMenuOpen]);
 
   function handleMoveTag(index: number, direction: -1 | 1): void {
     const targetIndex = index + direction;
@@ -226,53 +249,67 @@ export default function ProjectMetadataEditor({
               <label htmlFor={`${inputId}-key`} className="text-xs font-medium">
                 标签名
               </label>
-              <div className="relative">
+              <div ref={presetFieldRef} className="relative">
                 <Input
                   id={`${inputId}-key`}
                   placeholder="标签名"
                   value={draft.key}
                   disabled={disabled}
                   aria-invalid={missingKey}
+                  aria-autocomplete="list"
+                  aria-expanded={presetMenuOpen}
+                  aria-controls={`${inputId}-presets`}
                   aria-describedby={missingKey ? `${inputId}-error` : undefined}
                   className="pr-8"
-                  onChange={(event) => onDraftChange({ ...draft, key: event.target.value })}
+                  onChange={(event) => {
+                    onDraftChange({ ...draft, key: event.target.value });
+                    if (!disabled) setPresetMenuOpen(true);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") setPresetMenuOpen(false);
+                  }}
                 />
-                <Select
-                  disabled={disabled || presetsStatus === "loading"}
-                  onValueChange={handlePickPreset}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="选择预制标签"
+                  aria-expanded={presetMenuOpen}
+                  aria-controls={`${inputId}-presets`}
+                  title={presetsStatus === "loading" ? "正在加载预制标签" : "选择预制标签"}
+                  disabled={disabled}
+                  className="absolute top-1/2 right-1 -translate-y-1/2"
+                  onClick={() => setPresetMenuOpen((open) => !open)}
                 >
-                  <SelectTrigger
-                    aria-label="选择预制标签"
-                    title={presetsStatus === "loading" ? "正在加载预制标签" : "选择预制标签"}
-                    className="absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2 border-0 bg-transparent px-0 shadow-none hover:bg-muted"
-                  />
-                  <SelectContent side="bottom" align="end" className="w-56">
-                    <div
-                      className="p-1"
-                      onPointerDown={(event) => event.stopPropagation()}
-                      onKeyDown={(event) => event.stopPropagation()}
-                    >
-                      <Input
-                        value={presetQuery}
-                        placeholder="搜索标签名"
-                        aria-label="搜索预制标签"
-                        disabled={disabled || presetsStatus !== "ready"}
-                        onChange={(event) => setPresetQuery(event.target.value)}
-                      />
-                    </div>
+                  <ChevronDown />
+                </Button>
+                {presetMenuOpen && (
+                  <div
+                    id={`${inputId}-presets`}
+                    role="listbox"
+                    aria-label="组织预制标签"
+                    className="absolute top-full right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10"
+                  >
                     {visiblePresets.length === 0 ? (
                       <div className="px-2 py-1.5 text-sm text-muted-foreground">
                         {emptyPresetMessage}
                       </div>
                     ) : (
                       visiblePresets.map((preset) => (
-                        <SelectItem key={preset.id} value={preset.id}>
+                        <button
+                          key={preset.id}
+                          type="button"
+                          role="option"
+                          className="flex w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => handlePickPreset(preset.id)}
+                        >
                           {preset.name}
-                        </SelectItem>
+                        </button>
                       ))
                     )}
-                  </SelectContent>
-                </Select>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex min-w-0 flex-col gap-1.5">
