@@ -221,7 +221,7 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
   return (
     <article
       aria-label={project.title}
-      className="group/card flex aspect-[5/3] min-h-48 overflow-hidden rounded-lg border bg-card shadow-sm transition-colors hover:border-foreground/20"
+      className="flex aspect-[5/3] min-h-48 overflow-hidden rounded-lg border bg-card shadow-sm"
     >
       <Link
         to={detailTo}
@@ -324,13 +324,13 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
             to={detailTo}
             state={detailState}
             aria-label={`查看企划：${project.title}`}
-            className="ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-full border border-primary/15 bg-primary/5 py-1 pl-2.5 pr-1 text-xs font-medium text-primary outline-none transition-colors duration-150 group-hover/card:border-primary/30 group-hover/card:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="group/cta ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-full bg-primary py-1 pl-2.5 pr-1 text-xs font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             查看企划
-            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15">
               <ArrowRight
                 aria-hidden="true"
-                className="size-3.5 motion-safe:transition-transform motion-safe:duration-150 motion-safe:group-hover/card:translate-x-0.5"
+                className="size-3.5 motion-safe:transition-transform motion-safe:duration-150 motion-safe:group-hover/cta:translate-x-0.5"
               />
             </span>
           </Link>
