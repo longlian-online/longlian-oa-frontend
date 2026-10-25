@@ -82,7 +82,16 @@ export default function TaskSubmitPanel({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => !submitting && onOpenChange(nextOpen)}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen, details) => {
+        if (submitting || details.reason !== "close-press") {
+          details.cancel();
+          return;
+        }
+        onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>提交任务：{taskName}</DialogTitle>
@@ -169,9 +178,6 @@ export default function TaskSubmitPanel({
         </fieldset>
 
         <DialogFooter>
-          <Button variant="ghost" disabled={submitting} onClick={() => onOpenChange(false)}>
-            取消
-          </Button>
           <Button disabled={submitting} onClick={() => void handleSubmit()}>
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             提交
