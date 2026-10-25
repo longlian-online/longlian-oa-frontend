@@ -216,7 +216,7 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
   const metadataTags = parseProjectMetadataTags(project.metadata);
   const detailTo = `/dashboard/planning/${project.id}?view=about`;
   const detailState = { planningListReturnTo: `/dashboard/planning${location.search}` };
-  const ownerUsername = project.creatorUsername ?? "未知用户";
+  const ownerNickname = project.creatorNickname?.trim() || "未设置昵称";
 
   return (
     <article
@@ -276,7 +276,7 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               openOnHover
               delay={150}
               closeDelay={200}
-              aria-label={`负责人信息：${ownerUsername}`}
+              aria-label={`负责人信息：${ownerNickname}`}
               className="size-9 shrink-0 cursor-default rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <Avatar className="size-9">
@@ -290,7 +290,7 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               <Popover.Positioner side="bottom" align="start" sideOffset={8}>
                 <Popover.Popup
                   initialFocus={false}
-                  className="w-60 max-w-[calc(100vw-2rem)] rounded-xl border bg-popover p-4 text-popover-foreground shadow-lg outline-none"
+                  className="w-60 max-w-[calc(100vw-2rem)] rounded-xl border bg-popover p-4 text-popover-foreground shadow-lg outline-none duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none"
                 >
                   <div className="flex items-start gap-3">
                     <Avatar size="lg" className="shrink-0">
@@ -301,9 +301,9 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
                     </Avatar>
                     <div className="min-w-0 flex-1 space-y-3">
                       <div>
-                        <p className="text-xs text-muted-foreground">用户名</p>
+                        <p className="text-xs text-muted-foreground">昵称</p>
                         <Popover.Title className="mt-1 break-all text-sm font-semibold">
-                          {ownerUsername}
+                          {ownerNickname}
                         </Popover.Title>
                       </div>
                       <div>

@@ -22,7 +22,7 @@ const project: ProjectInfoVO = {
   description: "简介",
   projectType: "漫画",
   projectStatus: "进行中",
-  creatorUsername: "owner-account",
+  creatorNickname: "企划负责人",
   creatorLastSubmittedAt: "2026-10-24 09:30:00",
 };
 
@@ -185,7 +185,7 @@ test("企划普通内容和负责人头像不会导航", async (): Promise<void>
     (element): boolean => element.textContent === project.projectType,
   )!;
 
-  for (const target of [title, description, type, card, button("负责人信息：owner-account")]) {
+  for (const target of [title, description, type, card, button("负责人信息：企划负责人")]) {
     await act(async () => target.click());
     expect(address()).toBe("?page=2");
     expect(container.querySelector("article")).toBe(card);
@@ -195,7 +195,7 @@ test("企划普通内容和负责人头像不会导航", async (): Promise<void>
 test("负责人信息支持键盘聚焦、Escape 和离焦关闭且不导航", async (): Promise<void> => {
   await mount("/dashboard/planning?page=2");
   await waitFor((): void => expect(container.querySelector("article")).not.toBeNull());
-  const trigger = button("负责人信息：owner-account");
+  const trigger = button("负责人信息：企划负责人");
   await act(async () => {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
     trigger.focus();

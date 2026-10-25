@@ -1977,8 +1977,8 @@
             "description": "创建人头像URL",
             "type": "string"
           },
-          "creatorUsername": {
-            "description": "创建人用户名",
+          "creatorNickname": {
+            "description": "创建人昵称",
             "type": "string"
           },
           "creatorLastSubmittedAt": {
@@ -3239,8 +3239,8 @@
             "description": "创建人头像URL",
             "type": "string"
           },
-          "creatorUsername": {
-            "description": "创建人用户名",
+          "creatorNickname": {
+            "description": "创建人昵称",
             "type": "string"
           },
           "creatorLastSubmittedAt": {
