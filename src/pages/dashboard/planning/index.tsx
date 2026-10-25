@@ -324,10 +324,10 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
             to={detailTo}
             state={detailState}
             aria-label={`查看企划：${project.title}`}
-            className="group/cta ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-full bg-primary py-1 pl-2.5 pr-1 text-xs font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="group/cta ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-full border border-primary/25 bg-primary/10 py-1 pl-2.5 pr-1 text-xs font-medium text-primary outline-none transition-colors duration-150 hover:border-primary/45 hover:bg-primary/18 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             查看企划
-            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15">
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/15">
               <ArrowRight
                 aria-hidden="true"
                 className="size-3.5 motion-safe:transition-transform motion-safe:duration-150 motion-safe:group-hover/cta:translate-x-0.5"
