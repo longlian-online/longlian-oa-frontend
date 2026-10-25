@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { Check, Info, Loader2 } from "lucide-react";
 
-import { useApiMutation } from "@/hooks/queries/useApiQuery";
+import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { useUploadFile } from "@/hooks/useUploadFile";
 import { createProject, updateProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
@@ -14,13 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { normalizeProjectMetadataTagColor, parseProjectMetadataTags } from "@/lib/projectMetadata";
 import { getStatusLabel } from "@/lib/projectStatus";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
-import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 import { centerCropSquare, PROJECT_IMAGE_MAX_BYTES } from "@/lib/imageCrop";
 import { requestImageCrop, UploadCancelledError } from "@/lib/imageCropRequest";
 import { fileFromPreview } from "@/lib/projectThumbnail";
+import { presetTagsQuery } from "@/queries/planning";
 
 import type { UploadedFileInfo } from "@/types/file";
 import type {
@@ -42,6 +43,12 @@ interface CreateProjectProps {
 export default function CreateProject({ project }: CreateProjectProps) {
   const navigate = useNavigate();
   const { projectTypes, loading: loadingProjectTypes } = useProjectTypes();
+  const presetTagQuery = useApiQuery(presetTagsQuery());
+  const presetTags = (presetTagQuery.data ?? []).map((tag) => ({
+    id: tag.id,
+    name: tag.name,
+    color: normalizeProjectMetadataTagColor(tag.color),
+  }));
   const isEditing = Boolean(project);
   const coverBizId = project ? String(project.id) : (getCurrentOrgId() ?? "cover");
   const createMutation = useApiMutation({
@@ -493,6 +500,10 @@ export default function CreateProject({ project }: CreateProjectProps) {
           <ProjectMetadataEditor
             tags={tags}
             draft={tagDraft}
+            presets={presetTags}
+            presetsStatus={
+              presetTagQuery.isPending ? "loading" : presetTagQuery.isError ? "error" : "ready"
+            }
             onTagsChange={setTags}
             onDraftChange={setTagDraft}
             disabled={loading}

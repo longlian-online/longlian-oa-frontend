@@ -11,6 +11,12 @@ export interface ProjectTypeInfoVO {
   name: string;
 }
 
+export interface PresetTagVO {
+  id: string;
+  name: string;
+  color?: string | null;
+}
+
 export interface ProjectInfoVO {
   id: number;
   title: string;

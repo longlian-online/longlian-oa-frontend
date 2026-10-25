@@ -7,6 +7,7 @@ import type {
   ProjectInfoVO,
   ProjectListDTO,
   ProjectTypeInfoVO,
+  PresetTagVO,
   ProjectUpdateDTO,
 } from "@/types/planning";
 
@@ -26,6 +27,10 @@ export async function getProjectTypes(): Promise<ProjectTypeInfoVO[]> {
     "/projects/types",
   );
   return Array.isArray(result) ? result : result.list;
+}
+
+export async function getPresetTags(): Promise<PresetTagVO[]> {
+  return request("/preset-tags");
 }
 
 export async function getProjectList(dto: ProjectListDTO): Promise<PageResult<ProjectInfoVO>> {

@@ -1,0 +1,108 @@
+// @vitest-environment happy-dom
+import { act } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, expect, test } from "vite-plus/test";
+
+import ProjectMetadataEditor, { type ProjectMetadataPresetTag } from "./index";
+
+import type { ProjectMetadataTag } from "@/lib/projectMetadata";
+
+const presets: ProjectMetadataPresetTag[] = [
+  { id: "author", name: "作者", color: "blue" },
+  { id: "rush", name: "加急", color: "amber" },
+];
+
+let root: Root | undefined;
+let container: HTMLDivElement | undefined;
+
+afterEach(() => {
+  act(() => root?.unmount());
+  container?.remove();
+  root = undefined;
+  container = undefined;
+});
+
+function renderEditor(
+  draft: ProjectMetadataTag,
+  onDraftChange: (draft: ProjectMetadataTag) => void,
+) {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <ProjectMetadataEditor
+        tags={[]}
+        draft={draft}
+        presets={presets}
+        onTagsChange={() => undefined}
+        onDraftChange={onDraftChange}
+      />,
+    );
+  });
+}
+
+test("选择预制标签后填入名称和颜色，并保留用户已填写的值", async () => {
+  let draft: ProjectMetadataTag = { key: "", value: "smile_snow" };
+  renderEditor(draft, (next) => {
+    draft = next;
+  });
+
+  const addButton = [...container!.querySelectorAll("button")].find((button) =>
+    button.textContent?.includes("添加标签"),
+  );
+  expect(addButton).toBeTruthy();
+  await act(async () => {
+    addButton?.click();
+  });
+  renderEditor(draft, (next) => {
+    draft = next;
+  });
+
+  const presetTrigger = document.body.querySelector<HTMLButtonElement>('[aria-label="预制标签"]');
+  expect(presetTrigger?.textContent).toContain("选择预制标签");
+  await act(async () => {
+    presetTrigger?.click();
+  });
+
+  const author = [...document.body.querySelectorAll('[role="option"]')].find((option) =>
+    option.textContent?.includes("作者"),
+  );
+  expect(author).toBeTruthy();
+  await act(async () => {
+    author?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+
+  expect(draft).toEqual({ key: "作者", value: "smile_snow", color: "blue" });
+});
+
+test("没有预制标签时仍可手动填写", async () => {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <ProjectMetadataEditor
+        tags={[]}
+        draft={{ key: "", value: "" }}
+        presets={[]}
+        onTagsChange={() => undefined}
+        onDraftChange={() => undefined}
+      />,
+    );
+  });
+  const addButton = [...container.querySelectorAll("button")].find((button) =>
+    button.textContent?.includes("添加标签"),
+  );
+  await act(async () => {
+    addButton?.click();
+  });
+
+  expect(container.textContent).toContain("标签名");
+  expect(container.textContent).toContain("值（选填）");
+  const presetTrigger = container.querySelector<HTMLButtonElement>('[aria-label="预制标签"]');
+  await act(async () => {
+    presetTrigger?.click();
+  });
+  expect(document.body.textContent).toContain("暂无预制标签");
+});

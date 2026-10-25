@@ -1,4 +1,4 @@
-import { getProjectDetail, getProjectList, getProjectTypes } from "@/api/planning";
+import { getPresetTags, getProjectDetail, getProjectList, getProjectTypes } from "@/api/planning";
 import { getTaskPlaza } from "@/api/plaza";
 import { getProjectItemList } from "@/api/projectItem";
 import { getItemTaskFlow, getItemTaskInstances } from "@/api/workflowInstance";
@@ -10,6 +10,7 @@ import type {
   ProjectInfoVO,
   ProjectListDTO,
   ProjectTypeInfoVO,
+  PresetTagVO,
 } from "@/types/planning";
 import type { PlazaProjectGroup, PlazaSortBy } from "@/types/plaza";
 import type { ProjectItemListFilter, ProjectItemListVO } from "@/types/projectItem";
@@ -27,6 +28,10 @@ export const DEFAULT_PLAZA_SORT: PlazaSortBy = "WAIT";
 
 export function projectTypesQuery(): ApiQueryOptions<ProjectTypeInfoVO[]> {
   return { key: ["projectTypes"], queryFn: getProjectTypes, staleTime: 300_000 };
+}
+
+export function presetTagsQuery(): ApiQueryOptions<PresetTagVO[]> {
+  return { key: ["presetTags"], queryFn: getPresetTags, staleTime: 300_000 };
 }
 
 export function projectListQuery(

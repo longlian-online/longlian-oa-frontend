@@ -133,6 +133,26 @@ export interface ProjectTypeVO {
   createdAt?: string;
 }
 
+export interface OrganizationPresetTagListDTO {
+  pageNum?: number;
+  pageSize?: number;
+  keyword?: string;
+  orderDir?: "DESC" | "ASC";
+}
+
+export interface OrganizationPresetTagWriteDTO {
+  name: string;
+  color?: string | null;
+  priority?: number;
+}
+
+export interface OrganizationPresetTagVO {
+  id: string;
+  name: string;
+  color?: string | null;
+  priority: number;
+}
+
 export interface OrganizationProjectListDTO {
   pageNum?: number;
   pageSize?: number;

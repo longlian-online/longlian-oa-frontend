@@ -40,6 +40,11 @@ const orgAdminItems: readonly SidebarItem[] = [
     activePrefixes: ["/dashboard/org-admin/project-types"],
   },
   {
+    to: "/dashboard/org-admin/preset-tags",
+    label: "标签",
+    activePrefixes: ["/dashboard/org-admin/preset-tags"],
+  },
+  {
     to: "/dashboard/org-admin/members",
     label: "成员",
     activePrefixes: ["/dashboard/org-admin/members", "/dashboard/org-admin/invites"],
