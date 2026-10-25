@@ -60,14 +60,12 @@ export function projectItemsQuery(
   projectId: string,
   pageNum = 1,
   status: ProjectItemListFilter | "" = "IN_PROGRESS",
-  orderDir: "ASC" | "DESC" = "DESC",
 ): ApiQueryOptions<PageResult<ProjectItemListVO>> {
   const params = {
     pageNum,
     pageSize: PROJECT_ITEMS_PAGE_SIZE,
     status,
-    sortByTime: "CREATE" as const,
-    orderDir,
+    sortBy: "MANUAL" as const,
   };
   return {
     key: ["items", "list", projectId, params],

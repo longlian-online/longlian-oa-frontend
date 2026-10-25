@@ -1,15 +1,15 @@
 # API 缓存摘要
 
 来源：https://sit.neo.oa.api.longlian.online/v3/api-docs
-更新时间：2026-10-23T19:06:31.645Z
+更新时间：2026-10-25T07:45:35.002Z
 
 ## 文档分组
 
 | 分组       | 路径数 | 接口数 | 缓存文件                  |
 | ---------- | ------ | ------ | ------------------------- |
-| 全部       | 76     | 91     | `openapi/全部.json`       |
+| 全部       | 77     | 94     | `openapi/全部.json`       |
 | 公共端     | 3      | 4      | `openapi/公共端.json`     |
-| 用户端     | 42     | 49     | `openapi/用户端.json`     |
+| 用户端     | 43     | 52     | `openapi/用户端.json`     |
 | 管理端     | 8      | 10     | `openapi/管理端.json`     |
 | 组织管理端 | 23     | 28     | `openapi/组织管理端.json` |
 
@@ -63,6 +63,9 @@
 | 全部       | GET    | `/app/task/instance/plaza`                                   | 任务广场（缺人任务）                   | `operations/全部_get_-app-task-instance-plaza.json`                                  |
 | 全部       | GET    | `/app/user/`                                                 | 获取当前登录用户信息                   | `operations/全部_get_-app-user.json`                                                 |
 | 全部       | PUT    | `/app/user/`                                                 | 更新当前用户信息                       | `operations/全部_put_-app-user.json`                                                 |
+| 全部       | GET    | `/app/user/config`                                           | 获取当前用户配置                       | `operations/全部_get_-app-user-config.json`                                          |
+| 全部       | PATCH  | `/app/user/config`                                           | 部分更新当前用户配置                   | `operations/全部_patch_-app-user-config.json`                                        |
+| 全部       | PUT    | `/app/user/config`                                           | 整体替换当前用户配置                   | `operations/全部_put_-app-user-config.json`                                          |
 | 全部       | PUT    | `/app/user/email`                                            | 绑定邮箱                               | `operations/全部_put_-app-user-email.json`                                           |
 | 全部       | GET    | `/app/user/organizations`                                    | 获取用户加入的组织列表                 | `operations/全部_get_-app-user-organizations.json`                                   |
 | 全部       | POST   | `/app/user/organizations/join-by-invite`                     | 已注册用户通过邀请码加入组织           | `operations/全部_post_-app-user-organizations-join-by-invite.json`                   |
@@ -148,6 +151,9 @@
 | 用户端     | GET    | `/app/task/instance/plaza`                                   | 任务广场（缺人任务）                   | `operations/用户端_get_-app-task-instance-plaza.json`                                |
 | 用户端     | GET    | `/app/user/`                                                 | 获取当前登录用户信息                   | `operations/用户端_get_-app-user.json`                                               |
 | 用户端     | PUT    | `/app/user/`                                                 | 更新当前用户信息                       | `operations/用户端_put_-app-user.json`                                               |
+| 用户端     | GET    | `/app/user/config`                                           | 获取当前用户配置                       | `operations/用户端_get_-app-user-config.json`                                        |
+| 用户端     | PATCH  | `/app/user/config`                                           | 部分更新当前用户配置                   | `operations/用户端_patch_-app-user-config.json`                                      |
+| 用户端     | PUT    | `/app/user/config`                                           | 整体替换当前用户配置                   | `operations/用户端_put_-app-user-config.json`                                        |
 | 用户端     | PUT    | `/app/user/email`                                            | 绑定邮箱                               | `operations/用户端_put_-app-user-email.json`                                         |
 | 用户端     | GET    | `/app/user/organizations`                                    | 获取用户加入的组织列表                 | `operations/用户端_get_-app-user-organizations.json`                                 |
 | 用户端     | POST   | `/app/user/organizations/join-by-invite`                     | 已注册用户通过邀请码加入组织           | `operations/用户端_post_-app-user-organizations-join-by-invite.json`                 |

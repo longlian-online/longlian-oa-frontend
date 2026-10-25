@@ -1,16 +1,16 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-10-23T19:06:31.645Z",
+  "generatedAt": "2026-10-25T07:45:35.002Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "a2ac9595dc17a0896ca2d73729444a6b9e7b69a8f1a4bd661522fea4cffaeb57",
-      "pathCount": 76,
-      "operationCount": 91
+      "sha256": "dd08ccb87e52ce8d8ce44ef0aeddcd2940c2ab7d4352b245f1367becc494ac2b",
+      "pathCount": 77,
+      "operationCount": 94
     },
     {
       "name": "公共端",
@@ -26,9 +26,9 @@
       "slug": "用户端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF",
       "file": "openapi/用户端.json",
-      "sha256": "d86078cb0b825350fd37713d7a204af708d9310329eab0b009fd95ea5ade213d",
-      "pathCount": 42,
-      "operationCount": 49
+      "sha256": "7d7a903c155555c145ba8d6717548669c16d179afbae85345025ccf692d681a1",
+      "pathCount": 43,
+      "operationCount": 52
     },
     {
       "name": "管理端",
@@ -509,6 +509,36 @@
       "tags": ["用户接口"],
       "file": "operations/全部_put_-app-user.json",
       "sha256": "243a1b64689817d813fa151c6421e2e17df47ef0eebb9288efcc7ec3c846634c"
+    },
+    {
+      "id": "全部_get_-app-user-config",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/user/config",
+      "summary": "获取当前用户配置",
+      "tags": ["用户接口"],
+      "file": "operations/全部_get_-app-user-config.json",
+      "sha256": "b5b56d75ba3b910e49225aeb8dd2d053887c150b0f162d67eb66f91a338f57ed"
+    },
+    {
+      "id": "全部_patch_-app-user-config",
+      "document": "全部",
+      "method": "PATCH",
+      "path": "/app/user/config",
+      "summary": "部分更新当前用户配置",
+      "tags": ["用户接口"],
+      "file": "operations/全部_patch_-app-user-config.json",
+      "sha256": "ee233a84262ca1ed5af4f78a87a398533098b905be07735078b99d515342de8f"
+    },
+    {
+      "id": "全部_put_-app-user-config",
+      "document": "全部",
+      "method": "PUT",
+      "path": "/app/user/config",
+      "summary": "整体替换当前用户配置",
+      "tags": ["用户接口"],
+      "file": "operations/全部_put_-app-user-config.json",
+      "sha256": "721ca43774990174bb35045d83997025eaa395a0c62f7a3feeb9ec379eecb515"
     },
     {
       "id": "全部_put_-app-user-email",
@@ -1359,6 +1389,36 @@
       "tags": ["用户接口"],
       "file": "operations/用户端_put_-app-user.json",
       "sha256": "e8b085cdea7a12b89cd96bc54260b3e99d343755e40cafe0001cdf32fa340133"
+    },
+    {
+      "id": "用户端_get_-app-user-config",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/user/config",
+      "summary": "获取当前用户配置",
+      "tags": ["用户接口"],
+      "file": "operations/用户端_get_-app-user-config.json",
+      "sha256": "e75ec486551f046a34684aa72ee5a9be5fc416c6bb66ac796d89b2a75e71b237"
+    },
+    {
+      "id": "用户端_patch_-app-user-config",
+      "document": "用户端",
+      "method": "PATCH",
+      "path": "/app/user/config",
+      "summary": "部分更新当前用户配置",
+      "tags": ["用户接口"],
+      "file": "operations/用户端_patch_-app-user-config.json",
+      "sha256": "5b7eb8d25e52d8b1920691a8f96c3c68e13fa5cb44c25697cc3b807ce94bde77"
+    },
+    {
+      "id": "用户端_put_-app-user-config",
+      "document": "用户端",
+      "method": "PUT",
+      "path": "/app/user/config",
+      "summary": "整体替换当前用户配置",
+      "tags": ["用户接口"],
+      "file": "operations/用户端_put_-app-user-config.json",
+      "sha256": "654d1a5827ba30a2b59a473b26a7c7c04121acbc951ce000e7a42622c15d7fe9"
     },
     {
       "id": "用户端_put_-app-user-email",

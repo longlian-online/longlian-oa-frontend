@@ -1,0 +1,37 @@
+{
+  "document": "用户端",
+  "method": "PATCH",
+  "operation": {
+    "description": "只更新请求中出现的配置字段；值为 null 时删除该字段，其他字段保持不变。无需选择组织",
+    "operationId": "patchConfig",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/PatchUserConfigDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "部分更新当前用户配置",
+    "tags": ["用户接口"]
+  },
+  "path": "/app/user/config",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}
