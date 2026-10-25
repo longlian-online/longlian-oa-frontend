@@ -210,4 +210,4 @@
 
 - 更新缓存：`vp run api:update`
 - 检查缓存：`vp run api:check`
-- 跳过提交前检查：`SKIP_API_CACHE_CHECK=1 git commit ...`
+- 缓存检查按需手动运行，不在提交钩子中执行。

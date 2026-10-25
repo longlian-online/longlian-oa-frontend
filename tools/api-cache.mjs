@@ -24,11 +24,6 @@ if (!COMMANDS.has(command)) {
   process.exit(1);
 }
 
-if (command === "check" && process.env.SKIP_API_CACHE_CHECK === "1") {
-  console.log("API 缓存检查已通过 SKIP_API_CACHE_CHECK=1 跳过。");
-  process.exit(0);
-}
-
 try {
   if (command === "update") {
     await updateCache();
@@ -327,7 +322,7 @@ function buildSummary(manifest) {
     "",
     "- 更新缓存：`vp run api:update`",
     "- 检查缓存：`vp run api:check`",
-    "- 跳过提交前检查：`SKIP_API_CACHE_CHECK=1 git commit ...`",
+    "- 缓存检查按需手动运行，不在提交钩子中执行。",
   );
 
   return `${lines.join("\n")}\n`;
