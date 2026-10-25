@@ -47,6 +47,7 @@ function getBreadcrumbItems(
     const items: BreadcrumbItem[] = [{ label: "组织管理", to: "/dashboard/org-admin" }];
     if (segments[2] === "projects") items.push({ label: "企划" });
     if (segments[2] === "project-types") items.push({ label: "企划类型" });
+    if (segments[2] === "preset-tags") items.push({ label: "标签" });
     if (segments[2] === "members") items.push({ label: "成员" });
     if (segments[2] === "applications") items.push({ label: "入组申请" });
     if (segments[2] === "deletion-requests") items.push({ label: "删除请求" });

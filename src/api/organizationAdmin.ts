@@ -27,6 +27,9 @@ import type {
   ProjectTypeListDTO,
   ProjectTypeUpdateDTO,
   ProjectTypeVO,
+  OrganizationPresetTagListDTO,
+  OrganizationPresetTagVO,
+  OrganizationPresetTagWriteDTO,
 } from "@/types/organizationAdmin";
 
 export type { OrganizationResourceStatus } from "@/types/organizationAdmin";
@@ -166,6 +169,44 @@ export async function changeProjectTypeStatus(
   return orgAdminRequest(`/orgadmin/project-types/${typeId}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
+  });
+}
+
+export async function getOrganizationPresetTags(
+  dto: OrganizationPresetTagListDTO,
+): Promise<OrganizationPageResult<OrganizationPresetTagVO>> {
+  return orgAdminRequest(
+    withQuery("/orgadmin/preset-tags", {
+      keyword: dto.keyword,
+      pageNum: dto.pageNum,
+      pageSize: dto.pageSize,
+      orderDir: dto.orderDir,
+    }),
+  );
+}
+
+export async function createOrganizationPresetTag(
+  dto: OrganizationPresetTagWriteDTO,
+): Promise<void> {
+  return orgAdminRequest("/orgadmin/preset-tags", {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function updateOrganizationPresetTag(
+  tagId: string,
+  dto: OrganizationPresetTagWriteDTO,
+): Promise<void> {
+  return orgAdminRequest(`/orgadmin/preset-tags/${tagId}`, {
+    method: "PUT",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function deleteOrganizationPresetTag(tagId: string): Promise<void> {
+  return orgAdminRequest(`/orgadmin/preset-tags/${tagId}`, {
+    method: "DELETE",
   });
 }
 

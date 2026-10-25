@@ -6,6 +6,7 @@ import {
   getOrganizationMembers,
   getOrganizationProjects,
   getOrganizationProjectTypes,
+  getOrganizationPresetTags,
   getOrganizationTaskTemplate,
   getOrganizationTaskTemplateList,
 } from "@/api/organizationAdmin";
@@ -22,6 +23,7 @@ import type {
   OrganizationTaskTemplateDetailVO,
   OrganizationTaskTemplateVO,
   ProjectTypeVO,
+  OrganizationPresetTagVO,
 } from "@/types/organizationAdmin";
 
 export const ORGANIZATION_ADMIN_PAGE_SIZE = 10;
@@ -85,6 +87,22 @@ export function organizationProjectTypesQuery(
     key: ["projectTypes", "management", keyword, page],
     queryFn: () =>
       getOrganizationProjectTypes({
+        keyword: keyword || undefined,
+        pageNum: page,
+        pageSize: ORGANIZATION_ADMIN_PAGE_SIZE,
+        orderDir: "DESC",
+      }),
+  };
+}
+
+export function organizationPresetTagsQuery(
+  keyword = "",
+  page = 1,
+): ApiQueryOptions<OrganizationPageResult<OrganizationPresetTagVO>> {
+  return {
+    key: ["presetTags", "management", keyword, page],
+    queryFn: () =>
+      getOrganizationPresetTags({
         keyword: keyword || undefined,
         pageNum: page,
         pageSize: ORGANIZATION_ADMIN_PAGE_SIZE,
