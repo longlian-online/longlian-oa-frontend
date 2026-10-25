@@ -20,6 +20,8 @@ export interface ProjectInfoVO {
   projectStatus: ProjectStatus;
   metadata?: string;
   creatorAvatarUrl?: string;
+  creatorNickname?: string | null;
+  creatorLastSubmittedAt?: string | null;
 }
 
 export interface ProjectDetailInfoVO {

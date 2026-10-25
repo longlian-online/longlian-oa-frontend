@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { Popover } from "@base-ui/react/popover";
+import { useId, useState, type ReactElement } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { Clock, Filter, FolderOpen, Plus } from "lucide-react";
+import { ArrowRight, Clock, Filter, FolderOpen, Plus, UserRound } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
@@ -21,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
+import { formatDate } from "@/lib/format";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 
 import type { ProjectInfoVO } from "@/types/planning";
@@ -207,23 +209,31 @@ interface ProjectCardProps {
   project: ProjectInfoVO;
 }
 
-function ProjectCard({ project }: ProjectCardProps) {
+function ProjectCard({ project }: ProjectCardProps): ReactElement {
   const location = useLocation();
+  const [ownerOpen, setOwnerOpen] = useState(false);
+  const ownerTriggerId = useId();
   const metadataTags = parseProjectMetadataTags(project.metadata);
+  const detailTo = `/dashboard/planning/${project.id}?view=about`;
+  const detailState = { planningListReturnTo: `/dashboard/planning${location.search}` };
+  const ownerNickname = project.creatorNickname?.trim() || "未设置昵称";
 
   return (
-    <Link
-      to={`/dashboard/planning/${project.id}?view=about`}
-      state={{ planningListReturnTo: `/dashboard/planning${location.search}` }}
-      className="group flex aspect-[5/3] min-h-48 cursor-pointer overflow-hidden rounded-lg border bg-card shadow-sm transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    <article
+      aria-label={project.title}
+      className="flex aspect-[5/3] min-h-48 overflow-hidden rounded-lg border bg-card shadow-sm"
     >
-      <div className="h-full w-[40%] shrink-0 overflow-hidden bg-muted">
+      <Link
+        to={detailTo}
+        state={detailState}
+        aria-label={`查看企划：${project.title}（封面）`}
+        className="relative h-full w-[40%] shrink-0 overflow-hidden bg-muted outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      >
         {project.coverUrl ? (
           <RemoteImage
             src={project.coverUrl}
             alt={project.title}
             className="size-full"
-            imgClassName="group-hover:scale-[1.03]"
             fallback={<span className="text-2xl font-semibold">{project.title.slice(0, 2)}</span>}
           />
         ) : (
@@ -231,7 +241,7 @@ function ProjectCard({ project }: ProjectCardProps) {
             {project.title.slice(0, 2)}
           </div>
         )}
-      </div>
+      </Link>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col p-4">
         <div className="flex shrink-0 items-start justify-between gap-2">
@@ -253,15 +263,79 @@ function ProjectCard({ project }: ProjectCardProps) {
         <ProjectCardTags tags={metadataTags} />
 
         <div className="mt-auto flex shrink-0 items-center gap-2 pt-3">
-          <Avatar className="size-9">
-            <AvatarImage src={project.creatorAvatarUrl} />
-            <AvatarFallback className="text-[10px]">{project.title.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <span className="ml-auto text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+          <Popover.Root
+            open={ownerOpen}
+            onOpenChange={setOwnerOpen}
+            triggerId={ownerOpen ? ownerTriggerId : null}
+          >
+            <Popover.Trigger
+              id={ownerTriggerId}
+              onFocus={(event) => {
+                if (event.currentTarget.matches(":focus-visible")) setOwnerOpen(true);
+              }}
+              openOnHover
+              delay={150}
+              closeDelay={200}
+              aria-label={`负责人信息：${ownerNickname}`}
+              className="size-9 shrink-0 cursor-default rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <Avatar className="size-9">
+                <AvatarImage src={project.creatorAvatarUrl} alt="" />
+                <AvatarFallback>
+                  <UserRound className="size-4" />
+                </AvatarFallback>
+              </Avatar>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Positioner side="bottom" align="start" sideOffset={8}>
+                <Popover.Popup
+                  initialFocus={false}
+                  className="w-60 max-w-[calc(100vw-2rem)] rounded-xl border bg-popover p-4 text-popover-foreground shadow-lg outline-none duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none"
+                >
+                  <div className="flex items-start gap-3">
+                    <Avatar size="lg" className="shrink-0">
+                      <AvatarImage src={project.creatorAvatarUrl} alt="" />
+                      <AvatarFallback>
+                        <UserRound className="size-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1 space-y-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground">昵称</p>
+                        <Popover.Title className="mt-1 break-all text-sm font-semibold">
+                          {ownerNickname}
+                        </Popover.Title>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">最近提交</p>
+                        <Popover.Description className="mt-1 text-xs leading-5 text-muted-foreground">
+                          {project.creatorLastSubmittedAt
+                            ? formatDate(project.creatorLastSubmittedAt)
+                            : "暂无提交记录"}
+                        </Popover.Description>
+                      </div>
+                    </div>
+                  </div>
+                </Popover.Popup>
+              </Popover.Positioner>
+            </Popover.Portal>
+          </Popover.Root>
+          <Link
+            to={detailTo}
+            state={detailState}
+            aria-label={`查看企划：${project.title}`}
+            className="group/cta ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-full border border-primary bg-primary py-1 pl-2.5 pr-1 text-xs font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-primary/30 dark:bg-primary/12 dark:text-primary dark:hover:border-primary/50 dark:hover:bg-primary/20 dark:hover:opacity-100 in-[[data-color-theme=pink]]:border-rose-300/45 in-[[data-color-theme=pink]]:bg-rose-100/70 in-[[data-color-theme=pink]]:text-rose-950 in-[[data-color-theme=pink]]:hover:border-rose-300/70 in-[[data-color-theme=pink]]:hover:bg-rose-100 in-[[data-color-theme=pink]]:hover:opacity-100 dark:in-[[data-color-theme=pink]]:border-rose-300/25 dark:in-[[data-color-theme=pink]]:bg-rose-300/10 dark:in-[[data-color-theme=pink]]:text-rose-100 dark:in-[[data-color-theme=pink]]:hover:border-rose-300/45 dark:in-[[data-color-theme=pink]]:hover:bg-rose-300/16"
+          >
             查看企划
-          </span>
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15 dark:bg-primary/18 in-[[data-color-theme=pink]]:bg-rose-950/8 dark:in-[[data-color-theme=pink]]:bg-rose-100/12">
+              <ArrowRight
+                aria-hidden="true"
+                className="size-3.5 motion-safe:transition-transform motion-safe:duration-150 motion-safe:group-hover/cta:translate-x-0.5"
+              />
+            </span>
+          </Link>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

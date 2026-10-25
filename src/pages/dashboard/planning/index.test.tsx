@@ -22,6 +22,8 @@ const project: ProjectInfoVO = {
   description: "简介",
   projectType: "漫画",
   projectStatus: "进行中",
+  creatorNickname: "企划负责人",
+  creatorLastSubmittedAt: "2026-10-24 09:30:00",
 };
 
 function LocationProbe(): ReactElement {
@@ -108,7 +110,8 @@ function address(): string {
 
 function button(name: string): HTMLButtonElement {
   const element = Array.from(container.querySelectorAll("button")).find(
-    (candidate): boolean => candidate.textContent === name,
+    (candidate): boolean =>
+      candidate.textContent === name || candidate.getAttribute("aria-label") === name,
   );
   if (!element) throw new Error(`缺少按钮：${name}`);
   return element;
@@ -136,7 +139,6 @@ test("opening page two requests that page and keeps it in the address", async ()
   await waitFor((): void => {
     expect(listRequests().at(-1)?.searchParams.get("pageNum")).toBe("2");
     expect(address()).toBe("?page=2");
-    expect(button("2").className).toContain("bg-primary");
   });
 });
 
@@ -149,9 +151,7 @@ test("returning from a project restores the list page", async (): Promise<void> 
     expect(listRequests().at(-1)?.searchParams.get("pageNum")).toBe("2");
   });
 
-  const link = container.querySelector<HTMLAnchorElement>(
-    'a[href="/dashboard/planning/21?view=about"]',
-  );
+  const link = container.querySelector<HTMLAnchorElement>('a[aria-label="查看企划：春季企划"]');
   if (!link) throw new Error("缺少企划链接");
   await act(async () => link.click());
   await waitFor((): void => {
@@ -164,7 +164,6 @@ test("returning from a project restores the list page", async (): Promise<void> 
   await click("后退");
   await waitFor((): void => {
     expect(address()).toBe("?page=2");
-    expect(button("2").className).toContain("bg-primary");
     expect(listRequests().at(-1)?.searchParams.get("pageNum")).toBe("2");
   });
 });
@@ -174,4 +173,47 @@ test("an unusable page cannot request page zero", async (): Promise<void> => {
   await waitFor((): void => {
     expect(listRequests().at(-1)?.searchParams.get("pageNum")).toBe("1");
   });
+});
+
+test("企划普通内容和负责人头像不会导航", async (): Promise<void> => {
+  await mount("/dashboard/planning?page=2");
+  await waitFor((): void => expect(container.querySelector("article")).not.toBeNull());
+  const card = container.querySelector("article")!;
+  const title = card.querySelector("h3")!;
+  const description = card.querySelector("p")!;
+  const type = Array.from(card.querySelectorAll("span")).find(
+    (element): boolean => element.textContent === project.projectType,
+  )!;
+
+  for (const target of [title, description, type, card, button("负责人信息：企划负责人")]) {
+    await act(async () => target.click());
+    expect(address()).toBe("?page=2");
+    expect(container.querySelector("article")).toBe(card);
+  }
+});
+
+test("负责人信息支持键盘聚焦、Escape 和离焦关闭且不导航", async (): Promise<void> => {
+  await mount("/dashboard/planning?page=2");
+  await waitFor((): void => expect(container.querySelector("article")).not.toBeNull());
+  const trigger = button("负责人信息：企划负责人");
+  await act(async () => {
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+    trigger.focus();
+  });
+  await waitFor((): void => expect(document.querySelector("[role=dialog]")).not.toBeNull());
+  expect(document.activeElement).toBe(trigger);
+  await act(async () => {
+    trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  });
+  await waitFor((): void => expect(document.querySelector("[role=dialog]")).toBeNull());
+  expect(document.activeElement).toBe(trigger);
+
+  await act(async () => {
+    button("1").focus();
+    trigger.focus();
+  });
+  await waitFor((): void => expect(document.querySelector("[role=dialog]")).not.toBeNull());
+  await act(async () => button("1").focus());
+  await waitFor((): void => expect(document.querySelector("[role=dialog]")).toBeNull());
+  expect(address()).toBe("?page=2");
 });

@@ -992,6 +992,15 @@
             "description": "创建人头像URL",
             "type": "string"
           },
+          "creatorNickname": {
+            "description": "创建人昵称",
+            "type": "string"
+          },
+          "creatorLastSubmittedAt": {
+            "description": "创建人在当前组织最近一次任务提交时间，打回不回退；无提交记录时为空",
+            "format": "date-time",
+            "type": "string"
+          },
           "description": {
             "description": "企划简介",
             "type": "string"
@@ -1788,6 +1797,15 @@
           },
           "creatorAvatarUrl": {
             "description": "创建人头像URL",
+            "type": "string"
+          },
+          "creatorNickname": {
+            "description": "创建人昵称",
+            "type": "string"
+          },
+          "creatorLastSubmittedAt": {
+            "description": "创建人在当前组织最近一次任务提交时间，打回不回退；无提交记录时为空",
+            "format": "date-time",
             "type": "string"
           },
           "id": {
