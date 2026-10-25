@@ -1,7 +1,6 @@
 import { useId, useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Tags, X } from "lucide-react";
 
-import FilterSelectContent from "@/components/FilterSelectContent";
 import ProjectMetadataTag, {
   PROJECT_METADATA_TAG_COLOR_LABELS,
 } from "@/components/ProjectMetadataTag";
@@ -87,7 +86,6 @@ export default function ProjectMetadataEditor({
   presetsStatus = "ready",
 }: ProjectMetadataEditorProps) {
   const [showInput, setShowInput] = useState(false);
-  const [pickedPresetId, setPickedPresetId] = useState<string | null>(null);
   const [presetQuery, setPresetQuery] = useState("");
   const inputId = useId();
   const missingKey = Boolean(draft.value.trim() && !draft.key.trim());
@@ -100,14 +98,12 @@ export default function ProjectMetadataEditor({
       { id: crypto.randomUUID(), key, value: draft.value.trim(), color: draft.color },
     ]);
     onDraftChange({ key: "", value: "" });
-    setPickedPresetId(null);
     setPresetQuery("");
     setShowInput(false);
   }
 
   function closeInput(): void {
     onDraftChange({ key: "", value: "" });
-    setPickedPresetId(null);
     setPresetQuery("");
     setShowInput(false);
   }
@@ -115,7 +111,6 @@ export default function ProjectMetadataEditor({
   function handlePickPreset(presetId: string | null): void {
     const preset = presets.find((item) => item.id === presetId);
     if (!preset || disabled) return;
-    setPickedPresetId(preset.id);
     onDraftChange({
       ...draft,
       key: preset.name,
@@ -127,9 +122,6 @@ export default function ProjectMetadataEditor({
   const visiblePresets = presets.filter((preset) =>
     preset.name.toLocaleLowerCase().includes(presetKeyword),
   );
-  const pickedPreset = presets.find((preset) => preset.id === pickedPresetId);
-  const presetSelectValue =
-    pickedPreset && pickedPreset.name === draft.key ? pickedPreset.id : null;
   const emptyPresetMessage =
     presetsStatus === "error"
       ? "暂时无法加载预制标签"
@@ -229,60 +221,59 @@ export default function ProjectMetadataEditor({
       )}
       {showInput && (
         <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-3">
-          <label className="flex min-w-0 max-w-xs flex-col gap-1.5 text-xs font-medium">
-            预制
-            <Select
-              value={presetSelectValue}
-              disabled={disabled || presetsStatus === "loading"}
-              onValueChange={handlePickPreset}
-            >
-              <SelectTrigger className="w-full" aria-label="预制标签">
-                <SelectValue
-                  placeholder={presetsStatus === "loading" ? "正在加载" : "选择预制标签"}
-                />
-              </SelectTrigger>
-              <FilterSelectContent>
-                <div
-                  className="p-1"
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => event.stopPropagation()}
-                >
-                  <Input
-                    value={presetQuery}
-                    placeholder="搜索标签名"
-                    aria-label="搜索预制标签"
-                    disabled={disabled || presetsStatus !== "ready"}
-                    onChange={(event) => setPresetQuery(event.target.value)}
-                  />
-                </div>
-                {visiblePresets.length === 0 ? (
-                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                    {emptyPresetMessage}
-                  </div>
-                ) : (
-                  visiblePresets.map((preset) => (
-                    <SelectItem key={preset.id} value={preset.id}>
-                      {preset.name}
-                    </SelectItem>
-                  ))
-                )}
-              </FilterSelectContent>
-            </Select>
-          </label>
           <div className="grid min-w-0 gap-3 sm:grid-cols-2">
             <div className="flex min-w-0 flex-col gap-1.5">
               <label htmlFor={`${inputId}-key`} className="text-xs font-medium">
                 标签名
               </label>
-              <Input
-                id={`${inputId}-key`}
-                placeholder="标签名"
-                value={draft.key}
-                disabled={disabled}
-                aria-invalid={missingKey}
-                aria-describedby={missingKey ? `${inputId}-error` : undefined}
-                onChange={(event) => onDraftChange({ ...draft, key: event.target.value })}
-              />
+              <div className="relative">
+                <Input
+                  id={`${inputId}-key`}
+                  placeholder="标签名"
+                  value={draft.key}
+                  disabled={disabled}
+                  aria-invalid={missingKey}
+                  aria-describedby={missingKey ? `${inputId}-error` : undefined}
+                  className="pr-8"
+                  onChange={(event) => onDraftChange({ ...draft, key: event.target.value })}
+                />
+                <Select
+                  disabled={disabled || presetsStatus === "loading"}
+                  onValueChange={handlePickPreset}
+                >
+                  <SelectTrigger
+                    aria-label="选择预制标签"
+                    title={presetsStatus === "loading" ? "正在加载预制标签" : "选择预制标签"}
+                    className="absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2 border-0 bg-transparent px-0 shadow-none hover:bg-muted"
+                  />
+                  <SelectContent side="bottom" align="end" className="w-56">
+                    <div
+                      className="p-1"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
+                      <Input
+                        value={presetQuery}
+                        placeholder="搜索标签名"
+                        aria-label="搜索预制标签"
+                        disabled={disabled || presetsStatus !== "ready"}
+                        onChange={(event) => setPresetQuery(event.target.value)}
+                      />
+                    </div>
+                    {visiblePresets.length === 0 ? (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        {emptyPresetMessage}
+                      </div>
+                    ) : (
+                      visiblePresets.map((preset) => (
+                        <SelectItem key={preset.id} value={preset.id}>
+                          {preset.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="flex min-w-0 flex-col gap-1.5">
               <label htmlFor={`${inputId}-value`} className="text-xs font-medium">

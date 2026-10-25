@@ -59,8 +59,10 @@ test("选择预制标签后填入名称和颜色，并保留用户已填写的�
     draft = next;
   });
 
-  const presetTrigger = document.body.querySelector<HTMLButtonElement>('[aria-label="预制标签"]');
-  expect(presetTrigger?.textContent).toContain("选择预制标签");
+  const presetTrigger = document.body.querySelector<HTMLButtonElement>(
+    '[aria-label="选择预制标签"]',
+  );
+  expect(presetTrigger).toBeTruthy();
   await act(async () => {
     presetTrigger?.click();
   });
@@ -100,7 +102,7 @@ test("没有预制标签时仍可手动填写", async () => {
 
   expect(container.textContent).toContain("标签名");
   expect(container.textContent).toContain("值（选填）");
-  const presetTrigger = container.querySelector<HTMLButtonElement>('[aria-label="预制标签"]');
+  const presetTrigger = container.querySelector<HTMLButtonElement>('[aria-label="选择预制标签"]');
   await act(async () => {
     presetTrigger?.click();
   });
