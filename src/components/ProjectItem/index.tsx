@@ -8,7 +8,6 @@ import {
   getTaskTemplateOptions,
 } from "@/api/projectItem";
 import EmptyState from "@/components/EmptyState";
-import FilterSelectContent from "@/components/FilterSelectContent";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,7 @@ import { PROJECT_ITEMS_PAGE_SIZE as PAGE_SIZE, projectItemsQuery } from "@/queri
 import ProjectItemNodeList from "./ProjectItemNodeList";
 import ProjectItemOrderDialog from "./ProjectItemOrderDialog";
 
-import type { ProjectItemListVO, ProjectItemSortBy } from "@/types/projectItem";
+import type { ProjectItemListFilter, ProjectItemListVO } from "@/types/projectItem";
 
 interface ProjectItemSectionProps {
   projectId: string;
@@ -58,10 +57,7 @@ export default function ProjectItemSection({
   const navigate = useNavigate();
   const location = useLocation();
   const [page, setPage] = usePageQuery();
-  const [{ status, sortBy }, setQuery] = useState<{
-    status: "IN_PROGRESS" | "COMPLETED" | "";
-    sortBy: ProjectItemSortBy;
-  }>({ status: "IN_PROGRESS", sortBy: "MANUAL" });
+  const [status, setStatus] = useState<ProjectItemListFilter | "">("IN_PROGRESS");
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reasonItem, setReasonItem] = useState<ProjectItemListVO | null>(null);
@@ -85,7 +81,7 @@ export default function ProjectItemSection({
   }, []);
   const isCurrent = (): boolean =>
     mounted.current && projectLifecycle.current.generation === generation;
-  const itemsQuery = useApiQuery(projectItemsQuery(projectId, page, status, sortBy));
+  const itemsQuery = useApiQuery(projectItemsQuery(projectId, page, status));
   const templatesQuery = useApiQuery({
     key: ["templateOptions"],
     queryFn: getTaskTemplateOptions,
@@ -199,7 +195,7 @@ export default function ProjectItemSection({
             value={status || "ALL"}
             onValueChange={(value) => {
               if (value === "IN_PROGRESS" || value === "COMPLETED" || value === "ALL") {
-                setQuery((query) => ({ ...query, status: value === "ALL" ? "" : value }));
+                setStatus(value === "ALL" ? "" : value);
                 setPage(1);
               }
             }}
@@ -210,30 +206,6 @@ export default function ProjectItemSection({
               <TabsTrigger value="ALL">全部</TabsTrigger>
             </TabsList>
           </Tabs>
-          <Select
-            value={sortBy}
-            onValueChange={(value) => {
-              if (value === "MANUAL" || value === "CREATED_ASC" || value === "CREATED_DESC") {
-                setQuery((query) => ({ ...query, sortBy: value }));
-                setPage(1);
-              }
-            }}
-          >
-            <SelectTrigger size="sm" aria-label="项目排序">
-              <SelectValue>
-                {sortBy === "MANUAL"
-                  ? "自定义"
-                  : sortBy === "CREATED_ASC"
-                    ? "最早发布"
-                    : "最新发布"}
-              </SelectValue>
-            </SelectTrigger>
-            <FilterSelectContent>
-              <SelectItem value="MANUAL">自定义</SelectItem>
-              <SelectItem value="CREATED_ASC">最早发布</SelectItem>
-              <SelectItem value="CREATED_DESC">最新发布</SelectItem>
-            </FilterSelectContent>
-          </Select>
         </div>
 
         {loading ? (
@@ -339,7 +311,6 @@ export default function ProjectItemSection({
             open={orderDialogOpen}
             onOpenChange={setOrderDialogOpen}
             onSaved={() => {
-              setQuery((query) => ({ ...query, sortBy: "MANUAL" }));
               setPage(1);
               setOrderDialogOpen(false);
             }}
