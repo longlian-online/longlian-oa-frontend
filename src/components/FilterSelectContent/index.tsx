@@ -20,9 +20,9 @@ export default function FilterSelectContent({ children }: FilterSelectContentPro
       >
         <SelectPrimitive.Popup
           data-slot="select-content"
-          className="relative isolate w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-hidden rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
+          className="relative isolate w-max min-w-(--anchor-width) max-w-sm origin-(--transform-origin) overflow-hidden rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 [&_[data-slot=select-item]>span:first-child]:min-w-0 [&_[data-slot=select-item]>span:first-child]:shrink [&_[data-slot=select-item]>span:first-child]:truncate"
         >
-          <SelectPrimitive.List className="max-h-(--available-height) overflow-y-auto">
+          <SelectPrimitive.List className="max-h-[min(16rem,var(--available-height))] overflow-y-auto overscroll-contain">
             <SelectGroup>{children}</SelectGroup>
           </SelectPrimitive.List>
         </SelectPrimitive.Popup>

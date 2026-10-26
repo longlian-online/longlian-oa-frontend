@@ -40,6 +40,8 @@ import { useProjectTypes } from "@/hooks/useProjectTypes";
 import type { PlazaProjectGroup, PlazaSortBy, PlazaTask } from "@/types/plaza";
 
 const TASK_PAGE_SIZE = 6;
+const typeFilterTriggerClassName =
+  "h-9 w-max max-w-sm shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0 [&_[data-slot=select-value]]:line-clamp-none [&_[data-slot=select-value]]:block [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:truncate";
 
 const sortOptions = [
   { value: "WAIT", label: "等待最久" },
@@ -242,11 +244,8 @@ export default function TaskPlaza() {
                 }
               }}
             >
-              <SelectTrigger
-                aria-label="企划类型"
-                className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0"
-              >
-                <Filter className="mr-1.5 h-3.5 w-3.5" />
+              <SelectTrigger aria-label="企划类型" className={typeFilterTriggerClassName}>
+                <Filter className="mr-1.5 h-3.5 w-3.5 shrink-0" />
                 <SelectValue>
                   {selectedType === "all"
                     ? "全部企划类型"
@@ -275,11 +274,8 @@ export default function TaskPlaza() {
                 }
               }}
             >
-              <SelectTrigger
-                aria-label="任务类型"
-                className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0"
-              >
-                <Filter className="mr-1.5 h-3.5 w-3.5" />
+              <SelectTrigger aria-label="任务类型" className={typeFilterTriggerClassName}>
+                <Filter className="mr-1.5 h-3.5 w-3.5 shrink-0" />
                 <SelectValue>
                   {selectedTaskType === "all"
                     ? "全部任务类型"
