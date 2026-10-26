@@ -83,6 +83,10 @@ export interface InviteCodeVO {
   expireAt?: string;
 }
 
+export interface GenerateInviteCodeDTO {
+  expiredAt: string;
+}
+
 export interface OrganizationPageResult<T> {
   list: T[];
   total: number;

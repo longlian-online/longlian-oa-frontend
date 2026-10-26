@@ -54,6 +54,12 @@ export async function reorderProjectItems(
   });
 }
 
+export async function deleteProjectItem(projectId: string, itemId: string): Promise<void> {
+  return request(`/projects/${projectId}/items/${itemId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function createItemDeletionRequest(
   projectId: string,
   itemId: string,

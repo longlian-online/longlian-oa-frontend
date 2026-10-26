@@ -18,30 +18,38 @@ function instance(
 }
 
 describe("buildParticipantRoster", () => {
-  test("按阶段顺序聚合同一人的任务", () => {
+  test("按阶段顺序每个任务单独一段，段间空一行", () => {
     const instances = [
       instance({ id: "3", name: "嵌字", sort: 3, assigneeId: "u1", assigneeNickname: "阿岚" }),
       instance({ id: "1", name: "翻译", sort: 1, assigneeId: "u2", assigneeNickname: "小K" }),
       instance({ id: "2", name: "校对", sort: 2, assigneeId: "u1", assigneeNickname: "阿岚" }),
     ];
 
-    expect(buildParticipantRoster("第3话", instances)).toBe(
-      ["第3话 · 参与名单", "小K：翻译", "阿岚：校对、嵌字"].join("\n"),
+    expect(buildParticipantRoster(instances)).toBe(
+      ["翻译：小K", "校对：阿岚", "嵌字：阿岚"].join("\n\n"),
     );
   });
 
   test("忽略没有执行人的任务，全部未接取时返回空字符串", () => {
-    expect(buildParticipantRoster("第3话", [instance({ id: "1", status: "PENDING" })])).toBe("");
+    expect(buildParticipantRoster([instance({ id: "1", status: "PENDING" })])).toBe("");
     expect(
-      buildParticipantRoster("第3话", [
-        instance({ id: "1", status: "PENDING" }),
+      buildParticipantRoster([
+        instance({ id: "1", name: "图源", status: "PENDING" }),
         instance({ id: "2", name: "校对", assigneeId: "u1", assigneeNickname: "小K" }),
+        instance({ id: "3", name: "嵌字", sort: 3, assigneeNickname: "   " }),
       ]),
-    ).toBe(["第3话 · 参与名单", "小K：校对"].join("\n"));
+    ).toBe("校对：小K");
   });
 
-  test("并行同名任务合并并标注数量", () => {
+  test("同任务多名参与者按并行顺序用顿号连接", () => {
     const instances = [
+      instance({
+        id: "2",
+        name: "翻译",
+        parallelSort: 2,
+        assigneeId: "u2",
+        assigneeNickname: "小K",
+      }),
       instance({
         id: "1",
         name: "翻译",
@@ -49,26 +57,31 @@ describe("buildParticipantRoster", () => {
         assigneeId: "u1",
         assigneeNickname: "阿岚",
       }),
+      instance({ id: "3", name: "校对", sort: 2, assigneeId: "u3", assigneeNickname: "阿禾" }),
+    ];
+
+    expect(buildParticipantRoster(instances)).toBe(["翻译：阿岚、小K", "校对：阿禾"].join("\n\n"));
+  });
+
+  test("并行同名任务的同一参与者标注数量", () => {
+    const instances = [
       instance({
         id: "2",
         name: "翻译",
         parallelSort: 2,
+        assigneeId: "u1",
+        assigneeNickname: " 阿岚 ",
+      }),
+      instance({
+        id: "1",
+        name: "翻译",
+        parallelSort: 1,
         assigneeId: "u1",
         assigneeNickname: "阿岚",
       }),
       instance({ id: "3", name: "校对", sort: 2, assigneeId: "u2", assigneeNickname: "小K" }),
     ];
 
-    expect(buildParticipantRoster("第3话", instances)).toBe(
-      ["第3话 · 参与名单", "阿岚：翻译×2", "小K：校对"].join("\n"),
-    );
-  });
-
-  test("缺少项目标题时只输出名单标题", () => {
-    expect(
-      buildParticipantRoster("", [
-        instance({ id: "1", assigneeId: "u1", assigneeNickname: "阿岚" }),
-      ]),
-    ).toBe(["参与名单", "阿岚：翻译"].join("\n"));
+    expect(buildParticipantRoster(instances)).toBe(["翻译：阿岚×2", "校对：小K"].join("\n\n"));
   });
 });

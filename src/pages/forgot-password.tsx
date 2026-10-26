@@ -7,6 +7,7 @@ import { ArrowLeft, Layers, Mail } from "lucide-react";
 
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { resetPassword, sendVerificationCode } from "@/api/auth";
+import { NEW_PASSWORD_HINT, newPasswordSchema } from "@/lib/password";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ const forgotPasswordSchema = z
   .object({
     email: z.string().email("请输入有效的邮箱地址"),
     code: z.string().regex(/^[A-Z0-9]{6}$/, "请输入 6 位大写字母或数字验证码"),
-    password: z.string().min(6, "密码至少 6 位").max(20, "密码最多 20 位"),
+    password: newPasswordSchema,
     confirmPassword: z.string().min(1, "请再次输入新密码"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -146,10 +147,11 @@ export default function ForgotPasswordPage() {
                 id="password"
                 type="password"
                 autoComplete="new-password"
-                placeholder="6 至 20 位密码"
+                placeholder="6-20位，含大写、小写和数字"
                 className="h-11"
                 {...form.register("password")}
               />
+              <p className="text-xs text-muted-foreground">{NEW_PASSWORD_HINT}</p>
               {form.formState.errors.password && (
                 <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
               )}

@@ -54,7 +54,7 @@ describe("admin api", () => {
 
   test("uses the correct endpoints for list and invite operations", async () => {
     await getAdminOrganizations({ orgName: "测试", pageNum: 1, pageSize: 10 });
-    await createOrganizationInviteCode();
+    await createOrganizationInviteCode({ expiredAt: "2099-01-01 00:00:00" });
     await getScheduledTasks();
 
     expect(adminRequest).toHaveBeenNthCalledWith(
@@ -66,6 +66,7 @@ describe("admin api", () => {
       "/admin/organizations/invite-codes/create-org",
       {
         method: "POST",
+        body: JSON.stringify({ expiredAt: "2099-01-01 00:00:00" }),
       },
     );
     expect(adminRequest).toHaveBeenNthCalledWith(3, "/admin/scheduled-tasks/");

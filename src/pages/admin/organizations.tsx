@@ -5,10 +5,12 @@ import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { changeAdminOrganizationStatus, createOrganizationInviteCode } from "@/api/admin";
 import AdminLayout from "@/components/AdminLayout";
+import InviteExpiryField from "@/components/InviteExpiryField";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
 import { formatDate } from "@/lib/format";
+import { toInviteExpiredAt } from "@/lib/inviteExpiry";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,8 +33,8 @@ import {
 } from "@/components/ui/table";
 
 import { ADMIN_PAGE_SIZE as PAGE_SIZE, adminOrganizationsQuery } from "@/queries/admin";
-import type { AdminOrganizationVO } from "@/types/admin";
-import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
+import type { AdminInviteCodeVO, AdminOrganizationVO } from "@/types/admin";
+import type { GenerateInviteCodeDTO, OrganizationResourceStatus } from "@/types/organizationAdmin";
 
 export default function AdminOrganizationsPage() {
   const changeAdminOrganizationStatusMutation = useApiMutation<
@@ -44,10 +46,10 @@ export default function AdminOrganizationsPage() {
     scope: "admin",
   });
   const createOrganizationInviteCodeMutation = useApiMutation<
-    Awaited<ReturnType<typeof createOrganizationInviteCode>>,
-    Parameters<typeof createOrganizationInviteCode>
+    AdminInviteCodeVO,
+    [GenerateInviteCodeDTO]
   >({
-    mutationFn: (args) => createOrganizationInviteCode(...args),
+    mutationFn: ([dto]) => createOrganizationInviteCode(dto),
     invalidate: [["adminOrganizations"]],
     scope: "admin",
   });
@@ -55,6 +57,7 @@ export default function AdminOrganizationsPage() {
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
   const invite = createOrganizationInviteCodeMutation.data;
+  const [expiredAt, setExpiredAt] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
   const workingId =
     (changeAdminOrganizationStatusMutation.isPending
@@ -82,10 +85,23 @@ export default function AdminOrganizationsPage() {
     }
   }
 
+  const selectedExpiry = toInviteExpiredAt(expiredAt);
+
+  function handleInviteOpenChange(nextOpen: boolean): void {
+    setInviteOpen(nextOpen);
+    if (!nextOpen) {
+      setExpiredAt("");
+      createOrganizationInviteCodeMutation.reset();
+    }
+  }
+
   async function handleCreateInvite(): Promise<void> {
+    if (!selectedExpiry) {
+      $tip("请选择晚于当前时间的到期时间", "error");
+      return;
+    }
     try {
-      await createOrganizationInviteCodeMutation.mutateAsync([]);
-      setInviteOpen(true);
+      await createOrganizationInviteCodeMutation.mutateAsync([{ expiredAt: selectedExpiry }]);
       $tip("创建组织邀请码已生成", "success");
     } catch {
       /* QueryClient 统一显示最终错误，草稿保留。 */
@@ -124,7 +140,7 @@ export default function AdminOrganizationsPage() {
             <Button
               type="button"
               disabled={createOrganizationInviteCodeMutation.isPending}
-              onClick={() => void handleCreateInvite()}
+              onClick={() => setInviteOpen(true)}
             >
               <KeyRound className="size-4" />
               生成创建邀请码
@@ -209,26 +225,48 @@ export default function AdminOrganizationsPage() {
           )}
         </CardContent>
       </Card>
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+      <Dialog open={inviteOpen} onOpenChange={handleInviteOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>创建组织邀请码</DialogTitle>
             <DialogDescription>
-              一次性邀请码有效期至 {formatDate(invite?.expireAt)}。
+              选择到期时间后生成一次性邀请码，供新用户注册并创建组织。
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-center justify-between rounded-lg border bg-muted/40 px-4 py-3">
-            <code className="select-all text-2xl font-semibold tracking-[0.3em]">
-              {invite?.inviteCode ?? "—"}
-            </code>
-            <Button type="button" variant="outline" onClick={() => void handleCopy()}>
-              <Copy className="size-4" />
-              复制
-            </Button>
-          </div>
+          <InviteExpiryField
+            value={expiredAt}
+            disabled={createOrganizationInviteCodeMutation.isPending}
+            onChange={setExpiredAt}
+          />
+          {invite?.inviteCode ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between rounded-lg border bg-muted/40 px-4 py-3">
+                <code className="select-all text-2xl font-semibold tracking-[0.3em]">
+                  {invite.inviteCode}
+                </code>
+                <Button type="button" variant="outline" onClick={() => void handleCopy()}>
+                  <Copy className="size-4" />
+                  复制
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                有效期至 {formatDate(invite.expireAt)}。
+              </p>
+            </div>
+          ) : null}
           <DialogFooter>
-            <Button type="button" onClick={() => setInviteOpen(false)}>
-              完成
+            <Button type="button" variant="outline" onClick={() => handleInviteOpenChange(false)}>
+              关闭
+            </Button>
+            <Button
+              type="button"
+              disabled={createOrganizationInviteCodeMutation.isPending || !selectedExpiry}
+              onClick={() => void handleCreateInvite()}
+            >
+              {createOrganizationInviteCodeMutation.isPending && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              {invite?.inviteCode ? "重新生成" : "生成邀请码"}
             </Button>
           </DialogFooter>
         </DialogContent>

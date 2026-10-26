@@ -12,7 +12,7 @@ import type {
   StorageStatsQueryDTO,
   StorageStatsVO,
 } from "@/types/admin";
-import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
+import type { GenerateInviteCodeDTO, OrganizationResourceStatus } from "@/types/organizationAdmin";
 
 function withQuery(path: string, params: Record<string, string | number | undefined>): string {
   const searchParams = new URLSearchParams();
@@ -72,9 +72,12 @@ export async function changeAdminOrganizationStatus(
   });
 }
 
-export async function createOrganizationInviteCode(): Promise<AdminInviteCodeVO> {
+export async function createOrganizationInviteCode(
+  dto: GenerateInviteCodeDTO,
+): Promise<AdminInviteCodeVO> {
   return adminRequest("/admin/organizations/invite-codes/create-org", {
     method: "POST",
+    body: JSON.stringify(dto),
   });
 }
 
