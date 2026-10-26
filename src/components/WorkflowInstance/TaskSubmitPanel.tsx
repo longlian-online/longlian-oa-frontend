@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -33,6 +34,10 @@ interface TaskSubmitPanelProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (submission: TaskSubmitDTO) => Promise<boolean>;
   submitting: boolean;
+  title?: string;
+  confirmLabel?: string;
+  extra?: ReactNode;
+  extraValid?: boolean;
 }
 
 export function validateRequiredFields(
@@ -59,6 +64,10 @@ export default function TaskSubmitPanel({
   onOpenChange,
   onSubmit,
   submitting,
+  title,
+  confirmLabel = "提交",
+  extra,
+  extraValid = true,
 }: TaskSubmitPanelProps) {
   const [values, setValues] = useState<Record<string, TaskSubmitValue>>({});
   const [uploads, setUploads] = useState<Record<string, UploadedFileInfo | null>>({});
@@ -94,11 +103,12 @@ export default function TaskSubmitPanel({
     >
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>提交任务：{taskName}</DialogTitle>
+          <DialogTitle>{title ?? `提交任务：${taskName}`}</DialogTitle>
         </DialogHeader>
 
         {/* fieldset 默认 min-inline-size: min-content，超长文件名会把弹窗撑出边界 */}
         <fieldset disabled={submitting} className="min-w-0 max-h-[60vh] space-y-3 overflow-y-auto">
+          {extra}
           {submitFields.length === 0 ? (
             <div className="rounded-xl bg-secondary/60 p-4 text-sm text-muted-foreground">
               该任务没有额外提交字段，确认后会直接提交。
@@ -178,9 +188,9 @@ export default function TaskSubmitPanel({
         </fieldset>
 
         <DialogFooter>
-          <Button disabled={submitting} onClick={() => void handleSubmit()}>
+          <Button disabled={submitting || !extraValid} onClick={() => void handleSubmit()}>
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            提交
+            {confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

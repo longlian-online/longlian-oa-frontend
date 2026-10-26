@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { canReset, canReject, canOwnerAct, canAssign } from "./taskPermissions";
+import { canReset, canReject, canOwnerAct, canAssign, canProxySubmit } from "./taskPermissions";
 import type { ItemTaskInstanceVO, ItemTaskNodeVO } from "@/types/workflowInstance";
 const task = (
   id: string,
@@ -123,5 +123,48 @@ describe("task assignment permission", () => {
         false,
       );
     }
+  });
+});
+
+describe("proxy submit permission", () => {
+  const pendingNodes: ItemTaskNodeVO[] = [
+    {
+      id: "first",
+      baseTaskId: "base",
+      name: "翻译",
+      submitFields: [],
+      sort: 1,
+      parallelSort: 1,
+      taskInstanceId: "a",
+      taskStatus: "COMPLETED",
+    },
+    {
+      id: "second",
+      baseTaskId: "base",
+      name: "校对",
+      submitFields: [],
+      sort: 2,
+      parallelSort: 1,
+      taskInstanceId: "b",
+      taskStatus: "PENDING",
+    },
+  ];
+
+  test("only the project creator can proxy-submit an unclaimed unlocked task", () => {
+    const pending = task("b", 2, "PENDING", undefined);
+    expect(canProxySubmit(pending, pendingNodes, true)).toBe(true);
+    expect(canProxySubmit(pending, pendingNodes, false)).toBe(false);
+    expect(canProxySubmit(task("b", 2, "CLAIMED", "member"), pendingNodes, true)).toBe(false);
+    expect(canProxySubmit(task("b", 2, "COMPLETED", "member"), pendingNodes, true)).toBe(false);
+    expect(canProxySubmit({ ...pending, revision: "" }, pendingNodes, true)).toBe(false);
+    expect(
+      canProxySubmit(
+        pending,
+        pendingNodes.map((node) =>
+          node.id === "first" ? { ...node, taskStatus: "PENDING" } : node,
+        ),
+        true,
+      ),
+    ).toBe(false);
   });
 });

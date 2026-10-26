@@ -174,6 +174,9 @@ beforeEach((): void => {
         defaultOrgId: "41",
       });
     }
+    if (method === "GET" && path === "/app/preset-tags") {
+      return ok([]);
+    }
     if (method === "GET" && path === "/app/projects/types") {
       return ok([{ id: "7", name: "漫画" }]);
     }

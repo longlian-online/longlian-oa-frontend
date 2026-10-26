@@ -74,6 +74,13 @@ export interface TaskSubmitDTO {
   values: Record<string, TaskSubmitValue>;
 }
 
+export interface TaskProxySubmitDTO {
+  assigneeId: string;
+  submittedAt: string;
+  expectedRevision: string;
+  values: Record<string, TaskSubmitValue>;
+}
+
 export type TaskSubmissionStatus = "SUBMITTED" | "REJECTED" | "RESET";
 
 export interface TaskSubmissionPerson {
@@ -106,10 +113,4 @@ export interface TaskAbandonDTO {
 export interface TaskAssignDTO {
   assigneeId: string;
   expectedRevision: string;
-}
-
-export interface AssignableMemberVO {
-  userId: string;
-  nickname?: string | null;
-  username?: string | null;
 }

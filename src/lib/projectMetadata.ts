@@ -65,3 +65,59 @@ export function parseProjectMetadataTags(metadata?: string): ProjectMetadataTag[
     return [];
   }
 }
+
+export interface ProjectCustomField {
+  name: string;
+  value: string;
+}
+
+export function parseProjectCustomFields(metadata?: string): ProjectCustomField[] {
+  if (!metadata) return [];
+
+  try {
+    const parsed: unknown = JSON.parse(metadata);
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      Array.isArray(parsed) ||
+      !("fields" in parsed) ||
+      !Array.isArray(parsed.fields)
+    ) {
+      return [];
+    }
+
+    const fields: ProjectCustomField[] = [];
+    for (const field of parsed.fields) {
+      if (
+        typeof field !== "object" ||
+        field === null ||
+        Array.isArray(field) ||
+        !("name" in field) ||
+        typeof field.name !== "string" ||
+        field.name.trim() === "" ||
+        !("value" in field) ||
+        typeof field.value !== "string"
+      ) {
+        continue;
+      }
+      fields.push({ name: field.name, value: field.value });
+    }
+    return fields;
+  } catch {
+    return [];
+  }
+}
+
+export function buildProjectMetadata(
+  tags: ProjectMetadataTag[],
+  fields: ProjectCustomField[],
+): string {
+  const savedFields = fields.flatMap((field) => {
+    const name = field.name.trim();
+    if (!name) return [];
+    return [{ name, value: field.value.trim() }];
+  });
+  const metadata: { tags: ProjectMetadataTag[]; fields?: ProjectCustomField[] } = { tags };
+  if (savedFields.length > 0) metadata.fields = savedFields;
+  return JSON.stringify(metadata);
+}

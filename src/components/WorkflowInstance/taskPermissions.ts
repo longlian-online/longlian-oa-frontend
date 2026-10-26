@@ -70,3 +70,23 @@ export function canAssign(instance: ItemTaskInstanceVO, isProjectCreator: boolea
     /^\d+$/.test(instance.revision)
   );
 }
+
+export function canProxySubmit(
+  instance: ItemTaskInstanceVO,
+  nodes: ItemTaskNodeVO[],
+  isProjectCreator: boolean,
+): boolean {
+  if (
+    !isProjectCreator ||
+    instance.status !== "PENDING" ||
+    typeof instance.revision !== "string" ||
+    !/^\d+$/.test(instance.revision)
+  ) {
+    return false;
+  }
+  const node = nodes.find((candidate) => candidate.taskInstanceId === instance.id);
+  if (!node) return false;
+  return nodes
+    .filter((candidate) => candidate.sort < node.sort)
+    .every((candidate) => candidate.taskStatus === "COMPLETED");
+}

@@ -2,6 +2,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
 import WorkflowInstance from "./index";
@@ -19,12 +20,14 @@ const api = vi.hoisted(() => ({
   abandonTask: vi.fn(),
   claimTask: vi.fn(),
   assignTask: vi.fn(),
+  proxySubmitTask: vi.fn(),
   rejectTask: vi.fn(),
   resetTask: vi.fn(),
   submitTask: vi.fn(),
-  getAssignableMembers: vi.fn(),
 }));
 vi.mock("@/api/workflowInstance", () => api);
+const members = vi.hoisted(() => ({ listMemberOptions: vi.fn() }));
+vi.mock("@/api/member", () => members);
 vi.mock("@/components/tip", () => ({ $tip: vi.fn() }));
 vi.mock("@/hooks/useConfirm", () => ({ useConfirm: () => vi.fn(async () => true) }));
 vi.mock("./TaskFlowViewer", () => ({
@@ -96,6 +99,8 @@ beforeEach(() => {
   api.getTaskSubmissionVersions.mockResolvedValue([]);
   api.abandonTask.mockResolvedValue(undefined);
   api.rejectTask.mockResolvedValue(undefined);
+  members.listMemberOptions.mockResolvedValue([{ userId: "member", nickname: "小明" }]);
+  api.proxySubmitTask.mockResolvedValue(undefined);
 });
 
 afterEach(async () => {
@@ -110,22 +115,26 @@ afterEach(async () => {
 async function render(
   itemId = "item",
   isProjectCreator = true,
-  entry: { taskInstanceId?: string } = {},
+  entry: { taskInstanceId?: string; projectId?: string } = {},
 ): Promise<void> {
   await act(async () =>
     root?.render(
       <QueryClientProvider client={client}>
-        <WorkflowInstance itemId={itemId} isProjectCreator={isProjectCreator} {...entry} />
+        <MemoryRouter>
+          <WorkflowInstance itemId={itemId} isProjectCreator={isProjectCreator} {...entry} />
+        </MemoryRouter>
       </QueryClientProvider>,
     ),
   );
 }
 
-async function mount(isProjectCreator = true): Promise<void> {
+async function mount(isProjectCreator = true, projectId?: string): Promise<void> {
+  await act(async () => root?.unmount());
+  container?.remove();
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
-  await render("item", isProjectCreator);
+  await render("item", isProjectCreator, projectId ? { projectId } : {});
   await vi.waitFor(async () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -185,9 +194,6 @@ test("owner cancellation refreshes task actions, while parallel completion and a
 
 test("project creator assigns a pending task to an enabled member", async () => {
   tasks = [task({ status: "PENDING", assigneeId: undefined, assigneeNickname: undefined })];
-  api.getAssignableMembers.mockResolvedValue([
-    { userId: "member", nickname: "小明", username: "xiaoming" },
-  ]);
   api.assignTask.mockImplementation(async () => {
     tasks = [
       task({
@@ -202,8 +208,14 @@ test("project creator assigns a pending task to an enabled member", async () => 
   await mount();
   expect(findButton("分配")).toBeDefined();
   await act(async () => findButton("分配")?.click());
-  await vi.waitFor(() => expect(memberButton()).toBeDefined());
-  await act(async () => memberButton()?.click());
+  const member = await vi.waitFor(() => {
+    const input = document.querySelector<HTMLInputElement>("#assign-member");
+    expect(input).not.toBeNull();
+    return input!;
+  });
+  await act(async () => member.click());
+  await vi.waitFor(() => expect(document.querySelector("[role='option']")).not.toBeNull());
+  await act(async () => document.querySelector<HTMLElement>("[role='option']")?.click());
   await act(async () => findButton("确认分配")?.click());
   expect(api.assignTask).toHaveBeenCalledWith("target", {
     assigneeId: "member",
@@ -211,12 +223,6 @@ test("project creator assigns a pending task to an enabled member", async () => 
   });
   await vi.waitFor(() => expect(findButton("分配")).toBeUndefined());
 });
-
-function memberButton(): HTMLButtonElement | undefined {
-  return [...document.querySelectorAll("button")].find((entry) =>
-    entry.textContent?.includes("小明"),
-  );
-}
 
 test("non creator cannot assign a pending task", async () => {
   tasks = [task({ status: "PENDING", assigneeId: undefined })];
@@ -477,3 +483,140 @@ test.each(["CLAIMED", "COMPLETED"] as const)(
     expect(api.submitTask).not.toHaveBeenCalled();
   },
 );
+
+test("creator proxy-submits an unclaimed task under the selected member and time", async () => {
+  tasks = [task({ status: "PENDING", assigneeId: undefined, assigneeNickname: undefined })];
+  await mount();
+  expect(findButton("接取")).toBeDefined();
+  expect(findButton("代提交")).toBeDefined();
+  await act(async () => findButton("代提交")?.click());
+  await vi.waitFor(() => expect(document.querySelector("#proxy-submit-time")).not.toBeNull());
+  await act(async () => document.querySelector<HTMLElement>("[role='combobox']")?.click());
+  await vi.waitFor(() => expect(document.querySelector("[role='option']")).not.toBeNull());
+  await act(async () => document.querySelector<HTMLElement>("[role='option']")?.click());
+  const time = document.querySelector<HTMLInputElement>("#proxy-submit-time");
+  if (!time) throw new Error("缺少提交时间");
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
+      time,
+      "2020-01-02T03:04",
+    );
+    time.dispatchEvent(new Event("input", { bubbles: true }));
+    time.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await act(async () => findButton("确认代提交")?.click());
+  await vi.waitFor(() =>
+    expect(api.proxySubmitTask).toHaveBeenCalledWith("target", {
+      assigneeId: "member",
+      submittedAt: "2020-01-02 03:04:00",
+      expectedRevision: "9007199254740993",
+      values: {},
+    }),
+  );
+});
+
+test("typing filters the member dropdown without covering the field", async () => {
+  members.listMemberOptions.mockResolvedValue([
+    { userId: "member", nickname: "小明" },
+    { userId: "other", nickname: "阿岚" },
+    { userId: "third", nickname: "林夏" },
+  ]);
+  tasks = [task({ status: "PENDING", assigneeId: undefined })];
+  await mount();
+  await act(async () => findButton("代提交")?.click());
+  const member = await vi.waitFor(() => {
+    const input = document.querySelector<HTMLInputElement>("#proxy-submit-member");
+    expect(input).not.toBeNull();
+    return input!;
+  });
+  await act(async () => {
+    member.focus();
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(member, "岚");
+    member.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await vi.waitFor(() => {
+    const labels = [...document.querySelectorAll("[role='option']")].map((option) =>
+      option.textContent?.trim(),
+    );
+    expect(labels).toEqual(["阿岚"]);
+  });
+  const list = document.querySelector<HTMLElement>("#proxy-submit-member-list");
+  expect(list?.parentElement).toBe(document.body);
+  expect(list && getComputedStyle(list).position).toBe("fixed");
+  const field = member.getBoundingClientRect();
+  const popup = list?.getBoundingClientRect();
+  expect(popup).toBeDefined();
+  expect(popup!.top).toBeGreaterThanOrEqual(field.bottom);
+});
+
+test("non-creator cannot proxy-submit an unclaimed task", async () => {
+  tasks = [task({ status: "PENDING", assigneeId: undefined })];
+  await mount(false);
+  expect(findButton("代提交")).toBeUndefined();
+  expect(findButton("接取")).toBeDefined();
+});
+
+test("claimed task has no proxy submit entry", async () => {
+  await mount();
+  expect(findButton("代提交")).toBeUndefined();
+  expect(findButton("取消接取")).toBeDefined();
+});
+
+test("later pending stage stays blocked until the previous stage is complete", async () => {
+  tasks = [
+    task({ id: "first", status: "PENDING", assigneeId: undefined, sort: 1 }),
+    task({ id: "target", status: "PENDING", assigneeId: undefined, sort: 2 }),
+  ];
+  await mount();
+  expect(findButton("代提交")).toBeUndefined();
+  await act(async () => findButton("选择first")?.click());
+  expect(findButton("代提交")).toBeDefined();
+});
+
+test("future proxy submit time stays disabled", async () => {
+  tasks = [task({ status: "PENDING", assigneeId: undefined })];
+  await mount();
+  await act(async () => findButton("代提交")?.click());
+  const time = await vi.waitFor(() => {
+    const input = document.querySelector<HTMLInputElement>("#proxy-submit-time");
+    expect(input).not.toBeNull();
+    return input!;
+  });
+  await act(async () => {
+    document.querySelector<HTMLElement>("[role='combobox']")?.click();
+  });
+  await vi.waitFor(() => expect(document.querySelector("[role='option']")).not.toBeNull());
+  await act(async () => document.querySelector<HTMLElement>("[role='option']")?.click());
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
+      time,
+      "2099-01-02T03:04",
+    );
+    time.dispatchEvent(new Event("input", { bubbles: true }));
+    time.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  expect(findButton("确认代提交")?.disabled).toBe(true);
+  expect(document.body.textContent).toContain("提交时间不能晚于当前时间");
+  expect(api.proxySubmitTask).not.toHaveBeenCalled();
+});
+
+function named(text: string): HTMLButtonElement | undefined {
+  return [...document.querySelectorAll("button")].find(
+    (entry) => entry.textContent?.trim() === text,
+  );
+}
+
+test("已提交任务的项目详情只向负责人提供删除", async () => {
+  tasks = [task({ status: "COMPLETED" })];
+  await mount(true, "21");
+  expect(named("删除项目")).toBeDefined();
+  await render("item", false, { projectId: "21" });
+  await vi.waitFor(() => expect(named("复制参与名单")).toBeDefined());
+  expect(named("删除项目")).toBeUndefined();
+});
+
+test("没有已提交任务时负责人仍可看到删除项目", async () => {
+  await mount(true, "21");
+  expect(named("删除项目")).toBeDefined();
+  expect(named("复制参与名单")).toBeDefined();
+});

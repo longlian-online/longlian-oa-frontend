@@ -26,6 +26,7 @@ import {
 import { projectDetailQuery } from "@/queries/planning";
 import ProjectItemSection from "@/components/ProjectItem";
 import PlanningDetailNavigation from "@/components/PlanningDetailNavigation";
+import ProjectCustomFields from "@/components/ProjectCustomFields";
 import ProjectMetadataTag from "@/components/ProjectMetadataTag";
 import RemoteImage from "@/components/RemoteImage";
 import { $tip } from "@/components/tip";
@@ -44,7 +45,7 @@ import {
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
 import { getStatusLabel } from "@/lib/projectStatus";
-import { parseProjectMetadataTags } from "@/lib/projectMetadata";
+import { parseProjectCustomFields, parseProjectMetadataTags } from "@/lib/projectMetadata";
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -178,6 +179,7 @@ export default function ProjectDetail() {
   }
 
   const tags = parseProjectMetadataTags(project.metadata);
+  const customFields = parseProjectCustomFields(project.metadata);
   const statusLabel = getStatusLabel(project.status);
 
   return (
@@ -308,11 +310,6 @@ export default function ProjectDetail() {
                   </Menu.Root>
                 </div>
               </div>
-              {browseView && project.description && (
-                <p className="line-clamp-2 max-w-3xl text-sm leading-7 text-muted-foreground">
-                  {project.description}
-                </p>
-              )}
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <span className="text-muted-foreground">整体进度</span>
@@ -420,6 +417,7 @@ export default function ProjectDetail() {
                   <dd>{project.inWorkshop ? "已加入" : "未加入"}</dd>
                   <dt className="text-muted-foreground">创建时间</dt>
                   <dd>{formatDate(project.createdAt)}</dd>
+                  <ProjectCustomFields fields={customFields} />
                 </dl>
               </div>
               <div className="aspect-[2/3] w-full max-w-64 overflow-hidden rounded-lg bg-muted">
@@ -442,7 +440,7 @@ export default function ProjectDetail() {
           </details>
           <div className="mt-3 flex flex-col gap-3 peer-open:hidden">
             {project.description && (
-              <p className="line-clamp-2 text-sm leading-7 text-muted-foreground">
+              <p className="line-clamp-2 whitespace-pre-wrap break-words text-sm leading-7 text-muted-foreground">
                 {project.description}
               </p>
             )}
@@ -457,6 +455,11 @@ export default function ProjectDetail() {
                   </span>
                 )}
               </div>
+            )}
+            {customFields.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {customFields.length} 个自定义字段，展开查看
+              </p>
             )}
           </div>
         </section>
