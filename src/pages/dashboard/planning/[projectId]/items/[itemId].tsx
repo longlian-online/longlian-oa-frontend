@@ -22,6 +22,7 @@ export default function ProjectItemTaskPage() {
   return (
     <div ref={rootRef} className="mx-auto w-full max-w-6xl">
       <WorkflowInstance
+        projectId={projectId}
         itemId={itemId}
         isProjectCreator={projectQuery.data?.isCreator === true}
         taskInstanceId={searchParams.get("taskInstanceId") ?? undefined}

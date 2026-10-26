@@ -17,6 +17,7 @@ import { getUserId } from "@/lib/session";
 import { formatTaskTitle, slotPosition } from "@/lib/slotLabel";
 import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
 import { buildParticipantRoster } from "./participantRoster";
+import ItemDeletionRequestButton from "./ItemDeletionRequestButton";
 import TaskDetailPanel from "./TaskDetailPanel";
 import { canReset, canReject, canOwnerAct, type OwnerTaskAction } from "./taskPermissions";
 import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
@@ -33,6 +34,7 @@ import type {
 
 interface WorkflowInstanceProps {
   itemId: string;
+  projectId?: string;
   isProjectCreator: boolean;
   taskInstanceId?: string;
 }
@@ -65,7 +67,12 @@ export default function WorkflowInstance(props: WorkflowInstanceProps) {
   return <ItemWorkflowInstance key={props.itemId} {...props} />;
 }
 
-function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: WorkflowInstanceProps) {
+function ItemWorkflowInstance({
+  itemId,
+  projectId,
+  isProjectCreator,
+  taskInstanceId,
+}: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const currentUserId = getUserId();
   const mounted = useRef(true);
@@ -341,17 +348,28 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
             <p className="mt-0.5 truncate text-sm text-muted-foreground">{taskFlow.description}</p>
           )}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="ml-auto shrink-0"
-          disabled={!participantRoster}
-          title={participantRoster ? "复制参与名单" : "暂无参与人"}
-          onClick={() => void handleCopyParticipantRoster()}
-        >
-          <Copy data-icon="inline-start" />
-          复制参与名单
-        </Button>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {projectId &&
+            isProjectCreator &&
+            instances.some((instance) => instance.status === "COMPLETED") && (
+              <ItemDeletionRequestButton
+                projectId={projectId}
+                itemId={itemId}
+                itemTitle={taskFlow.itemTitle}
+              />
+            )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            disabled={!participantRoster}
+            title={participantRoster ? "复制参与名单" : "暂无参与人"}
+            onClick={() => void handleCopyParticipantRoster()}
+          >
+            <Copy data-icon="inline-start" />
+            复制参与名单
+          </Button>
+        </div>
       </header>
 
       {entryError && (

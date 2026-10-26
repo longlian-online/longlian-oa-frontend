@@ -243,6 +243,18 @@ export default function ProjectDetail() {
                         <Pencil data-icon="inline-start" />
                         编辑资料
                       </Button>
+                      <Button
+                        variant="destructive"
+                        disabled={deleteLoading || requestMutation.isPending}
+                        onClick={() => void handleDelete()}
+                      >
+                        {deleteLoading || requestMutation.isPending ? (
+                          <Loader2 className="animate-spin" data-icon="inline-start" />
+                        ) : (
+                          <Trash2 data-icon="inline-start" />
+                        )}
+                        删除企划
+                      </Button>
                     </>
                   ) : !project.inWorkshop ? (
                     <Button disabled={workshopLoading} onClick={handleToggleWorkshop}>
@@ -287,21 +299,6 @@ export default function ProjectDetail() {
                               </Menu.Item>
                             )}
                           </Menu.Group>
-                          {project.isCreator && (
-                            <>
-                              <Menu.Separator className="my-1 h-px bg-border" />
-                              <Menu.Group>
-                                <Menu.Item
-                                  disabled={deleteLoading || requestMutation.isPending}
-                                  className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-destructive outline-none data-disabled:opacity-50 data-highlighted:bg-destructive/10"
-                                  onClick={() => void handleDelete()}
-                                >
-                                  <Trash2 className="size-4" />
-                                  删除企划
-                                </Menu.Item>
-                              </Menu.Group>
-                            </>
-                          )}
                         </Menu.Popup>
                       </Menu.Positioner>
                     </Menu.Portal>
