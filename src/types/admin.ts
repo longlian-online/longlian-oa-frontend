@@ -55,3 +55,32 @@ export interface ScheduledTaskVO {
 export interface ScheduleTriggerDTO {
   executeTime?: string;
 }
+
+export interface StorageStatsQueryDTO {
+  orgName?: string;
+  pageNum?: number;
+  pageSize?: number;
+}
+
+export interface StorageStateStatsVO {
+  count: number;
+  bytes: number;
+}
+
+export interface StorageCategoryStatsVO {
+  unbound: StorageStateStatsVO;
+  active: StorageStateStatsVO;
+  retention: StorageStateStatsVO;
+  recycled: StorageStateStatsVO;
+}
+
+export interface StorageStatsVO {
+  id: string;
+  name: string;
+  status: OrganizationResourceStatus;
+  occupiedBytes: number;
+  reclaimedBytes: number;
+  cover: StorageCategoryStatsVO;
+  thumbnail: StorageCategoryStatsVO;
+  taskSubmit: StorageCategoryStatsVO;
+}

@@ -7,6 +7,7 @@ import {
   getAdminList,
   getAdminOrganizations,
   getScheduledTasks,
+  getStorageStats,
   triggerScheduledTask,
 } from "@/api/admin";
 
@@ -68,5 +69,16 @@ describe("admin api", () => {
       },
     );
     expect(adminRequest).toHaveBeenNthCalledWith(3, "/admin/scheduled-tasks/");
+  });
+
+  test("queries storage stats by organization name and page", async () => {
+    await getStorageStats({ orgName: "甲组", pageNum: 2, pageSize: 10 });
+    await getStorageStats({ pageNum: 1, pageSize: 10 });
+
+    expect(adminRequest).toHaveBeenNthCalledWith(
+      1,
+      "/admin/storage-stats/?orgName=%E7%94%B2%E7%BB%84&pageNum=2&pageSize=10",
+    );
+    expect(adminRequest).toHaveBeenNthCalledWith(2, "/admin/storage-stats/?pageNum=1&pageSize=10");
   });
 });

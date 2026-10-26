@@ -1,7 +1,18 @@
-import { getAdminList, getAdminOrganizations, getScheduledTasks } from "@/api/admin";
+import {
+  getAdminList,
+  getAdminOrganizations,
+  getScheduledTasks,
+  getStorageStats,
+} from "@/api/admin";
 import { getSystemInfo } from "@/api/system";
 import type { ApiQueryOptions } from "@/lib/apiQuery";
-import type { AdminPageResult, AdminVO, AdminOrganizationVO, ScheduledTaskVO } from "@/types/admin";
+import type {
+  AdminPageResult,
+  AdminVO,
+  AdminOrganizationVO,
+  ScheduledTaskVO,
+  StorageStatsVO,
+} from "@/types/admin";
 import type { SystemInfoVO } from "@/types/system";
 
 export const ADMIN_PAGE_SIZE = 10;
@@ -37,4 +48,20 @@ export function scheduledTasksQuery(): ApiQueryOptions<ScheduledTaskVO[]> {
 
 export function systemInfoQuery(): ApiQueryOptions<SystemInfoVO> {
   return { key: ["systemInfo"], queryFn: getSystemInfo, scope: "public" };
+}
+
+export function storageStatsQuery(
+  page = 1,
+  keyword = "",
+): ApiQueryOptions<AdminPageResult<StorageStatsVO>> {
+  return {
+    key: ["storageStats", "management", page, keyword],
+    queryFn: () =>
+      getStorageStats({
+        orgName: keyword.trim(),
+        pageNum: page,
+        pageSize: ADMIN_PAGE_SIZE,
+      }),
+    scope: "admin",
+  };
 }

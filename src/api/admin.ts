@@ -9,6 +9,8 @@ import type {
   AdminVO,
   ScheduleTriggerDTO,
   ScheduledTaskVO,
+  StorageStatsQueryDTO,
+  StorageStatsVO,
 } from "@/types/admin";
 import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
 
@@ -88,4 +90,16 @@ export async function triggerScheduledTask(
     method: "POST",
     body: JSON.stringify(dto),
   });
+}
+
+export async function getStorageStats(
+  dto: StorageStatsQueryDTO,
+): Promise<AdminPageResult<StorageStatsVO>> {
+  return adminRequest(
+    withQuery("/admin/storage-stats/", {
+      orgName: dto.orgName,
+      pageNum: dto.pageNum,
+      pageSize: dto.pageSize,
+    }),
+  );
 }

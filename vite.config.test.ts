@@ -12,12 +12,14 @@ describe("admin dev-server proxy matching", () => {
   test("keeps admin page URLs in the SPA", () => {
     expect(isAdminApiPath("/admin/scheduled-tasks")).toBe(false);
     expect(isAdminApiPath("/admin/organizations")).toBe(false);
+    expect(isAdminApiPath("/admin/storage-stats")).toBe(false);
   });
 
   test("proxies admin API URLs", () => {
     expect(isAdminApiPath("/admin/scheduled-tasks/")).toBe(true);
     expect(isAdminApiPath("/admin/scheduled-tasks/cleanup/trigger")).toBe(true);
     expect(isAdminApiPath("/admin/session")).toBe(true);
+    expect(isAdminApiPath("/admin/storage-stats/")).toBe(true);
   });
 });
 
