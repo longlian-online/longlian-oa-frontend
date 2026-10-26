@@ -74,11 +74,6 @@ export interface TaskSubmitDTO {
   values: Record<string, TaskSubmitValue>;
 }
 
-export interface ProxySubmitCandidate {
-  userId: string;
-  nickname: string;
-}
-
 export interface TaskProxySubmitDTO {
   assigneeId: string;
   submittedAt: string;

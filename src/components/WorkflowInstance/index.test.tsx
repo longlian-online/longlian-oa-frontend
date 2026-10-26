@@ -18,13 +18,14 @@ const api = vi.hoisted(() => ({
   getTaskSubmissionVersions: vi.fn(),
   abandonTask: vi.fn(),
   claimTask: vi.fn(),
-  listProxySubmitCandidates: vi.fn(),
   proxySubmitTask: vi.fn(),
   rejectTask: vi.fn(),
   resetTask: vi.fn(),
   submitTask: vi.fn(),
 }));
 vi.mock("@/api/workflowInstance", () => api);
+const members = vi.hoisted(() => ({ listMemberOptions: vi.fn() }));
+vi.mock("@/api/member", () => members);
 vi.mock("@/components/tip", () => ({ $tip: vi.fn() }));
 vi.mock("@/hooks/useConfirm", () => ({ useConfirm: () => vi.fn(async () => true) }));
 vi.mock("./TaskFlowViewer", () => ({
@@ -96,7 +97,7 @@ beforeEach(() => {
   api.getTaskSubmissionVersions.mockResolvedValue([]);
   api.abandonTask.mockResolvedValue(undefined);
   api.rejectTask.mockResolvedValue(undefined);
-  api.listProxySubmitCandidates.mockResolvedValue([{ userId: "member", nickname: "小明" }]);
+  members.listMemberOptions.mockResolvedValue([{ userId: "member", nickname: "小明" }]);
   api.proxySubmitTask.mockResolvedValue(undefined);
 });
 
@@ -469,6 +470,40 @@ test("creator proxy-submits an unclaimed task under the selected member and time
       values: {},
     }),
   );
+});
+
+test("typing filters the member dropdown without covering the field", async () => {
+  members.listMemberOptions.mockResolvedValue([
+    { userId: "member", nickname: "小明" },
+    { userId: "other", nickname: "阿岚" },
+    { userId: "third", nickname: "林夏" },
+  ]);
+  tasks = [task({ status: "PENDING", assigneeId: undefined })];
+  await mount();
+  await act(async () => findButton("代提交")?.click());
+  const member = await vi.waitFor(() => {
+    const input = document.querySelector<HTMLInputElement>("#proxy-submit-member");
+    expect(input).not.toBeNull();
+    return input!;
+  });
+  await act(async () => {
+    member.focus();
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(member, "岚");
+    member.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await vi.waitFor(() => {
+    const labels = [...document.querySelectorAll("[role='option']")].map((option) =>
+      option.textContent?.trim(),
+    );
+    expect(labels).toEqual(["阿岚"]);
+  });
+  const list = document.querySelector<HTMLElement>("#proxy-submit-member-list");
+  expect(list?.parentElement).toBe(document.body);
+  expect(list && getComputedStyle(list).position).toBe("fixed");
+  const field = member.getBoundingClientRect();
+  const popup = list?.getBoundingClientRect();
+  expect(popup).toBeDefined();
+  expect(popup!.top).toBeGreaterThanOrEqual(field.bottom);
 });
 
 test("non-creator cannot proxy-submit an unclaimed task", async () => {
