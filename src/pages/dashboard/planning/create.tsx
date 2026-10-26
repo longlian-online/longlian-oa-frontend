@@ -7,6 +7,7 @@ import { useUploadFile } from "@/hooks/useUploadFile";
 import { createProject, updateProject } from "@/api/planning";
 import FileUpload from "@/components/FileUpload";
 import RemoteImage from "@/components/RemoteImage";
+import ProjectCustomFieldsEditor from "@/components/ProjectCustomFieldsEditor";
 import ProjectMetadataEditor from "@/components/ProjectMetadataEditor";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
-import { normalizeProjectMetadataTagColor, parseProjectMetadataTags } from "@/lib/projectMetadata";
+import {
+  buildProjectMetadata,
+  normalizeProjectMetadataTagColor,
+  parseProjectCustomFields,
+  parseProjectMetadataTags,
+} from "@/lib/projectMetadata";
 import { getStatusLabel } from "@/lib/projectStatus";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
@@ -30,6 +36,7 @@ import type {
   ProjectDetailInfoVO,
   ProjectStatus,
 } from "@/types/planning";
+import type { EditableProjectCustomField } from "@/components/ProjectCustomFieldsEditor";
 import type { EditableProjectMetadataTag } from "@/components/ProjectMetadataEditor";
 import type { ProjectMetadataTag } from "@/lib/projectMetadata";
 
@@ -71,6 +78,12 @@ export default function CreateProject({ project }: CreateProjectProps) {
   });
   const [tags, setTags] = useState<EditableProjectMetadataTag[]>(() =>
     parseProjectMetadataTags(project?.metadata).map((tag) => ({ ...tag, id: crypto.randomUUID() })),
+  );
+  const [customFields, setCustomFields] = useState<EditableProjectCustomField[]>(() =>
+    parseProjectCustomFields(project?.metadata).map((field) => ({
+      ...field,
+      id: crypto.randomUUID(),
+    })),
   );
   const [tagDraft, setTagDraft] = useState<ProjectMetadataTag>({ key: "", value: "" });
   const [coverFile, setCoverFile] = useState<UploadedFileInfo | null>(
@@ -240,7 +253,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
           alias: formData.alias.trim() || formData.title.trim(),
           typeId: formData.typeId,
           description: formData.description.trim(),
-          metadata: JSON.stringify({ tags: submittedTags }),
+          metadata: buildProjectMetadata(submittedTags, customFields),
           coverFileId: coverFile?.fileId || undefined,
           thumbnailFileId: thumbnailFile?.fileId || undefined,
           status:
@@ -260,7 +273,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
           description: formData.description.trim(),
           coverFileId: coverFile.fileId,
           thumbnailFileId: thumbnailFile?.fileId || undefined,
-          metadata: JSON.stringify({ tags: submittedTags }),
+          metadata: buildProjectMetadata(submittedTags, customFields),
         });
         succeeded = true;
         setSaveSucceeded(true);
@@ -522,6 +535,11 @@ export default function CreateProject({ project }: CreateProjectProps) {
               />
             </div>
           </section>
+          <ProjectCustomFieldsEditor
+            fields={customFields}
+            disabled={loading}
+            onChange={setCustomFields}
+          />
         </main>
       </div>
     </div>
