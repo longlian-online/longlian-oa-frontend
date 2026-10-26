@@ -5,6 +5,7 @@ import type {
   TaskAbandonDTO,
   TaskClaimResultVO,
   TaskInstanceDetailVO,
+  TaskProxySubmitDTO,
   TaskRejectDTO,
   TaskSubmissionVersionVO,
   TaskSubmitDTO,
@@ -47,6 +48,13 @@ export async function abandonTask(instanceId: string, dto: TaskAbandonDTO): Prom
 
 export async function submitTask(instanceId: string, dto: TaskSubmitDTO): Promise<void> {
   return request(`/task/instance/${instanceId}/submit`, {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function proxySubmitTask(instanceId: string, dto: TaskProxySubmitDTO): Promise<void> {
+  return request(`/task/instance/${instanceId}/proxy-submit`, {
     method: "POST",
     body: JSON.stringify(dto),
   });

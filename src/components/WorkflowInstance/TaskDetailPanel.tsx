@@ -29,9 +29,11 @@ interface TaskDetailActions {
   canReject: boolean;
   canOwnerCancel: boolean;
   canOwnerReject: boolean;
+  canProxySubmit: boolean;
   onOwnerAction: (action: OwnerTaskAction) => void;
   onClaim: () => void;
   onSubmit: () => void;
+  onProxySubmit: () => void;
   onAbandon: () => void;
   onReject: () => void;
   onReset: () => void;
@@ -199,6 +201,16 @@ function TaskActions({
         <Button size="sm" disabled={actions.mutating} onClick={actions.onClaim}>
           {actions.mutating && <Loader2 className="size-4 animate-spin" />}
           接取
+        </Button>
+      )}
+      {instance.status === "PENDING" && actions.canProxySubmit && (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={actions.mutating}
+          onClick={actions.onProxySubmit}
+        >
+          代提交
         </Button>
       )}
       {instance.status === "CLAIMED" && isMine && (
