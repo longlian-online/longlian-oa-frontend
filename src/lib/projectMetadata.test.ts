@@ -1,6 +1,8 @@
 import { expect, test } from "vite-plus/test";
 import {
+  buildProjectMetadata,
   normalizeProjectMetadataTagColor,
+  parseProjectCustomFields,
   parseProjectMetadataTags,
   PROJECT_METADATA_TAG_COLORS,
 } from "@/lib/projectMetadata";
@@ -158,4 +160,49 @@ test("colored single-key and key/value tags survive JSON roundtrips", (): void =
     { key: "审核", value: "", color: "green" },
   ]);
   expect(parseProjectMetadataTags(JSON.stringify({ tags: parsed }))).toEqual(parsed);
+});
+
+test("custom fields skip blank names and invalid records while keeping order", (): void => {
+  expect(parseProjectCustomFields()).toEqual([]);
+  expect(parseProjectCustomFields('{"tags":[]}')).toEqual([]);
+  expect(
+    parseProjectCustomFields(
+      JSON.stringify({
+        fields: [
+          null,
+          { name: "  ", value: "drop" },
+          { name: "作者", value: "xxxx" },
+          { name: "作者" },
+          { value: "只有值" },
+          { name: "译者", value: "" },
+          { name: " 画师 ", value: " yyyy " },
+        ],
+      }),
+    ),
+  ).toEqual([
+    { name: "作者", value: "xxxx" },
+    { name: "译者", value: "" },
+    { name: " 画师 ", value: " yyyy " },
+  ]);
+});
+
+test("empty custom field names are omitted and remaining values are trimmed", (): void => {
+  const tags = [{ key: "加急", value: "", color: "amber" as const }];
+  expect(
+    buildProjectMetadata(tags, [
+      { name: "  ", value: "drop" },
+      { name: " 作者 ", value: " xxxx " },
+      { name: "", value: "drop-too" },
+      { name: "译者", value: "   " },
+    ]),
+  ).toBe(
+    JSON.stringify({
+      tags,
+      fields: [
+        { name: "作者", value: "xxxx" },
+        { name: "译者", value: "" },
+      ],
+    }),
+  );
+  expect(buildProjectMetadata(tags, [{ name: " ", value: "none" }])).toBe(JSON.stringify({ tags }));
 });
