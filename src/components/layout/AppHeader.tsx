@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Link, useNavigate } from "react-router";
 
 import { isOrganizationManagerRole } from "@/lib/organizationRole";
+import { newPasswordError } from "@/lib/password";
 import { getSessionSnapshot } from "@/lib/session";
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { logout, sendVerificationCode } from "@/api/auth";
@@ -171,13 +172,13 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
       $tip("请输入原密码和新密码", "error");
       return;
     }
-    if (
-      oldPassword.length < 6 ||
-      oldPassword.length > 20 ||
-      newPassword.length < 6 ||
-      newPassword.length > 20
-    ) {
+    if (oldPassword.length < 6 || oldPassword.length > 20) {
       $tip("密码长度必须在6-20位之间", "error");
+      return;
+    }
+    const newPasswordMessage = newPasswordError(newPassword);
+    if (newPasswordMessage) {
+      $tip(newPasswordMessage, "error");
       return;
     }
 
@@ -511,7 +512,9 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
         <DialogContent>
           <DialogHeader>
             <DialogTitle>修改密码</DialogTitle>
-            <DialogDescription>输入原密码后设置新的登录密码。</DialogDescription>
+            <DialogDescription>
+              输入原密码后设置新的登录密码。新密码为 6-20 位，且同时包含大写字母、小写字母和数字。
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">

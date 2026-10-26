@@ -882,7 +882,7 @@ sort=5: 发布
 
 - `inviteCode`：邀请码。
 - `username`：用户名。
-- `password`：密码。
+- `password`：注册、重置和修改时的新密码为 6-20 位，须同时包含大写字母、小写字母和数字。登录和原密码不校验这套复杂度。
 - `nickname`：昵称。
 - `email`：邮箱。
 - `code`：邮箱验证码。
