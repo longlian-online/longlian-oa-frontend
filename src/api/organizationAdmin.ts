@@ -1,6 +1,7 @@
 import { orgAdminRequest } from "@/api/request";
 
 import type {
+  GenerateInviteCodeDTO,
   InviteCodeVO,
   JoinApplicationListDTO,
   JoinApplicationReviewDTO,
@@ -120,9 +121,10 @@ export async function reviewDeletionRequest(
   });
 }
 
-export async function createJoinInviteCode(): Promise<InviteCodeVO> {
+export async function createJoinInviteCode(dto: GenerateInviteCodeDTO): Promise<InviteCodeVO> {
   return orgAdminRequest("/orgadmin/members/invite-codes/join-org", {
     method: "POST",
+    body: JSON.stringify(dto),
   });
 }
 
