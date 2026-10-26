@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy } from "lucide-react";
 
-import { abandonTask, claimTask, rejectTask, resetTask, submitTask } from "@/api/workflowInstance";
+import {
+  abandonTask,
+  assignTask,
+  claimTask,
+  rejectTask,
+  resetTask,
+  submitTask,
+} from "@/api/workflowInstance";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +25,14 @@ import { formatTaskTitle, slotPosition } from "@/lib/slotLabel";
 import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
 import { buildParticipantRoster } from "./participantRoster";
 import TaskDetailPanel from "./TaskDetailPanel";
-import { canReset, canReject, canOwnerAct, type OwnerTaskAction } from "./taskPermissions";
+import {
+  canReset,
+  canReject,
+  canOwnerAct,
+  canAssign,
+  type OwnerTaskAction,
+} from "./taskPermissions";
+import AssignTaskDialog from "./AssignTaskDialog";
 import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
 import TaskFlowViewer from "./TaskFlowViewer";
 import TaskSubmitPanel from "./TaskSubmitPanel";
@@ -113,6 +127,10 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
   const [submitTarget, setSubmitTarget] = useState<{
     instance: ItemTaskInstanceVO;
     node: ItemTaskNodeVO;
+  } | null>(null);
+  const [assignTarget, setAssignTarget] = useState<{
+    instance: ItemTaskInstanceVO;
+    title: string;
   } | null>(null);
   const [rejectTarget, setRejectTarget] = useState<ItemTaskInstanceVO | null>(null);
   const [rejectComment, setRejectComment] = useState("");
@@ -263,6 +281,25 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
     );
   }
 
+  async function handleAssign(assigneeId: string): Promise<boolean> {
+    if (!assignTarget) return false;
+    const { instance } = assignTarget;
+    const current = instances.find((candidate) => candidate.id === instance.id);
+    if (
+      !current ||
+      current.revision !== instance.revision ||
+      !canAssign(current, isProjectCreator)
+    ) {
+      $tip("任务状态已变更或无操作权限，请刷新后重新操作", "error");
+      return false;
+    }
+    return runInstanceAction(
+      instance.id,
+      () => assignTask(instance.id, { assigneeId, expectedRevision: instance.revision }),
+      "任务已分配",
+    );
+  }
+
   async function handleAbandon(instanceId: string): Promise<void> {
     const instance = instances.find((candidate) => candidate.id === instanceId);
     if (!instance) return;
@@ -406,6 +443,7 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
                       instances,
                       isProjectCreator,
                     ),
+                    canAssign: canAssign(selectedInstance, isProjectCreator),
                     onOwnerAction: (action) =>
                       setOwnerTarget({
                         action,
@@ -421,6 +459,14 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
                         () => claimTask(selectedInstance.id),
                         "任务已接取",
                       ),
+                    onAssign: () =>
+                      setAssignTarget({
+                        instance: selectedInstance,
+                        title: formatTaskTitle(
+                          taskFlow.itemTitle,
+                          slotPosition(selectedNode, taskFlow.nodes),
+                        ),
+                      }),
                     onSubmit: () => openSubmit(selectedInstance),
                     onAbandon: () => void handleAbandon(selectedInstance.id),
                     onReject: () => setRejectTarget(selectedInstance),
@@ -467,6 +513,15 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
           taskTitle={ownerTarget.title}
           onClose={() => setOwnerTarget(null)}
           onConfirm={handleOwnerAction}
+        />
+      )}
+
+      {assignTarget && (
+        <AssignTaskDialog
+          key={`${itemId}:${assignTarget.instance.id}:${assignTarget.instance.revision}`}
+          taskTitle={assignTarget.title}
+          onClose={() => setAssignTarget(null)}
+          onConfirm={handleAssign}
         />
       )}
 

@@ -61,3 +61,12 @@ export function canOwnerAct(
     !hasLaterCompletion(instance, instances)
   );
 }
+
+export function canAssign(instance: ItemTaskInstanceVO, isProjectCreator: boolean): boolean {
+  return (
+    isProjectCreator &&
+    instance.status === "PENDING" &&
+    typeof instance.revision === "string" &&
+    /^\d+$/.test(instance.revision)
+  );
+}

@@ -3,6 +3,8 @@ import type {
   ItemTaskFlowVO,
   ItemTaskInstanceVO,
   TaskAbandonDTO,
+  TaskAssignDTO,
+  AssignableMemberVO,
   TaskClaimResultVO,
   TaskInstanceDetailVO,
   TaskRejectDTO,
@@ -36,6 +38,20 @@ export async function claimTask(instanceId: string): Promise<TaskClaimResultVO> 
   return request(`/task/instance/${instanceId}/claim`, {
     method: "POST",
   });
+}
+
+export async function assignTask(
+  instanceId: string,
+  dto: TaskAssignDTO,
+): Promise<TaskClaimResultVO> {
+  return request(`/task/instance/${instanceId}/assign`, {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function getAssignableMembers(): Promise<AssignableMemberVO[]> {
+  return request("/task/instance/assignees");
 }
 
 export async function abandonTask(instanceId: string, dto: TaskAbandonDTO): Promise<void> {

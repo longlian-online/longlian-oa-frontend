@@ -102,3 +102,14 @@ export interface TaskRejectDTO {
 export interface TaskAbandonDTO {
   expectedRevision: string;
 }
+
+export interface TaskAssignDTO {
+  assigneeId: string;
+  expectedRevision: string;
+}
+
+export interface AssignableMemberVO {
+  userId: string;
+  nickname?: string | null;
+  username?: string | null;
+}

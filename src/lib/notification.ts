@@ -9,6 +9,7 @@ interface NotificationPresentation {
 
 const NOTIFICATION_LABELS: Record<NotificationVO["kind"], string> = {
   TASK_READY: "可以开始",
+  TASK_ASSIGNED: "任务分配",
   ITEM_COMPLETED: "项目完成",
 };
 
@@ -25,6 +26,12 @@ export function notificationPresentation(notification: NotificationVO): Notifica
       return {
         label,
         message: `${title}的前置步骤已完成，你接取的「${formatSlotLabel(notification.source.taskSlot)}」可以开始了。`,
+        targetPath: `${itemPath}?taskInstanceId=${notification.sourceId}`,
+      };
+    case "TASK_ASSIGNED":
+      return {
+        label,
+        message: `${title}的「${formatSlotLabel(notification.source.taskSlot)}」已分配给你，无需手动领取。`,
         targetPath: `${itemPath}?taskInstanceId=${notification.sourceId}`,
       };
     case "ITEM_COMPLETED":

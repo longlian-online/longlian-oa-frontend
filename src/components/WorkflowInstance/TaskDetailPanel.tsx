@@ -29,8 +29,10 @@ interface TaskDetailActions {
   canReject: boolean;
   canOwnerCancel: boolean;
   canOwnerReject: boolean;
+  canAssign: boolean;
   onOwnerAction: (action: OwnerTaskAction) => void;
   onClaim: () => void;
+  onAssign: () => void;
   onSubmit: () => void;
   onAbandon: () => void;
   onReject: () => void;
@@ -199,6 +201,11 @@ function TaskActions({
         <Button size="sm" disabled={actions.mutating} onClick={actions.onClaim}>
           {actions.mutating && <Loader2 className="size-4 animate-spin" />}
           接取
+        </Button>
+      )}
+      {actions.canAssign && (
+        <Button size="sm" variant="outline" disabled={actions.mutating} onClick={actions.onAssign}>
+          分配
         </Button>
       )}
       {instance.status === "CLAIMED" && isMine && (

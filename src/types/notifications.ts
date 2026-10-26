@@ -30,6 +30,10 @@ export type NotificationVO = NotificationRecord &
         kind: "TASK_READY";
         source: (NotificationSourceVO & { taskSlot: NotificationTaskSlotVO }) | null;
       }
+    | {
+        kind: "TASK_ASSIGNED";
+        source: (NotificationSourceVO & { taskSlot: NotificationTaskSlotVO }) | null;
+      }
     | { kind: "ITEM_COMPLETED"; source: (NotificationSourceVO & { taskSlot: null }) | null }
   );
 
