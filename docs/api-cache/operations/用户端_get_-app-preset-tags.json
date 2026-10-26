@@ -1,0 +1,37 @@
+{
+  "document": "用户端",
+  "method": "GET",
+  "operation": {
+    "description": "按优先级降序、ID 升序，不含值",
+    "operationId": "listPresetTags",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/OrganizationPresetTagVO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "查询当前组织预制标签",
+    "tags": ["组织预制标签"]
+  },
+  "path": "/app/preset-tags",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

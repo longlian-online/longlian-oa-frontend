@@ -42,10 +42,16 @@ export interface PlazaProjectGroup {
 }
 
 export interface PlazaListDTO {
+  baseTaskId?: string;
   keyword?: string;
   projectType?: string;
   sortBy?: PlazaSortBy;
   stageScope?: PlazaStageScope;
   pageNum?: number;
   pageSize?: number;
+}
+
+export interface PlazaTaskTypeOption {
+  id: string;
+  name: string;
 }

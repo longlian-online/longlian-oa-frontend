@@ -1,0 +1,46 @@
+{
+  "document": "组织管理端",
+  "method": "PUT",
+  "operation": {
+    "description": "颜色不传或为空时改为默认；优先级省略时保持原值",
+    "operationId": "updatePresetTag",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "tagId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/OrganizationPresetTagUpdateDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "修改组织预制标签",
+    "tags": ["组织预制标签"]
+  },
+  "path": "/orgadmin/preset-tags/{tagId}",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
+}

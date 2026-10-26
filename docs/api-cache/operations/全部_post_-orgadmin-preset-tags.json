@@ -1,0 +1,36 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "operationId": "createPresetTag",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/OrganizationPresetTagCreateDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "创建组织预制标签",
+    "tags": ["组织预制标签"]
+  },
+  "path": "/orgadmin/preset-tags",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

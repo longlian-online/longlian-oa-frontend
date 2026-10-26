@@ -177,6 +177,7 @@ beforeEach((): void => {
       return ok(null);
     }
     if (path === "/app/task/instance/plaza") return ok(plaza());
+    if (path === "/app/task/instance/plaza/task-types") return ok([]);
     if (/^\/app\/item\/\d+\/flow$/.test(path)) return ok(flow());
     if (/^\/app\/task\/instance\/item\/\d+$/.test(path)) return ok(instances());
     if (path === "/app/projects/types") return ok([]);

@@ -1348,6 +1348,125 @@
         },
         "type": "object"
       },
+      "OrganizationPresetTagAdminVO": {
+        "description": "组织预制标签管理列表信息",
+        "properties": {
+          "color": {
+            "description": "颜色，空为默认。blue、green、amber、rose、violet",
+            "type": "string"
+          },
+          "id": {
+            "description": "组织预制标签ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "标签名",
+            "type": "string"
+          },
+          "priority": {
+            "description": "优先级，仅影响用户端下拉顺序，越大越靠前",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "OrganizationPresetTagCreateDTO": {
+        "description": "创建组织预制标签请求参数",
+        "properties": {
+          "color": {
+            "description": "颜色，空为默认。blue、green、amber、rose、violet",
+            "maxLength": 16,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "description": "标签名",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "priority": {
+            "description": "优先级，仅影响用户端下拉顺序，越大越靠前，默认 0",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": ["name"],
+        "type": "object"
+      },
+      "OrganizationPresetTagListDTO": {
+        "description": "组织预制标签列表查询请求参数",
+        "properties": {
+          "keyword": {
+            "description": "标签名模糊搜索关键词",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orderDir": {
+            "description": "排序方式，默认创建时间倒序",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "OrganizationPresetTagUpdateDTO": {
+        "description": "修改组织预制标签请求参数",
+        "properties": {
+          "color": {
+            "description": "颜色，空或不传表示改为默认。blue、green、amber、rose、violet",
+            "maxLength": 16,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "description": "标签名",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "priority": {
+            "description": "优先级，省略时保持原值。仅影响用户端下拉顺序，越大越靠前",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": ["name"],
+        "type": "object"
+      },
+      "OrganizationPresetTagVO": {
+        "description": "组织预制标签",
+        "properties": {
+          "color": {
+            "description": "颜色，空为默认。blue、green、amber、rose、violet",
+            "type": "string"
+          },
+          "id": {
+            "description": "组织预制标签ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "标签名",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PageResultVOAdminVO": {
         "description": "通用分页返回结果",
         "properties": {
@@ -1463,6 +1582,24 @@
             "description": "数据列表",
             "items": {
               "$ref": "#/components/schemas/OrgMemberInfoVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOOrganizationPresetTagAdminVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationPresetTagAdminVO"
             },
             "type": "array"
           },
@@ -1977,13 +2114,13 @@
             "description": "创建人头像URL",
             "type": "string"
           },
-          "creatorNickname": {
-            "description": "创建人昵称",
-            "type": "string"
-          },
           "creatorLastSubmittedAt": {
             "description": "创建人在当前组织最近一次任务提交时间，打回不回退；无提交记录时为空",
             "format": "date-time",
+            "type": "string"
+          },
+          "creatorNickname": {
+            "description": "创建人昵称",
             "type": "string"
           },
           "description": {
@@ -2038,11 +2175,6 @@
             "minLength": 0,
             "type": "string"
           },
-          "orderDir": {
-            "description": "排序方式：DESC-倒序，ASC-正序",
-            "enum": ["DESC", "ASC"],
-            "type": "string"
-          },
           "pageNum": {
             "description": "当前页码",
             "format": "int32",
@@ -2056,9 +2188,9 @@
             "minimum": 1,
             "type": "integer"
           },
-          "sortByTime": {
-            "description": "排序字段：CREATE-创建时间，UPDATE-更新时间",
-            "enum": ["CREATE", "UPDATE"],
+          "sortBy": {
+            "description": "项目排序，默认自定义顺序",
+            "enum": ["MANUAL", "CREATED_ASC", "CREATED_DESC", "UPDATED_ASC", "UPDATED_DESC"],
             "type": "string"
           },
           "status": {
@@ -2141,6 +2273,41 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "ProjectItemOrderEntryVO": {
+        "description": "项目排序标题",
+        "properties": {
+          "id": {
+            "description": "项目ID",
+            "type": "string"
+          },
+          "title": {
+            "description": "项目名称",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectItemReorderDTO": {
+        "description": "保存企划内全部项目顺序",
+        "properties": {
+          "expectedItemIds": {
+            "items": {
+              "description": "项目ID",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "itemIds": {
+            "items": {
+              "description": "项目ID",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["expectedItemIds", "itemIds"],
         "type": "object"
       },
       "ProjectListDTO": {
@@ -3239,15 +3406,6 @@
             "description": "创建人头像URL",
             "type": "string"
           },
-          "creatorNickname": {
-            "description": "创建人昵称",
-            "type": "string"
-          },
-          "creatorLastSubmittedAt": {
-            "description": "创建人在当前组织最近一次任务提交时间，打回不回退；无提交记录时为空",
-            "format": "date-time",
-            "type": "string"
-          },
           "id": {
             "description": "企划ID",
             "type": "string"
@@ -3876,6 +4034,39 @@
         "tags": ["站内通知接口"]
       }
     },
+    "/app/preset-tags": {
+      "get": {
+        "description": "按优先级降序、ID 升序，不含值",
+        "operationId": "listPresetTags_1",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationPresetTagVO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "查询当前组织预制标签",
+        "tags": ["组织预制标签"]
+      }
+    },
     "/app/projects": {
       "get": {
         "description": "支持关键词搜索、类型筛选、排序，仅返回启用状态企划",
@@ -4134,7 +4325,7 @@
     },
     "/app/projects/{projectId}/items": {
       "get": {
-        "description": "支持标题模糊搜索、完成情况筛选与时间排序。进行中包含没有任务或仍有未完成任务的项目；已完成指至少有一个任务且全部任务已完成。默认展示进行中并按更新时间倒序",
+        "description": "支持标题模糊搜索、完成情况筛选与自定义或时间排序。默认展示进行中并按负责人维护的自定义顺序展示。进行中包含没有任务或仍有未完成任务的项目；已完成指至少有一个任务且全部任务已完成。",
         "operationId": "listProjectItems",
         "parameters": [
           {
@@ -4221,9 +4412,10 @@
         "tags": ["项目相关接口"]
       }
     },
-    "/app/projects/{projectId}/items/{itemId}": {
-      "delete": {
-        "operationId": "deleteProjectItem",
+    "/app/projects/{projectId}/items/order": {
+      "get": {
+        "description": "仅企划负责人可读，不分页且不受完成情况筛选影响",
+        "operationId": "getProjectItemOrder",
         "parameters": [
           {
             "in": "query",
@@ -4234,19 +4426,8 @@
             }
           },
           {
-            "description": "企划ID",
             "in": "path",
             "name": "projectId",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "description": "项目ID",
-            "in": "path",
-            "name": "itemId",
             "required": true,
             "schema": {
               "format": "int64",
@@ -4256,10 +4437,60 @@
         ],
         "responses": {
           "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectItemOrderEntryVO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
             "description": "OK"
           }
         },
-        "summary": "删除项目",
+        "summary": "获取全部项目排序标题",
+        "tags": ["项目相关接口"]
+      },
+      "put": {
+        "description": "仅企划负责人可操作；原顺序过期时拒绝覆盖",
+        "operationId": "reorderProjectItems",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectItemReorderDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "保存全部项目顺序",
         "tags": ["项目相关接口"]
       }
     },
@@ -6058,6 +6289,146 @@
         "tags": ["组织信息管理接口"]
       }
     },
+    "/orgadmin/preset-tags": {
+      "get": {
+        "description": "支持标签名模糊搜索，默认按创建时间倒序",
+        "operationId": "listPresetTags",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "query",
+            "name": "listDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/OrganizationPresetTagListDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOOrganizationPresetTagAdminVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询组织预制标签",
+        "tags": ["组织预制标签"]
+      },
+      "post": {
+        "operationId": "createPresetTag",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationPresetTagCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "创建组织预制标签",
+        "tags": ["组织预制标签"]
+      }
+    },
+    "/orgadmin/preset-tags/{tagId}": {
+      "delete": {
+        "description": "删除后不能再选择。已经写入企划的标签不受影响",
+        "operationId": "deletePresetTag",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tagId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "删除组织预制标签",
+        "tags": ["组织预制标签"]
+      },
+      "put": {
+        "description": "颜色不传或为空时改为默认；优先级省略时保持原值",
+        "operationId": "updatePresetTag",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tagId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationPresetTagUpdateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "修改组织预制标签",
+        "tags": ["组织预制标签"]
+      }
+    },
     "/orgadmin/project-types": {
       "get": {
         "description": "支持名称模糊搜索，默认按创建时间倒序",
@@ -6726,6 +7097,10 @@
       "name": "原子任务管理"
     },
     {
+      "description": "项目列表、创建、排序和删除申请",
+      "name": "项目相关接口"
+    },
+    {
       "description": "用户个人工坊：企划列表、任务流模板列表与创建",
       "name": "工坊接口"
     },
@@ -6782,16 +7157,20 @@
       "name": "流程模板接口"
     },
     {
-      "description": "项目列表、创建和删除",
-      "name": "项目相关接口"
-    },
-    {
       "description": "企划相关接口",
       "name": "企划接口"
     },
     {
       "description": "组织管理员审核企划和项目删除申请",
       "name": "删除申请"
+    },
+    {
+      "description": "组织预制标签的增删改查，仅管理员可操作",
+      "name": "组织预制标签"
+    },
+    {
+      "description": "当前组织可供填写企划标签时选择的预制标签",
+      "name": "组织预制标签"
     }
   ]
 }

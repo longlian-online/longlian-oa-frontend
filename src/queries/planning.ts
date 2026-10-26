@@ -1,5 +1,5 @@
 import { getPresetTags, getProjectDetail, getProjectList, getProjectTypes } from "@/api/planning";
-import { getTaskPlaza } from "@/api/plaza";
+import { getPlazaTaskTypes, getTaskPlaza } from "@/api/plaza";
 import { getProjectItemList } from "@/api/projectItem";
 import { getItemTaskFlow, getItemTaskInstances } from "@/api/workflowInstance";
 
@@ -12,7 +12,7 @@ import type {
   ProjectTypeInfoVO,
   PresetTagVO,
 } from "@/types/planning";
-import type { PlazaProjectGroup, PlazaSortBy } from "@/types/plaza";
+import type { PlazaProjectGroup, PlazaSortBy, PlazaTaskTypeOption } from "@/types/plaza";
 import type { ProjectItemListFilter, ProjectItemListVO } from "@/types/projectItem";
 import type { ItemTaskFlowVO, ItemTaskInstanceVO } from "@/types/workflowInstance";
 
@@ -89,16 +89,22 @@ export function plazaListQuery(
   keyword = "",
   selectedType = "all",
   sortBy = DEFAULT_PLAZA_SORT,
+  selectedTaskType = "all",
 ): ApiQueryOptions<PageResult<PlazaProjectGroup>> {
   const params = {
     pageNum,
     pageSize: PLAZA_PAGE_SIZE,
     keyword: keyword || undefined,
     projectType: selectedType === "all" ? undefined : selectedType,
+    baseTaskId: selectedTaskType === "all" ? undefined : selectedTaskType,
     sortBy,
     stageScope,
   };
   return { key: ["plaza", "list", params], queryFn: () => getTaskPlaza(params) };
+}
+
+export function plazaTaskTypesQuery(): ApiQueryOptions<PlazaTaskTypeOption[]> {
+  return { key: ["plaza", "taskTypes"], queryFn: getPlazaTaskTypes };
 }
 
 export function itemFlowQuery(itemId: string): ApiQueryOptions<ItemTaskFlowVO> {

@@ -14,6 +14,7 @@ let container: HTMLDivElement;
 let client: QueryClient;
 const requests: URL[] = [];
 let groups: PlazaProjectGroup[];
+let taskTypesFail: boolean;
 
 function LocationProbe(): ReactElement {
   const location = useLocation();
@@ -31,11 +32,30 @@ beforeEach((): void => {
   saveSession({ token: "test-token", userId: "1", defaultOrgId: "11" });
   requests.length = 0;
   groups = [];
+  taskTypesFail = false;
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: string): Promise<Response> => {
       const url = new URL(input, "http://localhost");
       requests.push(url);
+      if (url.pathname.endsWith("/plaza/task-types")) {
+        return new Response(
+          JSON.stringify(
+            taskTypesFail
+              ? { code: 100003, msg: "选项查询失败" }
+              : {
+                  code: 0,
+                  data: [
+                    { id: "101", name: "翻译" },
+                    { id: "102", name: "校对" },
+                  ],
+                },
+          ),
+        );
+      }
+      if (url.pathname.endsWith("/projects/types")) {
+        return new Response(JSON.stringify({ code: 0, data: [{ id: "1", name: "漫画" }] }));
+      }
       const data = url.pathname.endsWith("/plaza")
         ? { list: groups, total: groups.length ? 9 : 0 }
         : [];
@@ -157,6 +177,96 @@ async function chooseTaskPage(projectId: string, page: number): Promise<void> {
   await act(async (): Promise<void> => option!.focus());
   await act(async (): Promise<void> => option!.click());
 }
+
+async function chooseFilter(label: string, name: string): Promise<void> {
+  await click(label);
+  let option: HTMLElement | undefined;
+  await waitFor((): void => {
+    option = Array.from(document.body.querySelectorAll<HTMLElement>('[role="option"]')).find(
+      (element): boolean => element.textContent?.trim() === name,
+    );
+    expect(option).toBeDefined();
+  });
+  await act(async (): Promise<void> => option!.focus());
+  await act(async (): Promise<void> => option!.click());
+}
+
+function lastPlazaRequest(): URL | undefined {
+  return requests.filter((url): boolean => url.pathname.endsWith("/plaza")).at(-1);
+}
+
+test("任务类型按 ID 查询，切换重置两层页码，清除恢复全部", async (): Promise<void> => {
+  groups = [makeGroup("21", 13)];
+  await mount("?keep=1&page=2");
+  await waitFor((): void => expect(button("任务类型").disabled).toBe(false));
+  expect(lastPlazaRequest()?.searchParams.has("baseTaskId")).toBe(false);
+  await chooseTaskPage("21", 2);
+  expect(visibleTaskNames("21")[0]).toBe("21任务6");
+  await chooseFilter("任务类型", "翻译");
+  await waitFor((): void => {
+    expect(lastPlazaRequest()?.searchParams.get("baseTaskId")).toBe("101");
+    expect(lastPlazaRequest()?.searchParams.get("pageNum")).toBe("1");
+    expect(container.querySelector("output")?.textContent).toBe("?keep=1");
+    expect(visibleTaskNames("21")[0]).toBe("21任务0");
+  });
+  await click("下一页");
+  await waitFor((): void => {
+    expect(lastPlazaRequest()?.searchParams.get("pageNum")).toBe("2");
+    expect(lastPlazaRequest()?.searchParams.get("baseTaskId")).toBe("101");
+  });
+  await chooseFilter("任务类型", "全部任务类型");
+  await waitFor((): void => {
+    expect(lastPlazaRequest()?.searchParams.has("baseTaskId")).toBe(false);
+    expect(lastPlazaRequest()?.searchParams.get("pageNum")).toBe("1");
+  });
+});
+
+test("任务类型与关键词、企划类型、排序和阶段组合并在接取刷新后保留", async (): Promise<void> => {
+  groups = [makeGroup("21", 1)];
+  await mount();
+  await waitFor((): void => expect(button("任务类型").disabled).toBe(false));
+  await chooseFilter("企划类型", "漫画");
+  await chooseFilter("排序", "缺员最多");
+  const input = container.querySelector<HTMLInputElement>(
+    'input[placeholder="搜索任务或企划..."]',
+  )!;
+  await act(async (): Promise<void> => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "测试");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await act(async (): Promise<void> => {
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  });
+  await chooseFilter("任务类型", "校对");
+  await click("当前阶段");
+  await waitFor((): void => {
+    expect(lastPlazaRequest()?.searchParams.get("baseTaskId")).toBe("102");
+    expect(lastPlazaRequest()?.searchParams.get("projectType")).toBe("漫画");
+    expect(lastPlazaRequest()?.searchParams.get("keyword")).toBe("测试");
+    expect(lastPlazaRequest()?.searchParams.get("sortBy")).toBe("MOST");
+    expect(lastPlazaRequest()?.searchParams.get("stageScope")).toBe("CURRENT");
+  });
+  groups = [];
+  await click("接取");
+  await waitFor((): void => expect(container.textContent).toContain("当前没有待接取任务"));
+  expect(lastPlazaRequest()?.searchParams.get("baseTaskId")).toBe("102");
+  expect(button("任务类型").textContent).toContain("校对");
+});
+
+test("任务类型选项失败可重试，不影响大厅列表", async (): Promise<void> => {
+  taskTypesFail = true;
+  groups = [makeGroup("21", 1)];
+  await mount();
+  await waitFor((): void => expect(container.textContent).toContain("任务类型加载失败"));
+  expect(button("任务类型").disabled).toBe(true);
+  expect(visibleTaskNames("21")).toEqual(["21任务0"]);
+  taskTypesFail = false;
+  await click("重试任务类型");
+  await waitFor((): void => expect(button("任务类型").disabled).toBe(false));
+  await chooseFilter("任务类型", "翻译");
+  await waitFor((): void => expect(lastPlazaRequest()?.searchParams.get("baseTaskId")).toBe("101"));
+});
 
 test("切换阶段重置企划和任务页码，说明操作保留任务页码", async (): Promise<void> => {
   groups = [makeGroup("21", 7)];
