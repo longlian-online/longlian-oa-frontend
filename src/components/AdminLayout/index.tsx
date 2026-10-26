@@ -3,6 +3,7 @@ import {
   Bell,
   Building2,
   CalendarClock,
+  HardDrive,
   LogOut,
   MonitorCog,
   Network,
@@ -31,6 +32,7 @@ interface AdminLayoutProps {
 const navItems = [
   { to: "/admin/admins", label: "管理员", icon: Users },
   { to: "/admin/organizations", label: "组织", icon: Building2 },
+  { to: "/admin/storage-stats", label: "存储", icon: HardDrive },
   { to: "/admin/scheduled-tasks", label: "定时任务", icon: CalendarClock },
   { to: "/admin/system-info", label: "系统信息", icon: MonitorCog },
 ] as const;
