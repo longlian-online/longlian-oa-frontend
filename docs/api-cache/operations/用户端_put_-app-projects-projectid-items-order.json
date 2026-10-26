@@ -1,8 +1,9 @@
 {
   "document": "用户端",
-  "method": "DELETE",
+  "method": "PUT",
   "operation": {
-    "operationId": "deleteProjectItem",
+    "description": "仅企划负责人可操作；原顺序过期时拒绝覆盖",
+    "operationId": "reorderProjectItems",
     "parameters": [
       {
         "in": "query",
@@ -13,7 +14,6 @@
         }
       },
       {
-        "description": "企划ID",
         "in": "path",
         "name": "projectId",
         "required": true,
@@ -21,26 +21,26 @@
           "format": "int64",
           "type": "integer"
         }
-      },
-      {
-        "description": "项目ID",
-        "in": "path",
-        "name": "itemId",
-        "required": true,
-        "schema": {
-          "format": "int64",
-          "type": "integer"
-        }
       }
     ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ProjectItemReorderDTO"
+          }
+        }
+      },
+      "required": true
+    },
     "responses": {
       "200": {
         "description": "OK"
       }
     },
-    "summary": "删除项目",
+    "summary": "保存全部项目顺序",
     "tags": ["项目相关接口"]
   },
-  "path": "/app/projects/{projectId}/items/{itemId}",
+  "path": "/app/projects/{projectId}/items/order",
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
 }

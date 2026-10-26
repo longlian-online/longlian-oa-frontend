@@ -1,0 +1,46 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "仅企划负责人可读，不分页且不受完成情况筛选影响",
+    "operationId": "getProjectItemOrder",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "projectId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/ProjectItemOrderEntryVO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "获取全部项目排序标题",
+    "tags": ["项目相关接口"]
+  },
+  "path": "/app/projects/{projectId}/items/order",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

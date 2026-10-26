@@ -1,0 +1,36 @@
+{
+  "document": "全部",
+  "method": "DELETE",
+  "operation": {
+    "description": "删除后不能再选择。已经写入企划的标签不受影响",
+    "operationId": "deletePresetTag",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "tagId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "删除组织预制标签",
+    "tags": ["组织预制标签"]
+  },
+  "path": "/orgadmin/preset-tags/{tagId}",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

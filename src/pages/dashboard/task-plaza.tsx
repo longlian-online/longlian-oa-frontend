@@ -16,6 +16,7 @@ import {
   PLAZA_PAGE_SIZE as PAGE_SIZE,
   plazaListQuery,
   plazaStageScope,
+  plazaTaskTypesQuery,
 } from "@/queries/planning";
 import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
@@ -95,6 +96,9 @@ export default function TaskPlaza() {
   const [keyword, setKeyword] = useState("");
   const [submittedKeyword, setSubmittedKeyword] = useState("");
   const [selectedType, setSelectedType] = useState("all");
+  const [selectedTaskType, setSelectedTaskType] = useState("all");
+  const taskTypesQuery = useApiQuery(plazaTaskTypesQuery());
+  const taskTypes = taskTypesQuery.data ?? [];
   const [sortBy, setSortBy] = useState<PlazaSortBy>(DEFAULT_SORT);
   const session = useSessionSnapshot();
   const pendingClaims = useMutationState({
@@ -104,7 +108,7 @@ export default function TaskPlaza() {
   const claiming = new Set(pendingClaims);
 
   const listQuery = useApiQuery(
-    plazaListQuery(stageScope, pageNum, submittedKeyword, selectedType, sortBy),
+    plazaListQuery(stageScope, pageNum, submittedKeyword, selectedType, sortBy, selectedTaskType),
   );
   const groups = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
@@ -212,7 +216,10 @@ export default function TaskPlaza() {
                 }
               }}
             >
-              <SelectTrigger className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0">
+              <SelectTrigger
+                aria-label="排序"
+                className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0"
+              >
                 <ArrowUpDown className="mr-1.5 h-3.5 w-3.5" />
                 <SelectValue>
                   {sortOptions.find((option) => option.value === sortBy)?.label ?? "排序"}
@@ -235,19 +242,54 @@ export default function TaskPlaza() {
                 }
               }}
             >
-              <SelectTrigger className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0">
+              <SelectTrigger
+                aria-label="企划类型"
+                className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0"
+              >
                 <Filter className="mr-1.5 h-3.5 w-3.5" />
                 <SelectValue>
                   {selectedType === "all"
-                    ? "所有类型"
+                    ? "全部企划类型"
                     : (projectTypes.find((type) => type.name === selectedType)?.name ??
                       selectedType)}
                 </SelectValue>
               </SelectTrigger>
               <FilterSelectContent>
-                <SelectItem value="all">所有类型</SelectItem>
+                <SelectItem value="all">全部企划类型</SelectItem>
                 {projectTypes.map((type) => (
                   <SelectItem key={type.id} value={type.name}>
+                    {type.name}
+                  </SelectItem>
+                ))}
+              </FilterSelectContent>
+            </Select>
+            <Select
+              value={selectedTaskType}
+              disabled={
+                taskTypesQuery.isLoading || (taskTypesQuery.isError && !taskTypesQuery.data)
+              }
+              onValueChange={(value: string | null): void => {
+                if (value) {
+                  setSelectedTaskType(value);
+                  setPageNum(1);
+                }
+              }}
+            >
+              <SelectTrigger
+                aria-label="任务类型"
+                className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0"
+              >
+                <Filter className="mr-1.5 h-3.5 w-3.5" />
+                <SelectValue>
+                  {selectedTaskType === "all"
+                    ? "全部任务类型"
+                    : (taskTypes.find((type) => type.id === selectedTaskType)?.name ?? "任务类型")}
+                </SelectValue>
+              </SelectTrigger>
+              <FilterSelectContent>
+                <SelectItem value="all">全部任务类型</SelectItem>
+                {taskTypes.map((type) => (
+                  <SelectItem key={type.id} value={type.id}>
                     {type.name}
                   </SelectItem>
                 ))}
@@ -256,6 +298,15 @@ export default function TaskPlaza() {
           </>
         }
       />
+
+      {taskTypesQuery.isError && (
+        <p role="alert" className="text-sm text-muted-foreground">
+          任务类型加载失败
+          <Button variant="link" size="sm" onClick={() => void taskTypesQuery.refetch()}>
+            重试任务类型
+          </Button>
+        </p>
+      )}
 
       {listQuery.isError && !listQuery.data ? (
         <div role="alert">
@@ -276,7 +327,7 @@ export default function TaskPlaza() {
           <div className="space-y-6">
             {groups.map((group) => (
               <ProjectGroupSection
-                key={`${stageScope}-${group.projectId}`}
+                key={`${stageScope}-${selectedTaskType}-${group.projectId}`}
                 group={group}
                 claiming={claiming}
                 onClaim={handleClaim}

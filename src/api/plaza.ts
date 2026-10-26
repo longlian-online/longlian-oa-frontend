@@ -1,6 +1,6 @@
 import { request } from "@/api/request";
 import type { PageResult } from "@/types/planning";
-import type { PlazaListDTO, PlazaProjectGroup } from "@/types/plaza";
+import type { PlazaListDTO, PlazaProjectGroup, PlazaTaskTypeOption } from "@/types/plaza";
 
 function toQueryString(params: Record<string, string | number | undefined>): string {
   const searchParams = new URLSearchParams();
@@ -17,6 +17,7 @@ function toQueryString(params: Record<string, string | number | undefined>): str
 export async function getTaskPlaza(dto: PlazaListDTO): Promise<PageResult<PlazaProjectGroup>> {
   return request<PageResult<PlazaProjectGroup>>(
     `/task/instance/plaza${toQueryString({
+      baseTaskId: dto.baseTaskId,
       keyword: dto.keyword,
       projectType: dto.projectType,
       sortBy: dto.sortBy,
@@ -25,4 +26,8 @@ export async function getTaskPlaza(dto: PlazaListDTO): Promise<PageResult<PlazaP
       pageSize: dto.pageSize,
     })}`,
   );
+}
+
+export async function getPlazaTaskTypes(): Promise<PlazaTaskTypeOption[]> {
+  return request<PlazaTaskTypeOption[]>("/task/instance/plaza/task-types");
 }

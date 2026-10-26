@@ -1,0 +1,42 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "支持标签名模糊搜索，默认按创建时间倒序",
+    "operationId": "listPresetTags",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "query",
+        "name": "listDTO",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/OrganizationPresetTagListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOOrganizationPresetTagAdminVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询组织预制标签",
+    "tags": ["组织预制标签"]
+  },
+  "path": "/orgadmin/preset-tags",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

@@ -1,22 +1,36 @@
 # API 缓存摘要
 
 来源：https://sit.neo.oa.api.longlian.online/v3/api-docs
-更新时间：2026-10-25T07:45:35.002Z
+更新时间：2026-10-26T01:45:08.004Z
 
 ## 文档分组
 
 | 分组       | 路径数 | 接口数 | 缓存文件                  |
 | ---------- | ------ | ------ | ------------------------- |
-| 全部       | 77     | 94     | `openapi/全部.json`       |
+| 全部       | 80     | 100    | `openapi/全部.json`       |
 | 公共端     | 3      | 4      | `openapi/公共端.json`     |
-| 用户端     | 43     | 52     | `openapi/用户端.json`     |
+| 用户端     | 44     | 54     | `openapi/用户端.json`     |
 | 管理端     | 8      | 10     | `openapi/管理端.json`     |
-| 组织管理端 | 23     | 28     | `openapi/组织管理端.json` |
+| 组织管理端 | 25     | 32     | `openapi/组织管理端.json` |
 
 ## 接口索引
 
 | 分组       | 方法   | 路径                                                         | 摘要                                   | 缓存文件                                                                             |
 | ---------- | ------ | ------------------------------------------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------ |
+| 公共端     | GET    | `/common/file/local`                                         | 读取本地文件                           | `operations/公共端_get_-common-file-local.json`                                      |
+| 公共端     | PUT    | `/common/file/local`                                         | 本地上传文件                           | `operations/公共端_put_-common-file-local.json`                                      |
+| 公共端     | POST   | `/common/file/upload`                                        | 创建文件上传                           | `operations/公共端_post_-common-file-upload.json`                                    |
+| 公共端     | GET    | `/common/system/info`                                        | 获取系统信息                           | `operations/公共端_get_-common-system-info.json`                                     |
+| 管理端     | GET    | `/admin/admins/`                                             | 分页查询管理员列表                     | `operations/管理端_get_-admin-admins.json`                                           |
+| 管理端     | POST   | `/admin/admins/`                                             | 创建管理员                             | `operations/管理端_post_-admin-admins.json`                                          |
+| 管理端     | DELETE | `/admin/admins/{id}`                                         | 删除管理员                             | `operations/管理端_delete_-admin-admins-id.json`                                     |
+| 管理端     | GET    | `/admin/organizations/`                                      | 分页查询组织列表                       | `operations/管理端_get_-admin-organizations.json`                                    |
+| 管理端     | PATCH  | `/admin/organizations/{orgId}/status`                        | 操作组织状态                           | `operations/管理端_patch_-admin-organizations-orgid-status.json`                     |
+| 管理端     | POST   | `/admin/organizations/invite-codes/create-org`               | 生成邀请码（超管）                     | `operations/管理端_post_-admin-organizations-invite-codes-create-org.json`           |
+| 管理端     | GET    | `/admin/scheduled-tasks/`                                    | 列出所有已注册的定时任务               | `operations/管理端_get_-admin-scheduled-tasks.json`                                  |
+| 管理端     | POST   | `/admin/scheduled-tasks/{taskName}/trigger`                  | 手动触发定时任务                       | `operations/管理端_post_-admin-scheduled-tasks-taskname-trigger.json`                |
+| 管理端     | DELETE | `/admin/session`                                             | 管理员登出                             | `operations/管理端_delete_-admin-session.json`                                       |
+| 管理端     | POST   | `/admin/session`                                             | 管理员登录                             | `operations/管理端_post_-admin-session.json`                                         |
 | 全部       | GET    | `/admin/admins/`                                             | 分页查询管理员列表                     | `operations/全部_get_-admin-admins.json`                                             |
 | 全部       | POST   | `/admin/admins/`                                             | 创建管理员                             | `operations/全部_post_-admin-admins.json`                                            |
 | 全部       | DELETE | `/admin/admins/{id}`                                         | 删除管理员                             | `operations/全部_delete_-admin-admins-id.json`                                       |
@@ -32,6 +46,7 @@
 | 全部       | PUT    | `/app/notifications/{id}/read`                               | 标记当前收件箱的单条通知已读           | `operations/全部_put_-app-notifications-id-read.json`                                |
 | 全部       | PUT    | `/app/notifications/read-all`                                | 将当前组织完整收件箱全部标为已读       | `operations/全部_put_-app-notifications-read-all.json`                               |
 | 全部       | GET    | `/app/notifications/status`                                  | 检查当前收件箱是否有未读通知           | `operations/全部_get_-app-notifications-status.json`                                 |
+| 全部       | GET    | `/app/preset-tags`                                           | 查询当前组织预制标签                   | `operations/全部_get_-app-preset-tags.json`                                          |
 | 全部       | GET    | `/app/projects`                                              | 分页查询企划列表                       | `operations/全部_get_-app-projects.json`                                             |
 | 全部       | POST   | `/app/projects`                                              | 创建企划                               | `operations/全部_post_-app-projects.json`                                            |
 | 全部       | DELETE | `/app/projects/{projectId}`                                  | 删除企划                               | `operations/全部_delete_-app-projects-projectid.json`                                |
@@ -40,8 +55,9 @@
 | 全部       | POST   | `/app/projects/{projectId}/deletion-requests`                | 提交企划删除申请                       | `operations/全部_post_-app-projects-projectid-deletion-requests.json`                |
 | 全部       | GET    | `/app/projects/{projectId}/items`                            | 分页查询项目列表                       | `operations/全部_get_-app-projects-projectid-items.json`                             |
 | 全部       | POST   | `/app/projects/{projectId}/items`                            | 创建项目                               | `operations/全部_post_-app-projects-projectid-items.json`                            |
-| 全部       | DELETE | `/app/projects/{projectId}/items/{itemId}`                   | 删除项目                               | `operations/全部_delete_-app-projects-projectid-items-itemid.json`                   |
 | 全部       | POST   | `/app/projects/{projectId}/items/{itemId}/deletion-requests` | 提交项目删除申请                       | `operations/全部_post_-app-projects-projectid-items-itemid-deletion-requests.json`   |
+| 全部       | GET    | `/app/projects/{projectId}/items/order`                      | 获取全部项目排序标题                   | `operations/全部_get_-app-projects-projectid-items-order.json`                       |
+| 全部       | PUT    | `/app/projects/{projectId}/items/order`                      | 保存全部项目顺序                       | `operations/全部_put_-app-projects-projectid-items-order.json`                       |
 | 全部       | DELETE | `/app/projects/{projectId}/workshop`                         | 从工坊移除企划                         | `operations/全部_delete_-app-projects-projectid-workshop.json`                       |
 | 全部       | POST   | `/app/projects/{projectId}/workshop`                         | 添加企划到工坊                         | `operations/全部_post_-app-projects-projectid-workshop.json`                         |
 | 全部       | GET    | `/app/projects/types`                                        | 获取企划类型列表                       | `operations/全部_get_-app-projects-types.json`                                       |
@@ -94,6 +110,10 @@
 | 全部       | POST   | `/orgadmin/members/invite-codes/join-org`                    | 生成加入组织邀请码（管理员）           | `operations/全部_post_-orgadmin-members-invite-codes-join-org.json`                  |
 | 全部       | GET    | `/orgadmin/organizations`                                    | 获取组织信息                           | `operations/全部_get_-orgadmin-organizations.json`                                   |
 | 全部       | PUT    | `/orgadmin/organizations`                                    | 更新组织信息                           | `operations/全部_put_-orgadmin-organizations.json`                                   |
+| 全部       | GET    | `/orgadmin/preset-tags`                                      | 分页查询组织预制标签                   | `operations/全部_get_-orgadmin-preset-tags.json`                                     |
+| 全部       | POST   | `/orgadmin/preset-tags`                                      | 创建组织预制标签                       | `operations/全部_post_-orgadmin-preset-tags.json`                                    |
+| 全部       | DELETE | `/orgadmin/preset-tags/{tagId}`                              | 删除组织预制标签                       | `operations/全部_delete_-orgadmin-preset-tags-tagid.json`                            |
+| 全部       | PUT    | `/orgadmin/preset-tags/{tagId}`                              | 修改组织预制标签                       | `operations/全部_put_-orgadmin-preset-tags-tagid.json`                               |
 | 全部       | GET    | `/orgadmin/project-types`                                    | 分页查询企划类型列表                   | `operations/全部_get_-orgadmin-project-types.json`                                   |
 | 全部       | POST   | `/orgadmin/project-types`                                    | 创建企划类型                           | `operations/全部_post_-orgadmin-project-types.json`                                  |
 | 全部       | DELETE | `/orgadmin/project-types/{typeId}`                           | 删除企划类型                           | `operations/全部_delete_-orgadmin-project-types-typeid.json`                         |
@@ -111,15 +131,12 @@
 | 全部       | PUT    | `/orgadmin/task/template/{templateId}`                       | 更新任务模板                           | `operations/全部_put_-orgadmin-task-template-templateid.json`                        |
 | 全部       | PATCH  | `/orgadmin/task/template/{templateId}/status`                | 启用/禁用任务模板                      | `operations/全部_patch_-orgadmin-task-template-templateid-status.json`               |
 | 全部       | POST   | `/orgadmin/task/template/list`                               | 分页查询任务模板列表                   | `operations/全部_post_-orgadmin-task-template-list.json`                             |
-| 公共端     | GET    | `/common/file/local`                                         | 读取本地文件                           | `operations/公共端_get_-common-file-local.json`                                      |
-| 公共端     | PUT    | `/common/file/local`                                         | 本地上传文件                           | `operations/公共端_put_-common-file-local.json`                                      |
-| 公共端     | POST   | `/common/file/upload`                                        | 创建文件上传                           | `operations/公共端_post_-common-file-upload.json`                                    |
-| 公共端     | GET    | `/common/system/info`                                        | 获取系统信息                           | `operations/公共端_get_-common-system-info.json`                                     |
 | 用户端     | GET    | `/app/item/{itemId}/flow`                                    | 获取项目任务流（含节点执行状态）       | `operations/用户端_get_-app-item-itemid-flow.json`                                   |
 | 用户端     | GET    | `/app/notifications`                                         | 按游标读取最新 20 条通知及当前来源内容 | `operations/用户端_get_-app-notifications.json`                                      |
 | 用户端     | PUT    | `/app/notifications/{id}/read`                               | 标记当前收件箱的单条通知已读           | `operations/用户端_put_-app-notifications-id-read.json`                              |
 | 用户端     | PUT    | `/app/notifications/read-all`                                | 将当前组织完整收件箱全部标为已读       | `operations/用户端_put_-app-notifications-read-all.json`                             |
 | 用户端     | GET    | `/app/notifications/status`                                  | 检查当前收件箱是否有未读通知           | `operations/用户端_get_-app-notifications-status.json`                               |
+| 用户端     | GET    | `/app/preset-tags`                                           | 查询当前组织预制标签                   | `operations/用户端_get_-app-preset-tags.json`                                        |
 | 用户端     | GET    | `/app/projects`                                              | 分页查询企划列表                       | `operations/用户端_get_-app-projects.json`                                           |
 | 用户端     | POST   | `/app/projects`                                              | 创建企划                               | `operations/用户端_post_-app-projects.json`                                          |
 | 用户端     | DELETE | `/app/projects/{projectId}`                                  | 删除企划                               | `operations/用户端_delete_-app-projects-projectid.json`                              |
@@ -128,8 +145,9 @@
 | 用户端     | POST   | `/app/projects/{projectId}/deletion-requests`                | 提交企划删除申请                       | `operations/用户端_post_-app-projects-projectid-deletion-requests.json`              |
 | 用户端     | GET    | `/app/projects/{projectId}/items`                            | 分页查询项目列表                       | `operations/用户端_get_-app-projects-projectid-items.json`                           |
 | 用户端     | POST   | `/app/projects/{projectId}/items`                            | 创建项目                               | `operations/用户端_post_-app-projects-projectid-items.json`                          |
-| 用户端     | DELETE | `/app/projects/{projectId}/items/{itemId}`                   | 删除项目                               | `operations/用户端_delete_-app-projects-projectid-items-itemid.json`                 |
 | 用户端     | POST   | `/app/projects/{projectId}/items/{itemId}/deletion-requests` | 提交项目删除申请                       | `operations/用户端_post_-app-projects-projectid-items-itemid-deletion-requests.json` |
+| 用户端     | GET    | `/app/projects/{projectId}/items/order`                      | 获取全部项目排序标题                   | `operations/用户端_get_-app-projects-projectid-items-order.json`                     |
+| 用户端     | PUT    | `/app/projects/{projectId}/items/order`                      | 保存全部项目顺序                       | `operations/用户端_put_-app-projects-projectid-items-order.json`                     |
 | 用户端     | DELETE | `/app/projects/{projectId}/workshop`                         | 从工坊移除企划                         | `operations/用户端_delete_-app-projects-projectid-workshop.json`                     |
 | 用户端     | POST   | `/app/projects/{projectId}/workshop`                         | 添加企划到工坊                         | `operations/用户端_post_-app-projects-projectid-workshop.json`                       |
 | 用户端     | GET    | `/app/projects/types`                                        | 获取企划类型列表                       | `operations/用户端_get_-app-projects-types.json`                                     |
@@ -167,16 +185,6 @@
 | 用户端     | POST   | `/app/workshop/task-template`                                | 创建工坊个人任务流模板                 | `operations/用户端_post_-app-workshop-task-template.json`                            |
 | 用户端     | PUT    | `/app/workshop/task-template/{templateId}`                   | 更新工坊个人任务流模板                 | `operations/用户端_put_-app-workshop-task-template-templateid.json`                  |
 | 用户端     | POST   | `/app/workshop/task-template/list`                           | 分页查询工坊任务流模板列表             | `operations/用户端_post_-app-workshop-task-template-list.json`                       |
-| 管理端     | GET    | `/admin/admins/`                                             | 分页查询管理员列表                     | `operations/管理端_get_-admin-admins.json`                                           |
-| 管理端     | POST   | `/admin/admins/`                                             | 创建管理员                             | `operations/管理端_post_-admin-admins.json`                                          |
-| 管理端     | DELETE | `/admin/admins/{id}`                                         | 删除管理员                             | `operations/管理端_delete_-admin-admins-id.json`                                     |
-| 管理端     | GET    | `/admin/organizations/`                                      | 分页查询组织列表                       | `operations/管理端_get_-admin-organizations.json`                                    |
-| 管理端     | PATCH  | `/admin/organizations/{orgId}/status`                        | 操作组织状态                           | `operations/管理端_patch_-admin-organizations-orgid-status.json`                     |
-| 管理端     | POST   | `/admin/organizations/invite-codes/create-org`               | 生成邀请码（超管）                     | `operations/管理端_post_-admin-organizations-invite-codes-create-org.json`           |
-| 管理端     | GET    | `/admin/scheduled-tasks/`                                    | 列出所有已注册的定时任务               | `operations/管理端_get_-admin-scheduled-tasks.json`                                  |
-| 管理端     | POST   | `/admin/scheduled-tasks/{taskName}/trigger`                  | 手动触发定时任务                       | `operations/管理端_post_-admin-scheduled-tasks-taskname-trigger.json`                |
-| 管理端     | DELETE | `/admin/session`                                             | 管理员登出                             | `operations/管理端_delete_-admin-session.json`                                       |
-| 管理端     | POST   | `/admin/session`                                             | 管理员登录                             | `operations/管理端_post_-admin-session.json`                                         |
 | 组织管理端 | GET    | `/orgadmin/deletion-requests`                                | 分页查询待审核删除申请                 | `operations/组织管理端_get_-orgadmin-deletion-requests.json`                         |
 | 组织管理端 | PATCH  | `/orgadmin/deletion-requests/{requestId}`                    | 审核删除申请                           | `operations/组织管理端_patch_-orgadmin-deletion-requests-requestid.json`             |
 | 组织管理端 | POST   | `/orgadmin/members`                                          | 分页查询组员列表                       | `operations/组织管理端_post_-orgadmin-members.json`                                  |
@@ -188,6 +196,10 @@
 | 组织管理端 | POST   | `/orgadmin/members/invite-codes/join-org`                    | 生成加入组织邀请码（管理员）           | `operations/组织管理端_post_-orgadmin-members-invite-codes-join-org.json`            |
 | 组织管理端 | GET    | `/orgadmin/organizations`                                    | 获取组织信息                           | `operations/组织管理端_get_-orgadmin-organizations.json`                             |
 | 组织管理端 | PUT    | `/orgadmin/organizations`                                    | 更新组织信息                           | `operations/组织管理端_put_-orgadmin-organizations.json`                             |
+| 组织管理端 | GET    | `/orgadmin/preset-tags`                                      | 分页查询组织预制标签                   | `operations/组织管理端_get_-orgadmin-preset-tags.json`                               |
+| 组织管理端 | POST   | `/orgadmin/preset-tags`                                      | 创建组织预制标签                       | `operations/组织管理端_post_-orgadmin-preset-tags.json`                              |
+| 组织管理端 | DELETE | `/orgadmin/preset-tags/{tagId}`                              | 删除组织预制标签                       | `operations/组织管理端_delete_-orgadmin-preset-tags-tagid.json`                      |
+| 组织管理端 | PUT    | `/orgadmin/preset-tags/{tagId}`                              | 修改组织预制标签                       | `operations/组织管理端_put_-orgadmin-preset-tags-tagid.json`                         |
 | 组织管理端 | GET    | `/orgadmin/project-types`                                    | 分页查询企划类型列表                   | `operations/组织管理端_get_-orgadmin-project-types.json`                             |
 | 组织管理端 | POST   | `/orgadmin/project-types`                                    | 创建企划类型                           | `operations/组织管理端_post_-orgadmin-project-types.json`                            |
 | 组织管理端 | DELETE | `/orgadmin/project-types/{typeId}`                           | 删除企划类型                           | `operations/组织管理端_delete_-orgadmin-project-types-typeid.json`                   |
