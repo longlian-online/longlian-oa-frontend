@@ -349,15 +349,14 @@ function ItemWorkflowInstance({
           )}
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          {projectId &&
-            isProjectCreator &&
-            instances.some((instance) => instance.status === "COMPLETED") && (
-              <ItemDeletionRequestButton
-                projectId={projectId}
-                itemId={itemId}
-                itemTitle={taskFlow.itemTitle}
-              />
-            )}
+          {projectId && isProjectCreator && (
+            <ItemDeletionRequestButton
+              projectId={projectId}
+              itemId={itemId}
+              itemTitle={taskFlow.itemTitle}
+              hasSubmittedTask={instances.some((instance) => instance.status === "COMPLETED")}
+            />
+          )}
           <Button
             variant="outline"
             size="sm"

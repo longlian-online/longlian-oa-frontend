@@ -2,6 +2,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
 import WorkflowInstance from "./index";
@@ -113,7 +114,9 @@ async function render(
   await act(async () =>
     root?.render(
       <QueryClientProvider client={client}>
-        <WorkflowInstance itemId={itemId} isProjectCreator={isProjectCreator} {...entry} />
+        <MemoryRouter>
+          <WorkflowInstance itemId={itemId} isProjectCreator={isProjectCreator} {...entry} />
+        </MemoryRouter>
       </QueryClientProvider>,
     ),
   );
@@ -449,8 +452,8 @@ test("已提交任务的项目详情只向负责人提供删除", async () => {
   expect(named("删除项目")).toBeUndefined();
 });
 
-test("没有已提交任务时项目详情不提供删除", async () => {
+test("没有已提交任务时负责人仍可看到删除项目", async () => {
   await mount(true, "21");
-  expect(named("删除项目")).toBeUndefined();
+  expect(named("删除项目")).toBeDefined();
   expect(named("复制参与名单")).toBeDefined();
 });
