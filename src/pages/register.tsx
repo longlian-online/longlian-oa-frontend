@@ -18,6 +18,7 @@ import {
 import { getInviteInfo } from "@/api/user";
 import { $tip } from "@/components/tip";
 import { cn } from "@/lib/utils";
+import { NEW_PASSWORD_HINT, newPasswordSchema } from "@/lib/password";
 
 type RegisterMode = "join" | "create";
 
@@ -41,7 +42,7 @@ const registerObjectSchema = z.object({
     .regex(/^[A-Za-z0-9_]+$/, "用户名只能包含英文字母、数字和下划线"),
   email: z.string().email("请输入有效的邮箱地址"),
   code: z.string().regex(/^[A-Z0-9]{6}$/, "请输入 6 位大写字母或数字验证码"),
-  password: z.string().min(6, "密码至少6个字符").max(20, "密码最多20个字符"),
+  password: newPasswordSchema,
   confirmPassword: z.string().min(6, "请确认密码"),
 });
 
@@ -370,7 +371,7 @@ export default function RegisterPage() {
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="请输入密码（6-20字符）"
+                      placeholder="6-20位，含大写、小写和数字"
                       className="pl-10 pr-10 h-11"
                       {...form.register("password")}
                     />
@@ -382,6 +383,7 @@ export default function RegisterPage() {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  <p className="text-xs text-muted-foreground">{NEW_PASSWORD_HINT}</p>
                   {form.formState.errors.password && (
                     <p className="text-xs text-destructive">
                       {form.formState.errors.password.message}
