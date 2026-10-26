@@ -2,6 +2,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
 import WorkflowInstance from "./index";
@@ -108,22 +109,24 @@ afterEach(async () => {
 async function render(
   itemId = "item",
   isProjectCreator = true,
-  entry: { taskInstanceId?: string } = {},
+  entry: { taskInstanceId?: string; projectId?: string } = {},
 ): Promise<void> {
   await act(async () =>
     root?.render(
       <QueryClientProvider client={client}>
-        <WorkflowInstance itemId={itemId} isProjectCreator={isProjectCreator} {...entry} />
+        <MemoryRouter>
+          <WorkflowInstance itemId={itemId} isProjectCreator={isProjectCreator} {...entry} />
+        </MemoryRouter>
       </QueryClientProvider>,
     ),
   );
 }
 
-async function mount(isProjectCreator = true): Promise<void> {
+async function mount(isProjectCreator = true, projectId?: string): Promise<void> {
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
-  await render("item", isProjectCreator);
+  await render("item", isProjectCreator, projectId ? { projectId } : {});
   await vi.waitFor(async () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -433,3 +436,24 @@ test.each(["CLAIMED", "COMPLETED"] as const)(
     expect(api.submitTask).not.toHaveBeenCalled();
   },
 );
+
+function named(text: string): HTMLButtonElement | undefined {
+  return [...document.querySelectorAll("button")].find(
+    (entry) => entry.textContent?.trim() === text,
+  );
+}
+
+test("已提交任务的项目详情只向负责人提供删除", async () => {
+  tasks = [task({ status: "COMPLETED" })];
+  await mount(true, "21");
+  expect(named("删除项目")).toBeDefined();
+  await render("item", false, { projectId: "21" });
+  await vi.waitFor(() => expect(named("复制参与名单")).toBeDefined());
+  expect(named("删除项目")).toBeUndefined();
+});
+
+test("没有已提交任务时负责人仍可看到删除项目", async () => {
+  await mount(true, "21");
+  expect(named("删除项目")).toBeDefined();
+  expect(named("复制参与名单")).toBeDefined();
+});
