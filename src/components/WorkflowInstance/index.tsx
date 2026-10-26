@@ -123,7 +123,7 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
   } | null>(null);
   const sortedInstances = useMemo(() => getSortedInstances(instances), [instances]);
   const participantRoster = useMemo(
-    () => (taskFlow ? buildParticipantRoster(taskFlow.itemTitle, instances) : ""),
+    () => (taskFlow ? buildParticipantRoster(instances) : ""),
     [instances, taskFlow],
   );
   const selectedNode = taskFlow?.nodes.find((node) => node.id === selectedNodeId);
