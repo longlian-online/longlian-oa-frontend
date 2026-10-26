@@ -308,11 +308,6 @@ export default function ProjectDetail() {
                   </Menu.Root>
                 </div>
               </div>
-              {browseView && project.description && (
-                <p className="line-clamp-2 max-w-3xl text-sm leading-7 text-muted-foreground">
-                  {project.description}
-                </p>
-              )}
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <span className="text-muted-foreground">整体进度</span>
@@ -442,7 +437,7 @@ export default function ProjectDetail() {
           </details>
           <div className="mt-3 flex flex-col gap-3 peer-open:hidden">
             {project.description && (
-              <p className="line-clamp-2 text-sm leading-7 text-muted-foreground">
+              <p className="line-clamp-2 whitespace-pre-wrap break-words text-sm leading-7 text-muted-foreground">
                 {project.description}
               </p>
             )}
