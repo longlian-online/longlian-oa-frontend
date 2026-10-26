@@ -2,9 +2,11 @@ import { request } from "@/api/request";
 import type {
   ItemTaskFlowVO,
   ItemTaskInstanceVO,
+  ProxySubmitCandidate,
   TaskAbandonDTO,
   TaskClaimResultVO,
   TaskInstanceDetailVO,
+  TaskProxySubmitDTO,
   TaskRejectDTO,
   TaskSubmissionVersionVO,
   TaskSubmitDTO,
@@ -50,6 +52,19 @@ export async function submitTask(instanceId: string, dto: TaskSubmitDTO): Promis
     method: "POST",
     body: JSON.stringify(dto),
   });
+}
+
+export async function proxySubmitTask(instanceId: string, dto: TaskProxySubmitDTO): Promise<void> {
+  return request(`/task/instance/${instanceId}/proxy-submit`, {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function listProxySubmitCandidates(
+  instanceId: string,
+): Promise<ProxySubmitCandidate[]> {
+  return request(`/task/instance/${instanceId}/proxy-submit/candidates`);
 }
 
 export async function rejectTask(instanceId: string, dto: TaskRejectDTO): Promise<void> {

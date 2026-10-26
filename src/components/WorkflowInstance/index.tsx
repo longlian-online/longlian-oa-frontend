@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy } from "lucide-react";
 
-import { abandonTask, claimTask, rejectTask, resetTask, submitTask } from "@/api/workflowInstance";
+import {
+  abandonTask,
+  claimTask,
+  proxySubmitTask,
+  rejectTask,
+  resetTask,
+  submitTask,
+} from "@/api/workflowInstance";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,16 +25,24 @@ import { formatTaskTitle, slotPosition } from "@/lib/slotLabel";
 import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
 import { buildParticipantRoster } from "./participantRoster";
 import TaskDetailPanel from "./TaskDetailPanel";
-import { canReset, canReject, canOwnerAct, type OwnerTaskAction } from "./taskPermissions";
+import {
+  canReset,
+  canReject,
+  canOwnerAct,
+  canProxySubmit,
+  type OwnerTaskAction,
+} from "./taskPermissions";
 import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
 import TaskFlowViewer from "./TaskFlowViewer";
 import TaskSubmitPanel from "./TaskSubmitPanel";
+import ProxySubmitDialog from "./ProxySubmitDialog";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 
 import type {
   ItemTaskInstanceVO,
   ItemTaskNodeVO,
   TaskClaimResultVO,
+  TaskProxySubmitDTO,
   TaskSubmitDTO,
 } from "@/types/workflowInstance";
 
@@ -111,6 +126,10 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
     ],
   });
   const [submitTarget, setSubmitTarget] = useState<{
+    instance: ItemTaskInstanceVO;
+    node: ItemTaskNodeVO;
+  } | null>(null);
+  const [proxyTarget, setProxyTarget] = useState<{
     instance: ItemTaskInstanceVO;
     node: ItemTaskNodeVO;
   } | null>(null);
@@ -206,6 +225,35 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
       "任务已提交",
     );
     if (succeeded) setSubmitTarget(null);
+    return succeeded;
+  }
+
+  function openProxySubmit(instance: ItemTaskInstanceVO): void {
+    const targetNode = findNodeByInstance(instance, taskFlow?.nodes ?? []);
+    if (!targetNode || !canProxySubmit(instance, taskFlow?.nodes ?? [], isProjectCreator)) {
+      $tip("任务状态已变更或无操作权限，请刷新后重新操作", "error");
+      return;
+    }
+    setProxyTarget({ instance, node: targetNode });
+  }
+
+  async function handleProxySubmit(submission: TaskProxySubmitDTO): Promise<boolean> {
+    if (!proxyTarget) return false;
+    const current = instances.find((candidate) => candidate.id === proxyTarget.instance.id);
+    if (
+      !current ||
+      current.revision !== proxyTarget.instance.revision ||
+      !canProxySubmit(current, taskFlow?.nodes ?? [], isProjectCreator)
+    ) {
+      $tip("任务状态已变更或无操作权限，请刷新后重新操作", "error");
+      return false;
+    }
+    const succeeded = await runInstanceAction(
+      proxyTarget.instance.id,
+      () => proxySubmitTask(proxyTarget.instance.id, submission),
+      "已代提交",
+    );
+    if (succeeded) setProxyTarget(null);
     return succeeded;
   }
 
@@ -406,6 +454,11 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
                       instances,
                       isProjectCreator,
                     ),
+                    canProxySubmit: canProxySubmit(
+                      selectedInstance,
+                      taskFlow.nodes,
+                      isProjectCreator,
+                    ),
                     onOwnerAction: (action) =>
                       setOwnerTarget({
                         action,
@@ -422,6 +475,7 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
                         "任务已接取",
                       ),
                     onSubmit: () => openSubmit(selectedInstance),
+                    onProxySubmit: () => openProxySubmit(selectedInstance),
                     onAbandon: () => void handleAbandon(selectedInstance.id),
                     onReject: () => setRejectTarget(selectedInstance),
                     onReset: () => void handleReset(selectedInstance.id),
@@ -456,6 +510,25 @@ function ItemWorkflowInstance({ itemId, isProjectCreator, taskInstanceId }: Work
             actionMutation.variables?.instanceId === submitTarget.instance.id
           }
           onSubmit={handleSubmit}
+        />
+      )}
+
+      {proxyTarget && (
+        <ProxySubmitDialog
+          key={`${itemId}:${proxyTarget.instance.id}:${proxyTarget.instance.revision}`}
+          taskInstanceId={proxyTarget.instance.id}
+          taskName={formatTaskTitle(
+            taskFlow.itemTitle,
+            slotPosition(proxyTarget.node, taskFlow.nodes),
+          )}
+          expectedRevision={proxyTarget.instance.revision}
+          submitFields={proxyTarget.node.submitFields}
+          submitting={
+            actionMutation.isPending &&
+            actionMutation.variables?.instanceId === proxyTarget.instance.id
+          }
+          onClose={() => setProxyTarget(null)}
+          onSubmit={handleProxySubmit}
         />
       )}
 
