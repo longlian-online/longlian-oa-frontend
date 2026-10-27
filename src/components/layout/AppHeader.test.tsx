@@ -26,9 +26,10 @@ import type { UseOrganizationSwitcherResult } from "@/hooks/useOrganizationSwitc
 import type { UserInfoVO } from "@/types/user";
 import type * as UserApi from "@/api/user";
 
-const { bindEmail, sendVerificationCode, currentUser } = vi.hoisted(() => ({
+const { bindEmail, sendVerificationCode, updateMyInfo, currentUser } = vi.hoisted(() => ({
   bindEmail: vi.fn(async () => undefined),
   sendVerificationCode: vi.fn(async () => undefined),
+  updateMyInfo: vi.fn(async () => undefined),
   currentUser: {
     user: null as UserInfoVO | null,
     role: null as string | null,
@@ -41,7 +42,7 @@ vi.mock("@/api/user", async (importOriginal) => ({
   changePassword: vi.fn(),
   getInviteInfo: vi.fn(),
   joinOrganizationByInvite: vi.fn(),
-  updateMyInfo: vi.fn(),
+  updateMyInfo,
 }));
 
 vi.mock("@/api/auth", () => ({
@@ -101,6 +102,8 @@ beforeEach((): void => {
   bindEmail.mockResolvedValue(undefined);
   sendVerificationCode.mockReset();
   sendVerificationCode.mockResolvedValue(undefined);
+  updateMyInfo.mockReset();
+  updateMyInfo.mockResolvedValue(undefined);
   saveSession({ token: TOKEN, userId: "1" });
   client = createQueryClient();
   notifyError.mockClear();
@@ -170,6 +173,39 @@ test("已绑定邮箱时不显示绑定入口", async (): Promise<void> => {
   await mount();
   expect(buttonsNamed("绑定邮箱")).toHaveLength(0);
   expect(buttonsNamed("修改密码")).toHaveLength(1);
+  expect(buttonsNamed("修改昵称")).toHaveLength(1);
+});
+
+test("从头像菜单修改昵称，空白和超长停在字段旁", async (): Promise<void> => {
+  currentUser.user = user("a@example.com");
+  await mount();
+  await click(buttonsNamed("修改昵称")[0]);
+  expect(document.querySelector("[data-slot='dialog-title']")?.textContent).toBe("修改昵称");
+
+  const dialog = document.querySelector("[data-slot='dialog-content']");
+  if (!(dialog instanceof HTMLElement)) throw new Error("缺少修改昵称对话框");
+  const nickname = dialog.querySelector("#nickname");
+  if (!(nickname instanceof HTMLInputElement)) throw new Error("缺少昵称输入框");
+  expect(nickname.value).toBe("遗留用户");
+
+  await typeInto(nickname, "   ");
+  const submit = buttonsNamed("保存", dialog)[0];
+  if (!submit) throw new Error("缺少保存按钮");
+  await click(submit);
+  expect(dialog.querySelector("#nickname-error")?.textContent).toBe("昵称不能为空");
+  expect(updateMyInfo).not.toHaveBeenCalled();
+
+  await typeInto(nickname, "名".repeat(21));
+  await click(submit);
+  expect(dialog.querySelector("#nickname-error")?.textContent).toBe("昵称最多20个字符");
+  expect(updateMyInfo).not.toHaveBeenCalled();
+
+  await typeInto(nickname, "  新昵称  ");
+  await click(submit);
+  await vi.waitFor(() => {
+    expect(updateMyInfo).toHaveBeenCalledWith({ nickname: "新昵称" });
+  });
+  expect(document.querySelector("[data-slot='dialog-title']")).toBeNull();
 });
 
 test("用户资料未返回时不显示绑定入口", async (): Promise<void> => {
