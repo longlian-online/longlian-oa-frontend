@@ -5,6 +5,7 @@ import { ChevronRight, Loader2, Plus, Trash2, Workflow } from "lucide-react";
 import {
   createItemDeletionRequest,
   createProjectItem,
+  deleteProjectItem,
   getTaskTemplateOptions,
 } from "@/api/projectItem";
 import EmptyState from "@/components/EmptyState";
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { useConfirm } from "@/hooks/useConfirm";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { PROJECT_ITEMS_PAGE_SIZE as PAGE_SIZE, projectItemsQuery } from "@/queries/planning";
 import ProjectItemNodeList from "./ProjectItemNodeList";
@@ -56,6 +58,7 @@ export default function ProjectItemSection({
 }: ProjectItemSectionProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const confirm = useConfirm();
   const [page, setPage] = usePageQuery();
   const [status, setStatus] = useState<ProjectItemListFilter | "">("IN_PROGRESS");
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
@@ -92,11 +95,24 @@ export default function ProjectItemSection({
     mutationFn: (dto: ProjectItemForm) => createProjectItem(projectId, dto),
     invalidate: [["items"], ["projects"], ["workshop"], ["plaza"]],
   });
+  const deleteMutation = useApiMutation({
+    mutationFn: (itemId: string) => deleteProjectItem(projectId, itemId),
+    invalidate: [
+      ["items"],
+      ["projects"],
+      ["flow"],
+      ["instances"],
+      ["taskDetail"],
+      ["workshop"],
+      ["plaza"],
+    ],
+  });
   const requestMutation = useApiMutation({
     mutationFn: (input: { itemId: string; reason: string }) =>
       createItemDeletionRequest(projectId, input.itemId, input.reason),
     invalidate: [["deletionRequests"]],
   });
+  const deleting = deleteMutation.isPending || requestMutation.isPending;
   const items = itemsQuery.data?.list ?? [];
   const total = itemsQuery.data?.total ?? 0;
   const templates = templatesQuery.data ?? [];
@@ -136,6 +152,32 @@ export default function ProjectItemSection({
       setPage(1);
     } catch {
       // Mutation 的最终失败由共享错误入口提示，保留当前草稿。
+    } finally {
+      actionLock.current = false;
+    }
+  }
+
+  async function handleDeleteItem(item: ProjectItemListVO): Promise<void> {
+    if (actionLock.current) return;
+    if (item.hasSubmittedTask) {
+      setReason("");
+      setReasonItem(item);
+      return;
+    }
+    const confirmed = await confirm({
+      title: "删除项目？",
+      description: `删除后「${item.title}」的流程与任务记录将不可恢复。`,
+      confirmText: "删除",
+      variant: "destructive",
+    });
+    if (!confirmed || actionLock.current || !isCurrent()) return;
+    actionLock.current = true;
+    try {
+      await deleteMutation.mutateAsync(item.id);
+      if (!isCurrent()) return;
+      $tip("项目已删除", "success");
+    } catch {
+      // Mutation 的最终失败由共享错误入口提示，保留当前列表。
     } finally {
       actionLock.current = false;
     }
@@ -273,18 +315,15 @@ export default function ProjectItemSection({
                     进入任务
                     <ChevronRight data-icon="inline-end" />
                   </Button>
-                  {isCreator && item.hasSubmittedTask && (
+                  {isCreator && (
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      aria-label={`申请删除项目：${item.title}`}
-                      title="申请删除项目"
+                      aria-label={`删除项目：${item.title}`}
+                      title="删除项目"
                       className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                      disabled={requestMutation.isPending}
-                      onClick={() => {
-                        setReason("");
-                        setReasonItem(item);
-                      }}
+                      disabled={deleting}
+                      onClick={() => void handleDeleteItem(item)}
                     >
                       <Trash2 />
                     </Button>
