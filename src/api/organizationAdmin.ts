@@ -1,8 +1,10 @@
 import { orgAdminRequest } from "@/api/request";
 
 import type {
-  GenerateInviteCodeDTO,
+  GenerateJoinInviteCodeDTO,
   InviteCodeVO,
+  JoinInviteCodeListDTO,
+  JoinInviteCodeVO,
   JoinApplicationListDTO,
   JoinApplicationReviewDTO,
   JoinApplicationVO,
@@ -121,10 +123,25 @@ export async function reviewDeletionRequest(
   });
 }
 
-export async function createJoinInviteCode(dto: GenerateInviteCodeDTO): Promise<InviteCodeVO> {
+export async function listJoinInviteCodes(
+  dto: JoinInviteCodeListDTO,
+): Promise<OrganizationPageResult<JoinInviteCodeVO>> {
+  return orgAdminRequest("/orgadmin/members/invite-codes", {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function createJoinInviteCode(dto: GenerateJoinInviteCodeDTO): Promise<InviteCodeVO> {
   return orgAdminRequest("/orgadmin/members/invite-codes/join-org", {
     method: "POST",
     body: JSON.stringify(dto),
+  });
+}
+
+export async function revokeJoinInviteCode(inviteId: string): Promise<void> {
+  return orgAdminRequest(`/orgadmin/members/invite-codes/${inviteId}/revoke`, {
+    method: "POST",
   });
 }
 
