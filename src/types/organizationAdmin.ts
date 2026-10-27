@@ -79,12 +79,35 @@ export interface JoinApplicationReviewDTO {
 }
 
 export interface InviteCodeVO {
+  id?: string;
   inviteCode?: string;
+  maxUses?: number | null;
   expireAt?: string;
 }
 
 export interface GenerateInviteCodeDTO {
   expiredAt: string;
+}
+
+export interface GenerateJoinInviteCodeDTO {
+  maxUses?: number;
+}
+
+export type JoinInviteCodeStatus = "PENDING" | "USED";
+
+export interface JoinInviteCodeListDTO {
+  pageNum?: number;
+  pageSize?: number;
+  status?: JoinInviteCodeStatus;
+}
+
+export interface JoinInviteCodeVO {
+  id: string;
+  inviteCode: string;
+  useCount: number;
+  maxUses?: number | null;
+  status: JoinInviteCodeStatus;
+  createdAt?: string;
 }
 
 export interface OrganizationPageResult<T> {

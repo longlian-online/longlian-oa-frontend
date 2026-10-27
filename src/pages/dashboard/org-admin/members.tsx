@@ -21,7 +21,6 @@ import {
 } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
-import OrganizationInviteDialog from "@/components/OrganizationInviteDialog";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import RemoteImage from "@/components/RemoteImage";
@@ -174,7 +173,6 @@ function OrganizationMembersContent() {
           <h1 className="text-xl font-bold text-foreground">成员管理</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <OrganizationInviteDialog />
           <div className="relative w-56 max-w-full">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
