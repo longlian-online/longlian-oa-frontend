@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { canReset, canReject, canOwnerAct, canProxySubmit } from "./taskPermissions";
+import { canReset, canReject, canOwnerAct, canAssign, canProxySubmit } from "./taskPermissions";
 import type { ItemTaskInstanceVO, ItemTaskNodeVO } from "@/types/workflowInstance";
 const task = (
   id: string,
@@ -108,6 +108,20 @@ describe("project creator task permissions", () => {
       expect(
         canOwnerAct(action, target, [...retained, task("farther", 9, "COMPLETED")], true),
       ).toBe(false);
+    }
+  });
+});
+
+describe("task assignment permission", () => {
+  test("only the project creator can assign a pending task with a valid revision", () => {
+    expect(canAssign(task("a", 1, "PENDING"), true)).toBe(true);
+    expect(canAssign(task("a", 1, "PENDING"), false)).toBe(false);
+    expect(canAssign(task("a", 1, "CLAIMED"), true)).toBe(false);
+    expect(canAssign(task("a", 1, "COMPLETED"), true)).toBe(false);
+    for (const revision of [undefined, "", "-1", "1.5", " 0 "]) {
+      expect(canAssign({ ...task("a", 1, "PENDING"), revision: revision as string }, true)).toBe(
+        false,
+      );
     }
   });
 });

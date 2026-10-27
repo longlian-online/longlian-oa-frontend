@@ -62,6 +62,15 @@ export function canOwnerAct(
   );
 }
 
+export function canAssign(instance: ItemTaskInstanceVO, isProjectCreator: boolean): boolean {
+  return (
+    isProjectCreator &&
+    instance.status === "PENDING" &&
+    typeof instance.revision === "string" &&
+    /^\d+$/.test(instance.revision)
+  );
+}
+
 export function canProxySubmit(
   instance: ItemTaskInstanceVO,
   nodes: ItemTaskNodeVO[],

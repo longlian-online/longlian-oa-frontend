@@ -19,6 +19,7 @@ const api = vi.hoisted(() => ({
   getTaskSubmissionVersions: vi.fn(),
   abandonTask: vi.fn(),
   claimTask: vi.fn(),
+  assignTask: vi.fn(),
   proxySubmitTask: vi.fn(),
   rejectTask: vi.fn(),
   resetTask: vi.fn(),
@@ -189,6 +190,45 @@ test("owner cancellation refreshes task actions, while parallel completion and a
   expect(findButton("提交")).toBeUndefined();
   expect(findButton("放弃")).toBeDefined();
   expect(document.body.textContent).toContain("等待前置阶段完成");
+});
+
+test("project creator assigns a pending task to an enabled member", async () => {
+  tasks = [task({ status: "PENDING", assigneeId: undefined, assigneeNickname: undefined })];
+  api.assignTask.mockImplementation(async () => {
+    tasks = [
+      task({
+        status: "CLAIMED",
+        assigneeId: "member",
+        assigneeNickname: "小明",
+        revision: "9007199254740994",
+      }),
+    ];
+    return { autoJoinedProject: true };
+  });
+  await mount();
+  expect(findButton("分配")).toBeDefined();
+  await act(async () => findButton("分配")?.click());
+  const member = await vi.waitFor(() => {
+    const input = document.querySelector<HTMLInputElement>("#assign-member");
+    expect(input).not.toBeNull();
+    return input!;
+  });
+  await act(async () => member.click());
+  await vi.waitFor(() => expect(document.querySelector("[role='option']")).not.toBeNull());
+  await act(async () => document.querySelector<HTMLElement>("[role='option']")?.click());
+  await act(async () => findButton("确认分配")?.click());
+  expect(api.assignTask).toHaveBeenCalledWith("target", {
+    assigneeId: "member",
+    expectedRevision: "9007199254740993",
+  });
+  await vi.waitFor(() => expect(findButton("分配")).toBeUndefined());
+});
+
+test("non creator cannot assign a pending task", async () => {
+  tasks = [task({ status: "PENDING", assigneeId: undefined })];
+  await mount(false);
+  expect(findButton("分配")).toBeUndefined();
+  expect(findButton("接取")).toBeDefined();
 });
 
 test("owner rejection failure retains reason and target; retry uses the shared reject endpoint", async () => {

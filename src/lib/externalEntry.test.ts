@@ -13,7 +13,18 @@ test("task ready opens the item with that task selected", (): void => {
     itemId: "22",
     taskInstanceId: "202",
   });
-  expect(entry && externalEntryPath(entry)).toBe("/dashboard/planning/11/items/22?taskInstanceId=202");
+  expect(entry && externalEntryPath(entry)).toBe(
+    "/dashboard/planning/11/items/22?taskInstanceId=202",
+  );
+});
+
+test("task assignment opens the assigned task", (): void => {
+  const entry = parseExternalEntry(
+    "type=TASK_ASSIGNED&orgId=8&projectId=11&itemId=22&taskInstanceId=202",
+  );
+  expect(entry && externalEntryPath(entry)).toBe(
+    "/dashboard/planning/11/items/22?taskInstanceId=202",
+  );
 });
 
 test("item completed opens the item without selecting a task", (): void => {

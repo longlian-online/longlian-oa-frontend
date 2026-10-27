@@ -109,3 +109,8 @@ export interface TaskRejectDTO {
 export interface TaskAbandonDTO {
   expectedRevision: string;
 }
+
+export interface TaskAssignDTO {
+  assigneeId: string;
+  expectedRevision: string;
+}

@@ -3,6 +3,7 @@ import { Copy } from "lucide-react";
 
 import {
   abandonTask,
+  assignTask,
   claimTask,
   proxySubmitTask,
   rejectTask,
@@ -30,9 +31,11 @@ import {
   canReset,
   canReject,
   canOwnerAct,
+  canAssign,
   canProxySubmit,
   type OwnerTaskAction,
 } from "./taskPermissions";
+import AssignTaskDialog from "./AssignTaskDialog";
 import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
 import TaskFlowViewer from "./TaskFlowViewer";
 import TaskSubmitPanel from "./TaskSubmitPanel";
@@ -135,6 +138,10 @@ function ItemWorkflowInstance({
   const [submitTarget, setSubmitTarget] = useState<{
     instance: ItemTaskInstanceVO;
     node: ItemTaskNodeVO;
+  } | null>(null);
+  const [assignTarget, setAssignTarget] = useState<{
+    instance: ItemTaskInstanceVO;
+    title: string;
   } | null>(null);
   const [proxyTarget, setProxyTarget] = useState<{
     instance: ItemTaskInstanceVO;
@@ -318,6 +325,25 @@ function ItemWorkflowInstance({
     );
   }
 
+  async function handleAssign(assigneeId: string): Promise<boolean> {
+    if (!assignTarget) return false;
+    const { instance } = assignTarget;
+    const current = instances.find((candidate) => candidate.id === instance.id);
+    if (
+      !current ||
+      current.revision !== instance.revision ||
+      !canAssign(current, isProjectCreator)
+    ) {
+      $tip("任务状态已变更或无操作权限，请刷新后重新操作", "error");
+      return false;
+    }
+    return runInstanceAction(
+      instance.id,
+      () => assignTask(instance.id, { assigneeId, expectedRevision: instance.revision }),
+      "任务已分配",
+    );
+  }
+
   async function handleAbandon(instanceId: string): Promise<void> {
     const instance = instances.find((candidate) => candidate.id === instanceId);
     if (!instance) return;
@@ -471,6 +497,7 @@ function ItemWorkflowInstance({
                       instances,
                       isProjectCreator,
                     ),
+                    canAssign: canAssign(selectedInstance, isProjectCreator),
                     canProxySubmit: canProxySubmit(
                       selectedInstance,
                       taskFlow.nodes,
@@ -491,6 +518,14 @@ function ItemWorkflowInstance({
                         () => claimTask(selectedInstance.id),
                         "任务已接取",
                       ),
+                    onAssign: () =>
+                      setAssignTarget({
+                        instance: selectedInstance,
+                        title: formatTaskTitle(
+                          taskFlow.itemTitle,
+                          slotPosition(selectedNode, taskFlow.nodes),
+                        ),
+                      }),
                     onSubmit: () => openSubmit(selectedInstance),
                     onProxySubmit: () => openProxySubmit(selectedInstance),
                     onAbandon: () => void handleAbandon(selectedInstance.id),
@@ -557,6 +592,15 @@ function ItemWorkflowInstance({
           taskTitle={ownerTarget.title}
           onClose={() => setOwnerTarget(null)}
           onConfirm={handleOwnerAction}
+        />
+      )}
+
+      {assignTarget && (
+        <AssignTaskDialog
+          key={`${itemId}:${assignTarget.instance.id}:${assignTarget.instance.revision}`}
+          taskTitle={assignTarget.title}
+          onClose={() => setAssignTarget(null)}
+          onConfirm={handleAssign}
         />
       )}
 

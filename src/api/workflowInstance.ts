@@ -3,6 +3,7 @@ import type {
   ItemTaskFlowVO,
   ItemTaskInstanceVO,
   TaskAbandonDTO,
+  TaskAssignDTO,
   TaskClaimResultVO,
   TaskInstanceDetailVO,
   TaskProxySubmitDTO,
@@ -36,6 +37,16 @@ export async function getTaskSubmissionVersions(
 export async function claimTask(instanceId: string): Promise<TaskClaimResultVO> {
   return request(`/task/instance/${instanceId}/claim`, {
     method: "POST",
+  });
+}
+
+export async function assignTask(
+  instanceId: string,
+  dto: TaskAssignDTO,
+): Promise<TaskClaimResultVO> {
+  return request(`/task/instance/${instanceId}/assign`, {
+    method: "POST",
+    body: JSON.stringify(dto),
   });
 }
 
