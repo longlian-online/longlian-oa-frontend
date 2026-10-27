@@ -94,7 +94,7 @@ const entries: Entry[] = [
     createUrl: "/dashboard/planning/create",
     destination: "/dashboard/planning",
     createPath: "/app/projects",
-    titlePlaceholder: "例如：春季漫画汉化企划",
+    titlePlaceholder: "企划名",
     descriptionPlaceholder: "介绍作品来源、当前进度、协作注意事项等",
     saveLabel: "创建企划",
     element: <CreateProject />,
@@ -258,7 +258,9 @@ function button(label: string): HTMLButtonElement {
 }
 function field(placeholder: string): HTMLInputElement | HTMLTextAreaElement {
   const found = Array.from(container.querySelectorAll("input, textarea")).find(
-    (element) => element.getAttribute("placeholder") === placeholder,
+    (element) =>
+      element.getAttribute("placeholder") === placeholder ||
+      element.getAttribute("aria-label") === placeholder,
   );
   if (!(found instanceof HTMLInputElement || found instanceof HTMLTextAreaElement)) {
     throw new Error(`缺少输入框：${placeholder}`);
@@ -328,6 +330,13 @@ async function fill(entry: Entry): Promise<void> {
   act(() => inputValue(entry.titlePlaceholder, `${entry.name}草稿`));
   act(() => inputValue(entry.descriptionPlaceholder, "保留这份简介"));
   if (entry.createPath === "/app/projects") {
+    const title = field(entry.titlePlaceholder);
+    expect(title.hasAttribute("placeholder")).toBe(false);
+    expect(container.textContent).not.toContain("填写基础信息、封面、缩略图与标签");
+    expect(container.textContent).not.toContain("更新基础信息、封面、缩略图与标签");
+    expect(container.textContent).not.toContain("每项是名称和值");
+    expect(container.textContent).not.toContain("值可留空作为纯标签");
+    expect(container.textContent).not.toContain("自定义，不随封面更新");
     const trigger = container.querySelector<HTMLButtonElement>('[data-slot="select-trigger"]');
     if (!trigger) throw new Error("缺少企划类型选择器");
     await waitFor(() => expect(trigger.disabled).toBe(false));
