@@ -485,6 +485,58 @@ test.each(["CLAIMED", "COMPLETED"] as const)(
   },
 );
 
+function isoDay(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+async function visibleDay(
+  date: Date,
+  direction: "上个月" | "下个月" = "上个月",
+): Promise<HTMLButtonElement> {
+  const key = isoDay(date);
+  const buttonFor = (): HTMLButtonElement | null => {
+    const found = document.querySelector(`[data-day="${key}"]`)?.querySelector("button");
+    return found instanceof HTMLButtonElement ? found : null;
+  };
+  const found = buttonFor();
+  if (found) return found;
+  const previous = [...document.querySelectorAll("button")].find((entry) =>
+    entry.getAttribute("aria-label")?.includes(direction),
+  );
+  if (!previous) throw new Error(`缺少${direction}`);
+  await act(async () => previous.click());
+  const moved = buttonFor();
+  if (!moved) throw new Error(`缺少日期 ${key}`);
+  return moved;
+}
+
+async function chooseSubmitTime(): Promise<string> {
+  const trigger = document.querySelector<HTMLButtonElement>("#proxy-submit-time");
+  if (!trigger) throw new Error("缺少提交时间");
+  await act(async () => trigger.click());
+  const past = new Date();
+  past.setDate(past.getDate() - 1);
+  const day = await visibleDay(past);
+  await act(async () => day.click());
+  const column = (label: string, value: string): HTMLButtonElement => {
+    const found = [
+      ...(document.querySelector(`[aria-label="${label}"]`)?.querySelectorAll("button") ?? []),
+    ].find((entry) => entry.textContent === value);
+    if (!(found instanceof HTMLButtonElement)) throw new Error(`缺少${label} ${value}`);
+    return found;
+  };
+  await act(async () => column("时", "03").click());
+  await act(async () => column("分", "04").click());
+  const confirm = [...document.querySelectorAll("button")].find(
+    (entry) => entry.textContent?.trim() === "确定",
+  );
+  if (!(confirm instanceof HTMLButtonElement)) throw new Error("缺少确定");
+  await act(async () => confirm.click());
+  return `${isoDay(past)} 03:04:00`;
+}
+
 test("creator proxy-submits an unclaimed task under the selected member and time", async () => {
   tasks = [task({ status: "PENDING", assigneeId: undefined, assigneeNickname: undefined })];
   await mount();
@@ -498,21 +550,12 @@ test("creator proxy-submits an unclaimed task under the selected member and time
   await act(async () => document.querySelector<HTMLElement>("[role='combobox']")?.click());
   await vi.waitFor(() => expect(document.querySelector("[role='option']")).not.toBeNull());
   await act(async () => document.querySelector<HTMLElement>("[role='option']")?.click());
-  const time = document.querySelector<HTMLInputElement>("#proxy-submit-time");
-  if (!time) throw new Error("缺少提交时间");
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
-      time,
-      "2020-01-02T03:04",
-    );
-    time.dispatchEvent(new Event("input", { bubbles: true }));
-    time.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  const submittedAt = await chooseSubmitTime();
   await act(async () => findButton("确认代提交")?.click());
   await vi.waitFor(() =>
     expect(api.proxySubmitTask).toHaveBeenCalledWith("target", {
       assigneeId: "member",
-      submittedAt: "2020-01-02 03:04:00",
+      submittedAt,
       expectedRevision: "9007199254740993",
       values: {},
     }),
@@ -582,25 +625,16 @@ test("future proxy submit time stays disabled", async () => {
   await mount();
   await act(async () => findButton("代提交")?.click());
   const time = await vi.waitFor(() => {
-    const input = document.querySelector<HTMLInputElement>("#proxy-submit-time");
-    expect(input).not.toBeNull();
-    return input!;
+    const trigger = document.querySelector<HTMLButtonElement>("#proxy-submit-time");
+    expect(trigger).not.toBeNull();
+    return trigger!;
   });
-  await act(async () => {
-    document.querySelector<HTMLElement>("[role='combobox']")?.click();
-  });
-  await vi.waitFor(() => expect(document.querySelector("[role='option']")).not.toBeNull());
-  await act(async () => document.querySelector<HTMLElement>("[role='option']")?.click());
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
-      time,
-      "2099-01-02T03:04",
-    );
-    time.dispatchEvent(new Event("input", { bubbles: true }));
-    time.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  await act(async () => time.click());
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const future = await visibleDay(tomorrow, "下个月");
+  expect(future.disabled).toBe(true);
   expect(findButton("确认代提交")?.disabled).toBe(true);
-  expect(document.body.textContent).toContain("提交时间不能晚于当前时间");
   expect(api.proxySubmitTask).not.toHaveBeenCalled();
 });
 
