@@ -63,14 +63,14 @@ describe("buildParticipantRoster", () => {
     expect(buildParticipantRoster(instances)).toBe(["翻译：阿岚、小K", "校对：阿禾"].join("\n\n"));
   });
 
-  test("并行同名任务的同一参与者标注数量", () => {
+  test("同一任务里重复出现的参与者只保留一次昵称", () => {
     const instances = [
       instance({
         id: "2",
         name: "翻译",
         parallelSort: 2,
-        assigneeId: "u1",
-        assigneeNickname: " 阿岚 ",
+        assigneeId: "u2",
+        assigneeNickname: "小K",
       }),
       instance({
         id: "1",
@@ -79,9 +79,16 @@ describe("buildParticipantRoster", () => {
         assigneeId: "u1",
         assigneeNickname: "阿岚",
       }),
-      instance({ id: "3", name: "校对", sort: 2, assigneeId: "u2", assigneeNickname: "小K" }),
+      instance({
+        id: "3",
+        name: "翻译",
+        parallelSort: 3,
+        assigneeId: "u1",
+        assigneeNickname: " 阿岚 ",
+      }),
+      instance({ id: "4", name: "校对", sort: 2, assigneeId: "u2", assigneeNickname: "小K" }),
     ];
 
-    expect(buildParticipantRoster(instances)).toBe(["翻译：阿岚×2", "校对：小K"].join("\n\n"));
+    expect(buildParticipantRoster(instances)).toBe(["翻译：阿岚、小K", "校对：小K"].join("\n\n"));
   });
 });
