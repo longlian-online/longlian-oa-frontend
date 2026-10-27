@@ -1,6 +1,10 @@
 // @vitest-environment happy-dom
 import { expect, test } from "vite-plus/test";
-import { compareNotifications, notificationTarget } from "@/lib/notification";
+import {
+  compareNotifications,
+  notificationPresentation,
+  notificationTarget,
+} from "@/lib/notification";
 import type { NotificationVO } from "@/types/notifications";
 
 test.each([
@@ -24,6 +28,32 @@ test.each([
   [null, null],
 ])("navigation boundary %j", (value, expected): void => {
   expect(notificationTarget(value)).toBe(expected);
+});
+
+test("review notifications describe the request and open the administrator list", (): void => {
+  const joined: NotificationVO = {
+    id: "4",
+    sourceId: "4",
+    createdAt: "2026-10-22 09:00:00",
+    readAt: null,
+    thumbnailUrl: null,
+    kind: "JOIN_APPLICATION",
+    source: { applicantName: "新同学" },
+  };
+  const deletion: NotificationVO = {
+    id: "5",
+    sourceId: "5",
+    createdAt: "2026-10-22 09:00:00",
+    readAt: null,
+    thumbnailUrl: null,
+    kind: "DELETION_REQUEST",
+    source: { requesterName: "管理员", targetType: "PROJECT", targetTitle: "作品" },
+  };
+  expect(notificationPresentation(joined).message).toBe("「新同学」申请加入组织。");
+  expect(notificationPresentation(deletion)).toMatchObject({
+    message: "「管理员」申请删除企划「作品」。",
+    targetPath: "/dashboard/org-admin/deletion-requests",
+  });
 });
 
 test("newer read notification stays behind older unread notification", (): void => {
