@@ -11,6 +11,8 @@ const NOTIFICATION_LABELS: Record<NotificationVO["kind"], string> = {
   TASK_READY: "可以开始",
   TASK_ASSIGNED: "任务分配",
   ITEM_COMPLETED: "项目完成",
+  JOIN_APPLICATION: "入组申请",
+  DELETION_REQUEST: "删除申请",
 };
 
 export function notificationPresentation(notification: NotificationVO): NotificationPresentation {
@@ -18,24 +20,44 @@ export function notificationPresentation(notification: NotificationVO): Notifica
   if (notification.source === null) {
     return { label, message: "通知关联内容已不可访问", targetPath: null };
   }
-  const source = notification.source;
-  const title = `「${source.projectTitle} · ${source.itemTitle}」`;
-  const itemPath = `/dashboard/planning/${source.projectId}/items/${source.itemId}`;
   switch (notification.kind) {
     case "TASK_READY":
+    case "TASK_ASSIGNED": {
+      const source = notification.source;
+      const title = `「${source.projectTitle} · ${source.itemTitle}」`;
+      const itemPath = `/dashboard/planning/${source.projectId}/items/${source.itemId}`;
+      const action =
+        notification.kind === "TASK_READY"
+          ? `的前置步骤已完成，你接取的「${formatSlotLabel(source.taskSlot)}」可以开始了。`
+          : `的「${formatSlotLabel(source.taskSlot)}」已分配给你，无需手动领取。`;
       return {
         label,
-        message: `${title}的前置步骤已完成，你接取的「${formatSlotLabel(notification.source.taskSlot)}」可以开始了。`,
+        message: `${title}${action}`,
         targetPath: `${itemPath}?taskInstanceId=${notification.sourceId}`,
       };
-    case "TASK_ASSIGNED":
+    }
+    case "ITEM_COMPLETED": {
+      const source = notification.source;
       return {
         label,
-        message: `${title}的「${formatSlotLabel(notification.source.taskSlot)}」已分配给你，无需手动领取。`,
-        targetPath: `${itemPath}?taskInstanceId=${notification.sourceId}`,
+        message: `「${source.projectTitle} · ${source.itemTitle}」的全部任务已完成。`,
+        targetPath: `/dashboard/planning/${source.projectId}/items/${source.itemId}`,
       };
-    case "ITEM_COMPLETED":
-      return { label, message: `${title}的全部任务已完成。`, targetPath: itemPath };
+    }
+    case "JOIN_APPLICATION":
+      return {
+        label,
+        message: `「${notification.source.applicantName}」申请加入组织。`,
+        targetPath: "/dashboard/org-admin/applications",
+      };
+    case "DELETION_REQUEST": {
+      const target = notification.source.targetType === "PROJECT" ? "企划" : "项目";
+      return {
+        label,
+        message: `「${notification.source.requesterName}」申请删除${target}「${notification.source.targetTitle}」。`,
+        targetPath: "/dashboard/org-admin/deletion-requests",
+      };
+    }
   }
 }
 

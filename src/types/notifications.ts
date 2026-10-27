@@ -35,6 +35,15 @@ export type NotificationVO = NotificationRecord &
         source: (NotificationSourceVO & { taskSlot: NotificationTaskSlotVO }) | null;
       }
     | { kind: "ITEM_COMPLETED"; source: (NotificationSourceVO & { taskSlot: null }) | null }
+    | { kind: "JOIN_APPLICATION"; source: { applicantName: string } | null }
+    | {
+        kind: "DELETION_REQUEST";
+        source: {
+          requesterName: string;
+          targetType: "PROJECT" | "ITEM";
+          targetTitle: string;
+        } | null;
+      }
   );
 
 export interface NotificationCursor {
