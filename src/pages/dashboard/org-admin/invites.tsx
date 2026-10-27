@@ -51,8 +51,8 @@ function OrganizationInvitesContent(): React.JSX.Element {
   const confirm = useConfirm();
   const [page, setPage] = usePageQuery();
   const [status, setStatus] = useState<StatusFilter>("");
-  const [usageMode, setUsageMode] = useState<UsageMode>("unlimited");
-  const [maxUses, setMaxUses] = useState("5");
+  const [usageMode, setUsageMode] = useState<UsageMode>("limited");
+  const [maxUses, setMaxUses] = useState("1");
   const [expiredAt, setExpiredAt] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [copyingId, setCopyingId] = useState<string | null>(null);
@@ -78,8 +78,8 @@ function OrganizationInvitesContent(): React.JSX.Element {
   function handleCreateOpenChange(open: boolean): void {
     if (createMutation.isPending) return;
     if (open) {
-      setUsageMode("unlimited");
-      setMaxUses("5");
+      setUsageMode("limited");
+      setMaxUses("1");
       setExpiredAt(defaultInviteExpiry());
     }
     setCreateOpen(open);
