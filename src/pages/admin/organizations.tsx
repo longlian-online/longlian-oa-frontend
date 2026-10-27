@@ -10,7 +10,7 @@ import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
 import { formatDate } from "@/lib/format";
-import { toInviteExpiredAt } from "@/lib/inviteExpiry";
+import { defaultInviteExpiry, toInviteExpiredAt } from "@/lib/inviteExpiry";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -89,7 +89,9 @@ export default function AdminOrganizationsPage() {
 
   function handleInviteOpenChange(nextOpen: boolean): void {
     setInviteOpen(nextOpen);
-    if (!nextOpen) {
+    if (nextOpen) {
+      setExpiredAt(defaultInviteExpiry());
+    } else {
       setExpiredAt("");
       createOrganizationInviteCodeMutation.reset();
     }
