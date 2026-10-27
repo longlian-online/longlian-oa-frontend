@@ -28,7 +28,7 @@ export default function ProxySubmitDialog({
   onSubmit,
 }: ProxySubmitDialogProps) {
   const [assigneeId, setAssigneeId] = useState("");
-  const [submittedAt, setSubmittedAt] = useState("");
+  const [submittedAt, setSubmittedAt] = useState(() => toDateTimeLocalValue(new Date()));
   const timestamp = toSubmitTimestamp(submittedAt);
   const ready = Boolean(assigneeId && timestamp);
 

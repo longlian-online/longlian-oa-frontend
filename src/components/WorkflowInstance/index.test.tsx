@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
 import WorkflowInstance from "./index";
+import { toDateTimeLocalValue } from "./proxySubmitTime";
 import { createQueryClient } from "@/lib/queryClient";
 import { $tip } from "@/components/tip";
 import { notificationService } from "@/services/notification";
@@ -489,8 +490,11 @@ test("creator proxy-submits an unclaimed task under the selected member and time
   await mount();
   expect(findButton("接取")).toBeDefined();
   expect(findButton("代提交")).toBeDefined();
+  const beforeOpen = toDateTimeLocalValue(new Date());
   await act(async () => findButton("代提交")?.click());
   await vi.waitFor(() => expect(document.querySelector("#proxy-submit-time")).not.toBeNull());
+  const timeInput = document.querySelector<HTMLInputElement>("#proxy-submit-time");
+  expect([beforeOpen, toDateTimeLocalValue(new Date())]).toContain(timeInput?.value);
   await act(async () => document.querySelector<HTMLElement>("[role='combobox']")?.click());
   await vi.waitFor(() => expect(document.querySelector("[role='option']")).not.toBeNull());
   await act(async () => document.querySelector<HTMLElement>("[role='option']")?.click());
