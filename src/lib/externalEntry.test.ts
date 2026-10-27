@@ -32,6 +32,16 @@ test("item completed opens the item without selecting a task", (): void => {
   expect(entry && externalEntryPath(entry)).toBe("/dashboard/planning/11/items/22");
 });
 
+test("review notifications open the administrator lists", (): void => {
+  const join = parseExternalEntry("type=JOIN_APPLICATION&orgId=8&applicationId=77");
+  expect(join && externalEntryPath(join)).toBe("/dashboard/org-admin/applications");
+  const deletion = parseExternalEntry("type=DELETION_REQUEST&orgId=8&requestId=56");
+  expect(deletion && externalEntryPath(deletion)).toBe("/dashboard/org-admin/deletion-requests");
+  expect(loginResumePath("/go?type=JOIN_APPLICATION&orgId=8&applicationId=77")).toBe(
+    "/go?type=JOIN_APPLICATION&orgId=8&applicationId=77",
+  );
+});
+
 test.each([
   "",
   "type=TASK_READY&orgId=8&projectId=11&itemId=22",
@@ -39,6 +49,8 @@ test.each([
   "type=TASK_READY&orgId=0&projectId=11&itemId=22&taskInstanceId=202",
   "type=TASK_READY&orgId=8&projectId=11a&itemId=22&taskInstanceId=202",
   "type=ITEM_COMPLETED&orgId=8&projectId=11",
+  "type=JOIN_APPLICATION&orgId=8",
+  "type=DELETION_REQUEST&orgId=8&requestId=0",
 ])("rejects %j", (search): void => {
   expect(parseExternalEntry(search)).toBeNull();
 });

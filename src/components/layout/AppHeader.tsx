@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactElement } from "react";
-import { Check, KeyRound, LogOut, Mail, Pencil, UserRound } from "lucide-react";
+import { Check, KeyRound, LogOut, Mail, Pencil, UserPen, UserRound } from "lucide-react";
 import { z } from "zod";
 import { Link, useNavigate } from "react-router";
 
+import { nicknameFieldError, normalizeNickname } from "@/lib/nickname";
 import { isOrganizationManagerRole } from "@/lib/organizationRole";
 import { newPasswordError } from "@/lib/password";
 import { getSessionSnapshot } from "@/lib/session";
@@ -103,6 +104,9 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
     mutationFn: updateMyInfo,
     invalidate: [["currentUser"]],
   });
+  const [isChangeNicknameOpen, setIsChangeNicknameOpen] = useState(false);
+  const [nicknameDraft, setNicknameDraft] = useState("");
+  const [nicknameError, setNicknameError] = useState<string | null>(null);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -188,6 +192,35 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
       setOldPassword("");
       setNewPassword("");
       setIsChangePasswordOpen(false);
+    } catch {
+      /* 共享 Mutation 负责提示。 */
+    }
+  };
+
+  const openNicknameDialog = (): void => {
+    setNicknameDraft(user?.nickname ?? "");
+    setNicknameError(null);
+    setIsChangeNicknameOpen(true);
+  };
+
+  const handleNicknameDialogOpenChange = (open: boolean): void => {
+    if (open) {
+      openNicknameDialog();
+      return;
+    }
+    setIsChangeNicknameOpen(false);
+    setNicknameError(null);
+  };
+
+  const handleChangeNickname = async (): Promise<void> => {
+    const error = nicknameFieldError(nicknameDraft);
+    setNicknameError(error);
+    if (error) return;
+
+    try {
+      await updateProfile.mutateAsync({ nickname: normalizeNickname(nicknameDraft) });
+      $tip("昵称已更新", "success");
+      setIsChangeNicknameOpen(false);
     } catch {
       /* 共享 Mutation 负责提示。 */
     }
@@ -423,6 +456,14 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
             <Button
               variant="ghost"
               className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+              onClick={openNicknameDialog}
+            >
+              <UserPen className="h-4 w-4" />
+              修改昵称
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
               onClick={() => setIsChangePasswordOpen(true)}
             >
               <KeyRound className="h-4 w-4" />
@@ -503,6 +544,50 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
             </Button>
             <Button onClick={() => void handleConfirmJoinOrganization()} disabled={isJoining}>
               {isJoining ? "加入中..." : "确认加入"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isChangeNicknameOpen} onOpenChange={handleNicknameDialogOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>修改</DialogTitle>
+            <DialogDescription>最多 20 个字符。</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="nickname">昵称</Label>
+            <Input
+              id="nickname"
+              value={nicknameDraft}
+              autoComplete="nickname"
+              aria-invalid={Boolean(nicknameError)}
+              aria-describedby={nicknameError ? "nickname-error" : undefined}
+              onChange={(event) => {
+                const next = event.target.value;
+                setNicknameDraft(next);
+                if (nicknameError) setNicknameError(nicknameFieldError(next));
+              }}
+            />
+            {nicknameError ? (
+              <p id="nickname-error" className="text-xs text-destructive">
+                {nicknameError}
+              </p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => handleNicknameDialogOpenChange(false)}
+              disabled={updateProfile.isPending}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={() => void handleChangeNickname()}
+              disabled={updateProfile.isPending || isUploadingAvatar}
+            >
+              {updateProfile.isPending ? "保存中..." : "保存"}
             </Button>
           </DialogFooter>
         </DialogContent>
