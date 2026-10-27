@@ -213,6 +213,10 @@ test("project creator assigns a pending task to an enabled member", async () => 
     expect(input).not.toBeNull();
     return input!;
   });
+  member.focus();
+  expect(document.querySelector("[role='listbox']")).toBeNull();
+  await act(async () => document.querySelector<HTMLLabelElement>("#assign-member-label")?.click());
+  expect(document.querySelector("[role='listbox']")).toBeNull();
   await act(async () => member.click());
   await vi.waitFor(() => expect(document.querySelector("[role='option']")).not.toBeNull());
   await act(async () => document.querySelector<HTMLElement>("[role='option']")?.click());
@@ -490,8 +494,18 @@ test("creator proxy-submits an unclaimed task under the selected member and time
   expect(findButton("接取")).toBeDefined();
   expect(findButton("代提交")).toBeDefined();
   await act(async () => findButton("代提交")?.click());
-  await vi.waitFor(() => expect(document.querySelector("#proxy-submit-time")).not.toBeNull());
-  await act(async () => document.querySelector<HTMLElement>("[role='combobox']")?.click());
+  const memberField = await vi.waitFor(() => {
+    const input = document.querySelector<HTMLInputElement>("#proxy-submit-member");
+    expect(input).not.toBeNull();
+    return input!;
+  });
+  memberField.focus();
+  expect(document.querySelector("[role='listbox']")).toBeNull();
+  await act(async () =>
+    document.querySelector<HTMLLabelElement>("#proxy-submit-member-label")?.click(),
+  );
+  expect(document.querySelector("[role='listbox']")).toBeNull();
+  await act(async () => memberField.click());
   await vi.waitFor(() => expect(document.querySelector("[role='option']")).not.toBeNull());
   await act(async () => document.querySelector<HTMLElement>("[role='option']")?.click());
   const time = document.querySelector<HTMLInputElement>("#proxy-submit-time");
