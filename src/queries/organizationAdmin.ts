@@ -1,6 +1,7 @@
 import {
   getDeletionRequests,
   getJoinApplications,
+  listJoinInviteCodes,
   getOrganizationBaseTaskList,
   getOrganizationInfo,
   getOrganizationMembers,
@@ -15,6 +16,8 @@ import type { MemberListFilters } from "@/pages/dashboard/org-admin/memberListFi
 import type {
   DeletionRequestVO,
   JoinApplicationVO,
+  JoinInviteCodeStatus,
+  JoinInviteCodeVO,
   OrganizationBaseTaskVO,
   OrganizationInfoVO,
   OrganizationMemberVO,
@@ -50,6 +53,21 @@ export function organizationMembersQuery(
         startJoinedTime: appliedFilters.startJoinedTime || undefined,
         endJoinedTime: appliedFilters.endJoinedTime || undefined,
         orderDir: appliedFilters.orderDir,
+      }),
+  };
+}
+
+export function organizationInviteCodesQuery(
+  status: JoinInviteCodeStatus | "",
+  page = 1,
+): ApiQueryOptions<OrganizationPageResult<JoinInviteCodeVO>> {
+  return {
+    key: ["joinInviteCodes", "management", status, page],
+    queryFn: () =>
+      listJoinInviteCodes({
+        pageNum: page,
+        pageSize: ORGANIZATION_ADMIN_PAGE_SIZE,
+        status: status || undefined,
       }),
   };
 }
