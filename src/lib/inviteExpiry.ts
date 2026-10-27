@@ -1,5 +1,11 @@
 const DATETIME_LOCAL_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 
+export function defaultInviteExpiry(now = new Date()): string {
+  const expiry = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const local = new Date(expiry.getTime() - expiry.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
 export function toInviteExpiredAt(value: string, now = new Date()): string | null {
   const matched = DATETIME_LOCAL_PATTERN.exec(value);
   if (!matched) return null;
