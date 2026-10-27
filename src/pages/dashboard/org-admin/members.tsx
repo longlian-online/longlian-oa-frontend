@@ -19,6 +19,7 @@ import {
   getMemberSubmitCounts,
   type OrgMemberRole,
 } from "@/api/organizationAdmin";
+import DateTimeField from "@/components/DateTimeField";
 import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
@@ -188,32 +189,26 @@ function OrganizationMembersContent() {
             <Label htmlFor="member-start-joined" className="shrink-0 text-xs text-muted-foreground">
               开始
             </Label>
-            <Input
+            <DateTimeField
               id="member-start-joined"
-              type="date"
-              lang="zh-CN"
-              aria-label="入组开始日期"
+              mode="date"
+              ariaLabel="入组开始日期"
               value={filters.startJoinedTime}
               className="w-36"
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, startJoinedTime: event.target.value }))
-              }
+              onChange={(next) => setFilters((current) => ({ ...current, startJoinedTime: next }))}
             />
           </div>
           <div className="flex items-center gap-1.5">
             <Label htmlFor="member-end-joined" className="shrink-0 text-xs text-muted-foreground">
               结束
             </Label>
-            <Input
+            <DateTimeField
               id="member-end-joined"
-              type="date"
-              lang="zh-CN"
-              aria-label="入组结束日期"
+              mode="date"
+              ariaLabel="入组结束日期"
               value={filters.endJoinedTime}
               className="w-36"
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, endJoinedTime: event.target.value }))
-              }
+              onChange={(next) => setFilters((current) => ({ ...current, endJoinedTime: next }))}
             />
           </div>
           <Select
