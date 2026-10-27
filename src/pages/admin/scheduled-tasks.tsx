@@ -5,6 +5,7 @@ import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { triggerScheduledTask } from "@/api/admin";
 import { scheduledTasksQuery } from "@/queries/admin";
 import AdminLayout from "@/components/AdminLayout";
+import DateTimeField from "@/components/DateTimeField";
 import EmptyState from "@/components/EmptyState";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -137,10 +137,11 @@ export default function ScheduledTasksPage() {
               任务：{selectedTask?.taskName}。不填写时间时按当前时间执行。
             </DialogDescription>
           </DialogHeader>
-          <Input
-            type="datetime-local"
+          <DateTimeField
+            mode="datetime"
+            ariaLabel="执行时间"
             value={executeTime}
-            onChange={(event) => setExecuteTime(event.target.value)}
+            onChange={setExecuteTime}
           />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setSelectedTask(null)}>

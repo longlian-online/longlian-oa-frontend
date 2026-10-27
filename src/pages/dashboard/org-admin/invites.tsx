@@ -146,33 +146,30 @@ function OrganizationInvitesContent(): React.JSX.Element {
         </p>
       </div>
 
-      <div className="flex items-end gap-3 rounded-xl border bg-card p-4">
+      <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
         <Button onClick={() => handleCreateOpenChange(true)}>
           <Ticket className="size-4" />
           生成邀请码
         </Button>
-        <div className="grid gap-1.5 lg:ml-auto">
-          <Label>状态</Label>
-          <Select
-            value={status || "ALL"}
-            onValueChange={(value) => {
-              if (value !== "ALL" && value !== "PENDING" && value !== "USED") return;
-              setStatus(value === "ALL" ? "" : value);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue>
-                {status === "PENDING" ? "待使用" : status === "USED" ? "已用尽" : "全部"}
-              </SelectValue>
-            </SelectTrigger>
-            <FilterSelectContent>
-              <SelectItem value="ALL">全部</SelectItem>
-              <SelectItem value="PENDING">待使用</SelectItem>
-              <SelectItem value="USED">已用尽</SelectItem>
-            </FilterSelectContent>
-          </Select>
-        </div>
+        <Select
+          value={status || "ALL"}
+          onValueChange={(value) => {
+            if (value !== "ALL" && value !== "PENDING" && value !== "USED") return;
+            setStatus(value === "ALL" ? "" : value);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger aria-label="状态" className="ml-auto w-36">
+            <SelectValue>
+              {status === "PENDING" ? "待使用" : status === "USED" ? "已用尽" : "全部状态"}
+            </SelectValue>
+          </SelectTrigger>
+          <FilterSelectContent>
+            <SelectItem value="ALL">全部状态</SelectItem>
+            <SelectItem value="PENDING">待使用</SelectItem>
+            <SelectItem value="USED">已用尽</SelectItem>
+          </FilterSelectContent>
+        </Select>
       </div>
 
       <Dialog open={createOpen} onOpenChange={handleCreateOpenChange}>
