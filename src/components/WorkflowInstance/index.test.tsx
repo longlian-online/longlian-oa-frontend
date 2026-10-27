@@ -214,6 +214,10 @@ test("project creator assigns a pending task to an enabled member", async () => 
     expect(input).not.toBeNull();
     return input!;
   });
+  member.focus();
+  expect(document.querySelector("[role='listbox']")).toBeNull();
+  await act(async () => document.querySelector<HTMLLabelElement>("#assign-member-label")?.click());
+  expect(document.querySelector("[role='listbox']")).toBeNull();
   await act(async () => member.click());
   await vi.waitFor(() => expect(document.querySelector("[role='option']")).not.toBeNull());
   await act(async () => document.querySelector<HTMLElement>("[role='option']")?.click());
@@ -544,10 +548,24 @@ test("creator proxy-submits an unclaimed task under the selected member and time
   expect(findButton("代提交")).toBeDefined();
   const beforeOpen = toDateTimeLocalValue(new Date());
   await act(async () => findButton("代提交")?.click());
-  await vi.waitFor(() => expect(document.querySelector("#proxy-submit-time")).not.toBeNull());
-  const timeInput = document.querySelector<HTMLInputElement>("#proxy-submit-time");
-  expect([beforeOpen, toDateTimeLocalValue(new Date())]).toContain(timeInput?.value);
-  await act(async () => document.querySelector<HTMLElement>("[role='combobox']")?.click());
+  const timeTrigger = await vi.waitFor(() => {
+    const trigger = document.querySelector<HTMLButtonElement>("#proxy-submit-time");
+    expect(trigger).not.toBeNull();
+    return trigger!;
+  });
+  const shown = [beforeOpen, toDateTimeLocalValue(new Date())].map((value) =>
+    value.replace("T", " "),
+  );
+  expect(shown.some((value) => timeTrigger.textContent?.includes(value))).toBe(true);
+  const memberField = document.querySelector<HTMLInputElement>("#proxy-submit-member");
+  if (!memberField) throw new Error("缺少组员");
+  memberField.focus();
+  expect(document.querySelector("[role='listbox']")).toBeNull();
+  await act(async () =>
+    document.querySelector<HTMLLabelElement>("#proxy-submit-member-label")?.click(),
+  );
+  expect(document.querySelector("[role='listbox']")).toBeNull();
+  await act(async () => memberField.click());
   await vi.waitFor(() => expect(document.querySelector("[role='option']")).not.toBeNull());
   await act(async () => document.querySelector<HTMLElement>("[role='option']")?.click());
   const submittedAt = await chooseSubmitTime();
