@@ -290,20 +290,9 @@ export default function CreateProject({ project }: CreateProjectProps) {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
       <div className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <div className="flex items-start gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold tracking-tight text-foreground">
-                {isEditing ? "编辑企划" : "发布新企划"}
-              </h1>
-            </div>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {isEditing
-                ? "更新基础信息、封面、缩略图与标签。"
-                : "填写基础信息、封面、缩略图与标签。"}
-            </p>
-          </div>
-        </div>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          {isEditing ? "编辑企划" : "发布新企划"}
+        </h1>
         <Button
           size="sm"
           className="min-w-24"
@@ -359,15 +348,15 @@ export default function CreateProject({ project }: CreateProjectProps) {
                   )}
                 </div>
                 <div className="min-w-0 flex-1 space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    {thumbnailBusy
-                      ? "正在处理缩略图"
-                      : thumbnailFollowsCover
-                        ? thumbnailFile
+                  {(thumbnailBusy || thumbnailFollowsCover) && (
+                    <p className="text-xs text-muted-foreground">
+                      {thumbnailBusy
+                        ? "正在处理缩略图"
+                        : thumbnailFile
                           ? "从封面中心截取"
-                          : "上传封面后自动截取，也可自行上传"
-                        : "自定义，不随封面更新"}
-                  </p>
+                          : "上传封面后自动截取，也可自行上传"}
+                    </p>
+                  )}
                   <div className="flex flex-col gap-2">
                     <Button
                       type="button"
@@ -418,7 +407,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
                   企划名<span className="text-destructive"> *</span>
                 </label>
                 <Input
-                  placeholder="例如：春季漫画汉化企划"
+                  aria-label="企划名"
                   value={formData.title}
                   aria-invalid={showInvalid && titleMissing}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>

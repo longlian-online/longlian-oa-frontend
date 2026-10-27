@@ -35,9 +35,6 @@ export default function ProjectCustomFieldsEditor({
           添加字段
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">
-        每项是名称和值，例如作者 / xxxx。名称为空的字段不会保存。企划搜索按完整名称或值匹配。
-      </p>
       {fields.length === 0 ? (
         <div className="rounded-lg border border-dashed px-3 py-4 text-sm text-muted-foreground">
           还没有自定义字段。

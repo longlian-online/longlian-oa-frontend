@@ -180,9 +180,6 @@ export default function ProjectMetadataEditor({
           </Button>
         )}
       </div>
-      <p className="text-xs text-muted-foreground">
-        值可留空作为纯标签。列表展示前两个标签，可通过上下移动调整优先顺序。
-      </p>
       {tags.length > 0 && (
         <ol className="flex min-w-0 flex-col gap-2" aria-label="标签列表">
           {tags.map((tag, index) => (
