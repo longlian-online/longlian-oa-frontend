@@ -552,8 +552,8 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
       <Dialog open={isChangeNicknameOpen} onOpenChange={handleNicknameDialogOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>修改昵称</DialogTitle>
-            <DialogDescription>昵称会显示在页头和协作记录中，最多 20 个字符。</DialogDescription>
+            <DialogTitle>修改</DialogTitle>
+            <DialogDescription>最多 20 个字符。</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="nickname">昵称</Label>
