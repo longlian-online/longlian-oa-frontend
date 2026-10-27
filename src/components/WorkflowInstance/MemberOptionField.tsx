@@ -80,7 +80,9 @@ export default function MemberOptionField({ id, listId, value, onChange }: Membe
 
   return (
     <div className="flex flex-col gap-2 text-sm text-foreground">
-      <label htmlFor={id}>组员</label>
+      <label id={`${id}-label`} onClick={() => memberInputRef.current?.focus()}>
+        组员
+      </label>
       {membersQuery.isLoading ? (
         <p className="text-muted-foreground">正在加载组员...</p>
       ) : membersQuery.isError ? (
@@ -95,22 +97,26 @@ export default function MemberOptionField({ id, listId, value, onChange }: Membe
             ref={memberInputRef}
             id={id}
             role="combobox"
+            aria-labelledby={`${id}-label`}
             aria-expanded={memberListOpen}
             aria-controls={listId}
             aria-autocomplete="list"
             placeholder="搜索组员昵称"
             value={memberListOpen ? memberQuery : selectedMember ? memberLabel(selectedMember) : ""}
-            onFocus={() => {
-              setMemberListOpen(true);
+            onClick={() => {
               setMemberQuery("");
+              setMemberListOpen(true);
             }}
-            onClick={() => setMemberListOpen(true)}
             onChange={(event) => {
               setMemberQuery(event.target.value);
               setMemberListOpen(true);
             }}
             onBlur={() => setMemberListOpen(false)}
             onKeyDown={(event) => {
+              if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                setMemberQuery("");
+                setMemberListOpen(true);
+              }
               if (event.key === "Escape") setMemberListOpen(false);
             }}
           />

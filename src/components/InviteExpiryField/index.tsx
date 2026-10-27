@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input";
+import DateTimeField from "@/components/DateTimeField";
 
 interface InviteExpiryFieldProps {
   value: string;
@@ -20,13 +20,12 @@ export default function InviteExpiryField({
   return (
     <label className="flex flex-col gap-2 text-sm">
       <span className="font-medium text-foreground">到期时间</span>
-      <Input
-        type="datetime-local"
-        lang="zh-CN"
+      <DateTimeField
+        mode="datetime"
         value={value}
         min={currentMinute()}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={onChange}
       />
       <span className="text-muted-foreground">邀请码在该时间后失效。</span>
     </label>

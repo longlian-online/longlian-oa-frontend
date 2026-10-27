@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Input } from "@/components/ui/input";
+import DateTimeField from "@/components/DateTimeField";
 import type { TaskFormField } from "@/types/task";
 import type { TaskProxySubmitDTO } from "@/types/workflowInstance";
 
@@ -28,7 +28,7 @@ export default function ProxySubmitDialog({
   onSubmit,
 }: ProxySubmitDialogProps) {
   const [assigneeId, setAssigneeId] = useState("");
-  const [submittedAt, setSubmittedAt] = useState("");
+  const [submittedAt, setSubmittedAt] = useState(() => toDateTimeLocalValue(new Date()));
   const timestamp = toSubmitTimestamp(submittedAt);
   const ready = Boolean(assigneeId && timestamp);
 
@@ -67,12 +67,12 @@ export default function ProxySubmitDialog({
           />
           <div className="flex flex-col gap-2 text-sm text-foreground">
             <label htmlFor="proxy-submit-time">提交时间</label>
-            <Input
+            <DateTimeField
               id="proxy-submit-time"
-              type="datetime-local"
+              mode="datetime"
               max={toDateTimeLocalValue(new Date())}
               value={submittedAt}
-              onChange={(event) => setSubmittedAt(event.target.value)}
+              onChange={setSubmittedAt}
             />
             {submittedAt && !timestamp && (
               <p role="alert" className="text-destructive">

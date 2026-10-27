@@ -6,22 +6,12 @@ function compareInstances(left: ItemTaskInstanceVO, right: ItemTaskInstanceVO): 
 }
 
 function summarizeParticipants(nicknames: string[]): string {
-  const total = new Map<string, number>();
-  for (const nickname of nicknames) {
-    total.set(nickname, (total.get(nickname) ?? 0) + 1);
-  }
-
   const seen = new Set<string>();
   const labels: string[] = [];
   for (const nickname of nicknames) {
-    const count = total.get(nickname) ?? 1;
-    if (count === 1) {
-      labels.push(nickname);
-      continue;
-    }
     if (seen.has(nickname)) continue;
     seen.add(nickname);
-    labels.push(`${nickname}×${count}`);
+    labels.push(nickname);
   }
 
   return labels.join("、");
@@ -30,6 +20,7 @@ function summarizeParticipants(nicknames: string[]): string {
 /**
  * 按任务聚合当前项目的参与人，生成可直接粘贴的参与名单。
  * 每个有执行人的任务单独一段，段间空一行；任务名使用实例名称。
+ * 同一任务内重复出现的参与者只保留一次昵称。
  * 没有执行人的任务不产生文案，全部未接取时返回空字符串。
  */
 export function buildParticipantRoster(instances: ItemTaskInstanceVO[]): string {
