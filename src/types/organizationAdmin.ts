@@ -90,6 +90,7 @@ export interface GenerateInviteCodeDTO {
 }
 
 export interface GenerateJoinInviteCodeDTO {
+  expiredAt: string;
   maxUses?: number;
 }
 
@@ -106,6 +107,7 @@ export interface JoinInviteCodeVO {
   inviteCode: string;
   useCount: number;
   maxUses?: number | null;
+  expiredAt?: string;
   status: JoinInviteCodeStatus;
   createdAt?: string;
 }

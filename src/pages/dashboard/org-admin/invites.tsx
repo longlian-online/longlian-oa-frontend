@@ -4,6 +4,7 @@ import { Copy, Loader2, Ticket, TicketX } from "lucide-react";
 import { createJoinInviteCode, revokeJoinInviteCode } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
+import InviteExpiryField from "@/components/InviteExpiryField";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
@@ -24,6 +25,7 @@ import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { formatDate } from "@/lib/format";
+import { toInviteExpiredAt } from "@/lib/inviteExpiry";
 import {
   ORGANIZATION_ADMIN_PAGE_SIZE as PAGE_SIZE,
   organizationInviteCodesQuery,
@@ -43,6 +45,7 @@ function OrganizationInvitesContent(): React.JSX.Element {
   const [status, setStatus] = useState<StatusFilter>("");
   const [usageMode, setUsageMode] = useState<UsageMode>("unlimited");
   const [maxUses, setMaxUses] = useState("5");
+  const [expiredAt, setExpiredAt] = useState("");
   const [copyingId, setCopyingId] = useState<string | null>(null);
   const listQuery = useApiQuery(organizationInviteCodesQuery(status, page));
   const invites = listQuery.data?.list ?? [];
@@ -64,6 +67,11 @@ function OrganizationInvitesContent(): React.JSX.Element {
   });
 
   async function handleCreate(): Promise<void> {
+    const selectedExpiry = toInviteExpiredAt(expiredAt);
+    if (!selectedExpiry) {
+      $tip("请选择晚于当前时间的到期时间", "error");
+      return;
+    }
     const limited = usageMode === "limited";
     const parsed = Number(maxUses);
     if (limited && (!Number.isInteger(parsed) || parsed < 1)) {
@@ -71,7 +79,9 @@ function OrganizationInvitesContent(): React.JSX.Element {
       return;
     }
     try {
-      const created = await createMutation.mutateAsync([limited ? { maxUses: parsed } : {}]);
+      const created = await createMutation.mutateAsync([
+        limited ? { expiredAt: selectedExpiry, maxUses: parsed } : { expiredAt: selectedExpiry },
+      ]);
       $tip(created.inviteCode ? `邀请码 ${created.inviteCode} 已生成` : "邀请码已生成", "success");
       setPage(1);
     } catch {
@@ -112,7 +122,7 @@ function OrganizationInvitesContent(): React.JSX.Element {
       <div>
         <h1 className="text-xl font-bold text-foreground">邀请码</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          管理加入当前组织的邀请码。不限次数的邀请码可以重复使用，没有到期时间。
+          管理加入当前组织的邀请码。不限次数的邀请码在到期前可以重复使用。
         </p>
       </div>
 
@@ -135,6 +145,11 @@ function OrganizationInvitesContent(): React.JSX.Element {
             </FilterSelectContent>
           </Select>
         </div>
+        <InviteExpiryField
+          value={expiredAt}
+          disabled={createMutation.isPending}
+          onChange={setExpiredAt}
+        />
         {usageMode === "limited" ? (
           <div className="grid gap-1.5">
             <Label htmlFor="invite-max-uses">使用次数</Label>
@@ -202,6 +217,7 @@ function OrganizationInvitesContent(): React.JSX.Element {
                 <TableRow>
                   <TableHead>邀请码</TableHead>
                   <TableHead>使用情况</TableHead>
+                  <TableHead>到期时间</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead>创建时间</TableHead>
                   <TableHead className="w-40 text-right">操作</TableHead>
@@ -214,6 +230,9 @@ function OrganizationInvitesContent(): React.JSX.Element {
                       <code className="font-semibold tracking-widest">{invite.inviteCode}</code>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{usageLabel(invite)}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDate(invite.expiredAt)}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline">
                         {invite.status === "USED" ? "已用尽" : "待使用"}
