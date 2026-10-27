@@ -10,6 +10,14 @@ import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,7 +33,7 @@ import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { formatDate } from "@/lib/format";
-import { toInviteExpiredAt } from "@/lib/inviteExpiry";
+import { defaultInviteExpiry, toInviteExpiredAt } from "@/lib/inviteExpiry";
 import {
   ORGANIZATION_ADMIN_PAGE_SIZE as PAGE_SIZE,
   organizationInviteCodesQuery,
@@ -46,6 +54,7 @@ function OrganizationInvitesContent(): React.JSX.Element {
   const [usageMode, setUsageMode] = useState<UsageMode>("unlimited");
   const [maxUses, setMaxUses] = useState("5");
   const [expiredAt, setExpiredAt] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
   const [copyingId, setCopyingId] = useState<string | null>(null);
   const listQuery = useApiQuery(organizationInviteCodesQuery(status, page));
   const invites = listQuery.data?.list ?? [];
@@ -66,6 +75,16 @@ function OrganizationInvitesContent(): React.JSX.Element {
     invalidate: [["joinInviteCodes"]],
   });
 
+  function handleCreateOpenChange(open: boolean): void {
+    if (createMutation.isPending) return;
+    if (open) {
+      setUsageMode("unlimited");
+      setMaxUses("5");
+      setExpiredAt(defaultInviteExpiry());
+    }
+    setCreateOpen(open);
+  }
+
   async function handleCreate(): Promise<void> {
     const selectedExpiry = toInviteExpiredAt(expiredAt);
     if (!selectedExpiry) {
@@ -84,6 +103,7 @@ function OrganizationInvitesContent(): React.JSX.Element {
       ]);
       $tip(created.inviteCode ? `邀请码 ${created.inviteCode} 已生成` : "邀请码已生成", "success");
       setPage(1);
+      setCreateOpen(false);
     } catch {
       /* QueryClient 统一显示最终错误，草稿保留。 */
     }
@@ -126,48 +146,9 @@ function OrganizationInvitesContent(): React.JSX.Element {
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 lg:flex-row lg:items-end">
-        <div className="grid gap-1.5">
-          <Label>使用规则</Label>
-          <Select
-            value={usageMode}
-            onValueChange={(value) => {
-              if (value !== "unlimited" && value !== "limited") return;
-              setUsageMode(value);
-            }}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue>{usageMode === "limited" ? "指定次数" : "不限次数"}</SelectValue>
-            </SelectTrigger>
-            <FilterSelectContent>
-              <SelectItem value="unlimited">不限次数</SelectItem>
-              <SelectItem value="limited">指定次数</SelectItem>
-            </FilterSelectContent>
-          </Select>
-        </div>
-        <InviteExpiryField
-          value={expiredAt}
-          disabled={createMutation.isPending}
-          onChange={setExpiredAt}
-        />
-        {usageMode === "limited" ? (
-          <div className="grid gap-1.5">
-            <Label htmlFor="invite-max-uses">使用次数</Label>
-            <Input
-              id="invite-max-uses"
-              inputMode="numeric"
-              value={maxUses}
-              className="w-32"
-              onChange={(event) => setMaxUses(event.target.value.replace(/\D/g, ""))}
-            />
-          </div>
-        ) : null}
-        <Button disabled={createMutation.isPending} onClick={() => void handleCreate()}>
-          {createMutation.isPending ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Ticket className="size-4" />
-          )}
+      <div className="flex items-end gap-3 rounded-xl border bg-card p-4">
+        <Button onClick={() => handleCreateOpenChange(true)}>
+          <Ticket className="size-4" />
           生成邀请码
         </Button>
         <div className="grid gap-1.5 lg:ml-auto">
@@ -193,6 +174,68 @@ function OrganizationInvitesContent(): React.JSX.Element {
           </Select>
         </div>
       </div>
+
+      <Dialog open={createOpen} onOpenChange={handleCreateOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>生成邀请码</DialogTitle>
+            <DialogDescription>
+              设置使用规则和到期时间，生成加入当前组织的邀请码。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="invite-usage-mode">使用规则</Label>
+              <Select
+                value={usageMode}
+                disabled={createMutation.isPending}
+                onValueChange={(value) => {
+                  if (value !== "unlimited" && value !== "limited") return;
+                  setUsageMode(value);
+                }}
+              >
+                <SelectTrigger id="invite-usage-mode" className="w-full">
+                  <SelectValue>{usageMode === "limited" ? "指定次数" : "不限次数"}</SelectValue>
+                </SelectTrigger>
+                <FilterSelectContent>
+                  <SelectItem value="unlimited">不限次数</SelectItem>
+                  <SelectItem value="limited">指定次数</SelectItem>
+                </FilterSelectContent>
+              </Select>
+            </div>
+            {usageMode === "limited" ? (
+              <div className="grid gap-1.5">
+                <Label htmlFor="invite-max-uses">使用次数</Label>
+                <Input
+                  id="invite-max-uses"
+                  inputMode="numeric"
+                  value={maxUses}
+                  disabled={createMutation.isPending}
+                  onChange={(event) => setMaxUses(event.target.value.replace(/\D/g, ""))}
+                />
+              </div>
+            ) : null}
+            <InviteExpiryField
+              value={expiredAt}
+              disabled={createMutation.isPending}
+              onChange={setExpiredAt}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={createMutation.isPending}
+              onClick={() => handleCreateOpenChange(false)}
+            >
+              取消
+            </Button>
+            <Button disabled={createMutation.isPending} onClick={() => void handleCreate()}>
+              {createMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              生成邀请码
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {listQuery.isError && !listQuery.data ? (
         <Button variant="outline" onClick={() => void listQuery.refetch()}>
