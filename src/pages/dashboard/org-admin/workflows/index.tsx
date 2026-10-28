@@ -8,7 +8,7 @@ import { changeTaskTemplateStatus } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
-import { CreateWorkflowTemplateCard, WorkflowTemplateCard } from "@/components/WorkflowTemplate";
+import { WorkflowTemplateCard } from "@/components/WorkflowTemplate";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,7 +117,6 @@ function OrganizationAdminWorkflowsContent() {
       ) : (
         <>
           <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
-            <CreateWorkflowTemplateCard onClick={() => navigate("/dashboard/org-admin/create")} />
             {templates.map((template) => (
               <WorkflowTemplateCard
                 key={template.id}
