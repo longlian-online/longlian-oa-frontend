@@ -30,7 +30,15 @@ function getBreadcrumbItems(
     items.push({ label: projectTitle ?? "正在加载企划…", to: projectPath });
     if (segments[3] === "items") {
       items.push({ label: "项目列表", to: `${projectPath}/items` });
-      if (segments[4]) items.push({ label: itemTitle ?? "正在加载项目…" });
+      if (segments[4] && segments[5] === "workflow") {
+        items.push({
+          label: itemTitle ?? "正在加载项目…",
+          to: `${projectPath}/items/${segments[4]}`,
+        });
+        items.push({ label: "编辑工作流" });
+      } else if (segments[4]) {
+        items.push({ label: itemTitle ?? "正在加载项目…" });
+      }
     }
     return items;
   }

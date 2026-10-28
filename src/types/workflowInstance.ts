@@ -23,6 +23,8 @@ export interface ItemTaskNodeVO {
   parallelSort: number;
   taskInstanceId?: string | null;
   taskStatus?: TaskInstanceStatus | null;
+  revision?: string;
+  removable?: boolean;
 }
 
 export interface ItemTaskInstanceVO {
@@ -68,6 +70,20 @@ export interface TaskInstanceDetailVO {
     submittedAt?: string;
     fields: TaskDetailField[];
   };
+}
+
+export interface ItemTaskFlowNodeUpdateDTO {
+  id?: string;
+  revision?: string;
+  baseTaskId: string;
+  sort: number;
+  parallelSort: number;
+  name?: string;
+}
+
+export interface ItemTaskFlowUpdateDTO {
+  nodes: ItemTaskFlowNodeUpdateDTO[];
+  removed?: Array<{ id: string; revision: string }>;
 }
 
 export interface TaskSubmitDTO {
