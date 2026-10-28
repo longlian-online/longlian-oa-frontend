@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { formatBuildTime } from "@/lib/format";
+import { APP_BUILD_TIME, APP_VERSION } from "@/release";
 import { systemInfoQuery } from "@/queries/admin";
 
 import type { ReactElement } from "react";
@@ -39,7 +40,7 @@ export default function SystemInfoPage(): ReactElement {
           <dl className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] items-baseline gap-x-4 gap-y-4">
             <dt className="text-muted-foreground">前端版本</dt>
             <dd className="min-w-0 text-right font-semibold wrap-anywhere">
-              {formatVersion(__APP_VERSION__)}
+              {formatVersion(APP_VERSION)}
             </dd>
             <dt className="text-muted-foreground">服务端版本</dt>
             <dd className="min-w-0 text-right font-semibold wrap-anywhere">
@@ -47,7 +48,7 @@ export default function SystemInfoPage(): ReactElement {
             </dd>
             <dt className="text-muted-foreground">前端构建时间</dt>
             <dd className="min-w-0 text-right tabular-nums wrap-anywhere">
-              {formatBuildTime(__APP_BUILD_TIME__)}
+              {formatBuildTime(APP_BUILD_TIME)}
             </dd>
             <dt className="text-muted-foreground">服务端构建时间</dt>
             <dd className="min-w-0 text-right tabular-nums wrap-anywhere">
