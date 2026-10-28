@@ -20,14 +20,29 @@ function RouteFailure({
         {notFound ? "页面不存在" : moduleFailed ? "页面资源加载失败" : "页面暂时无法显示"}
       </h1>
       <p className="max-w-sm text-sm text-muted-foreground">
-        {notFound ? "请检查访问地址是否正确。" : "可切换其他页面继续使用。"}
+        {notFound
+          ? "请检查访问地址是否正确。"
+          : moduleFailed
+            ? "请刷新页面后重试，也可切换其他页面继续使用。"
+            : "可切换其他页面继续使用。"}
       </p>
-      <Link
-        to="/"
-        className="rounded-md border px-3 py-2 text-sm text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-      >
-        返回首页
-      </Link>
+      <div className="flex items-center gap-3">
+        {moduleFailed && (
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            刷新页面
+          </button>
+        )}
+        <Link
+          to="/"
+          className="rounded-md border px-3 py-2 text-sm text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          返回首页
+        </Link>
+      </div>
     </section>
   );
 }

@@ -134,7 +134,9 @@ test.each([
   expect(container.querySelector("header")).toBe(header);
   expect(container.querySelector("aside")).not.toBeNull();
   expect(container.querySelector("main [role=alert]")?.textContent).toContain("页面资源加载失败");
-  expect(container.textContent).not.toMatch(/刷新|重新加载|版本更新/);
+  expect(container.textContent).toContain("请刷新页面后重试");
+  expect(container.querySelector("main button")?.textContent).toBe("刷新页面");
+  expect(container.textContent).not.toContain("版本更新");
   expect(router.state.matches.at(-1)?.route.lazy).toBeUndefined();
   await act(async () => {
     container.querySelector<HTMLAnchorElement>("aside a")?.click();
@@ -143,6 +145,17 @@ test.each([
   expect(container.querySelector("main")?.textContent).toContain("正常内容");
   expect(container.querySelector("[role=alert]")).toBeNull();
   expect(console.error).not.toHaveBeenCalled();
+});
+
+test("资源错误仅在用户点击按钮后刷新页面", async (): Promise<void> => {
+  const reload = vi.fn();
+  vi.stubGlobal("window", { location: { reload } });
+  await mount(routesWithFailure(new Error("offline")), "/dashboard/org-admin/members");
+  expect(reload).not.toHaveBeenCalled();
+  await act(async () => {
+    container.querySelector<HTMLButtonElement>("main button")?.click();
+  });
+  expect(reload).toHaveBeenCalledTimes(1);
 });
 
 test("首次直达失败页也能显示布局和错误", async (): Promise<void> => {
@@ -190,6 +203,7 @@ test.each([new Error("loader failed"), new Response(null, { status: 404 })])(
     );
     await mount(routes, "/dashboard/working");
     expect(container.querySelector("header")).not.toBeNull();
+    expect(container.querySelector("main button")).toBeNull();
     expect(container.querySelector("main [role=alert]")?.textContent).toContain(
       error instanceof Response ? "页面不存在" : "页面暂时无法显示",
     );
