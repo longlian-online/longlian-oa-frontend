@@ -31,7 +31,7 @@ function EditItemWorkflow({ projectId, itemId }: { projectId: string; itemId: st
   const original = flowQuery.data?.nodes ?? [];
   const [nodes, setNodes] = useState<WorkflowEditorNode[] | null>(null);
   const editorNodes = nodes ?? buildItemEditorNodes(original);
-  const baseTasks = baseTasksQuery.data?.list ?? [];
+  const baseTasks = baseTasksQuery.data ?? [];
   const saveMutation = useApiMutation({
     mutationFn: () => updateItemTaskFlow(itemId, toItemWorkflowUpdate(original, editorNodes)),
     invalidate: [["flow"], ["instances"], ["items"], ["myTasks"], ["plaza"], ["projects"]],
