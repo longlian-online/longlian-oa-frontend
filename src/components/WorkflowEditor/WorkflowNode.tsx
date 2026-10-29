@@ -15,6 +15,7 @@ export interface WorkflowNodeData extends Record<string, unknown> {
   parallelCount: number;
   selected: boolean;
   preview?: boolean;
+  locked?: boolean;
   onSelect: (localId: string) => void;
   onRemove: (localId: string) => void;
 }
@@ -69,7 +70,7 @@ function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
           )}
         </div>
       </button>
-      {!data.preview && (
+      {!data.preview && !data.locked && (
         <button
           type="button"
           aria-label={`删除${data.label}节点`}

@@ -37,7 +37,7 @@ src/pages/dashboard/planning/[projectId].tsx
 后续复杂度上升后可拆：
 
 ```txt
-src/pages/dashboard/planning/[projectId]/items/[itemId].tsx
+src/pages/dashboard/planning/[projectId]/items/[itemId]/index.tsx
 ```
 
 ## 建议文件

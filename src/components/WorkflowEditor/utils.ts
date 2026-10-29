@@ -16,6 +16,9 @@ export interface WorkflowEditorNode {
   customName: string;
   sort: number;
   parallelSort: number;
+  nodeId?: string;
+  revision?: string;
+  locked?: boolean;
 }
 
 export interface WorkflowValidationResult {

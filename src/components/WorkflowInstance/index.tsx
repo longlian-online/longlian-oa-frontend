@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy } from "lucide-react";
+import { useNavigate } from "react-router";
 
 import {
   abandonTask,
@@ -92,6 +93,7 @@ function ItemWorkflowInstance({
   taskInstanceId,
 }: WorkflowInstanceProps) {
   const confirm = useConfirm();
+  const navigate = useNavigate();
   const currentUserId = getUserId();
   const mounted = useRef(true);
   useEffect(() => {
@@ -423,6 +425,17 @@ function ItemWorkflowInstance({
           )}
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          {projectId && isProjectCreator && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                void navigate(`/dashboard/planning/${projectId}/items/${itemId}/workflow`)
+              }
+            >
+              编辑工作流
+            </Button>
+          )}
           {projectId && isProjectCreator && (
             <ItemDeletionRequestButton
               projectId={projectId}
