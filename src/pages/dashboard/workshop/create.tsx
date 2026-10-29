@@ -44,7 +44,7 @@ function CreateWorkflowPageContent() {
     buildEditorNodes(editingTemplate?.nodes),
   );
   const baseTasksQuery = useApiQuery(baseTaskOptionsQuery());
-  const baseTasks = baseTasksQuery.data?.list ?? [];
+  const baseTasks = baseTasksQuery.data ?? [];
   const loadingBaseTasks = baseTasksQuery.isLoading;
   const saveMutation = useApiMutation({
     mutationFn: (payload: WorkshopTaskTemplateCreateDTO) =>
