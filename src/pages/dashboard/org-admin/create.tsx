@@ -145,7 +145,7 @@ function OrganizationAdminCreateWorkflowContent() {
   if (templateQuery.isError && !templateQuery.data)
     return <Button onClick={() => void templateQuery.refetch()}>模板加载失败，重试</Button>;
   return (
-    <div className="-m-6 flex min-h-[calc(100svh-3.5rem)] flex-col bg-background">
+    <div className="-mx-6 -mb-6 flex h-[calc(100svh-6.25rem)] flex-col bg-background">
       {baseQuery.isError && !baseQuery.data && (
         <Button onClick={() => void baseQuery.refetch()}>任务库加载失败，重试</Button>
       )}
