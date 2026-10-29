@@ -2,6 +2,7 @@
   "name": "longlian-oa-frontend",
   "version": "0.0.15",
   "private": true,
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "api:check": "node tools/api-cache.mjs check",
