@@ -12,6 +12,7 @@ import {
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
+import ProjectTypeCustomFormEditor from "@/components/ProjectTypeCustomFormEditor";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,11 +36,13 @@ import {
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
 
+import { presetFieldsQuery } from "@/queries/planning";
 import {
   ORGANIZATION_ADMIN_PAGE_SIZE as PAGE_SIZE,
   organizationProjectTypesQuery,
 } from "@/queries/organizationAdmin";
 import type { OrganizationResourceStatus, ProjectTypeVO } from "@/types/organizationAdmin";
+import type { ProjectTypeCustomFormItem } from "@/components/ProjectTypeCustomFormEditor";
 
 function OrganizationProjectTypesContent() {
   const confirm = useConfirm();
@@ -89,6 +92,8 @@ function OrganizationProjectTypesContent() {
   const [editingType, setEditingType] = useState<ProjectTypeVO | null>(null);
   const [name, setName] = useState("");
   const [priority, setPriority] = useState("0");
+  const [customFields, setCustomFields] = useState<ProjectTypeCustomFormItem[]>([]);
+  const presetFieldQuery = useApiQuery(presetFieldsQuery());
 
   const listQuery = useApiQuery(organizationProjectTypesQuery(keyword, page));
   const types = listQuery.data?.list ?? [];
@@ -104,6 +109,7 @@ function OrganizationProjectTypesContent() {
     setEditingType(null);
     setName("");
     setPriority("0");
+    setCustomFields([]);
     setDialogOpen(true);
   }
 
@@ -111,6 +117,13 @@ function OrganizationProjectTypesContent() {
     setEditingType(type);
     setName(type.name);
     setPriority(String(type.priority));
+    setCustomFields(
+      (type.customFields ?? []).map((field) => ({
+        presetFieldId: field.presetFieldId,
+        name: field.name,
+        required: field.required,
+      })),
+    );
     setDialogOpen(true);
   }
 
@@ -132,18 +145,27 @@ function OrganizationProjectTypesContent() {
         return;
       }
 
+      const customFieldPayload = customFields.map((field) => ({
+        presetFieldId: field.presetFieldId,
+        required: field.required,
+      }));
       if (editingType) {
         await updateOrganizationProjectTypeMutation.mutateAsync([
           editingType.id,
           {
             name: normalizedName,
             priority: normalizedPriority,
+            customFields: customFieldPayload,
           },
         ]);
         $tip("企划类型已更新", "success");
       } else {
         await createOrganizationProjectTypeMutation.mutateAsync([
-          { name: normalizedName, priority: normalizedPriority },
+          {
+            name: normalizedName,
+            priority: normalizedPriority,
+            customFields: customFieldPayload,
+          },
         ]);
         $tip("企划类型已创建", "success");
       }
@@ -342,11 +364,13 @@ function OrganizationProjectTypesContent() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[min(40rem,calc(100%-2rem))] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingType ? "编辑企划类型" : "新增企划类型"}</DialogTitle>
             <DialogDescription>
-              {editingType ? "修改类型名称与优先级。" : "新增一个组织可用的企划类型。"}
+              {editingType
+                ? "修改类型名称、优先级和默认自定义表单。"
+                : "新增一个组织可用的企划类型。"}
             </DialogDescription>
           </DialogHeader>
           <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
@@ -379,6 +403,18 @@ function OrganizationProjectTypesContent() {
               仅影响用户端企划类型的展示顺序，数值越大越靠前，默认 0。
             </span>
           </label>
+          <ProjectTypeCustomFormEditor
+            value={customFields}
+            presets={(presetFieldQuery.data ?? []).map((field) => ({
+              id: field.id,
+              name: field.name,
+            }))}
+            presetsStatus={
+              presetFieldQuery.isPending ? "loading" : presetFieldQuery.isError ? "error" : "ready"
+            }
+            disabled={mutatingId === (editingType?.id ?? "new")}
+            onChange={setCustomFields}
+          />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
               取消

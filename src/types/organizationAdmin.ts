@@ -141,14 +141,27 @@ export interface ProjectTypeListDTO {
   orderDir?: "DESC" | "ASC";
 }
 
+export interface ProjectTypeCustomFieldDTO {
+  presetFieldId: string;
+  required: boolean;
+}
+
+export interface ProjectTypeCustomFieldVO {
+  presetFieldId: string;
+  name: string;
+  required: boolean;
+}
+
 export interface ProjectTypeCreateDTO {
   name: string;
   priority?: number;
+  customFields?: ProjectTypeCustomFieldDTO[];
 }
 
 export interface ProjectTypeUpdateDTO {
   name: string;
   priority?: number;
+  customFields?: ProjectTypeCustomFieldDTO[];
 }
 
 export interface ProjectTypeVO {
@@ -160,6 +173,7 @@ export interface ProjectTypeVO {
   creatorId?: string;
   creatorNickname?: string;
   createdAt?: string;
+  customFields?: ProjectTypeCustomFieldVO[];
 }
 
 export interface OrganizationPresetTagListDTO {
@@ -180,6 +194,24 @@ export interface OrganizationPresetTagVO {
   name: string;
   color?: string | null;
   priority: number;
+}
+
+export interface OrganizationPresetFieldListDTO {
+  pageNum?: number;
+  pageSize?: number;
+  keyword?: string;
+  orderDir?: "DESC" | "ASC";
+}
+
+export interface OrganizationPresetFieldWriteDTO {
+  name: string;
+}
+
+export interface OrganizationPresetFieldVO {
+  id: string;
+  name: string;
+  createdAt?: string;
+  creatorNickname?: string | null;
 }
 
 export interface OrganizationProjectListDTO {

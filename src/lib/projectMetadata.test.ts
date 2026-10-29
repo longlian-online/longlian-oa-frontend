@@ -1,6 +1,8 @@
 import { expect, test } from "vite-plus/test";
 import {
+  applyTypeCustomFields,
   buildProjectMetadata,
+  missingRequiredFieldNames,
   normalizeProjectMetadataTagColor,
   parseProjectCustomFields,
   parseProjectMetadataTags,
@@ -205,4 +207,49 @@ test("empty custom field names are omitted and remaining values are trimmed", ()
     }),
   );
   expect(buildProjectMetadata(tags, [{ name: " ", value: "none" }])).toBe(JSON.stringify({ tags }));
+});
+
+test("type defaults fill empty forms and keep values already entered", (): void => {
+  let nextId = 0;
+  const defaults = [
+    { presetFieldId: "1", name: "作者", required: true },
+    { presetFieldId: "2", name: "状态", required: false },
+  ];
+  const created = applyTypeCustomFields([], defaults, "all", () => `field-${nextId++}`);
+  expect(created.map((field) => field.name)).toEqual(["作者", "状态"]);
+  expect(created[0]).toMatchObject({ required: true, fromType: true, value: "" });
+
+  const switched = applyTypeCustomFields(
+    [
+      ...created.map((field) => (field.name === "作者" ? { ...field, value: "山田" } : field)),
+      { id: "extra", name: "备注", value: "手填" },
+    ],
+    [{ presetFieldId: "3", name: "译者", required: true }],
+    "all",
+    () => `field-${nextId++}`,
+  );
+  expect(switched.map((field) => [field.name, field.value, field.required])).toEqual([
+    ["作者", "山田", false],
+    ["备注", "手填", false],
+    ["译者", "", true],
+  ]);
+});
+
+test("editing only appends missing required defaults", (): void => {
+  const fields = applyTypeCustomFields(
+    [{ id: "saved", name: "备注", value: "已有" }],
+    [
+      { presetFieldId: "1", name: "作者", required: true },
+      { presetFieldId: "2", name: "状态", required: false },
+    ],
+    "required",
+    () => "required-author",
+  );
+  expect(fields.map((field) => field.name)).toEqual(["备注", "作者"]);
+  expect(missingRequiredFieldNames(fields)).toEqual(["作者"]);
+  expect(
+    missingRequiredFieldNames(
+      fields.map((field) => (field.name === "作者" ? { ...field, value: "山田" } : field)),
+    ),
+  ).toEqual([]);
 });

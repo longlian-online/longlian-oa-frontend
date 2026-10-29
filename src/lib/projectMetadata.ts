@@ -71,6 +71,76 @@ export interface ProjectCustomField {
   value: string;
 }
 
+export interface EditableProjectCustomField extends ProjectCustomField {
+  id: string;
+  presetFieldId?: string;
+  required?: boolean;
+  fromType?: boolean;
+}
+
+export interface ProjectTypeCustomFieldDefault {
+  presetFieldId: string;
+  name: string;
+  required: boolean;
+}
+
+export function missingRequiredFieldNames(
+  fields: Array<Pick<ProjectCustomField, "name" | "value"> & { required?: boolean }>,
+): string[] {
+  const filled = new Set(
+    fields.flatMap((field) => {
+      const name = field.name.trim();
+      return name && field.value.trim() ? [name] : [];
+    }),
+  );
+  const missing: string[] = [];
+  for (const field of fields) {
+    const name = field.name.trim();
+    if (!field.required || !name || filled.has(name) || missing.includes(name)) continue;
+    missing.push(name);
+  }
+  return missing;
+}
+
+export function applyTypeCustomFields(
+  current: EditableProjectCustomField[],
+  defaults: ProjectTypeCustomFieldDefault[],
+  mode: "all" | "required",
+  createId: () => string = () => crypto.randomUUID(),
+): EditableProjectCustomField[] {
+  const remaining = defaults.map((item) => ({ ...item, name: item.name.trim() }));
+  const kept: EditableProjectCustomField[] = [];
+
+  for (const field of current) {
+    if (field.fromType && !field.value.trim()) continue;
+    const index = remaining.findIndex((item) => item.name === field.name.trim());
+    if (index >= 0) {
+      const match = remaining.splice(index, 1)[0]!;
+      kept.push({
+        ...field,
+        name: match.name,
+        presetFieldId: match.presetFieldId,
+        required: match.required,
+        fromType: true,
+      });
+    } else {
+      kept.push({ ...field, required: false, fromType: false, presetFieldId: undefined });
+    }
+  }
+
+  for (const item of mode === "all" ? remaining : remaining.filter((field) => field.required)) {
+    kept.push({
+      id: createId(),
+      name: item.name,
+      value: "",
+      presetFieldId: item.presetFieldId,
+      required: item.required,
+      fromType: true,
+    });
+  }
+  return kept;
+}
+
 export function parseProjectCustomFields(metadata?: string): ProjectCustomField[] {
   if (!metadata) return [];
 
