@@ -174,6 +174,15 @@ npx skills install
 
 没有明确指示时，不要添加不必要的说明文案。不要自行补充页面副标题、字段用法说明、保存或搜索规则提示，以及示例性 placeholder。只保留完成操作所必需的标签、必填标记、尺寸或大小等约束，以及校验和错误提示。
 
+### 接口端别
+
+用户端、组织管理端和平台管理端的接口必须分开调用，不能因为当前用户是组织管理员、组织所有者或企划负责人就跨端调用。
+
+- 用户端页面、路由加载、查询和 API 只能使用 `request`（`/app`）或 `commonRequest`（`/common`）。绝对不能调用 `orgAdminRequest`、`/orgadmin`、`adminRequest` 或 `/admin`。
+- 组织管理端只能使用 `orgAdminRequest` 或 `commonRequest`。绝对不能调用 `adminRequest` 或 `/admin`。
+- 平台管理端只使用 `adminRequest`（`/admin`）。
+- 某一端没有所需接口时，为该端补充接口。不能复用权限更高一端的接口，也不能靠服务端拒绝越权代替端别区分。
+
 ### 类型
 
 所有函数参数、返回值、组件 Props 必须有明确类型，禁止使用 `any`。
