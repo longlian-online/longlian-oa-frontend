@@ -46,24 +46,14 @@ export interface TaskTemplateOptionVO {
   name: string;
 }
 
-export interface BaseTaskListDTO {
-  pageNum?: number;
-  pageSize?: number;
-  keyword?: string;
-  status?: "ENABLED" | "DISABLED";
-  startCreatedTime?: string;
-  endCreatedTime?: string;
-  sortBy?: "CREATED_AT" | "REF_COUNT";
-  orderDir?: "DESC" | "ASC";
-}
-
 export type BaseTaskStatus = "ENABLED" | "DISABLED";
 
-export interface BaseTaskCreateDTO {
+export interface BaseTaskOption {
+  id: string;
   name: string;
   description?: string;
   icon?: string;
-  submitFields: TaskFormField[];
+  status: BaseTaskStatus;
 }
 
 export interface BaseTaskVO {

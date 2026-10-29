@@ -1,4 +1,4 @@
-import { getBaseTaskList } from "@/api/baseTask";
+import { getBaseTaskOptions } from "@/api/baseTask";
 import { getMyTasks } from "@/api/myTask";
 import { getOrganizationBaseTaskList } from "@/api/organizationAdmin";
 import { getWorkshopList } from "@/api/workshop";
@@ -8,7 +8,7 @@ import type { ApiQueryOptions } from "@/lib/apiQuery";
 import type { MyTaskBucket, MyTaskPage, MyTaskSortDirection } from "@/types/myTask";
 import type { OrganizationBaseTaskVO, OrganizationPageResult } from "@/types/organizationAdmin";
 import type { PageResult } from "@/types/planning";
-import type { BaseTaskVO, WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
+import type { BaseTaskOption, BaseTaskVO, WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 import type { WorkshopProjectInfoVO, WorkshopSortBy } from "@/types/workshop";
 
 export const WORKSHOP_PAGE_SIZE = 6;
@@ -53,17 +53,23 @@ export function workflowListQuery(
   return { key: ["templates", "list", params], queryFn: () => getWorkshopTaskTemplateList(params) };
 }
 
-export function baseTaskOptionsQuery(): ApiQueryOptions<PageResult<BaseTaskVO>> {
-  const params = {
-    pageNum: 1,
-    pageSize: 100,
-    status: "ENABLED" as const,
-    sortBy: "REF_COUNT" as const,
-    orderDir: "DESC" as const,
-  };
+function toEditorBaseTask(task: BaseTaskOption): BaseTaskVO {
   return {
-    key: ["baseTasks", "options", params],
-    queryFn: () => getBaseTaskList(params),
+    id: task.id,
+    name: task.name,
+    description: task.description,
+    icon: task.icon,
+    submitFields: [],
+    refCount: 0,
+    status: task.status,
+    createdAt: "",
+  };
+}
+
+export function baseTaskOptionsQuery(): ApiQueryOptions<BaseTaskVO[]> {
+  return {
+    key: ["baseTasks", "options"],
+    queryFn: async () => (await getBaseTaskOptions()).map(toEditorBaseTask),
     staleTime: 300_000,
   };
 }

@@ -135,6 +135,7 @@ let router: RouterProviderProps["router"] | undefined;
 let requests: SaveRequest[];
 let gates: Deferred<null>[];
 let unexpectedRequests: string[];
+let seenPaths: string[];
 
 beforeEach((): void => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -151,10 +152,12 @@ beforeEach((): void => {
   requests = [];
   gates = [];
   unexpectedRequests = [];
+  seenPaths = [];
   client = createQueryClient();
   const send = vi.fn(async (input: string, init?: RequestInit): Promise<Response> => {
     const method = init?.method ?? "GET";
     const path = new URL(input, "http://localhost").pathname;
+    seenPaths.push(`${method} ${path}`);
     const isCreate = method === "POST" && entries.some((entry) => entry.createPath === path);
     const isEdit =
       method === "PUT" &&
@@ -179,6 +182,16 @@ beforeEach((): void => {
     }
     if (method === "GET" && path === "/app/projects/types") {
       return ok([{ id: "7", name: "漫画" }]);
+    }
+    if (method === "GET" && path === "/app/task/base/options") {
+      return ok([
+        {
+          id: "11",
+          name: "翻译",
+          icon: "Languages",
+          status: "ENABLED",
+        },
+      ]);
     }
     if (method === "POST" && path === "/orgadmin/task/base/list") {
       return ok({
@@ -357,6 +370,13 @@ async function fill(entry: Entry): Promise<void> {
     act(() => click(button("上传已完成")));
   } else {
     await waitFor(() => expect(button("添加翻译节点").disabled).toBe(false));
+    if (entry.organization) {
+      expect(seenPaths).toContain("POST /orgadmin/task/base/list");
+      expect(seenPaths).not.toContain("GET /app/task/base/options");
+    } else {
+      expect(seenPaths).toContain("GET /app/task/base/options");
+      expect(seenPaths).not.toContain("POST /orgadmin/task/base/list");
+    }
     act(() => click(button("添加翻译节点")));
     expect(container.querySelectorAll('[aria-label="流程节点"] li')).toHaveLength(1);
   }
