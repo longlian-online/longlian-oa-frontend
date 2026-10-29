@@ -108,7 +108,7 @@ function CreateWorkflowPageContent() {
   }
 
   return (
-    <div className="-m-6 flex min-h-[calc(100svh-3.5rem)] flex-col bg-background">
+    <div className="-mx-6 -mb-6 flex h-[calc(100svh-6.25rem)] flex-col bg-background">
       {baseTasksQuery.isError && !baseTasksQuery.data && (
         <div role="alert">
           {baseTasksQuery.error.message}

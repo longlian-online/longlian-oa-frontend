@@ -117,6 +117,7 @@ export default function WorkflowEditor({
 
   async function handleRemoveNode(localId: string): Promise<void> {
     const node = value.find((item) => item.localId === localId);
+    if (node?.locked) return;
     const confirmed = await confirm({
       title: "删除节点？",
       description: `「${node ? getNodeLabel(node, baseTasks) : "该"}」将从当前流程中移除。`,

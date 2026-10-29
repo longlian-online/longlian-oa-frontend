@@ -73,6 +73,7 @@ function buildFlowNodes(
           stage: node.sort,
           parallelCount: group.length,
           selected: selectedNodeId === node.localId,
+          locked: node.locked,
           onSelect: onSelectNode,
           onRemove: onRemoveNode,
         },

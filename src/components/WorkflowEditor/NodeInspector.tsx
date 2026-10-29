@@ -127,15 +127,21 @@ export default function NodeInspector({
         </div>
 
         <div className="mt-auto">
-          <Button
-            type="button"
-            variant="destructive"
-            className="w-full"
-            onClick={() => onRemove(node.localId)}
-          >
-            <Trash2 data-icon="inline-start" />
-            删除节点
-          </Button>
+          {node.locked ? (
+            <Button type="button" variant="outline" className="w-full" disabled>
+              不能删除
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="destructive"
+              className="w-full"
+              onClick={() => onRemove(node.localId)}
+            >
+              <Trash2 data-icon="inline-start" />
+              删除节点
+            </Button>
+          )}
         </div>
       </div>
     </aside>

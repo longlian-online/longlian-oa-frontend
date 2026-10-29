@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import type { Plugin, ProxyOptions } from "vite-plus";
 import { readFileSync } from "node:fs";
+import { releaseManifestAsset } from "./src/lib/frontendRelease.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,6 +17,16 @@ const { version } = JSON.parse(
   version: string;
 };
 const buildTime = new Date().toISOString();
+
+export function frontendReleaseManifest(appVersion: string, appBuildTime: string): Plugin {
+  return {
+    name: "frontend-release-manifest",
+    apply: "build",
+    generateBundle() {
+      this.emitFile(releaseManifestAsset(appVersion, appBuildTime));
+    },
+  };
+}
 
 function ignoreUnknownRequests(): Plugin {
   return {
@@ -60,7 +71,13 @@ export default defineConfig({
   fmt: {
     ignorePatterns: [".agents/skills/**"],
   },
-  plugins: [ignoreUnknownRequests(), fileRoutes(), react(), tailwindcss()],
+  plugins: [
+    frontendReleaseManifest(version, buildTime),
+    ignoreUnknownRequests(),
+    fileRoutes(),
+    react(),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),

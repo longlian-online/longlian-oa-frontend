@@ -1,270 +1,37 @@
-# longlian-oa-frontend
+<p align="center">
+  <img src="./public/logo-full.webp" alt="白箱" width="96" />
+</p>
 
-面向汉化组的多租户 OA 协作系统前端。二次元轻量风格，解决旧系统任务流固化（仅支持漫画/小说）的技术债务，实现自定义工作流引擎、完整权限体系和美观的用户体验。
+<h1 align="center">白箱</h1>
 
-支持单租户（无管理端）独立运作，也支持多租户扩展。
+<p align="center">LongLian OA 的 Web 前端。</p>
 
-> 产品详细需求见 [PRODUCT.md](./PRODUCT.md)，AI Agent 工作规范见 [AGENTS.md](./AGENTS.md)。
-
----
-
-## 组织切换
-
-- 顶部左上角组织头像和名称支持悬停、点击或键盘打开浮层，展示最近成功切换的最多三个组织；当前组织标记为“当前”，不可重复切换。
-- “更多”将左侧导航替换为全部已加入组织，可用“返回导航”恢复；工坊页面也可展开组织列表，返回后恢复无侧栏布局。
-- 切换成功仅更新当前组织与组织角色，保留登录凭证；完整重载至 `/dashboard/planning`，重建权限并退出旧组织页面。失败保留原会话和选择界面，可重试。
-- 最近记录以 `recent-organizations:${userId}` 在当前浏览器按账号保存，仅存组织 ID；首次加载和加入组织不补写历史，退出登录不删除历史。
-- “加入组织”位于组织浮层下半区，沿用邀请码确认流程；成功后刷新组织列表，不自动切换组织。
-- 用户信息和组织列表的 API 缓存有效期为 1 分钟，过期后在下一次查询时重新请求；不会定时轮询，点击“更多”本身不触发查询。
-
----
+白箱是 LongLian OA 的 Web 客户端，用来访问系统的使用界面和管理界面。
 
 ## 技术栈
 
-| 类别      | 技术                             | 版本   |
-| --------- | -------------------------------- | ------ |
-| 构建工具  | Vite Plus (`vp`)                 | latest |
-| 前端框架  | React                            | 19     |
-| 类型系统  | TypeScript                       | 5.9    |
-| 样式      | Tailwind CSS                     | v4     |
-| UI 组件库 | shadcn/ui                        | latest |
-| 路由      | react-router + vite-plugin-pages | 7      |
-| Lint      | oxlint（内置于 vp）              | —      |
-| Format    | oxfmt（内置于 vp）               | —      |
+| 类别 | 技术 |
+| --- | --- |
+| 构建 | Vite Plus（`vp`） |
+| 界面 | React 19、TypeScript 5.9 |
+| 样式 | Tailwind CSS v4、shadcn/ui |
+| 路由 | React Router 7、vite-plugin-pages |
 
-**重要：** 项目使用 `vp`（Vite Plus）作为统一工具链，禁止直接使用 `pnpm` / `npm` / `npx`。
+日常开发命令使用 `vp`，不要直接调用 `pnpm`、`npm` 或 `npx`。
 
----
-
-## 快速开始
+## 本地开发
 
 ```bash
-# 1. 克隆项目
 git clone https://github.com/longlian-online/longlian-oa-frontend
 cd longlian-oa-frontend
-
-# 2. 安装依赖（会自动激活 Git Hooks）
 pnpm install
-
-# 3. 安装项目依赖的 AI Skills
-npx skills install
-
-# 4. 启动开发服务器
 vp dev
 ```
 
-## Docker 开发
+浏览器打开 http://localhost:5173 。`pnpm install` 只负责安装依赖并启用 Git Hooks，之后的开发、检查和构建都使用 `vp`。提交前可运行 `vp check`，一次完成格式、lint 和类型检查。
 
-容器内用 pnpm 按锁文件安装依赖，再用 `vp dev` 跑 Vite。源码 bind-mount 进 `/app`，额外挂 `/app/node_modules`，避免被源码挂载盖掉。
+## 许可证
 
-```bash
-docker build -f Dockerfile.dev -t longlian-oa-frontend:dev .
-docker run --rm -it -p 5173:5173 \
-  -e CHOKIDAR_USEPOLLING=true \
-  -v "$PWD":/app -v /app/node_modules \
-  longlian-oa-frontend:dev
-```
+本项目以 [Apache License 2.0](./LICENSE) 授权。
 
-浏览器打开 http://localhost:5173 。改依赖后重新 `docker build` 再跑；`-v /app/node_modules` 是匿名卷，容器删掉即丢，不会残留旧依赖。
-
----
-
-## 常用命令
-
-| 命令                                   | 说明                                         |
-| -------------------------------------- | -------------------------------------------- |
-| `vp dev`                               | 启动开发服务器                               |
-| `vp build`                             | 构建生产产物                                 |
-| `vp check`                             | 格式 + lint + 类型检查（三合一，提交前必跑） |
-| `vp fmt src --write`                   | 格式化 src 下所有文件                        |
-| `vp lint src`                          | 仅执行 lint                                  |
-| `vp add <pkg>`                         | 安装依赖（替代 pnpm add）                    |
-| `vp dlx shadcn@latest add <component>` | 安装 shadcn/ui 组件                          |
-
----
-
-## 目录结构
-
-```
-src/
-├── main.tsx                  # 入口：主题初始化 + QueryClientProvider + RouterProvider
-├── index.css                 # 全局样式：Tailwind + 主题变量 import
-├── pages/                    # 页面（文件即路由，无需手动注册）
-│   ├── index.tsx             # → /
-│   ├── dashboard.tsx         # → /dashboard
-│   ├── settings.tsx          # → /settings
-│   ├── about.tsx             # → /about
-│   └── theme-preview.tsx     # → /theme-preview（主题配色预览）
-├── components/
-│   ├── ui/                   # shadcn/ui 原始组件（不直接修改）
-│   └── theme/
-│       └── ThemeToggle.tsx   # 亮/暗模式切换按钮
-├── hooks/
-│   └── useIsDarkTheme.ts     # 监听 html.dark 类的 Hook
-├── lib/
-│   └── utils.ts              # cn() 工具函数
-└── styles/
-    └── theme/
-        ├── shadcn.css        # shadcn 语义色变量（亮/暗双套）
-        ├── index.css         # 品牌渐变、具名色、状态色等自定义变量
-        └── theme-transition.css  # 主题切换 View Transitions 动画
-```
-
----
-
-## 路由规范
-
-基于 `vite-plugin-pages` 自动扫描 `src/pages/`，**新增页面只需创建文件**：
-
-| 文件路径                        | 对应路由     |
-| ------------------------------- | ------------ |
-| `src/pages/index.tsx`           | `/`          |
-| `src/pages/login.tsx`           | `/login`     |
-| `src/pages/user/[id].tsx`       | `/user/:id`  |
-| `src/pages/dashboard/index.tsx` | `/dashboard` |
-
-禁止在 `main.tsx` 手动注册 `<Route>`。
-
-### 首屏数据与页面资源并行加载
-
-- `src/router.tsx` 使用 React Router Data Router。`vite-plugin-pages` 继续生成路径和嵌套关系，页面通过路由 `lazy` 加载，不在入口手写页面路径。
-- 有首屏数据的页面，在 `src/routeLoaders/` 下创建同路径 `.ts` 文件并导出 `loader`；例如 `pages/dashboard/planning/index.tsx` 对应 `routeLoaders/dashboard/planning/index.ts`。loader 静态注册，与页面模块下载并行执行；不要从页面模块导入 loader。
-- `src/queries/` 保存页面与 loader 共用的查询配置。loader 调用 `fetchApiQuery`，页面继续使用 `useApiQuery`，复用同一 Query 缓存、会话身份与组织上下文。新鲜缓存不会重复请求；筛选、分页和操作后的失效刷新仍由 Query 管理。
-- 独立的首屏请求使用 `Promise.all`；单个请求直接 `await`。弹窗详情和用户操作触发的数据不放入首屏 loader。
-- 用户、组织和平台管理员的查询作用域保持隔离。未登录访问受保护页面会跳转登录页；没有选定组织时不发送组织业务请求。父子 loader 并行执行，子 loader 不依赖父 loader 完成后才能校验登录或权限。
-- 工作流与任务实例查询保留 `staleTime: 0`，每次进入由 loader 读取最新数据，组件挂载不重复请求；操作后失效刷新、窗口聚焦刷新保持启用。
-- 导航等待期间保留当前页面并展示加载提示；初次加载、模块下载失败、首屏接口失败和未知地址均有路由级兜底。
-
-企划列表卡片的封面、「查看企划」入口，以及「创建新企划」卡片使用路由 `Link`，保留普通点击的站内跳转，并支持右键在新标签页打开、中键、Cmd/Ctrl + 点击及键盘 Enter 导航。企划卡片的其他区域不是详情链接。
-导航卡片应使用带 `href` 的链接，而不是仅用 `onClick` 调用 `navigate` 的普通元素。
-
----
-
-## 主题系统
-
-### 两个独立维度
-
-| 维度      | 切换方式                                   | 存储                          |
-| --------- | ------------------------------------------ | ----------------------------- |
-| 亮/暗模式 | `<html>` 加/移除 `.dark` 类                | `localStorage("theme")`       |
-| 颜色主题  | `<html>` 设置 `data-color-theme="pink"` 等 | `localStorage("color-theme")` |
-
-两者完全独立，可以任意组合（如：暗色 + 粉色主题）。
-
-### 默认主题：Monochrome（黑白）
-
-不设置 `data-color-theme` 时，使用纯黑白无彩色主题。颜色主题作为可选叠加层。
-
-### 配色文件结构
-
-- `src/styles/theme/shadcn.css` — shadcn 语义变量（`--background`、`--foreground`、`--primary` 等），亮/暗双套，与颜色主题无关
-  - 浅色页面背景（`bg-background`）为 `#F7F7F7`；用户端与管理端的侧边栏和顶部导航共用 `bg-sidebar`，颜色为 `oklch(99% 0 0)`。深色模式保留原背景，导航背景跟随 `--background`。
-  - 默认浅色主题的次级文字（`text-muted-foreground`）使用 `oklch(30% 0 0)`，用于导航未选中项、说明和标签；深色及 Pink 主题保留各自覆盖值。
-- `src/styles/theme/index.css` — 多主题颜色系统：
-  - `--theme-accent-*` — 当前颜色主题的品牌色（渐变、实色、透明版），通过 `[data-color-theme="xxx"]` 选择器覆盖
-  - 背景渐变、状态色（info/success/warning/danger）、具名语义色
-- `src/styles/theme/theme-transition.css` — View Transitions 切换动画
-
-### 新增颜色主题
-
-在 `src/styles/theme/index.css` 中添加对应选择器：
-
-```css
-[data-color-theme="blue"] {
-  --theme-accent-start: #3b82f6;
-  --theme-accent-end: #1d4ed8;
-  --theme-accent-gradient: linear-gradient(
-    279deg,
-    var(--theme-accent-start) 0%,
-    var(--theme-accent-end) 100%
-  );
-  --theme-accent-solid: #2563eb;
-  --theme-accent-solid-a3: rgba(37, 99, 235, 0.3);
-}
-```
-
-### 在代码中使用主题色
-
-```tsx
-// 品牌渐变（跟随颜色主题）
-<div style={{ background: "var(--theme-accent-gradient)" }} />
-
-// 品牌实色
-<div style={{ color: "var(--theme-accent-solid)" }} />
-
-// shadcn 语义色（推荐用 Tailwind class）
-<div className="bg-background text-foreground" />
-<div className="bg-primary text-primary-foreground" />
-```
-
-访问 `/theme-preview` 可查看所有配色的可视化预览，并支持实时切换颜色主题。
-
-### 样式规范
-
-- 只用 Tailwind CSS utility class + `cn()` 合并类名
-- 不写独立 CSS 文件，不用内联 `style`（CSS 变量引用除外）
-- 颜色统一使用 CSS 变量或 Tailwind 语义 class，禁止硬编码 hex/rgb
-
----
-
-## 代码规范
-
-### 类型
-
-- 所有函数参数、返回值、组件 Props 必须有明确类型
-- 禁止使用 `any`
-
-### 组件
-
-- 函数组件 + Hooks，不用 class 组件
-- shadcn/ui 原始组件装在 `src/components/ui/`，不直接修改
-- 业务封装组件放 `src/components/<Name>/index.tsx`
-
-### 新增 UI 组件
-
-```bash
-vp dlx shadcn@latest add <component>
-```
-
----
-
-## Git 规范
-
-### Commit Message 格式
-
-```
-<type>(<scope>): <subject>
-```
-
-| type       | 说明                   |
-| ---------- | ---------------------- |
-| `feat`     | 新功能                 |
-| `fix`      | Bug 修复               |
-| `upd`      | 更新/优化已有功能      |
-| `docs`     | 文档变更               |
-| `style`    | 代码格式（不影响逻辑） |
-| `refactor` | 重构                   |
-| `chore`    | 构建/工具/依赖变更     |
-| `revert`   | 回滚                   |
-
-示例：`feat(dashboard): add task statistics`、`fix(theme): dark mode not switching`
-
-### Git Hooks（pnpm install 后自动激活）
-
-- **pre-commit**：对暂存的 `.ts/.tsx` 文件自动执行 `vp fmt` + `vp lint`，报错阻断提交
-- **commit-msg**：校验 message 格式，不符合阻断提交
-
-### 提交流程
-
-```bash
-git add <files>
-# pre-commit hook 自动 fmt + lint
-git commit -m "feat(xxx): your message"
-```
-
----
-
-## 关联文档
-
-- [PRODUCT.md](./PRODUCT.md) — 产品需求、用户角色、功能模块、UI 原则
-- [AGENTS.md](./AGENTS.md) — AI Agent 专用：项目结构、工作规范、禁止行为
+Copyright 2026 longlian-online

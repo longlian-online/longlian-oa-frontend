@@ -100,7 +100,7 @@ function releaseBody(version, sha) {
     "前端静态站点构建包。",
     "",
     `- 提交：\`${sha}\``,
-    "- ZIP 解压后根目录为 `index.html`。",
+    "- ZIP 解压后根目录为 `index.html` 和 `version.json`。",
     "- 使用同名 `.sha256` 文件校验 ZIP。",
   ].join("\n");
 }

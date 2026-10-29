@@ -10,10 +10,21 @@ import type {
   TaskRejectDTO,
   TaskSubmissionVersionVO,
   TaskSubmitDTO,
+  ItemTaskFlowUpdateDTO,
 } from "@/types/workflowInstance";
 
 export async function getItemTaskFlow(itemId: string): Promise<ItemTaskFlowVO> {
   return request(`/item/${itemId}/flow`);
+}
+
+export async function updateItemTaskFlow(
+  itemId: string,
+  dto: ItemTaskFlowUpdateDTO,
+): Promise<void> {
+  return request(`/item/${itemId}/flow`, {
+    method: "PUT",
+    body: JSON.stringify(dto),
+  });
 }
 
 export async function getItemTaskInstances(itemId: string): Promise<ItemTaskInstanceVO[]> {
