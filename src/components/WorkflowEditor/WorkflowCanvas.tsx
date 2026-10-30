@@ -40,6 +40,7 @@ interface WorkflowCanvasProps {
   onMoveToParallelGroup: (localId: string, targetSort: number) => void;
   onRemoveNode: (localId: string) => void;
   onAddNode: (baseTaskId: string, stageIndex?: number) => void;
+  assigneeNames?: Record<string, string | undefined>;
 }
 
 type CanvasNode = WorkflowFlowNode;
@@ -51,6 +52,7 @@ function buildFlowNodes(
   selectedNodeId: string | null,
   onSelectNode: (localId: string) => void,
   onRemoveNode: (localId: string) => void,
+  assigneeNames?: Record<string, string | undefined>,
 ): WorkflowFlowNode[] {
   const groups = groupNodes(nodes);
   const maxParallelCount = groups.reduce((max, group) => Math.max(max, group.length), 0);
@@ -74,6 +76,8 @@ function buildFlowNodes(
           parallelCount: group.length,
           selected: selectedNodeId === node.localId,
           locked: node.locked,
+          showAssignee: assigneeNames !== undefined,
+          assigneeLabel: assigneeNames?.[node.localId],
           onSelect: onSelectNode,
           onRemove: onRemoveNode,
         },
@@ -110,10 +114,12 @@ export default function WorkflowCanvas({
   onMoveToParallelGroup,
   onRemoveNode,
   onAddNode,
+  assigneeNames,
 }: WorkflowCanvasProps) {
   const initialNodes = useMemo(
-    () => buildFlowNodes(nodes, baseTasks, selectedNodeId, onSelectNode, onRemoveNode),
-    [baseTasks, nodes, onRemoveNode, onSelectNode, selectedNodeId],
+    () =>
+      buildFlowNodes(nodes, baseTasks, selectedNodeId, onSelectNode, onRemoveNode, assigneeNames),
+    [assigneeNames, baseTasks, nodes, onRemoveNode, onSelectNode, selectedNodeId],
   );
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<CanvasNode>(initialNodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(buildEdges(nodes));
@@ -134,11 +140,19 @@ export default function WorkflowCanvas({
     if (!preview || !previewNodes) return { nodes: flowNodes, edges: flowEdges };
     return buildDragPreviewScene(
       flowNodes,
-      buildFlowNodes(previewNodes, baseTasks, selectedNodeId, onSelectNode, onRemoveNode),
+      buildFlowNodes(
+        previewNodes,
+        baseTasks,
+        selectedNodeId,
+        onSelectNode,
+        onRemoveNode,
+        assigneeNames,
+      ),
       buildEdges(previewNodes),
       preview.localId,
     );
   }, [
+    assigneeNames,
     baseTasks,
     flowEdges,
     flowNodes,

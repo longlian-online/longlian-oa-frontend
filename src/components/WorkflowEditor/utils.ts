@@ -19,6 +19,8 @@ export interface WorkflowEditorNode {
   nodeId?: string;
   revision?: string;
   locked?: boolean;
+  /** 来自模板且原子任务已停用时仍可保留，不能当作新加节点。 */
+  allowDisabled?: boolean;
 }
 
 export interface WorkflowValidationResult {

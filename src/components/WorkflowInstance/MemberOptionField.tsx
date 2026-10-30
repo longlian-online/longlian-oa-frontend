@@ -11,6 +11,7 @@ interface MemberOptionFieldProps {
   listId: string;
   value: string;
   onChange: (userId: string) => void;
+  label?: string;
 }
 
 function memberLabel(member: MemberOption): string {
@@ -62,7 +63,13 @@ function FloatingMemberList({
   );
 }
 
-export default function MemberOptionField({ id, listId, value, onChange }: MemberOptionFieldProps) {
+export default function MemberOptionField({
+  id,
+  listId,
+  value,
+  onChange,
+  label = "组员",
+}: MemberOptionFieldProps) {
   const [memberQuery, setMemberQuery] = useState("");
   const [memberListOpen, setMemberListOpen] = useState(false);
   const memberInputRef = useRef<HTMLInputElement>(null);
@@ -81,7 +88,7 @@ export default function MemberOptionField({ id, listId, value, onChange }: Membe
   return (
     <div className="flex flex-col gap-2 text-sm text-foreground">
       <label id={`${id}-label`} onClick={() => memberInputRef.current?.focus()}>
-        组员
+        {label}
       </label>
       {membersQuery.isLoading ? (
         <p className="text-muted-foreground">正在加载组员...</p>

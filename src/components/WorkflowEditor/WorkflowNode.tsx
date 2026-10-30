@@ -16,6 +16,8 @@ export interface WorkflowNodeData extends Record<string, unknown> {
   selected: boolean;
   preview?: boolean;
   locked?: boolean;
+  showAssignee?: boolean;
+  assigneeLabel?: string;
   onSelect: (localId: string) => void;
   onRemove: (localId: string) => void;
 }
@@ -69,6 +71,11 @@ function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
             </span>
           )}
         </div>
+        {data.showAssignee && (
+          <div className="mt-2 truncate text-xs text-muted-foreground">
+            {data.assigneeLabel || "待接取"}
+          </div>
+        )}
       </button>
       {!data.preview && !data.locked && (
         <button
