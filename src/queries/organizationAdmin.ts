@@ -4,6 +4,7 @@ import {
   listJoinInviteCodes,
   getOrganizationBaseTaskList,
   getOrganizationInfo,
+  getMemberWorkloads,
   getOrganizationMembers,
   getOrganizationProjects,
   getOrganizationProjectTypes,
@@ -14,6 +15,7 @@ import {
 } from "@/api/organizationAdmin";
 import type { ApiQueryOptions } from "@/lib/apiQuery";
 import type { MemberListFilters } from "@/pages/dashboard/org-admin/memberListFilters";
+import type { WorkloadFilters } from "@/pages/dashboard/org-admin/workloadFilters";
 import type {
   DeletionRequestVO,
   JoinApplicationVO,
@@ -22,6 +24,7 @@ import type {
   OrganizationBaseTaskVO,
   OrganizationInfoVO,
   OrganizationMemberVO,
+  OrganizationMemberWorkloadVO,
   OrganizationPageResult,
   OrganizationProjectVO,
   OrganizationTaskTemplateDetailVO,
@@ -54,6 +57,27 @@ export function organizationMembersQuery(
         keyword: appliedFilters.keyword || undefined,
         startJoinedTime: appliedFilters.startJoinedTime || undefined,
         endJoinedTime: appliedFilters.endJoinedTime || undefined,
+        orderDir: appliedFilters.orderDir,
+      }),
+  };
+}
+
+export const INITIAL_WORKLOAD_FILTERS: WorkloadFilters = {
+  keyword: "",
+  orderDir: "DESC",
+};
+
+export function organizationWorkloadsQuery(
+  appliedFilters: WorkloadFilters = INITIAL_WORKLOAD_FILTERS,
+  page = 1,
+): ApiQueryOptions<OrganizationPageResult<OrganizationMemberWorkloadVO>> {
+  return {
+    key: ["members", "workload", appliedFilters, page],
+    queryFn: () =>
+      getMemberWorkloads({
+        pageNum: page,
+        pageSize: ORGANIZATION_ADMIN_PAGE_SIZE,
+        keyword: appliedFilters.keyword || undefined,
         orderDir: appliedFilters.orderDir,
       }),
   };

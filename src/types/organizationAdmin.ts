@@ -40,6 +40,47 @@ export interface OrganizationMemberVO {
   submitCount: number;
 }
 
+export interface OrganizationMemberWorkloadListDTO {
+  pageNum?: number;
+  pageSize?: number;
+  keyword?: string;
+  orderDir?: "DESC" | "ASC";
+}
+
+export interface OrganizationMemberWorkloadTaskVO {
+  instanceId: string;
+  itemId: string;
+  projectId: string;
+  itemTitle?: string;
+  projectName?: string;
+  nodeName?: string;
+  slotIndex?: number | null;
+  slotTotal?: number | null;
+  serialStep?: number | null;
+  waitingStageName?: string | null;
+  waitingSlotIndex?: number | null;
+  waitingSlotTotal?: number | null;
+  waitingSerialStep?: number | null;
+}
+
+export interface OrganizationMemberWorkloadVO {
+  id: string;
+  userId: string;
+  username?: string;
+  nickname?: string;
+  avatarUrl?: string;
+  status: OrganizationResourceStatus;
+  note: string;
+  claimedCount: number;
+  readyCount: number;
+  waitingCount: number;
+  tasks: OrganizationMemberWorkloadTaskVO[];
+}
+
+export interface OrganizationMemberNoteDTO {
+  note: string;
+}
+
 export interface MemberSubmitCountVO {
   baseTaskId: string;
   baseTaskName?: string;
