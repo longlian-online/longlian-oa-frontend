@@ -1,4 +1,10 @@
-import { getPresetTags, getProjectDetail, getProjectList, getProjectTypes } from "@/api/planning";
+import {
+  getPresetFields,
+  getPresetTags,
+  getProjectDetail,
+  getProjectList,
+  getProjectTypes,
+} from "@/api/planning";
 import { getPlazaTaskTypes, getTaskPlaza } from "@/api/plaza";
 import { getProjectItemList } from "@/api/projectItem";
 import { getItemTaskFlow, getItemTaskInstances } from "@/api/workflowInstance";
@@ -9,6 +15,7 @@ import type {
   ProjectDetailInfoVO,
   ProjectInfoVO,
   ProjectListDTO,
+  PresetFieldVO,
   ProjectTypeInfoVO,
   PresetTagVO,
 } from "@/types/planning";
@@ -32,6 +39,10 @@ export function projectTypesQuery(): ApiQueryOptions<ProjectTypeInfoVO[]> {
 
 export function presetTagsQuery(): ApiQueryOptions<PresetTagVO[]> {
   return { key: ["presetTags"], queryFn: getPresetTags, staleTime: 300_000 };
+}
+
+export function presetFieldsQuery(): ApiQueryOptions<PresetFieldVO[]> {
+  return { key: ["presetFields"], queryFn: getPresetFields, staleTime: 300_000 };
 }
 
 export function projectListQuery(
