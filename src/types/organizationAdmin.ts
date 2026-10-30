@@ -142,12 +142,13 @@ export interface ProjectTypeListDTO {
 }
 
 export interface ProjectTypeCustomFieldDTO {
-  presetFieldId: string;
+  presetFieldId?: string | null;
+  name: string;
   required: boolean;
 }
 
 export interface ProjectTypeCustomFieldVO {
-  presetFieldId: string;
+  presetFieldId?: string | null;
   name: string;
   required: boolean;
 }

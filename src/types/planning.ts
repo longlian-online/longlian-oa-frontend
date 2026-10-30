@@ -7,7 +7,7 @@ export type ProjectStatus =
   | "已归档";
 
 export interface ProjectTypeCustomFieldVO {
-  presetFieldId: string;
+  presetFieldId?: string | null;
   name: string;
   required: boolean;
 }

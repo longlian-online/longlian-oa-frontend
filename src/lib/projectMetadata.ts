@@ -79,7 +79,7 @@ export interface EditableProjectCustomField extends ProjectCustomField {
 }
 
 export interface ProjectTypeCustomFieldDefault {
-  presetFieldId: string;
+  presetFieldId?: string | null;
   name: string;
   required: boolean;
 }
@@ -119,7 +119,7 @@ export function applyTypeCustomFields(
       kept.push({
         ...field,
         name: match.name,
-        presetFieldId: match.presetFieldId,
+        presetFieldId: match.presetFieldId ?? undefined,
         required: match.required,
         fromType: true,
       });
@@ -133,7 +133,7 @@ export function applyTypeCustomFields(
       id: createId(),
       name: item.name,
       value: "",
-      presetFieldId: item.presetFieldId,
+      presetFieldId: item.presetFieldId ?? undefined,
       required: item.required,
       fromType: true,
     });

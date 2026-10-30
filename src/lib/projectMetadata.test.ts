@@ -235,6 +235,22 @@ test("type defaults fill empty forms and keep values already entered", (): void 
   ]);
 });
 
+test("custom type defaults fill the form without a preset reference", (): void => {
+  const fields = applyTypeCustomFields(
+    [],
+    [
+      { name: "备注", required: false },
+      { presetFieldId: "1", name: "作者", required: true },
+    ],
+    "all",
+    () => "custom-note",
+  );
+  expect(fields.map((field) => [field.name, field.presetFieldId, field.required])).toEqual([
+    ["备注", undefined, false],
+    ["作者", "1", true],
+  ]);
+});
+
 test("editing only appends missing required defaults", (): void => {
   const fields = applyTypeCustomFields(
     [{ id: "saved", name: "备注", value: "已有" }],

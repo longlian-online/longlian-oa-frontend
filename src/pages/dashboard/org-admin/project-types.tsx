@@ -119,7 +119,8 @@ function OrganizationProjectTypesContent() {
     setPriority(String(type.priority));
     setCustomFields(
       (type.customFields ?? []).map((field) => ({
-        presetFieldId: field.presetFieldId,
+        id: crypto.randomUUID(),
+        presetFieldId: field.presetFieldId ?? undefined,
         name: field.name,
         required: field.required,
       })),
@@ -145,8 +146,13 @@ function OrganizationProjectTypesContent() {
         return;
       }
 
+      if (customFields.some((field) => !field.name.trim())) {
+        $tip("请填写自定义表单的字段名", "error");
+        return;
+      }
       const customFieldPayload = customFields.map((field) => ({
-        presetFieldId: field.presetFieldId,
+        presetFieldId: field.presetFieldId ?? null,
+        name: field.name.trim(),
         required: field.required,
       }));
       if (editingType) {
