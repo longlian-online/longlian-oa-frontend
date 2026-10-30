@@ -14,6 +14,7 @@ import type {
   OrganizationBaseTaskCreateDTO,
   OrganizationBaseTaskListDTO,
   OrganizationBaseTaskVO,
+  TaskWebhookFailureVO,
   OrganizationInfoVO,
   OrganizationMemberListDTO,
   OrganizationMemberVO,
@@ -339,6 +340,22 @@ export async function getOrganizationBaseTaskList(
 export async function deleteOrganizationBaseTask(taskId: string): Promise<void> {
   return orgAdminRequest(`/orgadmin/task/base/${taskId}`, {
     method: "DELETE",
+  });
+}
+
+export async function getTaskWebhookFailures(
+  pageNum: number,
+  pageSize: number,
+): Promise<OrganizationPageResult<TaskWebhookFailureVO>> {
+  return orgAdminRequest("/orgadmin/task/webhook/failures", {
+    method: "POST",
+    body: JSON.stringify({ pageNum, pageSize }),
+  });
+}
+
+export async function replayTaskWebhook(messageId: string): Promise<void> {
+  return orgAdminRequest(`/orgadmin/task/webhook/${messageId}/replay`, {
+    method: "POST",
   });
 }
 

@@ -244,6 +244,8 @@ export interface OrganizationBaseTaskCreateDTO {
   description?: string;
   icon?: string;
   submitFields: TaskFormField[];
+  webhookUrl?: string;
+  webhookSecret?: string;
 }
 
 export interface OrganizationBaseTaskListDTO {
@@ -263,9 +265,21 @@ export interface OrganizationBaseTaskVO {
   description?: string;
   icon?: string;
   submitFields: TaskFormField[];
+  webhookUrl?: string | null;
+  webhookSecretConfigured?: boolean;
   refCount: number;
   status: OrganizationResourceStatus;
   createdAt?: string;
+}
+
+export interface TaskWebhookFailureVO {
+  id: string;
+  event?: string | null;
+  taskInstanceId?: string | null;
+  submissionId?: string | null;
+  lastError?: string | null;
+  attemptCount?: number;
+  updatedAt?: string;
 }
 
 export interface OrganizationTaskTemplateNodeDTO {
