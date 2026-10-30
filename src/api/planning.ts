@@ -7,6 +7,7 @@ import type {
   ProjectInfoVO,
   ProjectListDTO,
   ProjectTypeInfoVO,
+  PresetFieldVO,
   PresetTagVO,
   ProjectUpdateDTO,
 } from "@/types/planning";
@@ -31,6 +32,10 @@ export async function getProjectTypes(): Promise<ProjectTypeInfoVO[]> {
 
 export async function getPresetTags(): Promise<PresetTagVO[]> {
   return request("/preset-tags");
+}
+
+export async function getPresetFields(): Promise<PresetFieldVO[]> {
+  return request("/preset-fields");
 }
 
 export async function getProjectList(dto: ProjectListDTO): Promise<PageResult<ProjectInfoVO>> {
