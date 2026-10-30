@@ -7,6 +7,7 @@ import {
   LogOut,
   MonitorCog,
   Network,
+  ScrollText,
   UserRound,
   Users,
 } from "lucide-react";
@@ -35,6 +36,7 @@ const navItems = [
   { to: "/admin/storage-stats", label: "存储", icon: HardDrive },
   { to: "/admin/scheduled-tasks", label: "定时任务", icon: CalendarClock },
   { to: "/admin/system-info", label: "系统信息", icon: MonitorCog },
+  { to: "/admin/product-releases", label: "产品版本", icon: ScrollText },
 ] as const;
 
 export default function AdminLayout({ children, title, description }: AdminLayoutProps) {

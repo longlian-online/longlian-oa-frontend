@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactElement } from "react";
-import { Check, KeyRound, LogOut, Mail, Pencil, UserPen, UserRound } from "lucide-react";
+import {
+  Check,
+  KeyRound,
+  LogOut,
+  Mail,
+  Pencil,
+  ScrollText,
+  UserPen,
+  UserRound,
+} from "lucide-react";
 import { z } from "zod";
 import { Link, useNavigate } from "react-router";
 
@@ -460,6 +469,14 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
             >
               <UserPen className="h-4 w-4" />
               修改昵称
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+              onClick={() => void navigate("/dashboard/updates")}
+            >
+              <ScrollText className="h-4 w-4" />
+              更新记录
             </Button>
             <Button
               variant="ghost"
