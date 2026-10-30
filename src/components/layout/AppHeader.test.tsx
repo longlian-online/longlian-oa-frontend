@@ -26,10 +26,7 @@ import type { UseOrganizationSwitcherResult } from "@/hooks/useOrganizationSwitc
 import type { UserInfoVO } from "@/types/user";
 import type * as UserApi from "@/api/user";
 
-const { bindEmail, sendVerificationCode, updateMyInfo, currentUser } = vi.hoisted(() => ({
-  bindEmail: vi.fn(async () => undefined),
-  sendVerificationCode: vi.fn(async () => undefined),
-  updateMyInfo: vi.fn(async () => undefined),
+const { currentUser } = vi.hoisted(() => ({
   currentUser: {
     user: null as UserInfoVO | null,
     role: null as string | null,
@@ -38,15 +35,11 @@ const { bindEmail, sendVerificationCode, updateMyInfo, currentUser } = vi.hoiste
 
 vi.mock("@/api/user", async (importOriginal) => ({
   ...(await importOriginal<typeof UserApi>()),
-  bindEmail,
-  changePassword: vi.fn(),
   getInviteInfo: vi.fn(),
   joinOrganizationByInvite: vi.fn(),
-  updateMyInfo,
 }));
 
 vi.mock("@/api/auth", () => ({
-  sendVerificationCode,
   logout: vi.fn(),
 }));
 
@@ -63,10 +56,6 @@ vi.mock("@/hooks/useCurrentUser", () => ({
 
 vi.mock("@/hooks/useTheme", () => ({
   useTheme: () => ({ theme: "light", setTheme: () => undefined }),
-}));
-
-vi.mock("@/hooks/useUploadFile", () => ({
-  useUploadFile: () => ({ uploading: false, uploadFile: async () => ({ fileId: "1" }) }),
 }));
 
 vi.mock("@/hooks/usePendingPathname", () => ({
@@ -98,12 +87,6 @@ beforeEach((): void => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   currentUser.user = user(null);
   currentUser.role = null;
-  bindEmail.mockReset();
-  bindEmail.mockResolvedValue(undefined);
-  sendVerificationCode.mockReset();
-  sendVerificationCode.mockResolvedValue(undefined);
-  updateMyInfo.mockReset();
-  updateMyInfo.mockResolvedValue(undefined);
   saveSession({ token: TOKEN, userId: "1" });
   client = createQueryClient();
   notifyError.mockClear();
@@ -154,90 +137,25 @@ async function click(button: HTMLButtonElement): Promise<void> {
   });
 }
 
-async function typeInto(input: HTMLInputElement, value: string): Promise<void> {
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, value);
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-  });
-}
+test.each([null, "", "  ", "a@example.com"])(
+  "邮箱 %j 时菜单只进入个人设置",
+  async (email): Promise<void> => {
+    currentUser.user = user(email);
+    await mount();
+    expect(document.querySelector("a[href='/dashboard/settings']")?.textContent).toContain(
+      "个人设置",
+    );
+    expect(buttonsNamed("绑定邮箱")).toHaveLength(0);
+    expect(buttonsNamed("修改密码")).toHaveLength(0);
+    expect(buttonsNamed("修改昵称")).toHaveLength(0);
+  },
+);
 
-test.each([null, "", "  "])("邮箱 %j 时显示绑定邮箱", async (email): Promise<void> => {
-  currentUser.user = user(email);
-  await mount();
-  expect(buttonsNamed("绑定邮箱")).toHaveLength(1);
-  expect(buttonsNamed("修改密码")).toHaveLength(1);
-});
-
-test("已绑定邮箱时不显示绑定入口", async (): Promise<void> => {
-  currentUser.user = user("a@example.com");
-  await mount();
-  expect(buttonsNamed("绑定邮箱")).toHaveLength(0);
-  expect(buttonsNamed("修改密码")).toHaveLength(1);
-  expect(buttonsNamed("修改昵称")).toHaveLength(1);
-});
-
-test("从头像菜单修改昵称，空白和超长停在字段旁", async (): Promise<void> => {
-  currentUser.user = user("a@example.com");
-  await mount();
-  await click(buttonsNamed("修改昵称")[0]);
-  expect(document.querySelector("[data-slot='dialog-title']")?.textContent).toBe("修改昵称");
-
-  const dialog = document.querySelector("[data-slot='dialog-content']");
-  if (!(dialog instanceof HTMLElement)) throw new Error("缺少修改昵称对话框");
-  const nickname = dialog.querySelector("#nickname");
-  if (!(nickname instanceof HTMLInputElement)) throw new Error("缺少昵称输入框");
-  expect(nickname.value).toBe("遗留用户");
-
-  await typeInto(nickname, "   ");
-  const submit = buttonsNamed("保存", dialog)[0];
-  if (!submit) throw new Error("缺少保存按钮");
-  await click(submit);
-  expect(dialog.querySelector("#nickname-error")?.textContent).toBe("昵称不能为空");
-  expect(updateMyInfo).not.toHaveBeenCalled();
-
-  await typeInto(nickname, "名".repeat(21));
-  await click(submit);
-  expect(dialog.querySelector("#nickname-error")?.textContent).toBe("昵称最多20个字符");
-  expect(updateMyInfo).not.toHaveBeenCalled();
-
-  await typeInto(nickname, "  新昵称  ");
-  await click(submit);
-  await vi.waitFor(() => {
-    expect(updateMyInfo).toHaveBeenCalledWith({ nickname: "新昵称" });
-  });
-  expect(document.querySelector("[data-slot='dialog-title']")).toBeNull();
-});
-
-test("用户资料未返回时不显示绑定入口", async (): Promise<void> => {
+test("用户资料未返回时仍可进入个人设置", async (): Promise<void> => {
   currentUser.user = null;
   await mount();
+  expect(document.querySelector("a[href='/dashboard/settings']")).not.toBeNull();
   expect(buttonsNamed("绑定邮箱")).toHaveLength(0);
-  expect(buttonsNamed("修改密码")).toHaveLength(1);
-});
-
-test("提交绑定邮箱时验证码转成大写且不清除登录凭证", async (): Promise<void> => {
-  currentUser.user = user(null);
-  await mount();
-  await click(buttonsNamed("绑定邮箱")[0]);
-  expect(document.querySelector("[data-slot='dialog-title']")?.textContent).toBe("绑定邮箱");
-
-  const dialog = document.querySelector("[data-slot='dialog-content']");
-  if (!(dialog instanceof HTMLElement)) throw new Error("缺少绑定邮箱对话框");
-  const email = dialog.querySelector("#bind-email");
-  const code = dialog.querySelector("#bind-code");
-  if (!(email instanceof HTMLInputElement) || !(code instanceof HTMLInputElement)) {
-    throw new Error("缺少邮箱或验证码输入框");
-  }
-  await typeInto(email, "bind@example.com");
-  await typeInto(code, "a1b2c3");
-  const submit = buttonsNamed("绑定邮箱", dialog).at(-1);
-  if (!submit) throw new Error("缺少绑定提交按钮");
-  await click(submit);
-
-  await vi.waitFor(() => {
-    expect(bindEmail).toHaveBeenCalledWith({ email: "bind@example.com", code: "A1B2C3" });
-  });
-  expect(localStorage.getItem("token")).toBe(TOKEN);
 });
 
 function LocationProbe(): React.ReactElement {
