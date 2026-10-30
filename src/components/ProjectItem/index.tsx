@@ -1,13 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { ChevronRight, Loader2, Plus, Trash2, Workflow } from "lucide-react";
 
-import {
-  createItemDeletionRequest,
-  createProjectItem,
-  deleteProjectItem,
-  getTaskTemplateOptions,
-} from "@/api/projectItem";
+import { createItemDeletionRequest, deleteProjectItem } from "@/api/projectItem";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
@@ -20,16 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -46,11 +33,6 @@ interface ProjectItemSectionProps {
   renderHeader?: (onCreate: () => void) => ReactNode;
 }
 
-interface ProjectItemForm {
-  title: string;
-  taskTemplateId: string;
-}
-
 export default function ProjectItemSection({
   projectId,
   isCreator = false,
@@ -62,11 +44,9 @@ export default function ProjectItemSection({
   const [page, setPage] = usePageQuery();
   const [status, setStatus] = useState<ProjectItemListFilter | "">("IN_PROGRESS");
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [reasonItem, setReasonItem] = useState<ProjectItemListVO | null>(null);
   const [reason, setReason] = useState("");
   const actionLock = useRef(false);
-  const createSucceeded = useRef(false);
   const projectLifecycle = useRef({ id: projectId, generation: 0 });
   if (projectLifecycle.current.id !== projectId) {
     projectLifecycle.current = {
@@ -85,16 +65,6 @@ export default function ProjectItemSection({
   const isCurrent = (): boolean =>
     mounted.current && projectLifecycle.current.generation === generation;
   const itemsQuery = useApiQuery(projectItemsQuery(projectId, page, status));
-  const templatesQuery = useApiQuery({
-    key: ["templateOptions"],
-    queryFn: getTaskTemplateOptions,
-    enabled: dialogOpen,
-    staleTime: 300_000,
-  });
-  const createMutation = useApiMutation({
-    mutationFn: (dto: ProjectItemForm) => createProjectItem(projectId, dto),
-    invalidate: [["items"], ["projects"], ["workshop"], ["plaza"]],
-  });
   const deleteMutation = useApiMutation({
     mutationFn: (itemId: string) => deleteProjectItem(projectId, itemId),
     invalidate: [
@@ -115,46 +85,10 @@ export default function ProjectItemSection({
   const deleting = deleteMutation.isPending || requestMutation.isPending;
   const items = itemsQuery.data?.list ?? [];
   const total = itemsQuery.data?.total ?? 0;
-  const templates = templatesQuery.data ?? [];
   const loading = itemsQuery.isLoading;
-  const templateLoading = templatesQuery.isLoading;
-  const saving = createMutation.isPending;
-  const [form, setForm] = useState<ProjectItemForm>({
-    title: "",
-    taskTemplateId: "",
-  });
 
-  const canCreate = useMemo(
-    () => Boolean(dialogOpen && form.title.trim() && form.taskTemplateId && !saving),
-    [dialogOpen, form.taskTemplateId, form.title, saving],
-  );
-
-  function openCreateDialog(): void {
-    createSucceeded.current = false;
-    setForm({ title: "", taskTemplateId: "" });
-    setDialogOpen(true);
-  }
-
-  async function handleCreateItem(): Promise<void> {
-    if (!canCreate || actionLock.current || createSucceeded.current) return;
-    actionLock.current = true;
-
-    try {
-      await createMutation.mutateAsync({
-        title: form.title.trim(),
-        taskTemplateId: form.taskTemplateId,
-      });
-      if (!isCurrent()) return;
-      // 成功后直到下次打开表单都不再提交，避免关闭动画仍能接收第二次点击。
-      createSucceeded.current = true;
-      $tip("项目已创建", "success");
-      setDialogOpen(false);
-      setPage(1);
-    } catch {
-      // Mutation 的最终失败由共享错误入口提示，保留当前草稿。
-    } finally {
-      actionLock.current = false;
-    }
+  function openCreate(): void {
+    void navigate(`/dashboard/planning/${projectId}/items/new`, { state: location.state });
   }
 
   async function handleDeleteItem(item: ProjectItemListVO): Promise<void> {
@@ -201,7 +135,7 @@ export default function ProjectItemSection({
 
   return (
     <>
-      {renderHeader?.(openCreateDialog)}
+      {renderHeader?.(openCreate)}
       <section
         id="project-workspace"
         aria-labelledby="project-workspace-title"
@@ -225,7 +159,7 @@ export default function ProjectItemSection({
               </Button>
             )}
             {isCreator && !renderHeader && (
-              <Button size="sm" onClick={openCreateDialog}>
+              <Button size="sm" onClick={openCreate}>
                 <Plus className="h-4 w-4" />
                 创建项目
               </Button>
@@ -268,7 +202,7 @@ export default function ProjectItemSection({
             className="min-h-44"
             action={
               isCreator ? (
-                <Button size="sm" onClick={openCreateDialog}>
+                <Button size="sm" onClick={openCreate}>
                   <Plus className="h-4 w-4" />
                   创建项目
                 </Button>
@@ -356,69 +290,6 @@ export default function ProjectItemSection({
           />
         )}
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>创建项目</DialogTitle>
-              <DialogDescription>
-                项目必须绑定一个流程模板，创建后会生成对应任务流。
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">项目名</label>
-                <Input
-                  placeholder="例如：第一话翻译"
-                  value={form.title}
-                  onChange={(event) => setForm({ ...form, title: event.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">流程模板</label>
-                <Select
-                  value={form.taskTemplateId}
-                  onValueChange={(value: string | null) =>
-                    setForm({ ...form, taskTemplateId: value || "" })
-                  }
-                  disabled={templateLoading}
-                >
-                  <SelectTrigger className="w-full" disabled={templateLoading}>
-                    {templateLoading ? (
-                      <span className="flex flex-1 items-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        正在加载模板
-                      </span>
-                    ) : (
-                      <SelectValue placeholder="选择流程模板" />
-                    )}
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates.map((template) => (
-                      <SelectItem key={template.id} value={String(template.id)}>
-                        {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setDialogOpen(false)}>
-                取消
-              </Button>
-              <Button disabled={!canCreate} onClick={() => void handleCreateItem()}>
-                {saving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-                创建
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
         <Dialog open={reasonItem !== null} onOpenChange={(open) => !open && setReasonItem(null)}>
           <DialogContent>
             <DialogHeader>
