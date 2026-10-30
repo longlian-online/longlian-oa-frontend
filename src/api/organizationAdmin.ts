@@ -16,7 +16,10 @@ import type {
   OrganizationBaseTaskVO,
   OrganizationInfoVO,
   OrganizationMemberListDTO,
+  OrganizationMemberNoteDTO,
   OrganizationMemberVO,
+  OrganizationMemberWorkloadListDTO,
+  OrganizationMemberWorkloadVO,
   OrganizationPageResult,
   OrganizationProjectListDTO,
   OrganizationProjectVO,
@@ -67,6 +70,25 @@ export async function getOrganizationMembers(
 ): Promise<OrganizationPageResult<OrganizationMemberVO>> {
   return orgAdminRequest("/orgadmin/members", {
     method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function getMemberWorkloads(
+  dto: OrganizationMemberWorkloadListDTO,
+): Promise<OrganizationPageResult<OrganizationMemberWorkloadVO>> {
+  return orgAdminRequest("/orgadmin/members/workloads", {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function updateMemberNote(
+  memberId: string,
+  dto: OrganizationMemberNoteDTO,
+): Promise<void> {
+  await orgAdminRequest(`/orgadmin/members/${memberId}/note`, {
+    method: "PUT",
     body: JSON.stringify(dto),
   });
 }

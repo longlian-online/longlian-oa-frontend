@@ -58,6 +58,7 @@ function getBreadcrumbItems(
     if (segments[2] === "preset-tags") items.push({ label: "标签" });
     if (segments[2] === "preset-fields") items.push({ label: "表单字段" });
     if (segments[2] === "members") items.push({ label: "成员" });
+    if (segments[2] === "workload") items.push({ label: "负载" });
     if (segments[2] === "applications") items.push({ label: "入组申请" });
     if (segments[2] === "deletion-requests") items.push({ label: "删除请求" });
     if (segments[2] === "tasks") items.push({ label: "任务" });

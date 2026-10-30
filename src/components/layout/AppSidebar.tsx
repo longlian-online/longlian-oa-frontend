@@ -55,6 +55,11 @@ const orgAdminItems: readonly SidebarItem[] = [
     activePrefixes: ["/dashboard/org-admin/members"],
   },
   {
+    to: "/dashboard/org-admin/workload",
+    label: "负载",
+    activePrefixes: ["/dashboard/org-admin/workload"],
+  },
+  {
     to: "/dashboard/org-admin/invites",
     label: "邀请码",
     activePrefixes: ["/dashboard/org-admin/invites"],
