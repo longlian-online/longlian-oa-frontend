@@ -6,6 +6,7 @@ import AppSidebar from "./AppSidebar";
 import PageTransition from "./PageTransition";
 import OrganizationSidebar from "@/components/layout/OrganizationSidebar";
 import PageLoading from "@/components/PageLoading";
+import ProductReleaseNotice from "@/components/ProductReleaseNotice";
 import { useOrganizationSwitcher } from "@/hooks/useOrganizationSwitcher";
 import { usePageLoadingVisible, usePendingPathname } from "@/hooks/usePendingPathname";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ export default function AppLayout(): ReactElement {
   return (
     <CurrentUserProvider>
       <div className="bg-background flex h-svh flex-col overflow-hidden">
+        <ProductReleaseNotice />
         <AppHeader switcher={switcher} onMore={() => setIsOrganizationListOpen(true)} />
         <div className="flex min-h-0 flex-1 overflow-hidden">
           {/* 宽度立即切换。对 width 做过渡会在收起过程中逐帧重排主区域。 */}
