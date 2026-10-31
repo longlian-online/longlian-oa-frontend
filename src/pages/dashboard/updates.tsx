@@ -6,6 +6,7 @@ import { markProductReleaseSeen } from "@/api/productRelease";
 import PaginationBar from "@/components/PaginationBar";
 import { Button } from "@/components/ui/button";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
+import ReleaseMarkdown from "@/components/ReleaseMarkdown";
 import { formatProductVersion, formatReleaseTime } from "@/lib/productRelease";
 import {
   ADMIN_PRODUCT_RELEASE_PAGE_SIZE,
@@ -14,12 +15,6 @@ import {
 
 import type { ReactElement } from "react";
 import type { ProductReleaseNotice } from "@/types/productRelease";
-
-const GROUPS = [
-  ["added", "新增"],
-  ["changed", "调整"],
-  ["fixed", "修复"],
-] as const;
 
 export default function ProductReleaseHistoryPage(): ReactElement {
   const [page, setPage] = useState(1);
@@ -76,18 +71,7 @@ function ReleaseCard({ release }: { release: ProductReleaseNotice }): ReactEleme
         </time>
       </div>
       {release.summary ? <p className="text-sm">{release.summary}</p> : null}
-      {GROUPS.map(([key, label]) =>
-        release[key].length === 0 ? null : (
-          <section key={key}>
-            <h3 className="text-sm font-medium">{label}</h3>
-            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
-              {release[key].map((item, index) => (
-                <li key={`${release.id}-${key}-${index}`}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        ),
-      )}
+      <ReleaseMarkdown text={release.content} />
     </article>
   );
 }

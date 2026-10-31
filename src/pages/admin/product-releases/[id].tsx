@@ -31,9 +31,7 @@ function formFromDetail(detail: ProductReleaseDetail): ProductReleaseFormValues 
     backendVersion: detail.backendVersion,
     title: detail.title,
     summary: detail.summary,
-    added: detail.added.join("\n"),
-    changed: detail.changed.join("\n"),
-    fixed: detail.fixed.join("\n"),
+    content: detail.content,
   };
 }
 

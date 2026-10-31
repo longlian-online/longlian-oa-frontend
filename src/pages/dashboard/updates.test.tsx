@@ -92,9 +92,7 @@ describe("product release history", () => {
           title: "任务大厅",
           summary: "可以按当前阶段查看",
           publishedAt: "2026-03-21 18:40:00",
-          added: ["当前阶段"],
-          changed: [],
-          fixed: [],
+          content: "当前阶段",
         },
       ],
     });

@@ -1,16 +1,11 @@
 export type ProductReleaseStatus = "DRAFT" | "PUBLISHED" | "WITHDRAWN";
 
-export interface ProductReleaseChangeGroups {
-  added: string[];
-  changed: string[];
-  fixed: string[];
-}
-
-export interface ProductReleaseNotice extends ProductReleaseChangeGroups {
+export interface ProductReleaseNotice {
   id: string;
   version: string;
   title: string;
   summary: string;
+  content: string;
   publishedAt?: string | null;
 }
 
@@ -30,8 +25,9 @@ export interface ProductReleaseListItem {
   updatedAt?: string | null;
 }
 
-export interface ProductReleaseDetail extends ProductReleaseListItem, ProductReleaseChangeGroups {
+export interface ProductReleaseDetail extends ProductReleaseListItem {
   summary: string;
+  content: string;
 }
 
 export interface ProductReleaseBaseline {
@@ -50,9 +46,7 @@ export interface ProductReleaseSaveDTO {
   backendVersion: string;
   title: string;
   summary: string;
-  added: string[];
-  changed: string[];
-  fixed: string[];
+  content: string;
   publish?: boolean;
 }
 
@@ -62,7 +56,5 @@ export interface ProductReleaseFormValues {
   backendVersion: string;
   title: string;
   summary: string;
-  added: string;
-  changed: string;
-  fixed: string;
+  content: string;
 }

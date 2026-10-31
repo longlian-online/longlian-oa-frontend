@@ -27,9 +27,7 @@ function detail(raw: ProductReleaseDetail): ProductReleaseDetail {
   return {
     ...listItem(raw),
     summary: raw.summary ?? "",
-    added: raw.added ?? [],
-    changed: raw.changed ?? [],
-    fixed: raw.fixed ?? [],
+    content: raw.content ?? "",
   };
 }
 

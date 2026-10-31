@@ -24,13 +24,6 @@ export function normalizeVersionInput(value: string): string {
   return value.trim().replace(/^[vV]/, "");
 }
 
-export function parseChangeLines(value: string): string[] {
-  return value
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-}
-
 export function statusLabel(status: ProductReleaseStatus): string {
   if (status === "PUBLISHED") return "已发布";
   if (status === "WITHDRAWN") return "已撤回";
@@ -51,14 +44,11 @@ export function validateProductRelease(
     if (!normalized) return `${label}不能为空`;
     if (!VERSION.test(normalized)) return "版本格式不正确";
   }
+  if (values.content.trim().length > 4000) return "更新说明最多 4000 字";
   if (!publish) return null;
   if (!values.title.trim()) return "标题不能为空";
   if (!values.summary.trim()) return "摘要不能为空";
-  const count =
-    parseChangeLines(values.added).length +
-    parseChangeLines(values.changed).length +
-    parseChangeLines(values.fixed).length;
-  if (count === 0) return "至少写一条变更";
+  if (!values.content.trim()) return "更新说明不能为空";
   return null;
 }
 
@@ -72,9 +62,7 @@ export function toProductReleasePayload(
     backendVersion: normalizeVersionInput(values.backendVersion),
     title: values.title.trim(),
     summary: values.summary.trim(),
-    added: parseChangeLines(values.added),
-    changed: parseChangeLines(values.changed),
-    fixed: parseChangeLines(values.fixed),
+    content: values.content.trim(),
     publish,
   };
 }

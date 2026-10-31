@@ -83,9 +83,7 @@ describe("product release notice", () => {
         title: "任务大厅",
         summary: "可以按当前阶段查看",
         publishedAt: "2026-03-21 18:40:00",
-        added: ["当前阶段只展示待接取任务"],
-        changed: [],
-        fixed: [],
+        content: "- 当前阶段只展示待接取任务",
       },
     });
     await renderNotice();
@@ -104,9 +102,7 @@ describe("product release notice", () => {
         version: "1.3.0",
         title: "任务大厅",
         summary: "可以按当前阶段查看",
-        added: [],
-        changed: [],
-        fixed: [],
+        content: "",
       },
     });
     await renderNotice();

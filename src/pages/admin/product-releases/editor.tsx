@@ -30,9 +30,7 @@ export function emptyProductReleaseForm(
     backendVersion: baseline?.backendVersion ?? "",
     title: "",
     summary: "",
-    added: "",
-    changed: "",
-    fixed: "",
+    content: "",
   };
 }
 
@@ -95,24 +93,16 @@ export default function ProductReleaseEditor({
           onChange={(event) => patch({ summary: event.target.value })}
         />
       </Field>
-      <ChangeField
-        label="新增"
-        value={values.added}
-        disabled={readOnly || pending}
-        onChange={(added) => patch({ added })}
-      />
-      <ChangeField
-        label="调整"
-        value={values.changed}
-        disabled={readOnly || pending}
-        onChange={(changed) => patch({ changed })}
-      />
-      <ChangeField
-        label="修复"
-        value={values.fixed}
-        disabled={readOnly || pending}
-        onChange={(fixed) => patch({ fixed })}
-      />
+      <Field label="更新说明">
+        <Textarea
+          value={values.content}
+          disabled={readOnly || pending}
+          maxLength={4000}
+          rows={12}
+          onChange={(event) => patch({ content: event.target.value })}
+        />
+      </Field>
+      <p className="-mt-2 text-xs text-muted-foreground">Markdown，最多 4000 字。</p>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex flex-wrap justify-end gap-2">
         <Button
@@ -157,28 +147,6 @@ function VersionField({
   return (
     <Field label={label}>
       <Input value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} />
-    </Field>
-  );
-}
-
-function ChangeField({
-  label,
-  value,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  disabled: boolean;
-  onChange: (value: string) => void;
-}): ReactElement {
-  return (
-    <Field label={label}>
-      <Textarea
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-      />
     </Field>
   );
 }

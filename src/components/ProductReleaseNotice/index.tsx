@@ -15,15 +15,9 @@ import {
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { formatProductVersion } from "@/lib/productRelease";
 import { currentProductReleaseQuery } from "@/queries/productRelease";
+import ReleaseMarkdown from "@/components/ReleaseMarkdown";
 
 import type { ReactElement } from "react";
-import type { ProductReleaseNotice as Notice } from "@/types/productRelease";
-
-const GROUPS = [
-  ["added", "新增"],
-  ["changed", "调整"],
-  ["fixed", "修复"],
-] as const;
 
 export default function ProductReleaseNotice(): ReactElement | null {
   const navigate = useNavigate();
@@ -62,7 +56,7 @@ export default function ProductReleaseNotice(): ReactElement | null {
           <DialogTitle>{formatProductVersion(release.version)}</DialogTitle>
           <DialogDescription>{release.summary}</DialogDescription>
         </DialogHeader>
-        <ReleaseChanges release={release} olderCount={query.data?.olderCount ?? 0} />
+        <ReleaseBody content={release.content} olderCount={query.data?.olderCount ?? 0} />
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => void dismiss(true)}>
             以往更新
@@ -76,27 +70,16 @@ export default function ProductReleaseNotice(): ReactElement | null {
   );
 }
 
-function ReleaseChanges({
-  release,
+function ReleaseBody({
+  content,
   olderCount,
 }: {
-  release: Notice;
+  content: string;
   olderCount: number;
 }): ReactElement {
   return (
-    <div className="flex flex-col gap-4">
-      {GROUPS.map(([key, label]) =>
-        release[key].length === 0 ? null : (
-          <section key={key}>
-            <h3 className="text-sm font-medium">{label}</h3>
-            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
-              {release[key].map((item, index) => (
-                <li key={`${key}-${index}`}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        ),
-      )}
+    <div className="flex max-h-80 flex-col gap-4 overflow-y-auto">
+      <ReleaseMarkdown text={content} />
       {olderCount > 0 ? (
         <p className="text-sm text-muted-foreground">另有 {olderCount} 条更早的更新</p>
       ) : null}

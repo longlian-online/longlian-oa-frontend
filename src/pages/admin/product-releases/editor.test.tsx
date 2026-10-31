@@ -123,10 +123,8 @@ describe("product release editor", () => {
       backendVersion: "1.0.52",
       title: "任务大厅",
       summary: "摘要",
+      content: "一条",
       status: "PUBLISHED",
-      added: ["一条"],
-      changed: [],
-      fixed: [],
     });
     await render(<EditProductReleasePage />);
     await vi.waitFor(() => expect(inputValue("产品版本")).toBe("1.3.0"));

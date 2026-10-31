@@ -12,7 +12,7 @@ function asId(value: string | number): string {
 }
 
 function notice(raw: ProductReleaseNotice): ProductReleaseNotice {
-  return { ...raw, id: asId(raw.id) };
+  return { ...raw, id: asId(raw.id), content: raw.content ?? "" };
 }
 
 export async function getCurrentProductRelease(): Promise<ProductReleaseCurrent> {
