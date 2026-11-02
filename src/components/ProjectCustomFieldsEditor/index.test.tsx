@@ -71,3 +71,63 @@ test("adds, edits, and removes name/value rows without dropping an empty name", 
   await act(async () => remove.click());
   expect(editor.fields()).toEqual([{ id: editor.fields()[0]?.id, name: "", value: "只有值" }]);
 });
+
+test("selecting a preset field fills the name and leaves the value unchanged", async () => {
+  let fields: EditableProjectCustomField[] = [{ id: "field-1", name: "", value: "已填" }];
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  const render = (): void => {
+    act(() => {
+      root?.render(
+        <ProjectCustomFieldsEditor
+          fields={fields}
+          presets={[{ id: "preset-1", name: "作者" }]}
+          onChange={(next) => {
+            fields = next;
+            render();
+          }}
+        />,
+      );
+    });
+  };
+  render();
+
+  const open = container.querySelector<HTMLButtonElement>(
+    'button[aria-label="选择字段 1 的预置表单字段"]',
+  );
+  if (!open) throw new Error("缺少预置字段按钮");
+  await act(async () => open.click());
+  const option = container.querySelector<HTMLButtonElement>('[role="option"]');
+  if (!option) throw new Error("缺少预置字段选项");
+  await act(async () => option.click());
+
+  expect(fields).toEqual([{ id: "field-1", name: "作者", value: "已填" }]);
+});
+
+test("required fields keep their name and cannot be removed", async () => {
+  let fields: EditableProjectCustomField[] = [
+    { id: "field-1", name: "作者", value: "", required: true, fromType: true },
+  ];
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <ProjectCustomFieldsEditor
+        fields={fields}
+        showErrors
+        onChange={(next) => {
+          fields = next;
+        }}
+      />,
+    );
+  });
+
+  const name = container.querySelector<HTMLInputElement>('input[aria-label="字段 1 名称"]');
+  const value = container.querySelector<HTMLInputElement>('input[aria-label="字段 1 值"]');
+  expect(name?.readOnly).toBe(true);
+  expect(value?.getAttribute("aria-invalid")).toBe("true");
+  expect(container.querySelector('button[aria-label="删除字段 1"]')).toBeNull();
+  expect(container.textContent).toContain("必填");
+});

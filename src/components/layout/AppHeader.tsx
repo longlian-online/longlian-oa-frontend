@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactElement } from "react";
-import { Check, LogOut, Settings, UserRound } from "lucide-react";
+import { Check, LogOut, ScrollText, Settings, UserRound } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 
 import { isOrganizationManagerRole } from "@/lib/organizationRole";
@@ -232,6 +232,14 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
               <Settings className="h-4 w-4" />
               个人设置
             </Link>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+              onClick={() => void navigate("/dashboard/updates")}
+            >
+              <ScrollText className="h-4 w-4" />
+              更新记录
+            </Button>
             <Button
               variant="ghost"
               className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"

@@ -6,15 +6,27 @@ export type ProjectStatus =
   | "已完成"
   | "已归档";
 
+export interface ProjectTypeCustomFieldVO {
+  presetFieldId?: string | null;
+  name: string;
+  required: boolean;
+}
+
 export interface ProjectTypeInfoVO {
   id: string;
   name: string;
+  customFields?: ProjectTypeCustomFieldVO[];
 }
 
 export interface PresetTagVO {
   id: string;
   name: string;
   color?: string | null;
+}
+
+export interface PresetFieldVO {
+  id: string;
+  name: string;
 }
 
 export interface ProjectInfoVO {

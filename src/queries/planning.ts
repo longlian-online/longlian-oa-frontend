@@ -1,14 +1,22 @@
-import { getPresetTags, getProjectDetail, getProjectList, getProjectTypes } from "@/api/planning";
+import {
+  getPresetFields,
+  getPresetTags,
+  getProjectDetail,
+  getProjectList,
+  getProjectTypes,
+} from "@/api/planning";
 import { getPlazaTaskTypes, getTaskPlaza } from "@/api/plaza";
-import { getProjectItemList } from "@/api/projectItem";
+import { getProjectItemList, getTaskTemplateOptions } from "@/api/projectItem";
 import { getItemTaskFlow, getItemTaskInstances } from "@/api/workflowInstance";
 
 import type { ApiQueryOptions } from "@/lib/apiQuery";
+import type { TaskTemplateOptionVO } from "@/types/projectItem";
 import type {
   PageResult,
   ProjectDetailInfoVO,
   ProjectInfoVO,
   ProjectListDTO,
+  PresetFieldVO,
   ProjectTypeInfoVO,
   PresetTagVO,
 } from "@/types/planning";
@@ -34,6 +42,10 @@ export function presetTagsQuery(): ApiQueryOptions<PresetTagVO[]> {
   return { key: ["presetTags"], queryFn: getPresetTags, staleTime: 300_000 };
 }
 
+export function presetFieldsQuery(): ApiQueryOptions<PresetFieldVO[]> {
+  return { key: ["presetFields"], queryFn: getPresetFields, staleTime: 300_000 };
+}
+
 export function projectListQuery(
   pageNum = 1,
   keyword = "",
@@ -49,6 +61,14 @@ export function projectListQuery(
     ...timeSort,
   };
   return { key: ["projects", "list", params], queryFn: () => getProjectList(params) };
+}
+
+export function taskTemplateOptionsQuery(): ApiQueryOptions<TaskTemplateOptionVO[]> {
+  return {
+    key: ["templateOptions"],
+    queryFn: getTaskTemplateOptions,
+    staleTime: 300_000,
+  };
 }
 
 export function projectDetailQuery(

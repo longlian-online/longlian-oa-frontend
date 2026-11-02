@@ -16,7 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 import {
+  applyTypeCustomFields,
   buildProjectMetadata,
+  missingRequiredFieldNames,
   normalizeProjectMetadataTagColor,
   parseProjectCustomFields,
   parseProjectMetadataTags,
@@ -27,7 +29,7 @@ import { getCurrentOrgId } from "@/lib/session";
 import { centerCropSquare, PROJECT_IMAGE_MAX_BYTES } from "@/lib/imageCrop";
 import { requestImageCrop, UploadCancelledError } from "@/lib/imageCropRequest";
 import { fileFromPreview } from "@/lib/projectThumbnail";
-import { presetTagsQuery } from "@/queries/planning";
+import { presetFieldsQuery, presetTagsQuery } from "@/queries/planning";
 
 import type { UploadedFileInfo } from "@/types/file";
 import type {
@@ -55,6 +57,11 @@ export default function CreateProject({ project }: CreateProjectProps) {
     id: tag.id,
     name: tag.name,
     color: normalizeProjectMetadataTagColor(tag.color),
+  }));
+  const presetFieldQuery = useApiQuery(presetFieldsQuery());
+  const presetFields = (presetFieldQuery.data ?? []).map((field) => ({
+    id: field.id,
+    name: field.name,
   }));
   const isEditing = Boolean(project);
   const coverBizId = project ? String(project.id) : (getCurrentOrgId() ?? "cover");
@@ -220,6 +227,22 @@ export default function CreateProject({ project }: CreateProjectProps) {
     }
   }, [formData.typeId, project, projectTypes]);
 
+  const appliedTypeId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!formData.typeId || appliedTypeId.current === formData.typeId) return;
+    const selectedType = projectTypes.find((type) => type.id === formData.typeId);
+    if (!selectedType) return;
+    const defaults = (selectedType.customFields ?? []).map((field) => ({
+      presetFieldId: field.presetFieldId,
+      name: field.name,
+      required: field.required,
+    }));
+    setCustomFields((current) =>
+      applyTypeCustomFields(current, defaults, isEditing ? "required" : "all"),
+    );
+    appliedTypeId.current = formData.typeId;
+  }, [formData.typeId, isEditing, projectTypes]);
+
   const submitLock = useRef(false);
   async function handleSubmit(): Promise<void> {
     if (submitLock.current || loading || thumbnailBusy) return;
@@ -232,6 +255,12 @@ export default function CreateProject({ project }: CreateProjectProps) {
     const pendingTagValue = tagDraft.value.trim();
     if (!pendingTagKey && pendingTagValue) {
       $tip("请填写标签名", "error");
+      return;
+    }
+    const missingRequired = missingRequiredFieldNames(customFields);
+    if (missingRequired.length > 0) {
+      setShowInvalid(true);
+      $tip(`请填写必填字段：${missingRequired.join("、")}`, "error");
       return;
     }
 
@@ -526,6 +555,11 @@ export default function CreateProject({ project }: CreateProjectProps) {
           </section>
           <ProjectCustomFieldsEditor
             fields={customFields}
+            presets={presetFields}
+            presetsStatus={
+              presetFieldQuery.isPending ? "loading" : presetFieldQuery.isError ? "error" : "ready"
+            }
+            showErrors={showInvalid}
             disabled={loading}
             onChange={setCustomFields}
           />

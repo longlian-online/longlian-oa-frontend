@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
@@ -138,29 +138,13 @@ function button(name: string, scope: ParentNode = document): HTMLButtonElement {
 
 function dialog(): HTMLElement {
   const found = document.querySelector<HTMLElement>('[role="dialog"]');
-  if (!found) throw new Error("缺少创建弹窗");
+  if (!found) throw new Error("缺少弹窗");
   return found;
 }
 
-async function fillForm(): Promise<void> {
-  await act(async () => button("创建项目").click());
-  await waitFor(() =>
-    expect(dialog().querySelector('[role="combobox"]')?.hasAttribute("disabled")).toBe(false),
-  );
-  const input = dialog().querySelector("input");
-  if (!input) throw new Error("缺少项目名输入框");
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
-      input,
-      "第一话",
-    );
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    const select = dialog().querySelector<HTMLElement>('[role="combobox"]');
-    select?.click();
-  });
-  await waitFor(() => expect(document.querySelector('[role="option"]')).not.toBeNull());
-  await act(async () => document.querySelector<HTMLElement>('[role="option"]')?.click());
-  expect(button("创建", dialog()).disabled).toBe(false);
+function LocationProbe() {
+  const location = useLocation();
+  return <div>{location.pathname}</div>;
 }
 
 function labeled(name: string): HTMLButtonElement | undefined {
@@ -176,6 +160,7 @@ async function mount(isCreator = true): Promise<void> {
         <MemoryRouter>
           <ConfirmDialogProvider>
             <ProjectItemSection projectId="21" isCreator={isCreator} />
+            <LocationProbe />
           </ConfirmDialogProvider>
         </MemoryRouter>
       </QueryClientProvider>,
@@ -184,50 +169,11 @@ async function mount(isCreator = true): Promise<void> {
   await waitFor(() => expect(container.textContent).toContain(listed[0]?.title ?? "暂无项目"));
 }
 
-test("成功关闭动画期间不能再次创建，重新打开后可创建新项目", async (): Promise<void> => {
+test("创建项目进入创建页，而不是在列表里弹窗", async (): Promise<void> => {
   await mount();
-  await fillForm();
-  const popup = dialog();
-  const submit = button("创建", popup);
-  await act(async () => {
-    submit.click();
-    submit.click();
-  });
-  expect(creates).toBe(1);
-  await waitFor(() => expect(submit.disabled).toBe(true));
-  await act(async () => response.resolve(new Response('{"code":0}')));
-  await waitFor(() => expect(popup.hasAttribute("data-closed")).toBe(true));
-  expect(popup.isConnected).toBe(true);
-  expect(submit.disabled).toBe(true);
-  await act(async () => submit.click());
-  expect(creates).toBe(1);
-
-  await act(async () => exitAnimation.resolve());
-  await waitFor(() => expect(popup.isConnected).toBe(false));
-  await fillForm();
-  await act(async () => button("创建", dialog()).click());
-  await waitFor(() => expect(creates).toBe(2));
-});
-
-test("创建失败保留表单并允许直接重试", async (): Promise<void> => {
-  await mount();
-  await fillForm();
-  const popup = dialog();
-  const submit = button("创建", popup);
-  await act(async () => submit.click());
-  await waitFor(() => expect(submit.disabled).toBe(true));
-  await act(async () => response.resolve(new Response('{"code":400,"msg":"创建失败"}')));
-  await waitFor(() => expect(submit.disabled).toBe(false));
-  expect(popup.hasAttribute("data-closed")).toBe(false);
-  expect(popup.querySelector("input")?.value).toBe("第一话");
-  expect(popup.querySelector('[role="combobox"]')?.textContent).toContain("长工作流");
-
-  response = deferred<Response>();
-  await act(async () => submit.click());
-  expect(creates).toBe(2);
-  await act(async () => response.resolve(new Response('{"code":0}')));
-  await waitFor(() => expect(popup.hasAttribute("data-closed")).toBe(true));
-  expect(submit.disabled).toBe(true);
+  await act(async () => button("创建项目").click());
+  expect(container.textContent).toContain("/dashboard/planning/21/items/new");
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
 
 test("没有已提交任务时负责人确认后直接删除", async (): Promise<void> => {

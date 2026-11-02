@@ -30,6 +30,9 @@ import type {
   ProjectTypeListDTO,
   ProjectTypeUpdateDTO,
   ProjectTypeVO,
+  OrganizationPresetFieldListDTO,
+  OrganizationPresetFieldVO,
+  OrganizationPresetFieldWriteDTO,
   OrganizationPresetTagListDTO,
   OrganizationPresetTagVO,
   OrganizationPresetTagWriteDTO,
@@ -225,6 +228,44 @@ export async function updateOrganizationPresetTag(
 
 export async function deleteOrganizationPresetTag(tagId: string): Promise<void> {
   return orgAdminRequest(`/orgadmin/preset-tags/${tagId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getOrganizationPresetFields(
+  dto: OrganizationPresetFieldListDTO,
+): Promise<OrganizationPageResult<OrganizationPresetFieldVO>> {
+  return orgAdminRequest(
+    withQuery("/orgadmin/preset-fields", {
+      keyword: dto.keyword,
+      pageNum: dto.pageNum,
+      pageSize: dto.pageSize,
+      orderDir: dto.orderDir,
+    }),
+  );
+}
+
+export async function createOrganizationPresetField(
+  dto: OrganizationPresetFieldWriteDTO,
+): Promise<void> {
+  return orgAdminRequest("/orgadmin/preset-fields", {
+    method: "POST",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function updateOrganizationPresetField(
+  fieldId: string,
+  dto: OrganizationPresetFieldWriteDTO,
+): Promise<void> {
+  return orgAdminRequest(`/orgadmin/preset-fields/${fieldId}`, {
+    method: "PUT",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function deleteOrganizationPresetField(fieldId: string): Promise<void> {
+  return orgAdminRequest(`/orgadmin/preset-fields/${fieldId}`, {
     method: "DELETE",
   });
 }
