@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import type { ReactElement } from "react";
 import type { ProductReleaseFormValues } from "@/types/productRelease";
 
+import { componentVersionFromBuild } from "@/lib/productRelease";
+
 export type ProductReleaseEditorMode = "create" | "draft" | "published" | "withdrawn";
 
 interface ProductReleaseEditorProps {
@@ -22,12 +24,12 @@ interface ProductReleaseEditorProps {
 }
 
 export function emptyProductReleaseForm(
-  baseline?: { frontendVersion?: string; backendVersion?: string } | null,
+  current?: { frontendVersion?: string | null; backendVersion?: string | null } | null,
 ): ProductReleaseFormValues {
   return {
     version: "",
-    frontendVersion: baseline?.frontendVersion ?? "",
-    backendVersion: baseline?.backendVersion ?? "",
+    frontendVersion: componentVersionFromBuild(current?.frontendVersion),
+    backendVersion: componentVersionFromBuild(current?.backendVersion),
     title: "",
     summary: "",
     content: "",

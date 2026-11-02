@@ -24,6 +24,14 @@ export function normalizeVersionInput(value: string): string {
   return value.trim().replace(/^[vV]/, "");
 }
 
+/**
+ * 构建版本可能带预发布后缀（如 1.0.53-SNAPSHOT），产品版本只接受 x.y.z。
+ */
+export function componentVersionFromBuild(value?: string | null): string {
+  const matched = /^v?(\d+\.\d+\.\d+)/.exec(value?.trim() ?? "");
+  return matched ? matched[1] : "";
+}
+
 export function statusLabel(status: ProductReleaseStatus): string {
   if (status === "PUBLISHED") return "已发布";
   if (status === "WITHDRAWN") return "已撤回";

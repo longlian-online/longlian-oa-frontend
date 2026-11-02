@@ -6,15 +6,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
 
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
+import { componentVersionFromBuild } from "@/lib/productRelease";
 import { clearAdminSession, saveAdminSession } from "@/lib/session";
+import { APP_VERSION } from "@/release";
 
 import CreateProductReleasePage from "./create";
 import EditProductReleasePage from "./[id]";
 
-const { getProductReleaseBaseline, getAdminProductRelease } = vi.hoisted(() => ({
+const { getProductReleaseBaseline, getAdminProductRelease, getSystemInfo } = vi.hoisted(() => ({
   getProductReleaseBaseline: vi.fn(),
   getAdminProductRelease: vi.fn(),
+  getSystemInfo: vi.fn(),
 }));
+
+vi.mock("@/api/system", () => ({ getSystemInfo }));
 
 vi.mock("@/api/adminProductRelease", () => ({
   getProductReleaseBaseline,
@@ -56,6 +61,7 @@ beforeEach(() => {
   installStorage();
   getProductReleaseBaseline.mockReset();
   getAdminProductRelease.mockReset();
+  getSystemInfo.mockReset();
   saveAdminSession({ adminId: "1", username: "root", role: "ADMIN", token: "admin-token" });
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -104,15 +110,20 @@ function inputDisabled(label: string): boolean {
 }
 
 describe("product release editor", () => {
-  test("prefills the two component versions and leaves the product version empty", async () => {
+  test("prefills the two component versions from the current build and leaves the product version empty", async () => {
+    getSystemInfo.mockResolvedValue({ displayName: "longlian-oa", version: "1.0.53-SNAPSHOT" });
     getProductReleaseBaseline.mockResolvedValue({
-      frontendVersion: "0.0.18",
+      version: "1.2.0",
+      frontendVersion: "0.0.17",
       backendVersion: "1.0.52",
     });
     await render(<CreateProductReleasePage />);
-    await vi.waitFor(() => expect(inputValue("前端版本")).toBe("0.0.18"));
-    expect(inputValue("后端版本")).toBe("1.0.52");
+    await vi.waitFor(() =>
+      expect(inputValue("前端版本")).toBe(componentVersionFromBuild(APP_VERSION)),
+    );
+    expect(inputValue("后端版本")).toBe("1.0.53");
     expect(inputValue("产品版本")).toBe("");
+    expect(container?.textContent).toContain("当前最新 v1.2.0");
   });
 
   test("locks the version binding after publish", async () => {

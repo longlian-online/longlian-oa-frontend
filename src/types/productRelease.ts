@@ -31,8 +31,10 @@ export interface ProductReleaseDetail extends ProductReleaseListItem {
 }
 
 export interface ProductReleaseBaseline {
+  version?: string | null;
   frontendVersion: string;
   backendVersion: string;
+  publishedAt?: string | null;
 }
 
 export interface ProductReleasePage<T> {
