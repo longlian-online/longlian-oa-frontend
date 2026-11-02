@@ -207,7 +207,10 @@ export default function PersonalSettingsPage(): ReactElement {
               <Pencil className="h-2.5 w-2.5" />
             </button>
           </div>
-          <p className="text-sm text-muted-foreground">登录名 {user.username}</p>
+          <div className="min-w-0 text-sm text-muted-foreground">
+            <p>用户名 {user.username}</p>
+            <p className="mt-1">邮箱 {user.email?.trim() || "未绑定"}</p>
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="nickname">昵称</Label>
@@ -239,10 +242,8 @@ export default function PersonalSettingsPage(): ReactElement {
       </section>
 
       <section className="flex flex-col gap-4 rounded-xl border p-5">
-        <h2 className="text-base font-semibold">账号</h2>
-        {emailBound ? (
-          <p className="text-sm text-foreground">{user.email}</p>
-        ) : (
+        <h2 className="text-base font-semibold">邮箱</h2>
+        {emailBound ? null : (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="bind-email">邮箱</Label>

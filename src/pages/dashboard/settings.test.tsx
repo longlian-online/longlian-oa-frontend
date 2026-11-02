@@ -131,7 +131,9 @@ test("修改昵称时空白和超长停在字段旁", async (): Promise<void> =>
   const nickname = document.querySelector("#nickname");
   if (!(nickname instanceof HTMLInputElement)) throw new Error("缺少昵称输入框");
   expect(nickname.value).toBe("遗留用户");
-  expect(document.body.textContent).toContain("登录名 legacy");
+  expect(document.body.textContent).toContain("用户名 legacy");
+  expect(document.body.textContent).toContain("邮箱 a@example.com");
+  expect(document.body.textContent).not.toContain("登录名");
   expect(document.querySelector("#bind-email")).toBeNull();
 
   const submit = buttonsNamed("保存")[0];
@@ -155,6 +157,7 @@ test("修改昵称时空白和超长停在字段旁", async (): Promise<void> =>
 test("未绑定邮箱时提交验证码会转成大写且不清除登录凭证", async (): Promise<void> => {
   currentUser.user = user(null);
   await mount();
+  expect(document.body.textContent).toContain("邮箱 未绑定");
   const email = document.querySelector("#bind-email");
   const code = document.querySelector("#bind-code");
   if (!(email instanceof HTMLInputElement) || !(code instanceof HTMLInputElement)) {
@@ -200,6 +203,9 @@ test("关闭某一类型通知时只提交该类型", async (): Promise<void> =>
   await vi.waitFor(() => {
     expect(document.querySelectorAll("[role='switch']").length).toBe(6);
   });
+  expect(document.body.textContent).not.toContain("仅组织管理员会收到");
+  expect(document.querySelector("button[aria-label='入组申请说明']")).not.toBeNull();
+  expect(document.querySelector("button[aria-label='删除申请说明']")).not.toBeNull();
   const kind = document.querySelector("[aria-labelledby='TASK_READY-label']");
   if (!(kind instanceof HTMLElement)) throw new Error("缺少可以开始开关");
   await act(async () => {
