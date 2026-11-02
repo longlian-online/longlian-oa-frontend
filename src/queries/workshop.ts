@@ -1,12 +1,16 @@
 import { getBaseTaskOptions } from "@/api/baseTask";
 import { getMyTasks } from "@/api/myTask";
-import { getOrganizationBaseTaskList } from "@/api/organizationAdmin";
+import { getOrganizationBaseTaskList, getTaskWebhookFailures } from "@/api/organizationAdmin";
 import { getWorkshopList } from "@/api/workshop";
 import { getWorkshopTaskTemplateList } from "@/api/workflowTemplate";
 
 import type { ApiQueryOptions } from "@/lib/apiQuery";
 import type { MyTaskBucket, MyTaskPage, MyTaskSortDirection } from "@/types/myTask";
-import type { OrganizationBaseTaskVO, OrganizationPageResult } from "@/types/organizationAdmin";
+import type {
+  OrganizationBaseTaskVO,
+  OrganizationPageResult,
+  TaskWebhookFailureVO,
+} from "@/types/organizationAdmin";
 import type { PageResult } from "@/types/planning";
 import type { BaseTaskOption, BaseTaskVO, WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 import type { WorkshopProjectInfoVO, WorkshopSortBy } from "@/types/workshop";
@@ -86,4 +90,13 @@ export function organizationBaseTasksQuery(
     orderDir: "DESC" as const,
   };
   return { key: ["baseTasks", "list", params], queryFn: () => getOrganizationBaseTaskList(params) };
+}
+
+export function taskWebhookFailuresQuery(
+  pageNum: number,
+): ApiQueryOptions<OrganizationPageResult<TaskWebhookFailureVO>> {
+  return {
+    key: ["taskWebhooks", "failures", pageNum],
+    queryFn: () => getTaskWebhookFailures(pageNum, 20),
+  };
 }

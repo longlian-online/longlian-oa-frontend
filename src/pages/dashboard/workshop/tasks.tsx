@@ -18,6 +18,7 @@ import {
   changeBaseTaskStatus,
   createOrganizationBaseTask,
   deleteOrganizationBaseTask,
+  replayTaskWebhook,
   updateOrganizationBaseTask,
 } from "@/api/organizationAdmin";
 import BaseTaskFieldsEditor from "@/components/BaseTaskFieldsEditor";
@@ -41,11 +42,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/hooks/useConfirm";
 import { cn } from "@/lib/utils";
 import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
-import { BASE_TASK_PAGE_SIZE as PAGE_SIZE, organizationBaseTasksQuery } from "@/queries/workshop";
+import {
+  BASE_TASK_PAGE_SIZE as PAGE_SIZE,
+  organizationBaseTasksQuery,
+  taskWebhookFailuresQuery,
+} from "@/queries/workshop";
 
 import type {
   OrganizationBaseTaskCreateDTO,
   OrganizationBaseTaskVO,
+  TaskWebhookFailureVO,
 } from "@/types/organizationAdmin";
 import type { TaskFormField } from "@/types/task";
 
@@ -56,6 +62,8 @@ interface BaseTaskForm {
   description: string;
   icon?: string;
   submitFields: TaskFormField[];
+  webhookUrl: string;
+  webhookSecret: string;
 }
 
 const EMPTY_FORM: BaseTaskForm = {
@@ -63,7 +71,71 @@ const EMPTY_FORM: BaseTaskForm = {
   description: "",
   icon: undefined,
   submitFields: [],
+  webhookUrl: "",
+  webhookSecret: "",
 };
+
+const WEBHOOK_FAILURE_PAGE_SIZE = 20;
+
+function webhookEventLabel(event?: string | null): string {
+  if (event === "task.submitted") return "提交";
+  if (event === "task.submission_invalidated") return "作废";
+  return "投递";
+}
+
+function TaskWebhookFailureList() {
+  const [page, setPage] = useState(1);
+  const failures = useApiQuery(taskWebhookFailuresQuery(page));
+  const replay = useApiMutation({
+    mutationFn: (id: string) => replayTaskWebhook(id),
+    invalidate: [["taskWebhooks"]],
+  });
+  const list = failures.data?.list ?? [];
+  const total = failures.data?.total ?? 0;
+  if (failures.isLoading || failures.isError || total === 0) return null;
+
+  return (
+    <section className="flex flex-col gap-2">
+      <h2 className="text-sm font-medium text-foreground">投递失败</h2>
+      {list.map((failure: TaskWebhookFailureVO) => (
+        <div
+          key={failure.id}
+          className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2"
+        >
+          <div className="min-w-0">
+            <div className="text-sm text-foreground">
+              {webhookEventLabel(failure.event)}
+              {failure.taskInstanceId ? ` · ${failure.taskInstanceId}` : ""}
+            </div>
+            {failure.lastError ? (
+              <div className="truncate text-xs text-muted-foreground">{failure.lastError}</div>
+            ) : null}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={replay.isPending}
+            onClick={() => replay.mutate(failure.id)}
+          >
+            {replay.isPending && replay.variables === failure.id ? (
+              <Loader2 data-icon="inline-start" className="animate-spin" />
+            ) : null}
+            重放
+          </Button>
+        </div>
+      ))}
+      {total > WEBHOOK_FAILURE_PAGE_SIZE ? (
+        <PaginationBar
+          page={page}
+          pageSize={WEBHOOK_FAILURE_PAGE_SIZE}
+          total={total}
+          disabled={replay.isPending}
+          onPageChange={setPage}
+        />
+      ) : null}
+    </section>
+  );
+}
 
 function BaseTaskManagementContent() {
   const confirm = useConfirm();
@@ -129,6 +201,8 @@ function BaseTaskManagementContent() {
       description: task.description ?? "",
       icon: task.icon,
       submitFields: task.submitFields.map((field) => ({ ...field, options: [...field.options] })),
+      webhookUrl: task.webhookUrl ?? "",
+      webhookSecret: "",
     });
     setIconPickerOpen(false);
     setIconKeyword("");
@@ -211,6 +285,25 @@ function BaseTaskManagementContent() {
       return;
     }
 
+    const webhookUrl = form.webhookUrl.trim();
+    const webhookSecret = form.webhookSecret.trim();
+    if (!webhookUrl && webhookSecret) {
+      $tip("未填写 webhook 地址", "error");
+      return;
+    }
+    if (webhookUrl && !webhookUrl.startsWith("https://")) {
+      $tip("webhook 地址需要以 https:// 开头", "error");
+      return;
+    }
+    if (webhookUrl && !webhookSecret && !editingTask?.webhookSecretConfigured) {
+      $tip("请填写签名密钥", "error");
+      return;
+    }
+    if (webhookSecret && (webhookSecret.length < 16 || webhookSecret.length > 128)) {
+      $tip("签名密钥长度必须为 16 到 128 个字符", "error");
+      return;
+    }
+
     const payload: OrganizationBaseTaskCreateDTO = {
       name,
       description: form.description.trim() || undefined,
@@ -223,6 +316,8 @@ function BaseTaskManagementContent() {
             ? [...new Set(field.options.map((option) => option.trim()).filter(Boolean))]
             : [],
       })),
+      webhookUrl,
+      webhookSecret,
     };
 
     saveLock.current = true;
@@ -313,6 +408,8 @@ function BaseTaskManagementContent() {
           </Button>
         </div>
       </div>
+
+      <TaskWebhookFailureList />
 
       {listQuery.isError && !listQuery.data ? (
         <div role="alert">
@@ -432,7 +529,7 @@ function BaseTaskManagementContent() {
             <DialogTitle>{editingTask ? "编辑任务" : "创建任务"}</DialogTitle>
             <DialogDescription>
               {editingTask
-                ? "修改会影响所有引用模板及后续新建工作流；已有工作流保留名称和提交字段，图标同步更新。"
+                ? "修改会影响所有引用模板及后续新建工作流；已有工作流保留名称、提交字段和 webhook，图标同步更新。"
                 : "定义任务名称、图标和提交字段，创建后可继续编辑。"}
             </DialogDescription>
           </DialogHeader>
@@ -573,6 +670,25 @@ function BaseTaskManagementContent() {
                 支持全部 Lucide 图标；未填写时按任务名称自动匹配。
               </span>
             </div>
+            <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+              Webhook 地址
+              <Input
+                value={form.webhookUrl}
+                maxLength={500}
+                onChange={(event) => setForm({ ...form, webhookUrl: event.target.value })}
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+              签名密钥
+              <Input
+                type="password"
+                value={form.webhookSecret}
+                maxLength={128}
+                autoComplete="new-password"
+                placeholder={editingTask?.webhookSecretConfigured ? "留空则保持不变" : undefined}
+                onChange={(event) => setForm({ ...form, webhookSecret: event.target.value })}
+              />
+            </label>
             <BaseTaskFieldsEditor
               fields={form.submitFields}
               onAdd={addSubmitField}
