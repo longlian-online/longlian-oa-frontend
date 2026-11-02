@@ -37,6 +37,12 @@ export function claimedTaskTitle(task: MemberClaimedTaskItemVO): string {
   });
 }
 
+/** 任务页通过 taskInstanceId 定位精确的任务实例，包括同一阶段的并行槽位。 */
+export function claimedTaskPath(task: MemberClaimedTaskItemVO): string {
+  const search = new URLSearchParams({ taskInstanceId: task.instanceId });
+  return `/dashboard/planning/${task.projectId}/items/${task.itemId}?${search}`;
+}
+
 /** 等待中的任务显示挡住它的前置节点，写作「等校对（第 2 步）」；进行中时为 null。 */
 export function claimedTaskWaitingLabel(task: MemberClaimedTaskItemVO): string | null {
   if (!task.waitingStageName) return null;

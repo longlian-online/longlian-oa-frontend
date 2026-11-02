@@ -1,6 +1,7 @@
 import { expect, test } from "vite-plus/test";
 
 import {
+  claimedTaskPath,
   claimedTaskTabCount,
   claimedTaskTitle,
   claimedTaskWaitingLabel,
@@ -45,6 +46,23 @@ test("槽位文案与工坊待办一致", () => {
   expect(claimedTaskTitle(submittable)).toBe("第 12 话 · 嵌字 · 2/2");
   expect(claimedTaskWaitingLabel(waiting)).toBe("等翻译 · 2/3");
   expect(claimedTaskWaitingLabel(submittable)).toBeNull();
+});
+
+test("任务链接定位到对应项目与精确的任务实例", () => {
+  expect(claimedTaskPath(waiting)).toBe("/dashboard/planning/8/items/12?taskInstanceId=2");
+  expect(claimedTaskPath(submittable)).toBe("/dashboard/planning/8/items/12?taskInstanceId=4");
+});
+
+test("任务链接保持长 ID 精度", () => {
+  const task = {
+    ...waiting,
+    projectId: "2108448289661730818",
+    itemId: "2112422983490347009",
+    instanceId: "2112422983494541315",
+  };
+  expect(claimedTaskPath(task)).toBe(
+    "/dashboard/planning/2108448289661730818/items/2112422983490347009?taskInstanceId=2112422983494541315",
+  );
 });
 
 test("按 Tab 过滤任务", () => {

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
 import {
   Ban,
   CheckCircle2,
+  ChevronRight,
   ClipboardList,
   Loader2,
   Search,
@@ -65,6 +67,7 @@ import {
 import type { OrganizationMemberVO } from "@/types/organizationAdmin";
 
 import {
+  claimedTaskPath,
   claimedTaskTabCount,
   claimedTaskTitle,
   claimedTaskWaitingLabel,
@@ -332,12 +335,17 @@ function OrganizationMembersContent() {
                       <TableCell>
                         <Button
                           type="button"
-                          variant="link"
+                          variant="outline"
                           size="sm"
-                          className="h-7 px-1 tabular-nums"
+                          className="min-w-24 justify-between gap-2"
+                          aria-label={`查看${memberName(member)}的 ${member.claimedTaskCount} 项接取任务`}
+                          aria-haspopup="dialog"
+                          aria-expanded={claimedTaskMember?.id === member.id}
                           onClick={() => handleOpenClaimedTasks(member)}
                         >
-                          {member.claimedTaskCount}
+                          <span className="tabular-nums">{member.claimedTaskCount} 项</span>
+                          <span className="text-muted-foreground">查看</span>
+                          <ChevronRight data-icon="inline-end" aria-hidden="true" />
                         </Button>
                       </TableCell>
                       <TableCell>
@@ -489,16 +497,18 @@ function OrganizationMembersContent() {
                     {tasks.length === 0 ? (
                       <p className="py-6 text-center text-sm text-muted-foreground">暂无任务</p>
                     ) : (
-                      <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+                      <div className="flex max-h-80 flex-col gap-2 overflow-y-auto p-1">
                         {tasks.map((task) => {
                           const waitingLabel = claimedTaskWaitingLabel(task);
                           return (
-                            <div
+                            <Link
                               key={task.instanceId}
-                              className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2"
+                              to={claimedTaskPath(task)}
+                              className="group flex min-w-0 items-center gap-3 rounded-lg border px-3 py-2 transition-colors hover:border-primary/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              aria-label={`查看任务：${claimedTaskTitle(task)}，${task.projectName ?? ""}`}
                             >
-                              <div className="min-w-0">
-                                <div className="truncate text-sm font-medium text-foreground">
+                              <div className="min-w-0 flex-1">
+                                <div className="truncate text-sm font-medium text-foreground underline-offset-4 group-hover:underline group-focus-visible:underline">
                                   {claimedTaskTitle(task)}
                                 </div>
                                 <div className="truncate text-xs text-muted-foreground">
@@ -512,10 +522,14 @@ function OrganizationMembersContent() {
                                   </span>
                                 ) : null}
                                 <span className="text-xs text-muted-foreground tabular-nums">
-                                  {formatDate(task.claimedAt)}
+                                  接取于 {formatDate(task.claimedAt)}
                                 </span>
                               </div>
-                            </div>
+                              <ChevronRight
+                                className="size-4 shrink-0 text-muted-foreground group-hover:text-foreground"
+                                aria-hidden="true"
+                              />
+                            </Link>
                           );
                         })}
                       </div>
