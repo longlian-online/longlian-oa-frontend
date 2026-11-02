@@ -19,9 +19,18 @@ export interface ProjectItemReorderDTO {
   itemIds: string[];
 }
 
+export interface ProjectItemNodeCreateDTO {
+  baseTaskId: string;
+  sort: number;
+  parallelSort: number;
+  name?: string;
+  assigneeId?: string;
+}
+
 export interface ProjectItemCreateDTO {
   title: string;
   taskTemplateId: string;
+  nodes?: ProjectItemNodeCreateDTO[];
 }
 
 export interface ProjectItemListDTO {
@@ -51,7 +60,16 @@ export interface ProjectItemNodeVO {
   parallelCount: number;
 }
 
+export interface TaskTemplateOptionNodeVO {
+  baseTaskId: string;
+  baseTaskName?: string;
+  baseTaskStatus?: "ENABLED" | "DISABLED";
+  sort: number;
+  parallelSort?: number;
+}
+
 export interface TaskTemplateOptionVO {
   id: string;
   name: string;
+  nodes?: TaskTemplateOptionNodeVO[];
 }

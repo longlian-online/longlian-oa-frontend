@@ -30,6 +30,10 @@ function getBreadcrumbItems(
     items.push({ label: projectTitle ?? "正在加载企划…", to: projectPath });
     if (segments[3] === "items") {
       items.push({ label: "项目列表", to: `${projectPath}/items` });
+      if (segments[4] === "new") {
+        items.push({ label: "创建项目" });
+        return items;
+      }
       if (segments[4] && segments[5] === "workflow") {
         items.push({
           label: itemTitle ?? "正在加载项目…",
@@ -78,7 +82,10 @@ export default function AppBreadcrumb() {
     segments[1] === "planning" && segments[2] && !["create", "item"].includes(segments[2])
       ? segments[2]
       : undefined;
-  const itemId = projectId && segments[3] === "items" ? segments[4] : undefined;
+  const itemId =
+    projectId && segments[3] === "items" && segments[4] && segments[4] !== "new"
+      ? segments[4]
+      : undefined;
   const projectQuery = useApiQuery(projectDetailQuery(projectId));
   const flowQuery = useApiQuery(itemFlowQuery(itemId ?? ""));
   const items = getBreadcrumbItems(pathname, projectQuery.data?.title, flowQuery.data?.itemTitle);

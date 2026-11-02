@@ -418,6 +418,22 @@ test("an access token inside five minutes refreshes before the request", async (
   expect(storage.get("currentOrgId")).toBe("42");
 });
 
+test("keeps a snowflake id that the server returns directly as data", async (): Promise<void> => {
+  storage.set("token", "valid");
+  // 用原始文本，避免 JS 数字字面量先把 id 四舍五入。
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      async (): Promise<Response> =>
+        new Response('{"code":0,"msg":"ok","data":2117150782693732354}'),
+    ),
+  );
+
+  await expect(adminRequest<string>("/admin/product-releases/")).resolves.toBe(
+    "2117150782693732354",
+  );
+});
+
 test("an access token outside five minutes is not refreshed early", async (): Promise<void> => {
   storage.set("token", accessToken(Math.floor(Date.now() / 1000) + 6 * 60));
   storage.set("refreshToken", "refresh");

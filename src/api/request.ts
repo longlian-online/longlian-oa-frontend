@@ -23,8 +23,9 @@ const REFRESH_LEAD_SECONDS = 5 * 60;
 function parseApiResponse<T>(responseText: string): ApiResult<T> | T {
   // Snowflake IDs exceed JavaScript's safe integer range. Preserve matching ID fields
   // as strings before JSON.parse converts and rounds their trailing digits.
+  // 创建接口会把新 id 直接放在 data 上，也要一并保护。
   const safeResponseText = responseText.replace(
-    /("(?:id|[A-Za-z][A-Za-z0-9]*Id)"\s*:\s*)(-?\d{16,})(?=\s*[,}])/g,
+    /("(?:id|[A-Za-z][A-Za-z0-9]*Id|data)"\s*:\s*)(-?\d{16,})(?=\s*[,}])/g,
     '$1"$2"',
   );
 

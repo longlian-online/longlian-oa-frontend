@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, Layers2, PanelRight, Split, Trash2 } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ interface NodeInspectorProps {
   onSplitStage: (localId: string) => void;
   onMoveUp: (localId: string) => void;
   onMoveDown: (localId: string) => void;
+  assignee?: ReactNode;
 }
 
 export default function NodeInspector({
@@ -28,6 +30,7 @@ export default function NodeInspector({
   onSplitStage,
   onMoveUp,
   onMoveDown,
+  assignee,
 }: NodeInspectorProps) {
   if (!node) {
     return (
@@ -81,6 +84,8 @@ export default function NodeInspector({
             <p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p>
           )}
         </div>
+
+        {assignee}
 
         <Separator />
 

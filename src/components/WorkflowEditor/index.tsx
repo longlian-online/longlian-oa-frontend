@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { useConfirm } from "@/hooks/useConfirm";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,8 @@ interface WorkflowEditorProps {
   baseTasks: BaseTaskVO[];
   loadingBaseTasks: boolean;
   onChange: (nodes: WorkflowEditorNode[]) => void;
+  assigneeNames?: Record<string, string | undefined>;
+  renderAssignee?: (node: WorkflowEditorNode) => ReactNode;
 }
 
 interface NodeInspectorOverlayProps {
@@ -32,6 +34,7 @@ interface NodeInspectorOverlayProps {
   onSplitStage: (localId: string) => void;
   onMoveUp: (localId: string) => void;
   onMoveDown: (localId: string) => void;
+  assignee?: ReactNode;
 }
 
 function NodeInspectorOverlay({
@@ -43,6 +46,7 @@ function NodeInspectorOverlay({
   onSplitStage,
   onMoveUp,
   onMoveDown,
+  assignee,
 }: NodeInspectorOverlayProps) {
   const [renderedNode, setRenderedNode] = useState<WorkflowEditorNode | undefined>(node);
   const [visible, setVisible] = useState(Boolean(node));
@@ -77,6 +81,7 @@ function NodeInspectorOverlay({
         onSplitStage={onSplitStage}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
+        assignee={assignee}
       />
     </div>
   );
@@ -87,6 +92,8 @@ export default function WorkflowEditor({
   baseTasks,
   loadingBaseTasks,
   onChange,
+  assigneeNames,
+  renderAssignee,
 }: WorkflowEditorProps) {
   const confirm = useConfirm();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -174,6 +181,7 @@ export default function WorkflowEditor({
           onMoveToParallelGroup={handleMoveToParallelGroup}
           onRemoveNode={(localId) => void handleRemoveNode(localId)}
           onAddNode={handleAddNode}
+          assigneeNames={assigneeNames}
         />
         <NodeInspectorOverlay
           node={selectedNode}
@@ -184,6 +192,7 @@ export default function WorkflowEditor({
           onSplitStage={handleSplitStage}
           onMoveUp={(localId) => updateNodes(moveNodeByOffset(value, localId, -1))}
           onMoveDown={(localId) => updateNodes(moveNodeByOffset(value, localId, 1))}
+          assignee={selectedNode && renderAssignee ? renderAssignee(selectedNode) : undefined}
         />
       </div>
     </div>
