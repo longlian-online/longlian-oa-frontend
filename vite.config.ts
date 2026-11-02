@@ -96,7 +96,7 @@ export default defineConfig({
       "/app": apiProxy,
       "/common": apiProxy,
       "^/admin/session$": apiProxy,
-      "^/admin/(?:admins|organizations|scheduled-tasks|storage-stats)/": apiProxy,
+      "^/admin/(?:admins|organizations|scheduled-tasks|storage-stats|product-releases)/": apiProxy,
       "/orgadmin": apiProxy,
     },
   },
