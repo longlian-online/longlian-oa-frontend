@@ -272,7 +272,7 @@ async function requestWithBase<T>(
     }
 
     if (result.code !== 0) {
-      throw new ApiError(result.msg || `API error: ${result.code}`, notify);
+      throw new ApiError(result.msg || `API error: ${result.code}`, notify, result.code);
     }
 
     return result.data as T;

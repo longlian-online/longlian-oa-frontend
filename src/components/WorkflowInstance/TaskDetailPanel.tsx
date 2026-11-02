@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, ExternalLink, FileText, Loader2 } from "lucide-
 import { ApiError } from "@/api/apiError";
 import { getTaskInstanceDetail, getTaskSubmissionVersions } from "@/api/workflowInstance";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
+import { isPlanningResourceNotFound, readPlanningResource } from "@/lib/planningResourceError";
 import RemoteImage from "@/components/RemoteImage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -287,13 +288,15 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
   const isCurrent = lifecycle.current.capture();
   const detailQuery = useApiQuery({
     key: ["taskDetail", instanceId],
-    queryFn: () => getTaskInstanceDetail(instanceId!),
+    queryFn: () => readPlanningResource("item", () => getTaskInstanceDetail(instanceId!)),
+    throwOnError: isPlanningResourceNotFound,
     enabled: Boolean(instanceId),
     staleTime: 0,
   });
   const versionsQuery = useApiQuery({
     key: ["taskVersions", instanceId],
-    queryFn: () => getTaskSubmissionVersions(instanceId!),
+    queryFn: () => readPlanningResource("item", () => getTaskSubmissionVersions(instanceId!)),
+    throwOnError: isPlanningResourceNotFound,
     enabled: Boolean(instanceId),
     staleTime: 0,
   });

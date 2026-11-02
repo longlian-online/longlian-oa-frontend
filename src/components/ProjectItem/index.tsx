@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { ChevronRight, Loader2, Plus, Trash2, Workflow } from "lucide-react";
 
-import { createItemDeletionRequest, deleteProjectItem } from "@/api/projectItem";
+import { createItemDeletionRequest } from "@/api/projectItem";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { useDeleteProjectItem } from "@/hooks/queries/usePlanningDeletion";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { PROJECT_ITEMS_PAGE_SIZE as PAGE_SIZE, projectItemsQuery } from "@/queries/planning";
@@ -65,18 +66,7 @@ export default function ProjectItemSection({
   const isCurrent = (): boolean =>
     mounted.current && projectLifecycle.current.generation === generation;
   const itemsQuery = useApiQuery(projectItemsQuery(projectId, page, status));
-  const deleteMutation = useApiMutation({
-    mutationFn: (itemId: string) => deleteProjectItem(projectId, itemId),
-    invalidate: [
-      ["items"],
-      ["projects"],
-      ["flow"],
-      ["instances"],
-      ["taskDetail"],
-      ["workshop"],
-      ["plaza"],
-    ],
-  });
+  const deleteMutation = useDeleteProjectItem(projectId);
   const requestMutation = useApiMutation({
     mutationFn: (input: { itemId: string; reason: string }) =>
       createItemDeletionRequest(projectId, input.itemId, input.reason),

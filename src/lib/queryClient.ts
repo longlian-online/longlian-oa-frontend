@@ -2,6 +2,7 @@ import { MutationCache, QueryCache, QueryClient, isCancelledError } from "@tanst
 
 import { ApiError, GatewayError, NetworkError } from "@/api/apiError";
 import { AuthExpiredError } from "@/lib/authError";
+import { isPlanningResourceNotFound } from "@/lib/planningResourceError";
 import { getSessionSnapshot, subscribeSession } from "@/lib/session";
 import { notificationService } from "@/services/notification";
 
@@ -10,6 +11,7 @@ export function notifyQueryError(error: Error): void {
     isCancelledError(error) ||
     error.name === "AbortError" ||
     error instanceof AuthExpiredError ||
+    isPlanningResourceNotFound(error) ||
     (error instanceof ApiError && error.silenced)
   )
     return;
