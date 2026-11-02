@@ -55,6 +55,13 @@ test.each([
   expect(parseExternalEntry(search)).toBeNull();
 });
 
+test("email links keep the inbox id without requiring it", (): void => {
+  const entry = parseExternalEntry(`${task}&notificationId=9`);
+  expect(entry).toMatchObject({ notificationId: "9" });
+  expect(loginResumePath(`/go?${task}&notificationId=9`)).toBe(`/go?${task}&notificationId=9`);
+  expect(parseExternalEntry(`${task}&notificationId=0`)).toEqual(parseExternalEntry(task));
+});
+
 test("login resumes only a valid go link", (): void => {
   expect(loginResumePath(`/go?${task}`)).toBe(`/go?${task}`);
   expect(loginResumePath("/dashboard/planning/11/items/22?taskInstanceId=202")).toBeNull();
