@@ -43,7 +43,7 @@ function OrganizationAdminProjectsContent() {
     Parameters<typeof changeProjectStatus>
   >({
     mutationFn: (args) => changeProjectStatus(...args),
-    invalidate: [["projects"], ["workshop"], ["plaza"]],
+    invalidate: [["projects"], ["workshop"], ["plaza"], ["members"], ["memberClaimedTasks"]],
   });
   const [keyword, setKeyword] = useState("");
   const [searchText, setSearchText] = useState("");
