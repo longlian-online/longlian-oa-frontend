@@ -2,6 +2,7 @@ import { MutationCache, QueryCache, QueryClient, isCancelledError } from "@tanst
 
 import { ApiError, GatewayError, NetworkError } from "@/api/apiError";
 import { AuthExpiredError } from "@/lib/authError";
+import { isPlanningResourceNotFound } from "@/lib/planningResourceError";
 import { getSessionSnapshot, subscribeSession } from "@/lib/session";
 import { notificationService } from "@/services/notification";
 
@@ -10,6 +11,7 @@ export function notifyQueryError(error: Error): void {
     isCancelledError(error) ||
     error.name === "AbortError" ||
     error instanceof AuthExpiredError ||
+    isPlanningResourceNotFound(error) ||
     (error instanceof ApiError && error.silenced)
   )
     return;
@@ -26,13 +28,35 @@ export function shouldRetryQuery(failureCount: number, error: Error): boolean {
 }
 
 export function createQueryClient(): QueryClient {
-  return new QueryClient({
-    queryCache: new QueryCache({ onError: notifyQueryError }),
+  const client: QueryClient = new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error, query): void => {
+        if (
+          isPlanningResourceNotFound(error) &&
+          query.queryKey[0] === "app" &&
+          query.queryKey[2] === "org"
+        ) {
+          // 沿用失败查询的组织前缀；返回上级时不能再复用仍在新鲜期的旧列表。
+          const scope = query.queryKey.slice(0, 4);
+          const keys =
+            error.resource === "project"
+              ? [["projects", "list"]]
+              : [
+                  ["items", "list"],
+                  ["projects", "detail"],
+                ];
+          for (const key of keys) {
+            void client.invalidateQueries({ queryKey: [...scope, ...key], refetchType: "none" });
+          }
+        }
+        notifyQueryError(error);
+      },
+    }),
     mutationCache: new MutationCache({ onError: notifyQueryError }),
     defaultOptions: {
       queries: {
         staleTime: 30_000,
-        gcTime: 300_000,
+        gcTime: 60_000,
         retry: shouldRetryQuery,
         retryDelay: (_attempt, error): number =>
           error instanceof GatewayError && Number.isFinite(error.retryAfterMs)
@@ -44,6 +68,7 @@ export function createQueryClient(): QueryClient {
       mutations: { retry: false, gcTime: 0 },
     },
   });
+  return client;
 }
 
 export const queryClient = createQueryClient();

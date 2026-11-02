@@ -1,6 +1,7 @@
 import {
   getDeletionRequests,
   getJoinApplications,
+  getMemberClaimedTasks,
   listJoinInviteCodes,
   getOrganizationBaseTaskList,
   getOrganizationInfo,
@@ -19,6 +20,7 @@ import type {
   JoinApplicationVO,
   JoinInviteCodeStatus,
   JoinInviteCodeVO,
+  MemberClaimedTaskVO,
   OrganizationBaseTaskVO,
   OrganizationInfoVO,
   OrganizationMemberVO,
@@ -56,6 +58,16 @@ export function organizationMembersQuery(
         endJoinedTime: appliedFilters.endJoinedTime || undefined,
         orderDir: appliedFilters.orderDir,
       }),
+  };
+}
+
+export function memberClaimedTasksQuery(
+  memberId: string | null,
+): ApiQueryOptions<MemberClaimedTaskVO> {
+  return {
+    key: ["memberClaimedTasks", memberId],
+    queryFn: () => getMemberClaimedTasks(memberId!),
+    enabled: Boolean(memberId),
   };
 }
 
@@ -186,7 +198,7 @@ export function organizationTemplateBaseTasksQuery(): ApiQueryOptions<
   return {
     key: ["baseTasks", "options", params],
     queryFn: () => getOrganizationBaseTaskList(params),
-    staleTime: 300_000,
+    staleTime: 60_000,
   };
 }
 

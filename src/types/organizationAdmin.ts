@@ -38,6 +38,36 @@ export interface OrganizationMemberVO {
   joinedAt?: string;
   lastSubmittedAt?: string;
   submitCount: number;
+  claimedTaskCount: number;
+}
+
+export type MemberClaimedTaskBucket = "SUBMITTABLE" | "WAITING";
+
+export interface MemberClaimedTaskItemVO {
+  instanceId: string;
+  itemId: string;
+  projectId: string;
+  itemTitle?: string;
+  projectName?: string;
+  nodeName?: string;
+  slotIndex?: number | null;
+  slotTotal?: number | null;
+  serialStep?: number | null;
+  claimedAt?: string;
+  bucket: MemberClaimedTaskBucket;
+  waitingStageName?: string | null;
+  waitingSlotIndex?: number | null;
+  waitingSlotTotal?: number | null;
+  waitingSerialStep?: number | null;
+}
+
+export interface MemberClaimedTaskVO {
+  memberId: string;
+  userId: string;
+  totalCount: number;
+  submittableCount: number;
+  waitingCount: number;
+  list: MemberClaimedTaskItemVO[];
 }
 
 export interface MemberSubmitCountVO {

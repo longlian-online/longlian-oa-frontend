@@ -14,12 +14,18 @@ const DESCRIPTION = "第一行  保留空格\n第二行";
 let root: Root;
 let container: HTMLDivElement;
 let client: QueryClient;
+let isCreator: boolean;
+const calls: string[] = [];
 
 beforeEach((): void => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   saveSession({ token: "test-token", userId: "1", defaultOrgId: "11" });
-  vi.stubGlobal("fetch", async (input: string): Promise<Response> => {
+  isCreator = false;
+  calls.length = 0;
+  vi.stubGlobal("fetch", async (input: string, init?: RequestInit): Promise<Response> => {
     const url = new URL(input, "http://localhost");
+    calls.push(`${init?.method ?? "GET"} ${url.pathname}`);
+    if (init?.method === "DELETE" && url.pathname === "/app/projects/21") return json(null);
     if (url.pathname === "/app/projects/21") {
       return json({
         id: 21,
@@ -33,7 +39,7 @@ beforeEach((): void => {
         claimedTaskCount: 2,
         pendingTaskCount: 3,
         inWorkshop: true,
-        isCreator: false,
+        isCreator,
         hasItems: false,
         createdAt: "2026-10-01 10:00:00",
       });
@@ -70,6 +76,7 @@ async function mount(entry: string): Promise<void> {
           <ConfirmDialogProvider>
             <Routes>
               <Route path="/dashboard/planning/:projectId" element={<ProjectDetail />} />
+              <Route path="/dashboard/planning" element={<h1>企划列表</h1>} />
             </Routes>
           </ConfirmDialogProvider>
         </MemoryRouter>
@@ -94,6 +101,33 @@ function descriptionParagraphs(): HTMLParagraphElement[] {
     (paragraph): paragraph is HTMLParagraphElement => paragraph.textContent === DESCRIPTION,
   );
 }
+
+test("删除企划后返回列表，不再请求该企划详情和项目列表", async (): Promise<void> => {
+  isCreator = true;
+  await mount("/dashboard/planning/21");
+  await waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("春季企划"));
+  await act(async () =>
+    [...document.querySelectorAll("button")]
+      .find((button) => button.textContent?.includes("更多"))
+      ?.click(),
+  );
+  await act(async () =>
+    [...document.querySelectorAll<HTMLElement>("[role=menuitem]")]
+      .find((item) => item.textContent?.trim() === "删除企划")
+      ?.click(),
+  );
+  await act(async () =>
+    [...document.querySelectorAll("button")]
+      .find((button) => button.textContent?.trim() === "删除")
+      ?.click(),
+  );
+  await waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("企划列表"));
+  expect(calls).toEqual([
+    "GET /app/projects/21",
+    "GET /app/projects/21/items",
+    "DELETE /app/projects/21",
+  ]);
+});
 
 test.each(["/dashboard/planning/21", "/dashboard/planning/21?view=about"])(
   "detail page %s keeps typed line breaks only in the about section",
