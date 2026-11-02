@@ -2,10 +2,12 @@ import { GATEWAY_ERROR_MESSAGE, notificationService } from "@/services/notificat
 
 export class ApiError extends Error {
   silenced = false;
+  readonly code?: number;
 
-  constructor(message: string, notify = true) {
+  constructor(message: string, notify = true, code?: number) {
     super(message);
     this.name = "ApiError";
+    this.code = code;
     // Catch blocks run before timers, so they can silence a stale response first.
     setTimeout(() => {
       if (this.silenced || !notify) return;

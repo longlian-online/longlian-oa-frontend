@@ -10,7 +10,9 @@ import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 import { ApiError, GatewayError, NetworkError } from "@/api/apiError";
 import { request } from "@/api/request";
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
+import { apiQueryOptions } from "@/lib/apiQuery";
 import { AuthExpiredError } from "@/lib/authError";
+import { itemFlowQuery } from "@/queries/planning";
 import { fetchApiQuery } from "@/lib/routeQuery";
 import { createQueryClient, queryClient, shouldRetryQuery } from "@/lib/queryClient";
 import { scopedKey, type ApiScope } from "@/lib/queryKeys";
@@ -181,6 +183,24 @@ test("account 查询保留组织头，旧 Hook 在组织切换后拒绝发出新
   expect(send.mock.calls[0]?.[1]).toMatchObject({ headers: { "X-Org-Id": "11" } });
   saveCurrentOrganization("22");
   await expect(probe.refetch({ throwOnError: true })).rejects.toMatchObject({ name: "AbortError" });
+  expect(send).toHaveBeenCalledTimes(1);
+});
+
+test("缺失项目只标记原组织的父列表过期，不请求旧详情或污染其他组织", async (): Promise<void> => {
+  const client = makeClient();
+  const session = getSessionSnapshot();
+  const ownKey = scopedKey(["items", "list", "21"], "org", session);
+  const parentKey = scopedKey(["projects", "detail", "21"], "org", session);
+  const otherKey = scopedKey(["items", "list", "21"], "org", { ...session, orgId: "22" });
+  for (const key of [ownKey, parentKey, otherKey]) client.setQueryData(key, "cached");
+  const send = vi.fn(async (): Promise<Response> => new Response('{"code":6,"msg":"项目不存在"}'));
+  vi.stubGlobal("fetch", send);
+  await expect(client.fetchQuery(apiQueryOptions(itemFlowQuery("31")))).rejects.toMatchObject({
+    name: "PlanningResourceNotFoundError",
+  });
+  expect(client.getQueryState(ownKey)?.isInvalidated).toBe(true);
+  expect(client.getQueryState(parentKey)?.isInvalidated).toBe(true);
+  expect(client.getQueryState(otherKey)?.isInvalidated).toBe(false);
   expect(send).toHaveBeenCalledTimes(1);
 });
 

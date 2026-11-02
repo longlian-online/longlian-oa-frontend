@@ -2,11 +2,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, useLocation } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
+import { getTaskInstanceDetail, getTaskSubmissionVersions } from "@/api/workflowInstance";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
+import { useApiQuery } from "@/hooks/queries/useApiQuery";
+import { scopedKey } from "@/lib/queryKeys";
 import { clearSession, saveSession } from "@/lib/session";
+import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
 import ItemDeletionRequestButton from "./ItemDeletionRequestButton";
 
 let root: Root;
@@ -14,11 +18,15 @@ let container: HTMLDivElement;
 let client: QueryClient;
 const calls: { method: string; path: string; body: string }[] = [];
 const getAnimations = Object.getOwnPropertyDescriptor(Element.prototype, "getAnimations");
+let deleted: boolean;
+let deleteFailed: boolean;
 
 beforeEach((): void => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   saveSession({ token: "test-token", userId: "1", defaultOrgId: "11" });
   calls.length = 0;
+  deleted = false;
+  deleteFailed = false;
   Object.defineProperty(Element.prototype, "getAnimations", {
     configurable: true,
     value: (): [] => [],
@@ -30,9 +38,17 @@ beforeEach((): void => {
       path: url.pathname,
       body: typeof init?.body === "string" ? init.body : "",
     });
-    return new Response(JSON.stringify({ code: 0, data: null }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    if (init?.method === "DELETE") {
+      if (deleteFailed) return json(null, 3);
+      deleted = true;
+    }
+    if (url.pathname === "/app/item/31/flow") {
+      return json({ itemTitle: "第一话", nodes: [{ taskInstanceId: "41" }] }, deleted ? 6 : 0);
+    }
+    if (url.pathname === "/app/task/instance/item/31") {
+      return json([{ id: "41" }], deleted ? 6 : 0);
+    }
+    return json(null);
   });
   client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -64,19 +80,44 @@ function Address(): ReactElement {
   return <output aria-label="地址">{location.pathname}</output>;
 }
 
-async function mount(hasSubmittedTask: boolean): Promise<void> {
+function json(data: unknown, code = 0): Response {
+  return new Response(JSON.stringify({ code, msg: code ? "项目不存在" : "成功", data }), {
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+function ItemQueries(): null {
+  useApiQuery(itemFlowQuery("31"));
+  useApiQuery(itemInstancesQuery("31"));
+  useApiQuery({ key: ["taskDetail", "41"], queryFn: () => getTaskInstanceDetail("41") });
+  useApiQuery({ key: ["taskVersions", "41"], queryFn: () => getTaskSubmissionVersions("41") });
+  return null;
+}
+
+async function mount(hasSubmittedTask: boolean, observeItem = false): Promise<void> {
   await act(async () => {
     root.render(
       <QueryClientProvider client={client}>
         <ConfirmDialogProvider>
           <MemoryRouter initialEntries={["/dashboard/planning/21/items/31"]}>
             <Address />
-            <ItemDeletionRequestButton
-              projectId="21"
-              itemId="31"
-              itemTitle="第一话"
-              hasSubmittedTask={hasSubmittedTask}
-            />
+            <Routes>
+              <Route
+                path="/dashboard/planning/21/items/31"
+                element={
+                  <>
+                    {observeItem && <ItemQueries />}
+                    <ItemDeletionRequestButton
+                      projectId="21"
+                      itemId="31"
+                      itemTitle="第一话"
+                      hasSubmittedTask={hasSubmittedTask}
+                    />
+                  </>
+                }
+              />
+              <Route path="/dashboard/planning/21" element={<p>企划详情</p>} />
+            </Routes>
           </MemoryRouter>
         </ConfirmDialogProvider>
       </QueryClientProvider>,
@@ -121,4 +162,35 @@ test("没有已提交任务时确认后直接删除并回到企划详情", async
     expect(calls).toEqual([{ method: "DELETE", path: "/app/projects/21/items/31", body: "" }]);
     expect(document.querySelector("output")?.textContent).toBe("/dashboard/planning/21");
   });
+});
+
+test("详情仍挂载时删除只刷新列表，不重新请求已删除项目的流程、任务及版本", async (): Promise<void> => {
+  await mount(false, true);
+  await vi.waitFor(() => expect(calls.filter((call) => call.method === "GET")).toHaveLength(4));
+  const before = calls.length;
+  await act(async () => button("删除项目")?.click());
+  await act(async () => button("删除")?.click());
+  await vi.waitFor(() =>
+    expect(document.querySelector("output")?.textContent).toBe("/dashboard/planning/21"),
+  );
+  expect(calls.slice(before)).toEqual([
+    { method: "DELETE", path: "/app/projects/21/items/31", body: "" },
+  ]);
+});
+
+test("删除失败保留详情数据和当前地址，不失效已有查询", async (): Promise<void> => {
+  deleteFailed = true;
+  await mount(false, true);
+  await vi.waitFor(() =>
+    expect(client.getQueryData(scopedKey(["instances", "31"], "org"))).toEqual([{ id: "41" }]),
+  );
+  const before = calls.length;
+  await act(async () => button("删除项目")?.click());
+  await act(async () => button("删除")?.click());
+  await vi.waitFor(() => expect(button("删除项目")?.disabled).toBe(false));
+  expect(document.querySelector("output")?.textContent).toBe("/dashboard/planning/21/items/31");
+  expect(client.getQueryData(scopedKey(["instances", "31"], "org"))).toEqual([{ id: "41" }]);
+  expect(calls.slice(before)).toEqual([
+    { method: "DELETE", path: "/app/projects/21/items/31", body: "" },
+  ]);
 });
