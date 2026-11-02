@@ -11,6 +11,7 @@ import type {
   DeletionRequestReviewDTO,
   DeletionRequestVO,
   MemberSubmitCountsVO,
+  MemberClaimedTaskVO,
   OrganizationBaseTaskCreateDTO,
   OrganizationBaseTaskListDTO,
   OrganizationBaseTaskVO,
@@ -83,6 +84,10 @@ export async function changeMemberStatus(
 
 export async function getMemberSubmitCounts(memberId: string): Promise<MemberSubmitCountsVO> {
   return orgAdminRequest(`/orgadmin/members/${memberId}/base-tasks/submit-counts`);
+}
+
+export async function getMemberClaimedTasks(memberId: string): Promise<MemberClaimedTaskVO> {
+  return orgAdminRequest(`/orgadmin/members/${memberId}/claimed-tasks`);
 }
 
 export async function getJoinApplications(
