@@ -186,7 +186,7 @@ export function organizationTemplateBaseTasksQuery(): ApiQueryOptions<
   return {
     key: ["baseTasks", "options", params],
     queryFn: () => getOrganizationBaseTaskList(params),
-    staleTime: 300_000,
+    staleTime: 60_000,
   };
 }
 

@@ -32,7 +32,7 @@ export function createQueryClient(): QueryClient {
     defaultOptions: {
       queries: {
         staleTime: 30_000,
-        gcTime: 300_000,
+        gcTime: 60_000,
         retry: shouldRetryQuery,
         retryDelay: (_attempt, error): number =>
           error instanceof GatewayError && Number.isFinite(error.retryAfterMs)
