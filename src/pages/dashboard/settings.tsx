@@ -31,11 +31,14 @@ export default function PersonalSettingsPage(): ReactElement {
     mutationFn: updateMyInfo,
     invalidate: [["currentUser"]],
   });
+  const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameDraft, setNicknameDraft] = useState("");
   const [nicknameError, setNicknameError] = useState<string | null>(null);
+  const [editingPassword, setEditingPassword] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const passwordMutation = useApiMutation({ scope: "account", mutationFn: changePassword });
+  const [bindingEmail, setBindingEmail] = useState(false);
   const [bindEmailAddress, setBindEmailAddress] = useState("");
   const [bindCode, setBindCode] = useState("");
   const [bindErrors, setBindErrors] = useState<{ email?: string; code?: string }>({});
@@ -66,10 +69,30 @@ export default function PersonalSettingsPage(): ReactElement {
     if (error) return;
     try {
       await updateProfile.mutateAsync({ nickname: normalizeNickname(nicknameDraft) });
-      $tip("昵称已更新", "success");
     } catch {
       /* 共享 Mutation 负责提示。 */
+      return;
     }
+    $tip("昵称已更新", "success");
+    setEditingNickname(false);
+  };
+
+  const handleStartNickname = (): void => {
+    setNicknameDraft(user?.nickname ?? "");
+    setNicknameError(null);
+    setEditingNickname(true);
+  };
+
+  const handleCancelNickname = (): void => {
+    setNicknameDraft(user?.nickname ?? "");
+    setNicknameError(null);
+    setEditingNickname(false);
+  };
+
+  const handleCancelPassword = (): void => {
+    setOldPassword("");
+    setNewPassword("");
+    setEditingPassword(false);
   };
 
   const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -169,6 +192,14 @@ export default function PersonalSettingsPage(): ReactElement {
     setBindEmailAddress("");
     setBindCode("");
     setBindErrors({});
+    setBindingEmail(false);
+  };
+
+  const handleCancelBindEmail = (): void => {
+    setBindEmailAddress("");
+    setBindCode("");
+    setBindErrors({});
+    setBindingEmail(false);
   };
 
   if (isLoading || !user) {
@@ -176,12 +207,11 @@ export default function PersonalSettingsPage(): ReactElement {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <h1 className="text-xl font-bold text-foreground">个人设置</h1>
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+      <h1 className="text-xl font-semibold text-foreground">个人设置</h1>
 
-      <section className="flex flex-col gap-4 rounded-xl border p-5">
-        <h2 className="text-base font-semibold">资料</h2>
-        <div className="flex items-center gap-3">
+      <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+        <div className="flex items-start gap-4">
           <input
             ref={avatarInputRef}
             type="file"
@@ -189,11 +219,11 @@ export default function PersonalSettingsPage(): ReactElement {
             accept=".jpg,.jpeg,.png,.gif,.avif"
             onChange={handleAvatarChange}
           />
-          <div className="relative">
-            <Avatar size="lg">
+          <div className="relative shrink-0">
+            <Avatar size="lg" className="size-14">
               <AvatarImage src={user.avatarUrl} alt="" />
               <AvatarFallback>
-                <UserRound className="h-5 w-5" />
+                <UserRound className="size-6" />
               </AvatarFallback>
             </Avatar>
             <button
@@ -201,50 +231,79 @@ export default function PersonalSettingsPage(): ReactElement {
               aria-label="更换头像"
               title="更换头像"
               disabled={isUploadingAvatar || updateProfile.isPending}
-              className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full border border-background bg-foreground text-background disabled:cursor-not-allowed disabled:opacity-60"
+              className="absolute right-0 bottom-0 z-10 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground ring-2 ring-card disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => avatarInputRef.current?.click()}
             >
-              <Pencil className="h-2.5 w-2.5" />
+              <Pencil className="size-2.5" />
             </button>
           </div>
-          <div className="min-w-0 text-sm text-muted-foreground">
-            <p>用户名 {user.username}</p>
-            <p className="mt-1">邮箱 {user.email?.trim() || "未绑定"}</p>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            {editingNickname ? (
+              <div className="flex flex-col gap-3">
+                <Input
+                  id="nickname"
+                  aria-label="昵称"
+                  value={nicknameDraft}
+                  autoComplete="nickname"
+                  aria-invalid={Boolean(nicknameError)}
+                  aria-describedby={nicknameError ? "nickname-error" : undefined}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    setNicknameDraft(next);
+                    if (nicknameError) setNicknameError(nicknameFieldError(next));
+                  }}
+                />
+                {nicknameError ? (
+                  <p id="nickname-error" className="text-xs text-destructive">
+                    {nicknameError}
+                  </p>
+                ) : null}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => void handleChangeNickname()}
+                    disabled={updateProfile.isPending || isUploadingAvatar}
+                  >
+                    {updateProfile.isPending ? "保存中..." : "保存"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleCancelNickname}
+                    disabled={updateProfile.isPending}
+                  >
+                    取消
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-3">
+                <span className="truncate text-base font-medium">
+                  {user.nickname?.trim() || "未设置昵称"}
+                </span>
+                <Button size="sm" variant="outline" onClick={handleStartNickname}>
+                  修改昵称
+                </Button>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">用户名 {user.username}</p>
+            <p className="flex items-center text-xs text-muted-foreground">
+              邮箱 {user.email?.trim() || "未绑定"}
+              {emailBound || bindingEmail ? null : (
+                <Button
+                  size="xs"
+                  variant="link"
+                  className="ml-1 h-auto p-0 text-xs"
+                  onClick={() => setBindingEmail(true)}
+                >
+                  绑定
+                </Button>
+              )}
+            </p>
           </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="nickname">昵称</Label>
-          <Input
-            id="nickname"
-            value={nicknameDraft}
-            autoComplete="nickname"
-            aria-invalid={Boolean(nicknameError)}
-            aria-describedby={nicknameError ? "nickname-error" : undefined}
-            onChange={(event) => {
-              const next = event.target.value;
-              setNicknameDraft(next);
-              if (nicknameError) setNicknameError(nicknameFieldError(next));
-            }}
-          />
-          {nicknameError ? (
-            <p id="nickname-error" className="text-xs text-destructive">
-              {nicknameError}
-            </p>
-          ) : null}
-        </div>
-        <Button
-          className="self-start"
-          onClick={() => void handleChangeNickname()}
-          disabled={updateProfile.isPending || isUploadingAvatar}
-        >
-          {updateProfile.isPending ? "保存中..." : "保存"}
-        </Button>
-      </section>
-
-      <section className="flex flex-col gap-4 rounded-xl border p-5">
-        <h2 className="text-base font-semibold">邮箱</h2>
-        {emailBound ? null : (
-          <div className="space-y-4">
+        {!emailBound && bindingEmail ? (
+          <div className="flex flex-col gap-3 rounded-lg bg-muted/40 p-3">
             <div className="space-y-2">
               <Label htmlFor="bind-email">邮箱</Label>
               <Input
@@ -288,51 +347,77 @@ export default function PersonalSettingsPage(): ReactElement {
                 <p className="text-xs text-destructive">{bindErrors.code}</p>
               ) : null}
             </div>
-            <Button
-              className="self-start"
-              onClick={() => void handleBindEmail()}
-              disabled={bindEmailMutation.isPending}
-            >
-              {bindEmailMutation.isPending ? "绑定中..." : "绑定邮箱"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => void handleBindEmail()}
+                disabled={bindEmailMutation.isPending}
+              >
+                {bindEmailMutation.isPending ? "绑定中..." : "绑定邮箱"}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={handleCancelBindEmail}>
+                取消
+              </Button>
+            </div>
           </div>
-        )}
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {NEW_PASSWORD_HINT}。修改成功后，全部设备需要重新登录。
-          </p>
-          <div className="space-y-2">
-            <Label htmlFor="old-password">原密码</Label>
-            <Input
-              id="old-password"
-              type="password"
-              value={oldPassword}
-              autoComplete="current-password"
-              onChange={(event) => setOldPassword(event.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="new-password">新密码</Label>
-            <Input
-              id="new-password"
-              type="password"
-              value={newPassword}
-              autoComplete="new-password"
-              onChange={(event) => setNewPassword(event.target.value)}
-            />
-          </div>
-          <Button
-            className="self-start"
-            onClick={() => void handleChangePassword()}
-            disabled={passwordMutation.isPending}
-          >
-            {passwordMutation.isPending ? "修改中..." : "修改密码"}
-          </Button>
-        </div>
+        ) : null}
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl border p-5">
-        <h2 className="text-base font-semibold">通知</h2>
+      <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-heading text-base font-medium">修改密码</h2>
+          {editingPassword ? null : (
+            <Button variant="outline" onClick={() => setEditingPassword(true)}>
+              修改
+            </Button>
+          )}
+        </div>
+        {editingPassword ? (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">
+              {NEW_PASSWORD_HINT}。修改成功后，全部设备需要重新登录。
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="old-password">原密码</Label>
+              <Input
+                id="old-password"
+                type="password"
+                value={oldPassword}
+                autoComplete="current-password"
+                onChange={(event) => setOldPassword(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">新密码</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                autoComplete="new-password"
+                onChange={(event) => setNewPassword(event.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => void handleChangePassword()}
+                disabled={passwordMutation.isPending}
+              >
+                {passwordMutation.isPending ? "修改中..." : "保存"}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={handleCancelPassword}
+                disabled={passwordMutation.isPending}
+              >
+                取消
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+        <h2 className="font-heading text-base font-medium">通知</h2>
         <NotificationPreferences />
       </section>
     </div>
