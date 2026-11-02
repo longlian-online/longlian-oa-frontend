@@ -10,6 +10,7 @@ export interface ItemTaskFlowVO {
   itemTitle: string;
   name: string;
   description?: string;
+  hasSubmissionRecord: boolean;
   nodes: ItemTaskNodeVO[];
 }
 

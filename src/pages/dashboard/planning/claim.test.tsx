@@ -86,6 +86,7 @@ function flow(): ItemTaskFlowVO {
   return {
     itemTitle: "测试项目",
     name: "接取测试工作流",
+    hasSubmissionRecord: false,
     nodes: ["11", "12"].map((id, index) => ({
       id: `node-${id}`,
       baseTaskId: `base-${id}`,

@@ -64,7 +64,7 @@ function Address(): ReactElement {
   return <output aria-label="地址">{location.pathname}</output>;
 }
 
-async function mount(hasSubmittedTask: boolean): Promise<void> {
+async function mount(hasSubmissionRecord: boolean): Promise<void> {
   await act(async () => {
     root.render(
       <QueryClientProvider client={client}>
@@ -75,7 +75,7 @@ async function mount(hasSubmittedTask: boolean): Promise<void> {
               projectId="21"
               itemId="31"
               itemTitle="第一话"
-              hasSubmittedTask={hasSubmittedTask}
+              hasSubmissionRecord={hasSubmissionRecord}
             />
           </MemoryRouter>
         </ConfirmDialogProvider>
@@ -112,7 +112,7 @@ test("填写原因后提交项目删除申请，空白原因不能提交", async
   expect(document.querySelector("output")?.textContent).toBe("/dashboard/planning/21/items/31");
 });
 
-test("没有已提交任务时确认后直接删除并回到企划详情", async (): Promise<void> => {
+test("没有提交记录时确认后直接删除并回到企划详情", async (): Promise<void> => {
   await mount(false);
   await act(async () => button("删除项目")?.click());
   expect(document.body.textContent).toContain("删除后「第一话」的流程与任务记录将不可恢复。");

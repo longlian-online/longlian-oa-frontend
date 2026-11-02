@@ -48,7 +48,7 @@ export interface ProjectItemListVO {
   updatedAt: string;
   progressPercent: number;
   currentNodeName?: string;
-  hasSubmittedTask?: boolean;
+  hasSubmissionRecord?: boolean;
   nodes: ProjectItemNodeVO[];
 }
 

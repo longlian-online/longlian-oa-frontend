@@ -26,7 +26,7 @@ function deferred<T>(): Deferred<T> {
 interface ListedItem {
   id: string;
   title: string;
-  hasSubmittedTask: boolean;
+  hasSubmissionRecord: boolean;
 }
 
 let root: Root;
@@ -78,7 +78,7 @@ beforeEach((): void => {
               createdAt: "2026-10-01 00:00:00",
               updatedAt: "2026-10-01 00:00:00",
               progressPercent: 0,
-              hasSubmittedTask: item.hasSubmittedTask,
+              hasSubmissionRecord: item.hasSubmissionRecord,
               nodes: [],
             })),
             total: listed.length,
@@ -176,8 +176,8 @@ test("创建项目进入创建页，而不是在列表里弹窗", async (): Prom
   expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
 
-test("没有已提交任务时负责人确认后直接删除", async (): Promise<void> => {
-  listed = [{ id: "31", title: "第一话", hasSubmittedTask: false }];
+test("没有提交记录时负责人确认后直接删除", async (): Promise<void> => {
+  listed = [{ id: "31", title: "第一话", hasSubmissionRecord: false }];
   await mount();
   await act(async () => labeled("删除项目：第一话")?.click());
   expect(document.body.textContent).toContain("删除后「第一话」的流程与任务记录将不可恢复。");
@@ -188,11 +188,11 @@ test("没有已提交任务时负责人确认后直接删除", async (): Promise
   });
 });
 
-test("已有已提交任务时填写原因后提交删除申请", async (): Promise<void> => {
-  listed = [{ id: "31", title: "第一话", hasSubmittedTask: true }];
+test("已有提交记录时填写原因后提交删除申请", async (): Promise<void> => {
+  listed = [{ id: "31", title: "第一话", hasSubmissionRecord: true }];
   await mount();
   await act(async () => labeled("删除项目：第一话")?.click());
-  expect(document.body.textContent).toContain("由于项目存在已提交任务，删除需要管理员审核");
+  expect(document.body.textContent).toContain("由于项目存在提交记录，删除需要管理员审核");
   expect(button("提交申请", dialog()).disabled).toBe(true);
   const reason = dialog().querySelector("textarea");
   if (!reason) throw new Error("缺少删除原因");
@@ -216,8 +216,8 @@ test("已有已提交任务时填写原因后提交删除申请", async (): Prom
 
 test("非负责人不显示项目删除", async (): Promise<void> => {
   listed = [
-    { id: "31", title: "第一话", hasSubmittedTask: false },
-    { id: "32", title: "第二话", hasSubmittedTask: true },
+    { id: "31", title: "第一话", hasSubmissionRecord: false },
+    { id: "32", title: "第二话", hasSubmissionRecord: true },
   ];
   await mount(false);
   expect(labeled("删除项目：第一话")).toBeUndefined();

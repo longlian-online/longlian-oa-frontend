@@ -21,14 +21,14 @@ interface ItemDeletionRequestButtonProps {
   projectId: string;
   itemId: string;
   itemTitle: string;
-  hasSubmittedTask: boolean;
+  hasSubmissionRecord: boolean;
 }
 
 export default function ItemDeletionRequestButton({
   projectId,
   itemId,
   itemTitle,
-  hasSubmittedTask,
+  hasSubmissionRecord,
 }: ItemDeletionRequestButtonProps) {
   const confirm = useConfirm();
   const navigate = useNavigate();
@@ -56,7 +56,7 @@ export default function ItemDeletionRequestButton({
 
   async function handleDelete(): Promise<void> {
     if (actionLock.current) return;
-    if (hasSubmittedTask) {
+    if (hasSubmissionRecord) {
       setReason("");
       setOpen(true);
       return;
@@ -111,7 +111,7 @@ export default function ItemDeletionRequestButton({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>删除项目？</DialogTitle>
-            <DialogDescription>由于项目存在已提交任务，删除需要管理员审核</DialogDescription>
+            <DialogDescription>由于项目存在提交记录，删除需要管理员审核</DialogDescription>
           </DialogHeader>
           <Textarea
             value={reason}
