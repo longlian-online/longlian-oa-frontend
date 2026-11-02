@@ -6,10 +6,11 @@ import {
   getProjectTypes,
 } from "@/api/planning";
 import { getPlazaTaskTypes, getTaskPlaza } from "@/api/plaza";
-import { getProjectItemList } from "@/api/projectItem";
+import { getProjectItemList, getTaskTemplateOptions } from "@/api/projectItem";
 import { getItemTaskFlow, getItemTaskInstances } from "@/api/workflowInstance";
 
 import type { ApiQueryOptions } from "@/lib/apiQuery";
+import type { TaskTemplateOptionVO } from "@/types/projectItem";
 import type {
   PageResult,
   ProjectDetailInfoVO,
@@ -60,6 +61,14 @@ export function projectListQuery(
     ...timeSort,
   };
   return { key: ["projects", "list", params], queryFn: () => getProjectList(params) };
+}
+
+export function taskTemplateOptionsQuery(): ApiQueryOptions<TaskTemplateOptionVO[]> {
+  return {
+    key: ["templateOptions"],
+    queryFn: getTaskTemplateOptions,
+    staleTime: 300_000,
+  };
 }
 
 export function projectDetailQuery(
