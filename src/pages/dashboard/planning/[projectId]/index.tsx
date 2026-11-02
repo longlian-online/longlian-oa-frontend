@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { Menu } from "@base-ui/react/menu";
 import {
@@ -16,11 +15,10 @@ import {
 } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
-import { scopedKey } from "@/lib/queryKeys";
+import { useDeleteProject } from "@/hooks/queries/usePlanningDeletion";
 import {
   addProjectToWorkshop,
   createProjectDeletionRequest,
-  deleteProject,
   removeProjectFromWorkshop,
 } from "@/api/planning";
 import { projectDetailQuery } from "@/queries/planning";
@@ -54,7 +52,6 @@ export default function ProjectDetail() {
   const [searchParams] = useSearchParams();
   const browseView = searchParams.get("view") === "about";
   const pageRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
   const confirm = useConfirm();
   const projectQuery = useApiQuery(projectDetailQuery(projectId));
   const project = projectQuery.data;
@@ -66,10 +63,7 @@ export default function ProjectDetail() {
   });
   const workshopLoading = workshopMutation.isPending;
   const workshopLock = useRef(false);
-  const deleteMutation = useApiMutation({
-    mutationFn: () => deleteProject(projectId!),
-    invalidate: [["projects", "list"], ["projects", "management"], ["workshop"], ["plaza"]],
-  });
+  const deleteMutation = useDeleteProject(projectId ?? "");
   const deleteLoading = deleteMutation.isPending;
   const deleteLock = useRef(false);
   const requestMutation = useApiMutation({
@@ -142,12 +136,8 @@ export default function ProjectDetail() {
     deleteLock.current = true;
     try {
       await deleteMutation.mutateAsync();
-      await queryClient.invalidateQueries({
-        queryKey: scopedKey(["projects", "detail", projectId], "org"),
-        refetchType: "none",
-      });
       $tip("企划已删除", "success");
-      void navigate("/dashboard/planning");
+      void navigate("/dashboard/planning", { replace: true });
     } catch {
       /* 全局 Mutation 错误提示保留当前数据。 */
     } finally {

@@ -441,7 +441,7 @@ function ItemWorkflowInstance({
               projectId={projectId}
               itemId={itemId}
               itemTitle={taskFlow.itemTitle}
-              hasSubmittedTask={instances.some((instance) => instance.status === "COMPLETED")}
+              hasSubmissionRecord={taskFlow.hasSubmissionRecord}
             />
           )}
           <Button

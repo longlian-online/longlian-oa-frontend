@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Trash2 } from "lucide-react";
 
-import { createItemDeletionRequest, deleteProjectItem } from "@/api/projectItem";
+import { createItemDeletionRequest } from "@/api/projectItem";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,20 +15,21 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
+import { useDeleteProjectItem } from "@/hooks/queries/usePlanningDeletion";
 import { useConfirm } from "@/hooks/useConfirm";
 
 interface ItemDeletionRequestButtonProps {
   projectId: string;
   itemId: string;
   itemTitle: string;
-  hasSubmittedTask: boolean;
+  hasSubmissionRecord: boolean;
 }
 
 export default function ItemDeletionRequestButton({
   projectId,
   itemId,
   itemTitle,
-  hasSubmittedTask,
+  hasSubmissionRecord,
 }: ItemDeletionRequestButtonProps) {
   const confirm = useConfirm();
   const navigate = useNavigate();
@@ -36,18 +37,7 @@ export default function ItemDeletionRequestButton({
   const actionLock = useRef(false);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
-  const deleteMutation = useApiMutation({
-    mutationFn: () => deleteProjectItem(projectId, itemId),
-    invalidate: [
-      ["items"],
-      ["projects"],
-      ["flow"],
-      ["instances"],
-      ["taskDetail"],
-      ["workshop"],
-      ["plaza"],
-    ],
-  });
+  const deleteMutation = useDeleteProjectItem(projectId);
   const requestMutation = useApiMutation({
     mutationFn: (nextReason: string) => createItemDeletionRequest(projectId, itemId, nextReason),
     invalidate: [["deletionRequests"]],
@@ -56,7 +46,7 @@ export default function ItemDeletionRequestButton({
 
   async function handleDelete(): Promise<void> {
     if (actionLock.current) return;
-    if (hasSubmittedTask) {
+    if (hasSubmissionRecord) {
       setReason("");
       setOpen(true);
       return;
@@ -70,9 +60,9 @@ export default function ItemDeletionRequestButton({
     if (!confirmed || actionLock.current) return;
     actionLock.current = true;
     try {
-      await deleteMutation.mutateAsync();
+      await deleteMutation.mutateAsync(itemId);
       $tip("项目已删除", "success");
-      void navigate(`/dashboard/planning/${projectId}`, { state: location.state });
+      void navigate(`/dashboard/planning/${projectId}`, { replace: true, state: location.state });
     } catch {
       // Mutation 的最终失败由共享错误入口提示，保留当前项目。
     } finally {
@@ -111,7 +101,7 @@ export default function ItemDeletionRequestButton({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>删除项目？</DialogTitle>
-            <DialogDescription>由于项目存在已提交任务，删除需要管理员审核</DialogDescription>
+            <DialogDescription>由于项目存在提交记录，删除需要管理员审核</DialogDescription>
           </DialogHeader>
           <Textarea
             value={reason}

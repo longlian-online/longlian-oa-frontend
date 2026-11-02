@@ -1,4 +1,14 @@
-import { isRouteErrorResponse, Link, useRouteError } from "react-router";
+import {
+  isRouteErrorResponse,
+  Link,
+  Navigate,
+  useLocation,
+  useNavigation,
+  useRouteError,
+} from "react-router";
+
+import { planningListReturnTo } from "@/lib/pageQuery";
+import { isPlanningResourceNotFound } from "@/lib/planningResourceError";
 
 import type { ReactElement } from "react";
 
@@ -51,7 +61,22 @@ export function RouteModuleFailure(): ReactElement {
   return <RouteFailure moduleFailed />;
 }
 
-export default function RouteErrorBoundary(): ReactElement {
+export default function RouteErrorBoundary(): ReactElement | null {
   const error: unknown = useRouteError();
+  const location = useLocation();
+  const navigation = useNavigation();
+  if (isPlanningResourceNotFound(error)) {
+    // 旧详情的迟到失败不能覆盖用户已经发起的页面切换。
+    if (navigation.state !== "idle") return null;
+    const segments = location.pathname.split("/").filter(Boolean);
+    const projectId =
+      segments[0] === "dashboard" && segments[1] === "planning" ? segments[2] : undefined;
+    const target =
+      error.resource === "item" && projectId
+        ? `/dashboard/planning/${projectId}`
+        : (planningListReturnTo(location.state) ?? "/dashboard/planning");
+    // 已失效的历史地址不再占用当前历史项，避免后退时反复回到已删除的详情。
+    return <Navigate to={target} replace state={location.state} />;
+  }
   return <RouteFailure notFound={isRouteErrorResponse(error) && error.status === 404} />;
 }

@@ -94,6 +94,15 @@ test("public login failures do not redirect", async (): Promise<void> => {
   expect(replace).not.toHaveBeenCalled();
 });
 
+test.each([3, 6])("保留业务错误码 %s 供调用方区分权限与数据不存在", async (code): Promise<void> => {
+  respond(code);
+  await expect(request("/resource")).rejects.toMatchObject({
+    name: "ApiError",
+    code,
+    message: "错误",
+  });
+});
+
 test("permission denial preserves session", async (): Promise<void> => {
   storage.set("token", "valid");
   respond(3);

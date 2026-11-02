@@ -9,6 +9,7 @@ import { getPlazaTaskTypes, getTaskPlaza } from "@/api/plaza";
 import { getProjectItemList, getTaskTemplateOptions } from "@/api/projectItem";
 import { getItemTaskFlow, getItemTaskInstances } from "@/api/workflowInstance";
 
+import { isPlanningResourceNotFound, readPlanningResource } from "@/lib/planningResourceError";
 import type { ApiQueryOptions } from "@/lib/apiQuery";
 import type { TaskTemplateOptionVO } from "@/types/projectItem";
 import type {
@@ -76,7 +77,8 @@ export function projectDetailQuery(
 ): ApiQueryOptions<ProjectDetailInfoVO> {
   return {
     key: ["projects", "detail", projectId],
-    queryFn: () => getProjectDetail(projectId!),
+    queryFn: () => readPlanningResource("project", () => getProjectDetail(projectId!)),
+    throwOnError: isPlanningResourceNotFound,
     enabled: Boolean(projectId),
   };
 }
@@ -94,7 +96,8 @@ export function projectItemsQuery(
   };
   return {
     key: ["items", "list", projectId, params],
-    queryFn: () => getProjectItemList(projectId, params),
+    queryFn: () => readPlanningResource("project", () => getProjectItemList(projectId, params)),
+    throwOnError: isPlanningResourceNotFound,
     enabled: Boolean(projectId),
   };
 }
@@ -130,7 +133,8 @@ export function plazaTaskTypesQuery(): ApiQueryOptions<PlazaTaskTypeOption[]> {
 export function itemFlowQuery(itemId: string): ApiQueryOptions<ItemTaskFlowVO> {
   return {
     key: ["flow", itemId],
-    queryFn: () => getItemTaskFlow(itemId),
+    queryFn: () => readPlanningResource("item", () => getItemTaskFlow(itemId)),
+    throwOnError: isPlanningResourceNotFound,
     enabled: Boolean(itemId),
     staleTime: 0,
     // loader 每次进入都获取最新数据，挂载时直接复用，避免再发一次请求。
@@ -141,7 +145,8 @@ export function itemFlowQuery(itemId: string): ApiQueryOptions<ItemTaskFlowVO> {
 export function itemInstancesQuery(itemId: string): ApiQueryOptions<ItemTaskInstanceVO[]> {
   return {
     key: ["instances", itemId],
-    queryFn: () => getItemTaskInstances(itemId),
+    queryFn: () => readPlanningResource("item", () => getItemTaskInstances(itemId)),
+    throwOnError: isPlanningResourceNotFound,
     enabled: Boolean(itemId),
     staleTime: 0,
     refetchOnMount: false,

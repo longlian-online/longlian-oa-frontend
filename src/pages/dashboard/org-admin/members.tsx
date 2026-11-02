@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
 import {
   Ban,
   CheckCircle2,
+  ChevronRight,
   ClipboardList,
   Loader2,
   Search,
@@ -53,15 +55,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
 import {
   INITIAL_MEMBER_LIST_FILTERS,
+  memberClaimedTasksQuery,
   ORGANIZATION_ADMIN_PAGE_SIZE as PAGE_SIZE,
   organizationMembersQuery,
 } from "@/queries/organizationAdmin";
 import type { OrganizationMemberVO } from "@/types/organizationAdmin";
 
+import {
+  claimedTaskPath,
+  claimedTaskTabCount,
+  claimedTaskTitle,
+  claimedTaskWaitingLabel,
+  CLAIMED_TASK_TABS,
+  filterClaimedTasks,
+  type ClaimedTaskTab,
+} from "./memberClaimedTasks";
 import {
   commitMemberListFilters,
   MEMBER_SEARCH_DEBOUNCE_MS,
@@ -103,6 +116,16 @@ function OrganizationMembersContent() {
   });
   const submitCounts = detailQuery.data?.list ?? [];
   const detailLoading = detailQuery.isLoading;
+  const [claimedTaskMember, setClaimedTaskMember] = useState<OrganizationMemberVO | null>(null);
+  const [claimedTaskTab, setClaimedTaskTab] = useState<ClaimedTaskTab>("ALL");
+  const claimedTasksQuery = useApiQuery(memberClaimedTasksQuery(claimedTaskMember?.id ?? null));
+  const claimedTasks = claimedTasksQuery.data?.list ?? [];
+  const claimedTaskCounts = {
+    totalCount: claimedTasksQuery.data?.totalCount ?? 0,
+    submittableCount: claimedTasksQuery.data?.submittableCount ?? 0,
+    waitingCount: claimedTasksQuery.data?.waitingCount ?? 0,
+  };
+  const claimedTasksLoading = claimedTasksQuery.isLoading;
   const [roleMember, setRoleMember] = useState<OrganizationMemberVO | null>(null);
   const [selectedRole, setSelectedRole] = useState<OrgMemberRole>("ORG_USER");
   const savingRole = changeMemberRoleMutation.isPending;
@@ -147,6 +170,11 @@ function OrganizationMembersContent() {
 
   function handleOpenSubmitCounts(member: OrganizationMemberVO): void {
     setDetailMember(member);
+  }
+
+  function handleOpenClaimedTasks(member: OrganizationMemberVO): void {
+    setClaimedTaskTab("ALL");
+    setClaimedTaskMember(member);
   }
 
   function openRoleDialog(member: OrganizationMemberVO): void {
@@ -258,6 +286,7 @@ function OrganizationMembersContent() {
                   <TableHead>入组时间</TableHead>
                   <TableHead>最近活跃</TableHead>
                   <TableHead>任务提交数</TableHead>
+                  <TableHead>接取任务</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead className="w-56 text-right">操作</TableHead>
                 </TableRow>
@@ -303,6 +332,22 @@ function OrganizationMembersContent() {
                         {formatDate(member.lastSubmittedAt)}
                       </TableCell>
                       <TableCell>{member.submitCount}</TableCell>
+                      <TableCell>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="min-w-24 justify-between gap-2"
+                          aria-label={`查看${memberName(member)}的 ${member.claimedTaskCount} 项接取任务`}
+                          aria-haspopup="dialog"
+                          aria-expanded={claimedTaskMember?.id === member.id}
+                          onClick={() => handleOpenClaimedTasks(member)}
+                        >
+                          <span className="tabular-nums">{member.claimedTaskCount} 项</span>
+                          <span className="text-muted-foreground">查看</span>
+                          <ChevronRight data-icon="inline-end" aria-hidden="true" />
+                        </Button>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={disabled ? "secondary" : "outline"}>
                           {disabled ? "已禁用" : "已启用"}
@@ -407,6 +452,92 @@ function OrganizationMembersContent() {
                 </div>
               ))}
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={claimedTaskMember !== null}
+        onOpenChange={(open) => !open && setClaimedTaskMember(null)}
+      >
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {claimedTaskMember ? `${memberName(claimedTaskMember)}的接取任务` : "接取任务"}
+            </DialogTitle>
+          </DialogHeader>
+          {claimedTasksQuery.isError && !claimedTasksQuery.data ? (
+            <Button variant="outline" onClick={() => void claimedTasksQuery.refetch()}>
+              加载失败，重试
+            </Button>
+          ) : claimedTasksLoading ? (
+            <div className="flex min-h-24 items-center justify-center text-sm text-muted-foreground">
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              正在加载任务...
+            </div>
+          ) : (
+            <Tabs
+              value={claimedTaskTab}
+              onValueChange={(value) => setClaimedTaskTab(value as ClaimedTaskTab)}
+            >
+              <TabsList className="grid w-full grid-cols-3">
+                {CLAIMED_TASK_TABS.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value}>
+                    {tab.label}
+                    <span className="tabular-nums text-muted-foreground">
+                      {claimedTaskTabCount(tab.value, claimedTaskCounts)}
+                    </span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {CLAIMED_TASK_TABS.map((tab) => {
+                const tasks = filterClaimedTasks(claimedTasks, tab.value);
+                return (
+                  <TabsContent key={tab.value} value={tab.value}>
+                    {tasks.length === 0 ? (
+                      <p className="py-6 text-center text-sm text-muted-foreground">暂无任务</p>
+                    ) : (
+                      <div className="flex max-h-80 flex-col gap-2 overflow-y-auto p-1">
+                        {tasks.map((task) => {
+                          const waitingLabel = claimedTaskWaitingLabel(task);
+                          return (
+                            <Link
+                              key={task.instanceId}
+                              to={claimedTaskPath(task)}
+                              className="group flex min-w-0 items-center gap-3 rounded-lg border px-3 py-2 transition-colors hover:border-primary/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              aria-label={`查看任务：${claimedTaskTitle(task)}，${task.projectName ?? ""}`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="truncate text-sm font-medium text-foreground underline-offset-4 group-hover:underline group-focus-visible:underline">
+                                  {claimedTaskTitle(task)}
+                                </div>
+                                <div className="truncate text-xs text-muted-foreground">
+                                  {task.projectName}
+                                </div>
+                              </div>
+                              <div className="flex shrink-0 flex-col items-end gap-1">
+                                {waitingLabel ? (
+                                  <span className="inline-block max-w-full truncate rounded-full bg-[#fcede1] px-2.5 py-0.5 text-xs font-medium text-[#c45628] dark:bg-[#3a241c] dark:text-[#f3b08a]">
+                                    {waitingLabel}
+                                  </span>
+                                ) : null}
+                                <span className="text-xs text-muted-foreground tabular-nums">
+                                  接取于 {formatDate(task.claimedAt)}
+                                </span>
+                              </div>
+                              <ChevronRight
+                                className="size-4 shrink-0 text-muted-foreground group-hover:text-foreground"
+                                aria-hidden="true"
+                              />
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </TabsContent>
+                );
+              })}
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>
