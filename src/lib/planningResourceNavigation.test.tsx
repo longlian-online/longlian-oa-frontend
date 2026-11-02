@@ -17,6 +17,7 @@ import TaskDetailPanel from "@/components/WorkflowInstance/TaskDetailPanel";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { apiQueryOptions } from "@/lib/apiQuery";
 import { queryClient } from "@/lib/queryClient";
+import { scopedKey } from "@/lib/queryKeys";
 import { clearSession, saveSession } from "@/lib/session";
 import {
   itemFlowQuery,
@@ -45,6 +46,7 @@ let missingProject: boolean;
 let missingItem: boolean;
 let withTaskDetail: boolean;
 let businessCode: number;
+let workshopPending: Promise<null> | undefined;
 const calls: string[] = [];
 
 function Shell(): ReactElement {
@@ -109,6 +111,11 @@ function ProjectList(): ReactElement {
 }
 
 const routes: RouteObject[] = [
+  {
+    path: "/dashboard/workshop",
+    loader: () => workshopPending ?? null,
+    Component: () => <h1>工坊</h1>,
+  },
   { path: "/dashboard/planning", loader: projectListLoader, Component: ProjectList },
   { path: "/dashboard/planning/:projectId", loader: projectLoader, Component: Project },
   { path: "/dashboard/planning/:projectId/edit", loader: projectEditLoader, Component: Project },
@@ -133,6 +140,7 @@ beforeEach((): void => {
   missingItem = false;
   withTaskDetail = false;
   businessCode = 0;
+  workshopPending = undefined;
   calls.length = 0;
   vi.stubGlobal("fetch", async (input: string): Promise<Response> => {
     const path = new URL(input, "http://localhost").pathname;
@@ -327,6 +335,45 @@ test("返回仍在新鲜期的所属企划时更新项目列表，不再展示�
   await waitAt("/dashboard/planning/21");
   expect(container.textContent).not.toContain("第一话");
   expect(calls.filter((path) => path === "/app/projects/21/items")).toHaveLength(2);
+});
+
+test("旧详情的迟到不存在响应不覆盖用户正在进行的其他页面导航", async (): Promise<void> => {
+  await mount("/dashboard/planning/21/items/31");
+  await vi.waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("第一话"));
+  const send = globalThis.fetch;
+  let finishFlow!: (response: Response) => void;
+  vi.stubGlobal("fetch", (input: string, init?: RequestInit): Promise<Response> => {
+    if (new URL(input, "http://localhost").pathname === "/app/item/31/flow") {
+      return new Promise<Response>((resolve) => {
+        finishFlow = resolve;
+      });
+    }
+    return send(input, init);
+  });
+  let refreshed!: Promise<void>;
+  await act(async () => {
+    refreshed = queryClient.refetchQueries({ queryKey: scopedKey(["flow", "31"], "org") });
+  });
+  let finishWorkshop!: (result: null) => void;
+  workshopPending = new Promise<null>((resolve) => {
+    finishWorkshop = resolve;
+  });
+  await act(async () => {
+    void router.navigate("/dashboard/workshop");
+  });
+  expect(router.state.navigation.location?.pathname).toBe("/dashboard/workshop");
+  await act(async () => {
+    finishFlow(json(null, 6));
+    await refreshed;
+    await new Promise<void>((resolve) => setTimeout(resolve, 5));
+  });
+  expect(router.state.navigation.location?.pathname).toBe("/dashboard/workshop");
+  await act(async () => {
+    finishWorkshop(null);
+  });
+  await waitAt("/dashboard/workshop");
+  expect(container.querySelector("h1")?.textContent).toBe("工坊");
+  expect(notificationService.notify).not.toHaveBeenCalled();
 });
 
 test("权限错误不会误判为已删除或静默跳转", async (): Promise<void> => {

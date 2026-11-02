@@ -1,4 +1,11 @@
-import { isRouteErrorResponse, Link, Navigate, useLocation, useRouteError } from "react-router";
+import {
+  isRouteErrorResponse,
+  Link,
+  Navigate,
+  useLocation,
+  useNavigation,
+  useRouteError,
+} from "react-router";
 
 import { planningListReturnTo } from "@/lib/pageQuery";
 import { isPlanningResourceNotFound } from "@/lib/planningResourceError";
@@ -54,10 +61,13 @@ export function RouteModuleFailure(): ReactElement {
   return <RouteFailure moduleFailed />;
 }
 
-export default function RouteErrorBoundary(): ReactElement {
+export default function RouteErrorBoundary(): ReactElement | null {
   const error: unknown = useRouteError();
   const location = useLocation();
+  const navigation = useNavigation();
   if (isPlanningResourceNotFound(error)) {
+    // 旧详情的迟到失败不能覆盖用户已经发起的页面切换。
+    if (navigation.state !== "idle") return null;
     const segments = location.pathname.split("/").filter(Boolean);
     const projectId =
       segments[0] === "dashboard" && segments[1] === "planning" ? segments[2] : undefined;
