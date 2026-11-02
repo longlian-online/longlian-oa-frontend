@@ -112,6 +112,12 @@ function buttonsNamed(name: string, scope: ParentNode = document): HTMLButtonEle
   );
 }
 
+function buttonNamed(name: string): HTMLButtonElement {
+  const button = buttonsNamed(name)[0];
+  if (!button) throw new Error(`缺少${name}按钮`);
+  return button;
+}
+
 async function click(button: HTMLButtonElement): Promise<void> {
   await act(async () => {
     button.click();
@@ -128,16 +134,25 @@ async function typeInto(input: HTMLInputElement, value: string): Promise<void> {
 test("修改昵称时空白和超长停在字段旁", async (): Promise<void> => {
   currentUser.user = user("a@example.com");
   await mount();
-  const nickname = document.querySelector("#nickname");
-  if (!(nickname instanceof HTMLInputElement)) throw new Error("缺少昵称输入框");
-  expect(nickname.value).toBe("遗留用户");
+  expect(document.querySelector("#nickname")).toBeNull();
+  expect(document.querySelector("#old-password")).toBeNull();
+  expect(Array.from(document.querySelectorAll("h2"), (heading) => heading.textContent)).toEqual([
+    "修改密码",
+    "通知",
+  ]);
+  expect(document.body.textContent).not.toContain("昵称 遗留用户");
+  expect(document.body.textContent).toContain("遗留用户");
   expect(document.body.textContent).toContain("用户名 legacy");
   expect(document.body.textContent).toContain("邮箱 a@example.com");
   expect(document.body.textContent).not.toContain("登录名");
   expect(document.querySelector("#bind-email")).toBeNull();
 
-  const submit = buttonsNamed("保存")[0];
-  if (!submit) throw new Error("缺少保存按钮");
+  await click(buttonNamed("修改昵称"));
+  const nickname = document.querySelector("#nickname");
+  if (!(nickname instanceof HTMLInputElement)) throw new Error("缺少昵称输入框");
+  expect(nickname.value).toBe("遗留用户");
+
+  const submit = buttonNamed("保存");
   await typeInto(nickname, "   ");
   await click(submit);
   expect(document.querySelector("#nickname-error")?.textContent).toBe("昵称不能为空");
@@ -147,17 +162,30 @@ test("修改昵称时空白和超长停在字段旁", async (): Promise<void> =>
   await click(submit);
   expect(document.querySelector("#nickname-error")?.textContent).toBe("昵称最多20个字符");
 
-  await typeInto(nickname, "  新昵称  ");
-  await click(submit);
+  await typeInto(nickname, "先改一下");
+  await click(buttonNamed("取消"));
+  expect(document.querySelector("#nickname")).toBeNull();
+  expect(document.body.textContent).toContain("遗留用户");
+  expect(updateMyInfo).not.toHaveBeenCalled();
+
+  await click(buttonNamed("修改昵称"));
+  const reopened = document.querySelector("#nickname");
+  if (!(reopened instanceof HTMLInputElement)) throw new Error("缺少昵称输入框");
+  expect(reopened.value).toBe("遗留用户");
+  await typeInto(reopened, "  新昵称  ");
+  await click(buttonNamed("保存"));
   await vi.waitFor(() => {
     expect(updateMyInfo).toHaveBeenCalledWith({ nickname: "新昵称" });
   });
+  expect(document.querySelector("#nickname")).toBeNull();
 });
 
 test("未绑定邮箱时提交验证码会转成大写且不清除登录凭证", async (): Promise<void> => {
   currentUser.user = user(null);
   await mount();
   expect(document.body.textContent).toContain("邮箱 未绑定");
+  expect(document.querySelector("#bind-email")).toBeNull();
+  await click(buttonNamed("绑定"));
   const email = document.querySelector("#bind-email");
   const code = document.querySelector("#bind-code");
   if (!(email instanceof HTMLInputElement) || !(code instanceof HTMLInputElement)) {
@@ -177,6 +205,8 @@ test("未绑定邮箱时提交验证码会转成大写且不清除登录凭证",
 test("修改密码成功后清除当前登录并回到登录页", async (): Promise<void> => {
   currentUser.user = user("a@example.com");
   await mount();
+  expect(document.querySelector("#old-password")).toBeNull();
+  await click(buttonNamed("修改"));
   const oldPassword = document.querySelector("#old-password");
   const newPassword = document.querySelector("#new-password");
   if (!(oldPassword instanceof HTMLInputElement) || !(newPassword instanceof HTMLInputElement)) {
@@ -184,9 +214,24 @@ test("修改密码成功后清除当前登录并回到登录页", async (): Prom
   }
   await typeInto(oldPassword, "Oldpass1");
   await typeInto(newPassword, "Newpass1");
-  const submit = buttonsNamed("修改密码")[0];
-  if (!submit) throw new Error("缺少修改密码按钮");
-  await click(submit);
+  await click(buttonNamed("取消"));
+  expect(document.querySelector("#old-password")).toBeNull();
+  expect(changePassword).not.toHaveBeenCalled();
+
+  await click(buttonNamed("修改"));
+  const oldPasswordAgain = document.querySelector("#old-password");
+  const newPasswordAgain = document.querySelector("#new-password");
+  if (
+    !(oldPasswordAgain instanceof HTMLInputElement) ||
+    !(newPasswordAgain instanceof HTMLInputElement)
+  ) {
+    throw new Error("缺少密码输入框");
+  }
+  expect(oldPasswordAgain.value).toBe("");
+  expect(newPasswordAgain.value).toBe("");
+  await typeInto(oldPasswordAgain, "Oldpass1");
+  await typeInto(newPasswordAgain, "Newpass1");
+  await click(buttonNamed("保存"));
   await vi.waitFor(() => {
     expect(changePassword).toHaveBeenCalledWith({
       oldPassword: "Oldpass1",
