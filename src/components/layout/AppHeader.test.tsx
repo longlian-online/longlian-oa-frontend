@@ -485,6 +485,25 @@ test("分页和已读共享互斥保护，不会被旧分页覆盖", async (): P
   await vi.waitFor(() => expect(bell().getAttribute("aria-label")).toBe("通知"));
 });
 
+test("点击后立刻打开列表并显示加载，不等待列表返回", async (): Promise<void> => {
+  const pending = deferred<Response>();
+  serve = (url, options): Promise<Response> =>
+    url.pathname === "/app/notifications" ? pending.promise : defaultServe(url, options);
+  await enableInbox();
+  await click(bell());
+  expect(document.querySelector("[role='dialog']")).not.toBeNull();
+  expect(bell().getAttribute("aria-expanded")).toBe("true");
+  expect(document.querySelector("[role='dialog']")?.getAttribute("aria-busy")).toBe("true");
+  expect(document.body.textContent).toContain("正在加载通知");
+  expect(rowButtons()).toHaveLength(0);
+  expect(requests("/app/notifications")).toBe(1);
+  await act(async () =>
+    pending.resolve(json({ list: makeRows(1), hasNext: false, unreadCount: 1 })),
+  );
+  await vi.waitFor(() => expect(rowButtons()).toHaveLength(1));
+  expect(document.querySelector("[role='dialog']")?.getAttribute("aria-busy")).toBe("false");
+});
+
 test("关闭取消列表，快速重开不复用旧响应或图片", async (): Promise<void> => {
   const old = deferred<Response>();
   let first = true;
