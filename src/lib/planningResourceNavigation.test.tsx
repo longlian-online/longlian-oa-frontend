@@ -15,6 +15,7 @@ import AppBreadcrumb from "@/components/layout/AppBreadcrumb";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import TaskDetailPanel from "@/components/WorkflowInstance/TaskDetailPanel";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
+import { apiQueryOptions } from "@/lib/apiQuery";
 import { queryClient } from "@/lib/queryClient";
 import { clearSession, saveSession } from "@/lib/session";
 import {
@@ -22,7 +23,9 @@ import {
   itemInstancesQuery,
   projectDetailQuery,
   projectItemsQuery,
+  projectListQuery,
 } from "@/queries/planning";
+import { loader as projectListLoader } from "@/routeLoaders/dashboard/planning/index";
 import { loader as projectLoader } from "@/routeLoaders/dashboard/planning/[projectId]/index";
 import { loader as projectEditLoader } from "@/routeLoaders/dashboard/planning/[projectId]/edit";
 import { loader as itemListLoader } from "@/routeLoaders/dashboard/planning/[projectId]/items/index";
@@ -56,8 +59,15 @@ function Shell(): ReactElement {
 function Project(): ReactElement {
   const { projectId } = useParams();
   const project = useApiQuery(projectDetailQuery(projectId));
-  useApiQuery(projectItemsQuery(projectId ?? ""));
-  return <h1>{project.data?.title}</h1>;
+  const items = useApiQuery(projectItemsQuery(projectId ?? ""));
+  return (
+    <>
+      <h1>{project.data?.title}</h1>
+      {items.data?.list.map((item) => (
+        <p key={item.id}>{item.title}</p>
+      ))}
+    </>
+  );
 }
 
 function Item(): ReactElement {
@@ -86,8 +96,20 @@ function Item(): ReactElement {
   );
 }
 
+function ProjectList(): ReactElement {
+  const projects = useApiQuery(projectListQuery());
+  return (
+    <>
+      <h1>企划列表</h1>
+      {projects.data?.list.map((project) => (
+        <p key={project.id}>{project.title}</p>
+      ))}
+    </>
+  );
+}
+
 const routes: RouteObject[] = [
-  { path: "/dashboard/planning", Component: () => <h1>企划列表</h1> },
+  { path: "/dashboard/planning", loader: projectListLoader, Component: ProjectList },
   { path: "/dashboard/planning/:projectId", loader: projectLoader, Component: Project },
   { path: "/dashboard/planning/:projectId/edit", loader: projectEditLoader, Component: Project },
   { path: "/dashboard/planning/:projectId/items", loader: itemListLoader, Component: Project },
@@ -118,8 +140,17 @@ beforeEach((): void => {
     if (path === "/app/projects/21") {
       return json({ id: "21", title: "春季企划" }, missingProject ? 6 : businessCode);
     }
+    if (path === "/app/projects") {
+      return json({
+        list: missingProject ? [] : [{ id: "21", title: "春季企划" }],
+        total: missingProject ? 0 : 1,
+      });
+    }
     if (path === "/app/projects/21/items") {
-      return json({ list: [], total: 0 }, missingProject ? 6 : businessCode);
+      return json(
+        { list: missingItem ? [] : [{ id: "31", title: "第一话" }], total: missingItem ? 0 : 1 },
+        missingProject ? 6 : businessCode,
+      );
     }
     if (path === "/app/item/31/flow") {
       return json(
@@ -278,6 +309,24 @@ test("浏览器后退重新进入被其他标签页删除的项目时安全返�
   });
   await waitAt("/dashboard/planning/21");
   expect(notificationService.notify).not.toHaveBeenCalled();
+});
+
+test("返回仍在新鲜期的企划列表时重新获取，不再展示已删企划", async (): Promise<void> => {
+  await queryClient.prefetchQuery(apiQueryOptions(projectListQuery()));
+  missingProject = true;
+  await mount("/dashboard/planning/21");
+  await waitAt("/dashboard/planning?page=3");
+  expect(container.textContent).not.toContain("春季企划");
+  expect(calls.filter((path) => path === "/app/projects")).toHaveLength(2);
+});
+
+test("返回仍在新鲜期的所属企划时更新项目列表，不再展示已删项目", async (): Promise<void> => {
+  await queryClient.prefetchQuery(apiQueryOptions(projectItemsQuery("21")));
+  missingItem = true;
+  await mount("/dashboard/planning/21/items/31");
+  await waitAt("/dashboard/planning/21");
+  expect(container.textContent).not.toContain("第一话");
+  expect(calls.filter((path) => path === "/app/projects/21/items")).toHaveLength(2);
 });
 
 test("权限错误不会误判为已删除或静默跳转", async (): Promise<void> => {
