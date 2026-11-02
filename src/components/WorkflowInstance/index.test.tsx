@@ -53,6 +53,7 @@ let root: Root | undefined;
 let container: HTMLDivElement | undefined;
 let client: QueryClient;
 let tasks: ItemTaskInstanceVO[];
+let submissionRecord: boolean;
 
 function task(overrides: Partial<ItemTaskInstanceVO> = {}): ItemTaskInstanceVO {
   return {
@@ -75,9 +76,11 @@ beforeEach(() => {
   saveSession({ token: "token", userId: "creator", defaultOrgId: "11" });
   client = createQueryClient();
   tasks = [task()];
+  submissionRecord = false;
   api.getItemTaskFlow.mockImplementation(async () => ({
     itemTitle: "第一话",
     name: "流程",
+    hasSubmissionRecord: submissionRecord,
     nodes: tasks.map((entry) => ({
       id: entry.id,
       baseTaskId: "base",
@@ -662,8 +665,7 @@ function named(text: string): HTMLButtonElement | undefined {
   );
 }
 
-test("已提交任务的项目详情只向负责人提供删除", async () => {
-  tasks = [task({ status: "COMPLETED" })];
+test("项目详情只向负责人提供删除项目", async () => {
   await mount(true, "21");
   expect(named("删除项目")).toBeDefined();
   await render("item", false, { projectId: "21" });
@@ -671,8 +673,11 @@ test("已提交任务的项目详情只向负责人提供删除", async () => {
   expect(named("删除项目")).toBeUndefined();
 });
 
-test("没有已提交任务时负责人仍可看到删除项目", async () => {
+test("任务流存在提交记录时即使任务不是已完成也走删除申请", async () => {
+  submissionRecord = true;
+  tasks = [task({ status: "PENDING", assigneeId: undefined })];
   await mount(true, "21");
-  expect(named("删除项目")).toBeDefined();
-  expect(named("复制参与名单")).toBeDefined();
+  await act(async () => named("删除项目")?.click());
+  expect(document.body.textContent).toContain("由于项目存在提交记录，删除需要管理员审核");
+  expect(document.querySelector("textarea")).not.toBeNull();
 });

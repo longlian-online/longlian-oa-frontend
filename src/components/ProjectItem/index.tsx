@@ -83,7 +83,7 @@ export default function ProjectItemSection({
 
   async function handleDeleteItem(item: ProjectItemListVO): Promise<void> {
     if (actionLock.current) return;
-    if (item.hasSubmittedTask) {
+    if (item.hasSubmissionRecord) {
       setReason("");
       setReasonItem(item);
       return;
@@ -284,7 +284,7 @@ export default function ProjectItemSection({
           <DialogContent>
             <DialogHeader>
               <DialogTitle>删除项目？</DialogTitle>
-              <DialogDescription>由于项目存在已提交任务，删除需要管理员审核</DialogDescription>
+              <DialogDescription>由于项目存在提交记录，删除需要管理员审核</DialogDescription>
             </DialogHeader>
             <Textarea
               value={reason}
