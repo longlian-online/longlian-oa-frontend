@@ -52,7 +52,10 @@ export async function listAdminProductReleases(query: {
 }
 
 export async function getProductReleaseBaseline(): Promise<ProductReleaseBaseline | null> {
-  return adminRequest<ProductReleaseBaseline | null>("/admin/product-releases/baseline");
+  // 后端在还没有已发布版本时返回 data:null；旧响应可能省略该字段，这里统一成 null。
+  return (
+    (await adminRequest<ProductReleaseBaseline | null>("/admin/product-releases/baseline")) ?? null
+  );
 }
 
 export async function getAdminProductRelease(id: string): Promise<ProductReleaseDetail> {
