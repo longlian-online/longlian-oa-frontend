@@ -358,8 +358,6 @@ export default function ProjectDetail() {
           </DialogContent>
         </Dialog>
 
-        <ProjectAttachments key={projectId} projectId={projectId!} isCreator={project.isCreator} />
-
         <section aria-labelledby="project-info-title" className="border-t pt-6">
           <details
             key={`${projectId}-${browseView}`}
@@ -456,6 +454,8 @@ export default function ProjectDetail() {
             )}
           </div>
         </section>
+
+        <ProjectAttachments projectId={projectId!} isCreator={project.isCreator} />
       </div>
       <PlanningDetailNavigation key={projectId} pageRef={pageRef} />
     </div>

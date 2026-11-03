@@ -211,6 +211,12 @@ test("右上角导航包含附件入口", async (): Promise<void> => {
   await waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("春季企划"));
   const nav = container.querySelector("nav[aria-label='本页目录']");
   const labels = [...(nav?.querySelectorAll("a") ?? [])].map((link) => link.textContent);
-  expect(labels).toEqual(["企划概览", "项目", "附件", "关于作品"]);
+  expect(labels).toEqual(["企划概览", "项目", "关于作品", "附件"]);
   expect(nav?.querySelector("a[href='#project-attachments']")).not.toBeNull();
+  const about = container.querySelector("#project-info");
+  const attachments = container.querySelector("#project-attachments");
+  if (!about || !attachments) throw new Error("缺少页面区块");
+  expect(about.compareDocumentPosition(attachments) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  );
 });
