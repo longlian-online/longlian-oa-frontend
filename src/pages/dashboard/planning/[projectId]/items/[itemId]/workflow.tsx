@@ -78,7 +78,7 @@ function EditItemWorkflow({ projectId, itemId }: { projectId: string; itemId: st
   }
 
   return (
-    <div className="-mx-6 -mb-6 flex h-[calc(100svh-6.25rem)] flex-col bg-background">
+    <div className="-mx-6 -mb-6 flex min-h-[calc(100svh-6.25rem)] flex-col bg-background">
       <div className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-4">
         <h1 className="text-lg font-bold leading-6 text-foreground">编辑工作流</h1>
         <div className="flex-1" />
@@ -92,7 +92,7 @@ function EditItemWorkflow({ projectId, itemId }: { projectId: string; itemId: st
           保存
         </Button>
       </div>
-      <div className="flex flex-1 items-start gap-4 overflow-hidden p-4">
+      <div className="flex flex-1 gap-4 overflow-x-clip p-4">
         <WorkflowEditor
           value={editorNodes}
           baseTasks={baseTasks}

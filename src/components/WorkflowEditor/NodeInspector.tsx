@@ -34,7 +34,7 @@ export default function NodeInspector({
 }: NodeInspectorProps) {
   if (!node) {
     return (
-      <aside className="flex min-h-[440px] w-full shrink-0 flex-col items-center justify-center rounded-xl border bg-card px-6 text-center xl:w-72">
+      <aside className="flex h-full w-full shrink-0 flex-col items-center justify-center rounded-xl border bg-card px-6 text-center xl:w-72">
         <div className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
           <PanelRight className="size-5" />
         </div>
@@ -53,7 +53,7 @@ export default function NodeInspector({
   const Icon = getWorkflowTaskIcon(baseTask?.name || "", baseTask?.icon);
 
   return (
-    <aside className="flex min-h-[440px] w-full shrink-0 flex-col overflow-hidden rounded-xl border bg-card xl:w-72">
+    <aside className="flex w-full flex-col rounded-xl border bg-card xl:w-72">
       <div className="border-b p-4">
         <p className="text-xs font-medium text-muted-foreground">节点属性</p>
         <div className="mt-2 flex gap-2">
@@ -62,7 +62,7 @@ export default function NodeInspector({
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4">
+      <div className="flex flex-col gap-5 p-4">
         <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
           节点名称
           <Input
@@ -131,23 +131,23 @@ export default function NodeInspector({
           </div>
         </div>
 
-        <div className="mt-auto">
-          {node.locked ? (
-            <Button type="button" variant="outline" className="w-full" disabled>
-              不能删除
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="destructive"
-              className="w-full"
-              onClick={() => onRemove(node.localId)}
-            >
-              <Trash2 data-icon="inline-start" />
-              删除节点
-            </Button>
-          )}
-        </div>
+        <Separator />
+
+        {node.locked ? (
+          <Button type="button" variant="outline" className="w-full" disabled>
+            不能删除
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="destructive"
+            className="w-full"
+            onClick={() => onRemove(node.localId)}
+          >
+            <Trash2 data-icon="inline-start" />
+            删除节点
+          </Button>
+        )}
       </div>
     </aside>
   );
