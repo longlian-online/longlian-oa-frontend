@@ -165,7 +165,7 @@ export default function WorkflowEditor({
   );
 
   return (
-    <div className="grid min-w-0 flex-1 grid-cols-1 gap-3">
+    <div className="grid min-h-[clamp(320px,calc(100svh-26rem),520px)] min-w-0 flex-1 grid-rows-[auto_minmax(320px,1fr)] grid-cols-1 gap-3">
       <NodePanel
         baseTasks={baseTasks}
         loadingBaseTasks={loadingBaseTasks}

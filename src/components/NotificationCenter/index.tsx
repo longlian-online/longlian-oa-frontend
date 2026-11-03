@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactElement } from "react";
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
-import { Bell } from "lucide-react";
+import { Bell, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router";
 
 import { markAllNotificationsRead, markNotificationRead } from "@/api/notifications";
@@ -43,6 +43,7 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
   const rows = [...(inbox.data?.pages.flatMap((page) => page.list) ?? [])].sort(
     compareNotifications,
   );
+  const initialLoading = Boolean(session.orgId) && !inbox.data && !inbox.isError;
   const busy = reading || inbox.isFetchingNextPage;
 
   function patchRead(id: string | null, readAt: string, captured: InboxData | undefined): void {
@@ -144,6 +145,7 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
     <div
       id={panelId}
       role="dialog"
+      aria-busy={initialLoading}
       aria-labelledby={`${panelId}-title`}
       className="fixed right-4 top-14 z-50 w-[min(22.5rem,calc(100vw-2rem))] rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg sm:absolute sm:right-0 sm:top-full sm:mt-2"
     >
@@ -174,7 +176,10 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
               </Button>
             </div>
           ) : (
-            <p className="px-2 py-8 text-center text-sm text-muted-foreground">正在加载通知…</p>
+            <p className="flex items-center justify-center gap-2 px-2 py-8 text-sm text-muted-foreground">
+              <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+              正在加载通知…
+            </p>
           )
         ) : rows.length === 0 ? (
           <p className="px-2 py-8 text-center text-sm text-muted-foreground">暂无通知</p>
@@ -256,7 +261,6 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
 export default function NotificationCenter(): ReactElement {
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
-  const opening = useRef(false);
   const session = useSessionSnapshot();
   const status = useNotificationStatus();
   const client = useQueryClient();
@@ -288,22 +292,17 @@ export default function NotificationCenter(): ReactElement {
     };
   }, [open]);
 
-  async function toggle(): Promise<void> {
+  function toggle(): void {
     if (open) {
       setOpenedSession(null);
       return;
     }
-    if (opening.current) return;
-    opening.current = true;
     const captured = session;
-    try {
-      const key = scopedKey(["notifications"], "org", captured);
-      await client.cancelQueries({ queryKey: key, exact: true });
-      client.removeQueries({ queryKey: key, exact: true });
-      if (isScopeCurrent("org", captured)) setOpenedSession(captured);
-    } finally {
-      opening.current = false;
-    }
+    const key = scopedKey(["notifications"], "org", captured);
+    // 先打开面板。取消进行中的列表不能挡住这一次点击。
+    void client.cancelQueries({ queryKey: key, exact: true });
+    client.removeQueries({ queryKey: key, exact: true });
+    if (isScopeCurrent("org", captured)) setOpenedSession(captured);
   }
 
   const label = status.data
@@ -324,7 +323,7 @@ export default function NotificationCenter(): ReactElement {
         aria-expanded={open}
         aria-controls={panelId}
         className="relative"
-        onClick={() => void toggle()}
+        onClick={toggle}
       >
         <Bell className="h-4 w-4" />
         {status.data?.hasUnread && (

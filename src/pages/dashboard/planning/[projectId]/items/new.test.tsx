@@ -136,6 +136,32 @@ async function mount(): Promise<void> {
   await waitFor(() => expect(button("创建").disabled).toBe(true));
 }
 
+// 回归：页面高度和编辑区不能把内容裁掉，否则无法向下滚动（LON-12）。
+test("创建页允许整页滚动，编辑区不裁切内容", async (): Promise<void> => {
+  await mount();
+  await act(async () => document.querySelector<HTMLElement>('[role="combobox"]')?.click());
+  await waitFor(() => expect(document.body.textContent).toContain("漫画汉化"));
+  await act(async () => {
+    [...document.querySelectorAll<HTMLElement>('[role="option"]')]
+      .find((option) => option.textContent?.includes("漫画汉化"))
+      ?.click();
+  });
+  await waitFor(() => expect(container.textContent).toContain("翻译"));
+
+  const pageRoot = container.querySelector("div.-mx-6");
+  if (!pageRoot) throw new Error("缺少创建页根容器");
+  // 根容器用最小高度随内容增长，而不是锁死视口高度。
+  expect(pageRoot.className).toContain("min-h-[calc(100svh-6.25rem)]");
+  expect(pageRoot.className.split(" ")).not.toContain("h-[calc(100svh-6.25rem)]");
+
+  // 编辑区不能纵向裁切，否则画布和属性面板会被切掉。
+  const editorRegion = [...pageRoot.querySelectorAll("div")].find((node) =>
+    node.className.toString().includes("overflow-x-clip"),
+  );
+  if (!editorRegion) throw new Error("缺少编辑区容器");
+  expect(editorRegion.className).not.toContain("overflow-hidden");
+});
+
 test("选择模板后指定执行人并一次创建", async (): Promise<void> => {
   await mount();
   expect(container.textContent).toContain("先选择流程模板");
