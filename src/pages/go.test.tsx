@@ -176,6 +176,14 @@ test("an expired session does not continue into the target", async (): Promise<v
   expect(getNotificationStatus).not.toHaveBeenCalled();
 });
 
+test("task rejection email opens the rejected task", async (): Promise<void> => {
+  await open("/go?type=TASK_REJECTED&orgId=8&projectId=11&itemId=22&taskInstanceId=202");
+  await vi.waitFor(() =>
+    expect(container?.textContent).toBe("/dashboard/planning/11/items/22?taskInstanceId=202"),
+  );
+  expect(markNotificationRead).not.toHaveBeenCalled();
+});
+
 test("logged-out email links resume at login", async (): Promise<void> => {
   clearSession();
   await open(task);
