@@ -246,7 +246,7 @@ test("关闭某一类型通知时只提交该类型", async (): Promise<void> =>
   currentUser.user = user("a@example.com");
   await mount();
   await vi.waitFor(() => {
-    expect(document.querySelectorAll("[role='switch']").length).toBe(6);
+    expect(document.querySelectorAll("[role='switch']").length).toBe(7);
   });
   expect(document.body.textContent).not.toContain("仅组织管理员会收到");
   expect(document.querySelector("button[aria-label='入组申请说明']")).not.toBeNull();

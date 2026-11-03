@@ -16,6 +16,14 @@ interface NotificationSourceVO {
   itemTitle: string;
 }
 
+interface NotificationTaskSourceVO extends NotificationSourceVO {
+  taskSlot: NotificationTaskSlotVO;
+  /** 打回通知专用：被打回提交所属的任务实例，用于跳转到对应任务。 */
+  taskInstanceId?: string | null;
+  /** 打回通知专用：本次打回意见。 */
+  reviewComment?: string | null;
+}
+
 interface NotificationRecord {
   id: string;
   sourceId: string;
@@ -26,14 +34,9 @@ interface NotificationRecord {
 
 export type NotificationVO = NotificationRecord &
   (
-    | {
-        kind: "TASK_READY";
-        source: (NotificationSourceVO & { taskSlot: NotificationTaskSlotVO }) | null;
-      }
-    | {
-        kind: "TASK_ASSIGNED";
-        source: (NotificationSourceVO & { taskSlot: NotificationTaskSlotVO }) | null;
-      }
+    | { kind: "TASK_READY"; source: NotificationTaskSourceVO | null }
+    | { kind: "TASK_ASSIGNED"; source: NotificationTaskSourceVO | null }
+    | { kind: "TASK_REJECTED"; source: NotificationTaskSourceVO | null }
     | { kind: "ITEM_COMPLETED"; source: (NotificationSourceVO & { taskSlot: null }) | null }
     | { kind: "JOIN_APPLICATION"; source: { applicantName: string } | null }
     | {

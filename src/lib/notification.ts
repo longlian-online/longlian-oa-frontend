@@ -10,6 +10,7 @@ interface NotificationPresentation {
 const NOTIFICATION_LABELS: Record<NotificationVO["kind"], string> = {
   TASK_READY: "可以开始",
   TASK_ASSIGNED: "任务分配",
+  TASK_REJECTED: "任务打回",
   ITEM_COMPLETED: "项目完成",
   JOIN_APPLICATION: "入组申请",
   DELETION_REQUEST: "删除申请",
@@ -36,6 +37,19 @@ export function notificationPresentation(notification: NotificationVO): Notifica
         targetPath: `${itemPath}?taskInstanceId=${notification.sourceId}`,
       };
     }
+    case "TASK_REJECTED": {
+      const source = notification.source;
+      const title = `「${source.projectTitle} · ${source.itemTitle}」`;
+      const comment = truncateComment(source.reviewComment);
+      const reason = comment ? `打回意见：${comment}` : "请修改后重新提交。";
+      return {
+        label,
+        message: `${title}的「${formatSlotLabel(source.taskSlot)}」已被打回，${reason}`,
+        targetPath: source.taskInstanceId
+          ? `/dashboard/planning/${source.projectId}/items/${source.itemId}?taskInstanceId=${source.taskInstanceId}`
+          : null,
+      };
+    }
     case "ITEM_COMPLETED": {
       const source = notification.source;
       return {
@@ -59,6 +73,13 @@ export function notificationPresentation(notification: NotificationVO): Notifica
       };
     }
   }
+}
+
+/** 站内信列表空间有限，打回意见在任务详情里完整展示，这里只截断展示开头。 */
+function truncateComment(comment: string | null | undefined): string {
+  const trimmed = comment?.trim();
+  if (!trimmed) return "";
+  return trimmed.length > 40 ? `${trimmed.slice(0, 40)}…` : trimmed;
 }
 
 export function notificationTarget(value: string | null): string | null {
