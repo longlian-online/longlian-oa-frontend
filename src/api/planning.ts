@@ -11,6 +11,7 @@ import type {
   PresetTagVO,
   ProjectUpdateDTO,
 } from "@/types/planning";
+import type { ProjectAttachmentDownloadVO, ProjectAttachmentVO } from "@/types/projectAttachment";
 
 function toQueryString(params: Record<string, string | number | undefined>): string {
   const searchParams = new URLSearchParams();
@@ -91,4 +92,36 @@ export async function createProjectDeletionRequest(
     method: "POST",
     body: JSON.stringify({ reason }),
   });
+}
+
+export async function getProjectAttachments(
+  projectId: number | string,
+): Promise<ProjectAttachmentVO[]> {
+  return request(`/projects/${projectId}/attachments`);
+}
+
+export async function createProjectAttachment(
+  projectId: number | string,
+  fileId: string,
+): Promise<void> {
+  return request(`/projects/${projectId}/attachments`, {
+    method: "POST",
+    body: JSON.stringify({ fileId }),
+  });
+}
+
+export async function deleteProjectAttachment(
+  projectId: number | string,
+  attachmentId: string,
+): Promise<void> {
+  return request(`/projects/${projectId}/attachments/${attachmentId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getProjectAttachmentDownload(
+  projectId: number | string,
+  attachmentId: string,
+): Promise<ProjectAttachmentDownloadVO> {
+  return request(`/projects/${projectId}/attachments/${attachmentId}/download`);
 }
