@@ -288,10 +288,11 @@ export default function WorkflowCanvas({
         nodeTypes={NODE_TYPES}
         minZoom={0.55}
         maxZoom={1.35}
+        panOnScroll
         zoomOnScroll={false}
         zoomOnPinch
         panOnDrag
-        preventScrolling={false}
+        preventScrolling
         fitView
         fitViewOptions={{ padding: 0.18 }}
         nodesConnectable={false}

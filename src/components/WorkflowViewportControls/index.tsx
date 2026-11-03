@@ -12,8 +12,8 @@ export default function WorkflowViewportControls() {
         position="bottom-right"
         className="!pointer-events-none hidden rounded-md border bg-card/95 px-2.5 py-1.5 text-xs leading-5 text-muted-foreground sm:block"
       >
-        <p>拖拽空白处移动画布 · 双指捏合缩放</p>
-        <p>滚轮滚动页面，画布不拦截</p>
+        <p>滚轮移动 · Ctrl / ⌘ + 滚轮缩放</p>
+        <p>拖拽空白处移动 · 双指捏合缩放</p>
       </Panel>
     </>
   );
