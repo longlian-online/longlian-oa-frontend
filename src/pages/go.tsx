@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactElement } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
 import { switchOrganization } from "@/api/user";
+import { acknowledgeEmailNotification } from "@/lib/emailNotificationRead";
+import { AuthExpiredError } from "@/lib/authError";
 import { externalEntryPath, parseExternalEntry } from "@/lib/externalEntry";
 import { getCurrentOrgId, getToken, saveCurrentOrganization } from "@/lib/session";
 
@@ -28,6 +30,13 @@ export default function ExternalEntryPage(): ReactElement {
           const organization = await switchOrganization({ orgId: entry.orgId });
           if (cancelled) return;
           saveCurrentOrganization(organization.id, organization.role);
+        }
+        if (entry.notificationId) {
+          try {
+            await acknowledgeEmailNotification(entry.notificationId);
+          } catch (error) {
+            if (cancelled || error instanceof AuthExpiredError) return;
+          }
         }
         if (!cancelled) void navigate(externalEntryPath(entry), { replace: true });
       } catch {

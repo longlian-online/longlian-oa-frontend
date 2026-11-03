@@ -7,29 +7,36 @@ export type ExternalEntry =
       projectId: string;
       itemId: string;
       taskInstanceId?: string;
+      notificationId?: string;
     }
-  | { type: "JOIN_APPLICATION"; orgId: string; applicationId: string }
-  | { type: "DELETION_REQUEST"; orgId: string; requestId: string };
+  | { type: "JOIN_APPLICATION"; orgId: string; applicationId: string; notificationId?: string }
+  | { type: "DELETION_REQUEST"; orgId: string; requestId: string; notificationId?: string };
+
+function notificationIdOf(params: URLSearchParams): { notificationId: string } | undefined {
+  const notificationId = params.get("notificationId");
+  return notificationId && ID.test(notificationId) ? { notificationId } : undefined;
+}
 
 export function parseExternalEntry(search: string): ExternalEntry | null {
   const params = new URLSearchParams(search);
   const type = params.get("type");
   const orgId = params.get("orgId");
   if (!orgId || !ID.test(orgId)) return null;
+  const notification = notificationIdOf(params);
   if (type === "JOIN_APPLICATION") {
     const applicationId = params.get("applicationId");
     if (!applicationId || !ID.test(applicationId)) return null;
-    return { type, orgId, applicationId };
+    return { type, orgId, applicationId, ...notification };
   }
   if (type === "DELETION_REQUEST") {
     const requestId = params.get("requestId");
     if (!requestId || !ID.test(requestId)) return null;
-    return { type, orgId, requestId };
+    return { type, orgId, requestId, ...notification };
   }
   const projectId = params.get("projectId");
   const itemId = params.get("itemId");
   if (!projectId || !itemId || !ID.test(projectId) || !ID.test(itemId)) return null;
-  if (type === "ITEM_COMPLETED") return { type, orgId, projectId, itemId };
+  if (type === "ITEM_COMPLETED") return { type, orgId, projectId, itemId, ...notification };
   const taskInstanceId = params.get("taskInstanceId");
   if (
     (type !== "TASK_READY" && type !== "TASK_ASSIGNED") ||
@@ -37,7 +44,7 @@ export function parseExternalEntry(search: string): ExternalEntry | null {
     !ID.test(taskInstanceId)
   )
     return null;
-  return { type, orgId, projectId, itemId, taskInstanceId };
+  return { type, orgId, projectId, itemId, taskInstanceId, ...notification };
 }
 
 export function externalEntryPath(entry: ExternalEntry): string {
