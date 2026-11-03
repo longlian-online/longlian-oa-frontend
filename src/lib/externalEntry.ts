@@ -2,7 +2,7 @@ const ID = /^[1-9]\d*$/;
 
 export type ExternalEntry =
   | {
-      type: "TASK_READY" | "TASK_ASSIGNED" | "ITEM_COMPLETED";
+      type: "TASK_READY" | "TASK_ASSIGNED" | "TASK_REJECTED" | "ITEM_COMPLETED";
       orgId: string;
       projectId: string;
       itemId: string;
@@ -39,7 +39,7 @@ export function parseExternalEntry(search: string): ExternalEntry | null {
   if (type === "ITEM_COMPLETED") return { type, orgId, projectId, itemId, ...notification };
   const taskInstanceId = params.get("taskInstanceId");
   if (
-    (type !== "TASK_READY" && type !== "TASK_ASSIGNED") ||
+    (type !== "TASK_READY" && type !== "TASK_ASSIGNED" && type !== "TASK_REJECTED") ||
     !taskInstanceId ||
     !ID.test(taskInstanceId)
   )

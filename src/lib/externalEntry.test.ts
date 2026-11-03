@@ -27,6 +27,16 @@ test("task assignment opens the assigned task", (): void => {
   );
 });
 
+test("task rejection opens the rejected task", (): void => {
+  const entry = parseExternalEntry(
+    "type=TASK_REJECTED&orgId=8&projectId=11&itemId=22&taskInstanceId=202",
+  );
+  expect(entry).toMatchObject({ type: "TASK_REJECTED", taskInstanceId: "202" });
+  expect(entry && externalEntryPath(entry)).toBe(
+    "/dashboard/planning/11/items/22?taskInstanceId=202",
+  );
+});
+
 test("item completed opens the item without selecting a task", (): void => {
   const entry = parseExternalEntry("type=ITEM_COMPLETED&orgId=8&projectId=11&itemId=22");
   expect(entry && externalEntryPath(entry)).toBe("/dashboard/planning/11/items/22");
@@ -45,6 +55,7 @@ test("review notifications open the administrator lists", (): void => {
 test.each([
   "",
   "type=TASK_READY&orgId=8&projectId=11&itemId=22",
+  "type=TASK_REJECTED&orgId=8&projectId=11&itemId=22",
   "type=OTHER&orgId=8&projectId=11&itemId=22",
   "type=TASK_READY&orgId=0&projectId=11&itemId=22&taskInstanceId=202",
   "type=TASK_READY&orgId=8&projectId=11a&itemId=22&taskInstanceId=202",

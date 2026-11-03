@@ -15,6 +15,7 @@ const USER_CONFIG_KEY = ["userConfig"];
 const KINDS = [
   { kind: "TASK_READY", label: "可以开始", hint: "你接取的任务可以提交时发送邮件。" },
   { kind: "TASK_ASSIGNED", label: "任务分配", hint: "有任务分配给你时发送邮件。" },
+  { kind: "TASK_REJECTED", label: "任务打回", hint: "你提交的任务被打回时发送邮件。" },
   { kind: "ITEM_COMPLETED", label: "项目完成", hint: "你创建的项目全部完成时发送邮件。" },
   { kind: "JOIN_APPLICATION", label: "入组申请", hint: "仅组织管理员会收到。" },
   { kind: "DELETION_REQUEST", label: "删除申请", hint: "仅组织管理员会收到。" },

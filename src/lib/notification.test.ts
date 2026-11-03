@@ -56,6 +56,101 @@ test("review notifications describe the request and open the administrator list"
   });
 });
 
+test("rejected task notification names the slot, keeps the review comment and opens the task", (): void => {
+  const rejected: NotificationVO = {
+    id: "6",
+    sourceId: "61",
+    createdAt: "2026-11-03 09:00:00",
+    readAt: null,
+    thumbnailUrl: null,
+    kind: "TASK_REJECTED",
+    source: {
+      projectId: "11",
+      projectTitle: "企划",
+      itemId: "22",
+      itemTitle: "项目",
+      taskSlot: { name: "翻译", slotIndex: 2, slotTotal: 3, serialStep: 2 },
+      taskInstanceId: "202",
+      reviewComment: "第三页需要修改",
+    },
+  };
+  expect(notificationPresentation(rejected)).toEqual({
+    label: "任务打回",
+    message: "「企划 · 项目」的「翻译（第 2 步） · 2/3」已被打回，打回意见：第三页需要修改",
+    targetPath: "/dashboard/planning/11/items/22?taskInstanceId=202",
+  });
+});
+
+test("rejected task notification without a review comment asks for a resubmission", (): void => {
+  const rejected: NotificationVO = {
+    id: "7",
+    sourceId: "62",
+    createdAt: "2026-11-03 09:00:00",
+    readAt: null,
+    thumbnailUrl: null,
+    kind: "TASK_REJECTED",
+    source: {
+      projectId: "11",
+      projectTitle: "企划",
+      itemId: "22",
+      itemTitle: "项目",
+      taskSlot: { name: "翻译", slotIndex: 1, slotTotal: 1, serialStep: null },
+      taskInstanceId: "202",
+      reviewComment: "   ",
+    },
+  };
+  expect(notificationPresentation(rejected).message).toBe(
+    "「企划 · 项目」的「翻译」已被打回，请修改后重新提交。",
+  );
+});
+
+test("rejected task notification without a task instance keeps the label only", (): void => {
+  const rejected: NotificationVO = {
+    id: "8",
+    sourceId: "63",
+    createdAt: "2026-11-03 09:00:00",
+    readAt: null,
+    thumbnailUrl: null,
+    kind: "TASK_REJECTED",
+    source: {
+      projectId: "11",
+      projectTitle: "企划",
+      itemId: "22",
+      itemTitle: "项目",
+      taskSlot: { name: "翻译", slotIndex: 1, slotTotal: 1, serialStep: null },
+      taskInstanceId: null,
+    },
+  };
+  expect(notificationPresentation(rejected)).toMatchObject({
+    label: "任务打回",
+    targetPath: null,
+  });
+});
+
+test("long review comments are shortened in the inbox message", (): void => {
+  const longComment = "字".repeat(45);
+  const rejected: NotificationVO = {
+    id: "9",
+    sourceId: "64",
+    createdAt: "2026-11-03 09:00:00",
+    readAt: null,
+    thumbnailUrl: null,
+    kind: "TASK_REJECTED",
+    source: {
+      projectId: "11",
+      projectTitle: "企划",
+      itemId: "22",
+      itemTitle: "项目",
+      taskSlot: { name: "翻译", slotIndex: 1, slotTotal: 1, serialStep: null },
+      taskInstanceId: "202",
+      reviewComment: longComment,
+    },
+  };
+  expect(notificationPresentation(rejected).message).toBe(
+    `「企划 · 项目」的「翻译」已被打回，打回意见：${"字".repeat(40)}…`,
+  );
+});
+
 test("newer read notification stays behind older unread notification", (): void => {
   const unread = row("1", null, "2026-10-22 09:00:00");
   const newerRead = row("2", "2026-10-22 13:10:00", "2026-10-22 13:00:00");
