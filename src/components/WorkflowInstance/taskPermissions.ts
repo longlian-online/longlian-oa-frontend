@@ -20,15 +20,17 @@ export function canReject(
   nodes: ItemTaskNodeVO[],
   instances: ItemTaskInstanceVO[],
   currentUserId?: string | null,
+  canManage = false,
 ): boolean {
   if (
-    !currentUserId ||
     instance.status !== "COMPLETED" ||
     typeof instance.revision !== "string" ||
     !/^\d+$/.test(instance.revision) ||
     hasLaterCompletion(instance, instances)
   )
     return false;
+  if (canManage) return true;
+  if (!currentUserId) return false;
   const nextStage = nodes.reduce<number | undefined>(
     (next, node) =>
       node.sort > instance.sort && (next === undefined || node.sort < next) ? node.sort : next,
@@ -45,26 +47,23 @@ export function canReject(
   );
 }
 
-export type OwnerTaskAction = "cancel" | "reject";
-
-export function canOwnerAct(
-  action: OwnerTaskAction,
+export function canOwnerCancel(
   instance: ItemTaskInstanceVO,
   instances: ItemTaskInstanceVO[],
-  isProjectCreator: boolean,
+  canManage: boolean,
 ): boolean {
   return (
-    isProjectCreator &&
+    canManage &&
     typeof instance.revision === "string" &&
     /^\d+$/.test(instance.revision) &&
-    instance.status === (action === "cancel" ? "CLAIMED" : "COMPLETED") &&
+    instance.status === "CLAIMED" &&
     !hasLaterCompletion(instance, instances)
   );
 }
 
-export function canAssign(instance: ItemTaskInstanceVO, isProjectCreator: boolean): boolean {
+export function canAssign(instance: ItemTaskInstanceVO, canManage: boolean): boolean {
   return (
-    isProjectCreator &&
+    canManage &&
     instance.status === "PENDING" &&
     typeof instance.revision === "string" &&
     /^\d+$/.test(instance.revision)
@@ -74,10 +73,10 @@ export function canAssign(instance: ItemTaskInstanceVO, isProjectCreator: boolea
 export function canProxySubmit(
   instance: ItemTaskInstanceVO,
   nodes: ItemTaskNodeVO[],
-  isProjectCreator: boolean,
+  canManage: boolean,
 ): boolean {
   if (
-    !isProjectCreator ||
+    !canManage ||
     instance.status !== "PENDING" ||
     typeof instance.revision !== "string" ||
     !/^\d+$/.test(instance.revision)

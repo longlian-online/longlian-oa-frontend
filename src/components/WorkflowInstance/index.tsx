@@ -28,14 +28,7 @@ import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
 import { buildParticipantRoster } from "./participantRoster";
 import ItemDeletionRequestButton from "./ItemDeletionRequestButton";
 import TaskDetailPanel from "./TaskDetailPanel";
-import {
-  canReset,
-  canReject,
-  canOwnerAct,
-  canAssign,
-  canProxySubmit,
-  type OwnerTaskAction,
-} from "./taskPermissions";
+import { canReset, canReject, canOwnerCancel, canAssign, canProxySubmit } from "./taskPermissions";
 import AssignTaskDialog from "./AssignTaskDialog";
 import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
 import TaskFlowViewer from "./TaskFlowViewer";
@@ -54,7 +47,8 @@ import type {
 interface WorkflowInstanceProps {
   itemId: string;
   projectId?: string;
-  isProjectCreator: boolean;
+  /** 企划详情的 canManage：创建者，或本组织启用中的组织所有者、组织管理员。 */
+  canManage: boolean;
   taskInstanceId?: string;
 }
 
@@ -89,7 +83,7 @@ export default function WorkflowInstance(props: WorkflowInstanceProps) {
 function ItemWorkflowInstance({
   itemId,
   projectId,
-  isProjectCreator,
+  canManage,
   taskInstanceId,
 }: WorkflowInstanceProps) {
   const confirm = useConfirm();
@@ -153,7 +147,6 @@ function ItemWorkflowInstance({
   const [rejectTarget, setRejectTarget] = useState<ItemTaskInstanceVO | null>(null);
   const [rejectComment, setRejectComment] = useState("");
   const [ownerTarget, setOwnerTarget] = useState<{
-    action: OwnerTaskAction;
     instance: ItemTaskInstanceVO;
     title: string;
   } | null>(null);
@@ -247,7 +240,7 @@ function ItemWorkflowInstance({
 
   function openProxySubmit(instance: ItemTaskInstanceVO): void {
     const targetNode = findNodeByInstance(instance, taskFlow?.nodes ?? []);
-    if (!targetNode || !canProxySubmit(instance, taskFlow?.nodes ?? [], isProjectCreator)) {
+    if (!targetNode || !canProxySubmit(instance, taskFlow?.nodes ?? [], canManage)) {
       $tip("任务状态已变更或无操作权限，请刷新后重新操作", "error");
       return;
     }
@@ -260,7 +253,7 @@ function ItemWorkflowInstance({
     if (
       !current ||
       current.revision !== proxyTarget.instance.revision ||
-      !canProxySubmit(current, taskFlow?.nodes ?? [], isProjectCreator)
+      !canProxySubmit(current, taskFlow?.nodes ?? [], canManage)
     ) {
       $tip("任务状态已变更或无操作权限，请刷新后重新操作", "error");
       return false;
@@ -282,7 +275,7 @@ function ItemWorkflowInstance({
       current.revision !== rejectTarget.revision ||
       !rejectComment.trim() ||
       rejectComment.trim().length > 500 ||
-      !canReject(current, taskFlow?.nodes ?? [], instances, currentUserId)
+      !canReject(current, taskFlow?.nodes ?? [], instances, currentUserId, canManage)
     )
       return;
 
@@ -301,30 +294,22 @@ function ItemWorkflowInstance({
     }
   }
 
-  async function handleOwnerAction(reason?: string): Promise<boolean> {
+  async function handleOwnerCancel(): Promise<boolean> {
     if (!ownerTarget) return false;
-    if (ownerTarget.action === "reject" && (!reason?.trim() || reason.trim().length > 500))
-      return false;
-    const { action, instance } = ownerTarget;
+    const { instance } = ownerTarget;
     const current = instances.find((candidate) => candidate.id === instance.id);
     if (
       !current ||
       current.revision !== instance.revision ||
-      !canOwnerAct(action, current, instances, isProjectCreator)
+      !canOwnerCancel(current, instances, canManage)
     ) {
       $tip("任务状态已变更或无操作权限，请刷新后重新操作", "error");
       return false;
     }
     return runInstanceAction(
       instance.id,
-      () =>
-        action === "cancel"
-          ? abandonTask(instance.id, { expectedRevision: instance.revision })
-          : rejectTask(instance.id, {
-              expectedRevision: instance.revision,
-              reviewComment: reason!.trim(),
-            }),
-      action === "cancel" ? "已取消接取" : "任务已打回",
+      () => abandonTask(instance.id, { expectedRevision: instance.revision }),
+      "已取消接取",
     );
   }
 
@@ -332,11 +317,7 @@ function ItemWorkflowInstance({
     if (!assignTarget) return false;
     const { instance } = assignTarget;
     const current = instances.find((candidate) => candidate.id === instance.id);
-    if (
-      !current ||
-      current.revision !== instance.revision ||
-      !canAssign(current, isProjectCreator)
-    ) {
+    if (!current || current.revision !== instance.revision || !canAssign(current, canManage)) {
       $tip("任务状态已变更或无操作权限，请刷新后重新操作", "error");
       return false;
     }
@@ -426,7 +407,7 @@ function ItemWorkflowInstance({
           )}
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          {projectId && isProjectCreator && (
+          {projectId && canManage && (
             <Button
               variant="outline"
               size="sm"
@@ -439,7 +420,7 @@ function ItemWorkflowInstance({
               编辑工作流
             </Button>
           )}
-          {projectId && isProjectCreator && (
+          {projectId && canManage && (
             <ItemDeletionRequestButton
               projectId={projectId}
               itemId={itemId}
@@ -500,28 +481,13 @@ function ItemWorkflowInstance({
                       taskFlow.nodes,
                       instances,
                       currentUserId,
+                      canManage,
                     ),
-                    canOwnerCancel: canOwnerAct(
-                      "cancel",
-                      selectedInstance,
-                      instances,
-                      isProjectCreator,
-                    ),
-                    canOwnerReject: canOwnerAct(
-                      "reject",
-                      selectedInstance,
-                      instances,
-                      isProjectCreator,
-                    ),
-                    canAssign: canAssign(selectedInstance, isProjectCreator),
-                    canProxySubmit: canProxySubmit(
-                      selectedInstance,
-                      taskFlow.nodes,
-                      isProjectCreator,
-                    ),
-                    onOwnerAction: (action) =>
+                    canOwnerCancel: canOwnerCancel(selectedInstance, instances, canManage),
+                    canAssign: canAssign(selectedInstance, canManage),
+                    canProxySubmit: canProxySubmit(selectedInstance, taskFlow.nodes, canManage),
+                    onOwnerCancel: () =>
                       setOwnerTarget({
-                        action,
                         instance: selectedInstance,
                         title: formatTaskTitle(
                           taskFlow.itemTitle,
@@ -602,12 +568,11 @@ function ItemWorkflowInstance({
 
       {ownerTarget && (
         <OwnerTaskActionDialog
-          key={`${itemId}:${ownerTarget.instance.id}:${ownerTarget.action}:${ownerTarget.instance.revision}`}
-          action={ownerTarget.action}
+          key={`${itemId}:${ownerTarget.instance.id}:${ownerTarget.instance.revision}`}
           instance={ownerTarget.instance}
           taskTitle={ownerTarget.title}
           onClose={() => setOwnerTarget(null)}
-          onConfirm={handleOwnerAction}
+          onConfirm={handleOwnerCancel}
         />
       )}
 

@@ -118,27 +118,27 @@ afterEach(async () => {
 
 async function render(
   itemId = "item",
-  isProjectCreator = true,
+  canManage = true,
   entry: { taskInstanceId?: string; projectId?: string } = {},
 ): Promise<void> {
   await act(async () =>
     root?.render(
       <QueryClientProvider client={client}>
         <MemoryRouter>
-          <WorkflowInstance itemId={itemId} isProjectCreator={isProjectCreator} {...entry} />
+          <WorkflowInstance itemId={itemId} canManage={canManage} {...entry} />
         </MemoryRouter>
       </QueryClientProvider>,
     ),
   );
 }
 
-async function mount(isProjectCreator = true, projectId?: string): Promise<void> {
+async function mount(canManage = true, projectId?: string): Promise<void> {
   await act(async () => root?.unmount());
   container?.remove();
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
-  await render("item", isProjectCreator, projectId ? { projectId } : {});
+  await render("item", canManage, projectId ? { projectId } : {});
   await vi.waitFor(async () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -189,7 +189,8 @@ test("owner cancellation refreshes task actions, while parallel completion and a
   expect(document.querySelector("textarea")).toBeNull();
   await act(async () => findButton("选择parallel")?.click());
   expect(document.body.textContent).toContain("已完成");
-  expect(findButton("负责人打回")).toBeDefined();
+  expect(findButton("打回")).toBeDefined();
+  expect(findButton("负责人打回")).toBeUndefined();
   await act(async () => findButton("选择later")?.click());
   expect(findButton("提交")).toBeUndefined();
   expect(findButton("放弃")).toBeDefined();
@@ -239,16 +240,24 @@ test("non creator cannot assign a pending task", async () => {
   expect(findButton("接取")).toBeDefined();
 });
 
-test("owner rejection failure retains reason and target; retry uses the shared reject endpoint", async () => {
+function dialogButton(text: string): HTMLButtonElement {
+  const submit = [...document.querySelectorAll("[role='dialog'] button")].find(
+    (entry) => entry.textContent === text,
+  );
+  if (!(submit instanceof HTMLButtonElement)) throw new Error(`Missing dialog button ${text}`);
+  return submit;
+}
+
+test("planning manager rejection uses the shared reject dialog and retries with the same comment", async () => {
   tasks = [task({ status: "COMPLETED" })];
   api.rejectTask.mockRejectedValueOnce(new Error("任务已变更")).mockResolvedValueOnce(undefined);
   await mount();
-  await act(async () => findButton("负责人打回")?.click());
+  expect(findButton("负责人打回")).toBeUndefined();
+  await act(async () => findButton("打回")?.click());
   await fillReason(" 请补全缺失页面 ");
-  await act(async () => findButton("确认负责人打回")?.click());
-  expect(document.querySelector("[role='alert']")?.textContent).toContain("原因已保留");
+  await act(async () => dialogButton("打回").click());
   expect(document.querySelector("textarea")?.value).toBe(" 请补全缺失页面 ");
-  await act(async () => findButton("确认负责人打回")?.click());
+  await act(async () => dialogButton("打回").click());
   expect(api.rejectTask).toHaveBeenCalledTimes(2);
   expect(api.rejectTask).toHaveBeenLastCalledWith("target", {
     expectedRevision: "9007199254740993",
@@ -277,9 +286,10 @@ test("stale open dialog cannot act on an ABA replacement, even with the same sta
   expect(document.querySelector("[role='alert']")).not.toBeNull();
 });
 
-test("noncreator member or administrator gets no owner action and cannot submit somebody else's task", async () => {
+test("missing canManage hides manager actions and cannot submit somebody else's task", async () => {
   await mount(false);
   expect(findButton("取消接取")).toBeUndefined();
+  expect(findButton("打回")).toBeUndefined();
   expect(findButton("负责人打回")).toBeUndefined();
   expect(findButton("提交")).toBeUndefined();
   expect(findButton("放弃")).toBeUndefined();
@@ -297,21 +307,14 @@ test("missing server revision cannot expose a command", async () => {
   expect(findButton("取消接取")).toBeUndefined();
 });
 
-test("next-stage reject uses the shared endpoint with its captured revision for a noncreator", async () => {
+test("next-stage reject uses the shared endpoint when the user cannot manage the planning", async () => {
   tasks = [task({ status: "COMPLETED" }), task({ id: "next", sort: 3, assigneeId: "creator" })];
   await mount(false);
   expect(findButton("负责人打回")).toBeUndefined();
   expect(findButton("打回")).toBeDefined();
   await act(async () => findButton("打回")?.click());
   await fillReason("  旧路径意见  ");
-  await act(async () => {
-    const submit = [...document.querySelectorAll("[role='dialog'] button")].find(
-      (entry) => entry.textContent === "打回",
-    );
-    if (!(submit instanceof HTMLButtonElement))
-      throw new Error("Missing legacy reject confirmation");
-    submit.click();
-  });
+  await act(async () => dialogButton("打回").click());
   expect(api.rejectTask).toHaveBeenCalledWith("target", {
     expectedRevision: "9007199254740993",
     reviewComment: "旧路径意见",
@@ -415,13 +418,7 @@ test("an open next-stage rejection cannot act on a refreshed revision and retain
     await client.invalidateQueries();
   });
   await vi.waitFor(() => expect(document.body.textContent).toContain("刷新后的小明"));
-  await act(async () => {
-    const submit = [...document.querySelectorAll("[role='dialog'] button")].find(
-      (entry) => entry.textContent === "打回",
-    );
-    if (!(submit instanceof HTMLButtonElement)) throw new Error("Missing reject confirmation");
-    submit.click();
-  });
+  await act(async () => dialogButton("打回").click());
   expect(api.rejectTask).not.toHaveBeenCalled();
   expect(document.querySelector("textarea")?.value).toBe("保留旧版本意见");
 });
