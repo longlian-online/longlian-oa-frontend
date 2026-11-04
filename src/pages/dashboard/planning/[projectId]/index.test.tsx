@@ -239,7 +239,11 @@ test("明确拒绝管理权限时，不把创建者身份当作授权", async ()
   await waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("春季企划"));
   expect(container.textContent).toContain("负责人");
   expect(container.textContent).not.toContain("编辑资料");
-  expect(container.textContent).not.toContain("创建项目");
+  expect(
+    [...container.querySelectorAll("button")].some(
+      (button) => button.textContent?.trim() === "创建项目",
+    ),
+  ).toBe(false);
 });
 
 test("右上角导航包含附件入口", async (): Promise<void> => {
