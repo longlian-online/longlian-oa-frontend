@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Loader2, Search, Workflow } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { WORKFLOW_PAGE_SIZE as PAGE_SIZE, workflowListQuery } from "@/queries/workshop";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
@@ -16,21 +16,25 @@ import type { WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 function WorkshopWorkflowsPageContent() {
   const navigate = useNavigate();
   const [page, setPage] = usePageQuery();
-  const [keyword, setKeyword] = useState("");
-  const [searchText, setSearchText] = useState("");
+  const location = useLocation();
+  const returnState = { ...location.state, listReturnTo: location.pathname + location.search };
+  const openCreate = (): void => {
+    void navigate("/dashboard/workshop/create", { state: returnState });
+  };
+  const [{ keyword }, updateQuery] = useListQueryState({ keyword: "" });
+  const [searchText, setSearchText] = useListSearchDraft(keyword);
 
   const listQuery = useApiQuery(workflowListQuery(page, keyword));
   const templates = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;
   function handleSearch(): void {
-    setKeyword(searchText.trim());
-    setPage(1);
+    updateQuery({ keyword: searchText.trim() });
   }
 
   function handleEdit(template: WorkshopTaskTemplateVO): void {
     void navigate("/dashboard/workshop/create", {
-      state: { template },
+      state: { ...returnState, template },
     });
   }
 
@@ -66,7 +70,7 @@ function WorkshopWorkflowsPageContent() {
           <Button type="button" variant="outline" size="sm" onClick={handleSearch}>
             搜索
           </Button>
-          <Button type="button" size="sm" onClick={() => navigate("/dashboard/workshop/create")}>
+          <Button type="button" size="sm" onClick={openCreate}>
             创建流程
           </Button>
         </div>
@@ -87,12 +91,12 @@ function WorkshopWorkflowsPageContent() {
           icon={<Workflow className="h-5 w-5 text-muted-foreground" />}
           title="暂无工作流模板"
           description="创建一个流程模板后，就可以在企划项目里复用它。"
-          action={<Button onClick={() => navigate("/dashboard/workshop/create")}>创建流程</Button>}
+          action={<Button onClick={openCreate}>创建流程</Button>}
         />
       ) : (
         <>
           <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
-            <CreateWorkflowTemplateCard onClick={() => navigate("/dashboard/workshop/create")} />
+            <CreateWorkflowTemplateCard onClick={openCreate} />
             {templates.map((template) => (
               <WorkflowTemplateCard key={template.id} template={template} onEdit={handleEdit} />
             ))}

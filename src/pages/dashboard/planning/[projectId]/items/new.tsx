@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
+import { getProjectItemsReturnTo } from "@/lib/listReturnTo";
 import {
   buildCreateItemNodes,
   createItemDraftSignature,
@@ -98,7 +99,10 @@ function CreateProjectItem({ projectId }: { projectId: string }) {
   }
 
   function back(): void {
-    void navigate(`/dashboard/planning/${projectId}`, { state: location.state });
+    void navigate(
+      getProjectItemsReturnTo(location.state, projectId) ?? `/dashboard/planning/${projectId}`,
+      { state: location.state },
+    );
   }
 
   async function cancel(): Promise<void> {

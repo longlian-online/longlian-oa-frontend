@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
+import { getListReturnTo } from "@/lib/listReturnTo";
 
 import {
   publishProductRelease,
@@ -45,6 +46,7 @@ export default function EditProductReleasePage(): ReactElement {
   const params = useParams();
   const id = params.id ?? "";
   const navigate = useNavigate();
+  const location = useLocation();
   const confirm = useConfirm();
   const query = useApiQuery(adminProductReleaseQuery(id));
   const [override, setOverride] = useState<ProductReleaseFormValues | null>(null);
@@ -98,7 +100,9 @@ export default function EditProductReleasePage(): ReactElement {
       await saveMutation.mutateAsync(toProductReleasePayload(values));
       await publishMutation.mutateAsync();
       $tip("已发布", "success");
-      void navigate("/admin/product-releases");
+      void navigate(getListReturnTo(location.state, "/admin/product-releases")!, {
+        state: location.state,
+      });
     } catch {
       /* 保存成功但发布失败时，重新进入仍能看到草稿。 */
     }

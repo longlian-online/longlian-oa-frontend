@@ -42,6 +42,7 @@ import {
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import {
   PROJECT_METADATA_TAG_COLORS,
   normalizeProjectMetadataTagColor,
@@ -59,8 +60,8 @@ import type { ProjectMetadataTagColor } from "@/lib/projectMetadata";
 
 function OrganizationPresetTagsContent() {
   const confirm = useConfirm();
-  const [searchText, setSearchText] = useState("");
-  const [keyword, setKeyword] = useState("");
+  const [{ keyword }, update] = useListQueryState({ keyword: "" });
+  const [searchText, setSearchText] = useListSearchDraft(keyword);
   const [page, setPage] = usePageQuery();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<OrganizationPresetTagVO | null>(null);
@@ -90,8 +91,7 @@ function OrganizationPresetTagsContent() {
   const previewName = name.trim();
 
   function handleSearch(): void {
-    setKeyword(searchText.trim());
-    setPage(1);
+    update({ keyword: searchText.trim() });
   }
 
   function openCreateDialog(): void {

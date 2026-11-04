@@ -1,15 +1,11 @@
 import { Popover } from "@base-ui/react/popover";
-import { useId, useState, type ReactElement } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useEffect, useId, useState, type ReactElement } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { ArrowRight, Clock, Filter, FolderOpen, Plus, UserRound } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
-import {
-  DEFAULT_PROJECT_TIME_SORT as DEFAULT_TIME_SORT,
-  PLANNING_PAGE_SIZE as PAGE_SIZE,
-  projectListQuery,
-} from "@/queries/planning";
+import { PLANNING_PAGE_SIZE as PAGE_SIZE, projectListQuery } from "@/queries/planning";
 import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import FilterToolbar from "@/components/FilterToolbar";
@@ -24,6 +20,7 @@ import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/
 import { useProjectTypes } from "@/hooks/useProjectTypes";
 import { formatDate } from "@/lib/format";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
+import { readPlanningListView, withPlanningListFilters } from "@/lib/planningListView";
 
 import type { ProjectInfoVO } from "@/types/planning";
 
@@ -40,12 +37,18 @@ const PROJECT_CARD_GRID_CLASS =
 
 export default function Planning() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { projectTypes } = useProjectTypes();
-  const [keyword, setKeyword] = useState("");
-  const [submittedKeyword, setSubmittedKeyword] = useState("");
-  const [selectedType, setSelectedType] = useState("all");
-  const [timeSort, setTimeSort] = useState(DEFAULT_TIME_SORT);
-  const [pageNum, setPageNum] = usePageQuery();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const {
+    pageNum,
+    keyword: submittedKeyword,
+    selectedType,
+    timeSort,
+  } = readPlanningListView(searchParams);
+  const [keyword, setKeyword] = useState(submittedKeyword);
+  const [, setPageNum] = usePageQuery();
+  useEffect(() => setKeyword(submittedKeyword), [submittedKeyword]);
 
   const listQuery = useApiQuery(
     projectListQuery(pageNum, submittedKeyword, selectedType, timeSort),
@@ -56,8 +59,10 @@ export default function Planning() {
   const totalPages =
     total <= PAGE_SIZE - 1 ? 1 : 1 + Math.ceil((total - (PAGE_SIZE - 1)) / PAGE_SIZE);
   function handleSearch(): void {
-    setSubmittedKeyword(keyword.trim());
-    setPageNum(1);
+    setSearchParams(withPlanningListFilters(searchParams, { keyword }), {
+      preventScrollReset: true,
+      state: location.state,
+    });
     if (submittedKeyword === keyword.trim() && pageNum === 1) void listQuery.refetch();
   }
 
@@ -84,8 +89,10 @@ export default function Planning() {
                   (sortByTime === "CREATE" || sortByTime === "UPDATE") &&
                   (orderDir === "DESC" || orderDir === "ASC")
                 ) {
-                  setTimeSort({ sortByTime, orderDir });
-                  setPageNum(1);
+                  setSearchParams(
+                    withPlanningListFilters(searchParams, { timeSort: { sortByTime, orderDir } }),
+                    { preventScrollReset: true, state: location.state },
+                  );
                 }
               }}
             >
@@ -109,8 +116,10 @@ export default function Planning() {
               value={selectedType}
               onValueChange={(value: string | null) => {
                 if (value) {
-                  setSelectedType(value);
-                  setPageNum(1);
+                  setSearchParams(withPlanningListFilters(searchParams, { selectedType: value }), {
+                    preventScrollReset: true,
+                    state: location.state,
+                  });
                 }
               }}
             >
@@ -154,7 +163,16 @@ export default function Planning() {
                   title="还没有企划"
                   description="创建第一个企划后，团队成员就可以围绕项目推进任务流。"
                   action={
-                    <Button onClick={() => navigate("/dashboard/planning/create")}>
+                    <Button
+                      onClick={() =>
+                        navigate("/dashboard/planning/create", {
+                          state: {
+                            ...location.state,
+                            planningListReturnTo: `${location.pathname}${location.search}`,
+                          },
+                        })
+                      }
+                    >
                       <Plus className="h-4 w-4" />
                       创建企划
                     </Button>
@@ -187,9 +205,11 @@ export default function Planning() {
 }
 
 function CreateProjectCard() {
+  const location = useLocation();
   return (
     <Link
       to="/dashboard/planning/create"
+      state={{ ...location.state, planningListReturnTo: `${location.pathname}${location.search}` }}
       className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-4 transition-colors hover:border-primary hover:bg-primary/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40 transition-colors group-hover:border-primary/40 group-hover:bg-primary/5">
@@ -215,7 +235,10 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
   const ownerTriggerId = useId();
   const metadataTags = parseProjectMetadataTags(project.metadata);
   const detailTo = `/dashboard/planning/${project.id}?view=about`;
-  const detailState = { planningListReturnTo: `/dashboard/planning${location.search}` };
+  const detailState = {
+    ...location.state,
+    planningListReturnTo: `/dashboard/planning${location.search}`,
+  };
   const ownerNickname = project.creatorNickname?.trim() || "未设置昵称";
 
   return (

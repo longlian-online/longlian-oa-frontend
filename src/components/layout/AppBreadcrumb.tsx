@@ -6,6 +6,7 @@ import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { itemFlowQuery, projectDetailQuery } from "@/queries/planning";
 import { workshopReturnTo } from "@/lib/workshopNavigation";
 import { planningListReturnTo } from "@/lib/pageQuery";
+import { getListReturnTo, getProjectItemsReturnTo } from "@/lib/listReturnTo";
 
 interface BreadcrumbItem {
   label: string;
@@ -89,14 +90,48 @@ export default function AppBreadcrumb() {
   const projectQuery = useApiQuery(projectDetailQuery(projectId));
   const flowQuery = useApiQuery(itemFlowQuery(itemId ?? ""));
   const items = getBreadcrumbItems(pathname, projectQuery.data?.title, flowQuery.data?.itemTitle);
+  const projectItemsReturn = projectId
+    ? getProjectItemsReturnTo(location.state, projectId)
+    : undefined;
+  const sources = [...new Set([getListReturnTo(location.state), projectItemsReturn])];
+  for (const genericReturn of sources) {
+    if (!genericReturn || genericReturn.split("?")[0] === pathname) continue;
+    const sourcePath = genericReturn.split("?")[0];
+    const index = items.findIndex((item) => item.to === sourcePath);
+    if (index >= 0) items[index] = { ...items[index], to: genericReturn };
+    else {
+      const labels: Record<string, string> = {
+        projects: "企划",
+        "project-types": "企划类型",
+        "preset-tags": "标签",
+        "preset-fields": "表单字段",
+        members: "成员",
+        applications: "入组申请",
+        "deletion-requests": "删除请求",
+        invites: "邀请码",
+        tasks: "任务",
+        workflows: "工作流",
+        items: "项目列表",
+        "task-plaza": "任务广场",
+        planning: "企划",
+        workshop: "工坊",
+      };
+      const label = labels[sourcePath.split("/").at(-1) ?? ""] ?? "列表";
+      items.unshift({ label, to: genericReturn });
+    }
+  }
   const listReturn = planningListReturnTo(location.state);
   if (listReturn && segments[1] === "planning") {
-    const index = items.findIndex((item) => item.to === "/dashboard/planning");
+    const index = items.findIndex((item) => item.to?.split("?")[0] === "/dashboard/planning");
     const current = items[index];
     if (current) items[index] = { ...current, to: listReturn };
   }
   const returnTo = workshopReturnTo(location.state);
-  if (returnTo && segments[1] === "planning") items.unshift({ label: "工坊", to: returnTo });
+  if (returnTo && segments[1] === "planning") {
+    const index = items.findIndex((item) => item.to?.split("?")[0] === "/dashboard/workshop");
+    if (index >= 0) items.splice(index, 1);
+    items.unshift({ label: "工坊", to: returnTo });
+  }
   if (items.length < 2) return null;
 
   return (

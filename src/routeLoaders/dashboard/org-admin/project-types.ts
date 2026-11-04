@@ -1,11 +1,15 @@
 import type { LoaderFunctionArgs } from "react-router";
 
+import { readListQuery } from "@/lib/listQueryState";
+import { readPage } from "@/lib/pageQuery";
 import { fetchApiQuery } from "@/lib/routeQuery";
 import { isOrganizationAdmin } from "@/lib/session";
 import { organizationProjectTypesQuery } from "@/queries/organizationAdmin";
 
-export async function loader(_args: LoaderFunctionArgs): Promise<null> {
+export async function loader({ request }: LoaderFunctionArgs): Promise<null> {
   if (!isOrganizationAdmin()) return null;
-  await fetchApiQuery(organizationProjectTypesQuery());
+  const params = new URL(request.url).searchParams;
+  const { keyword } = readListQuery(params, { keyword: "" });
+  await fetchApiQuery(organizationProjectTypesQuery(keyword, readPage(params)));
   return null;
 }

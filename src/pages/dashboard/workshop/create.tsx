@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { baseTaskOptionsQuery } from "@/queries/workshop";
+import { getListReturnTo } from "@/lib/listReturnTo";
 import { createWorkshopTaskTemplate, updateWorkshopTaskTemplate } from "@/api/workflowTemplate";
 import WorkflowEditor, {
   buildEditorNodes,
@@ -99,7 +100,11 @@ function CreateWorkflowPageContent() {
         setSaveSucceeded(true);
         $tip("流程模板已创建", "success");
       }
-      void navigate("/dashboard/workshop/workflows");
+      void navigate(
+        getListReturnTo(location.state, "/dashboard/workshop/workflows") ??
+          "/dashboard/workshop/workflows",
+        { state: location.state },
+      );
     } catch {
       /* 失败保留画板草稿。 */
     } finally {

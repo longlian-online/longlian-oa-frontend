@@ -113,13 +113,23 @@ function button(name: string): HTMLButtonElement {
   return found;
 }
 
-async function mount(): Promise<void> {
+async function mount(returnTo?: string): Promise<ReturnType<typeof createMemoryRouter>> {
   const router = createMemoryRouter(
     [
       { path: "/dashboard/planning/:projectId/items/new", element: <CreateProjectItemPage /> },
       { path: "/dashboard/planning/:projectId", element: <p>企划详情</p> },
+      { path: "/dashboard/planning/:projectId/items", element: <p>企划详情</p> },
     ],
-    { initialEntries: ["/dashboard/planning/21/items/new"] },
+    {
+      initialEntries: [
+        {
+          pathname: "/dashboard/planning/21/items/new",
+          state: returnTo
+            ? { projectItemsReturnTo: returnTo, workshopReturnTo: "/dashboard/workshop?page=4" }
+            : undefined,
+        },
+      ],
+    },
   );
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -134,7 +144,22 @@ async function mount(): Promise<void> {
     );
   });
   await waitFor(() => expect(button("创建").disabled).toBe(true));
+  return router;
 }
+
+test.each([
+  "/dashboard/planning/21?status=COMPLETED&page=2",
+  "/dashboard/planning/21/items?status=ALL&page=3",
+])("取消创建回到原项目列表 %s 并保留上层来源", async (returnTo): Promise<void> => {
+  const router = await mount(returnTo);
+  await act(async () => button("取消").click());
+  await waitFor(() =>
+    expect(router.state.location.pathname + router.state.location.search).toBe(returnTo),
+  );
+  expect(router.state.location.state).toMatchObject({
+    workshopReturnTo: "/dashboard/workshop?page=4",
+  });
+});
 
 // 回归：页面高度和编辑区不能把内容裁掉，否则无法向下滚动（LON-12）。
 test("创建页允许整页滚动，编辑区不裁切内容", async (): Promise<void> => {
@@ -162,48 +187,54 @@ test("创建页允许整页滚动，编辑区不裁切内容", async (): Promise
   expect(editorRegion.className).not.toContain("overflow-hidden");
 });
 
-test("选择模板后指定执行人并一次创建", async (): Promise<void> => {
-  await mount();
-  expect(container.textContent).toContain("先选择流程模板");
-  await act(async () => document.querySelector<HTMLElement>('[role="combobox"]')?.click());
-  await waitFor(() => expect(document.body.textContent).toContain("漫画汉化"));
-  await act(async () => {
-    [...document.querySelectorAll<HTMLElement>('[role="option"]')]
-      .find((option) => option.textContent?.includes("漫画汉化"))
-      ?.click();
-  });
-  await waitFor(() => expect(container.textContent).toContain("翻译"));
-  const title = document.querySelector("input");
-  if (!title) throw new Error("缺少项目名");
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
-      title,
-      "第一话",
+test.each([undefined, "/dashboard/planning/21/items?status=ALL&page=3"])(
+  "选择模板后指定执行人并一次创建，返回来源 %s",
+  async (returnTo): Promise<void> => {
+    const router = await mount(returnTo);
+    expect(container.textContent).toContain("先选择流程模板");
+    await act(async () => document.querySelector<HTMLElement>('[role="combobox"]')?.click());
+    await waitFor(() => expect(document.body.textContent).toContain("漫画汉化"));
+    await act(async () => {
+      [...document.querySelectorAll<HTMLElement>('[role="option"]')]
+        .find((option) => option.textContent?.includes("漫画汉化"))
+        ?.click();
+    });
+    await waitFor(() => expect(container.textContent).toContain("翻译"));
+    const title = document.querySelector("input");
+    if (!title) throw new Error("缺少项目名");
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
+        title,
+        "第一话",
+      );
+      title.dispatchEvent(new Event("input", { bubbles: true }));
+      document.querySelector<HTMLButtonElement>('[aria-label="流程节点"] button')?.click();
+    });
+    await waitFor(() => expect(document.body.textContent).toContain("执行人"));
+    const assignee = document.querySelector<HTMLInputElement>("#assignee-tpl-1-1-1-0");
+    if (!assignee) throw new Error("缺少执行人");
+    await act(async () => assignee.click());
+    await waitFor(() => expect(document.body.textContent).toContain("林夏"));
+    await act(async () => {
+      [...document.querySelectorAll<HTMLElement>('[role="option"]')]
+        .find((option) => option.textContent?.includes("林夏"))
+        ?.click();
+    });
+    await waitFor(() => expect(container.textContent).toContain("林夏"));
+    expect(button("创建").disabled).toBe(false);
+    await act(async () => button("创建").click());
+    await waitFor(() => expect(container.textContent).toContain("企划详情"));
+    expect(router.state.location.pathname + router.state.location.search).toBe(
+      returnTo ?? "/dashboard/planning/21",
     );
-    title.dispatchEvent(new Event("input", { bubbles: true }));
-    document.querySelector<HTMLButtonElement>('[aria-label="流程节点"] button')?.click();
-  });
-  await waitFor(() => expect(document.body.textContent).toContain("执行人"));
-  const assignee = document.querySelector<HTMLInputElement>("#assignee-tpl-1-1-1-0");
-  if (!assignee) throw new Error("缺少执行人");
-  await act(async () => assignee.click());
-  await waitFor(() => expect(document.body.textContent).toContain("林夏"));
-  await act(async () => {
-    [...document.querySelectorAll<HTMLElement>('[role="option"]')]
-      .find((option) => option.textContent?.includes("林夏"))
-      ?.click();
-  });
-  await waitFor(() => expect(container.textContent).toContain("林夏"));
-  expect(button("创建").disabled).toBe(false);
-  await act(async () => button("创建").click());
-  await waitFor(() => expect(container.textContent).toContain("企划详情"));
-  const created = calls.find((call) => call.method === "POST");
-  expect(JSON.parse(created?.body ?? "{}")).toEqual({
-    title: "第一话",
-    taskTemplateId: "7",
-    nodes: [
-      { baseTaskId: "1", sort: 1, parallelSort: 1, name: "翻译", assigneeId: "8" },
-      { baseTaskId: "2", sort: 2, parallelSort: 1, name: "校对" },
-    ],
-  });
-});
+    const created = calls.find((call) => call.method === "POST");
+    expect(JSON.parse(created?.body ?? "{}")).toEqual({
+      title: "第一话",
+      taskTemplateId: "7",
+      nodes: [
+        { baseTaskId: "1", sort: 1, parallelSort: 1, name: "翻译", assigneeId: "8" },
+        { baseTaskId: "2", sort: 2, parallelSort: 1, name: "校对" },
+      ],
+    });
+  },
+);
