@@ -42,6 +42,15 @@ const DEFAULT_ACCEPT = [
   "7z",
   "mp4",
   "webm",
+  "mp3",
+  "wav",
+  "ogg",
+  "oga",
+  "opus",
+  "m4a",
+  "aac",
+  "flac",
+  "weba",
 ];
 
 const MIME_BY_EXT: Record<string, string[]> = {
@@ -66,6 +75,15 @@ const MIME_BY_EXT: Record<string, string[]> = {
   "7z": ["application/x-7z-compressed"],
   mp4: ["video/mp4"],
   webm: ["video/webm"],
+  mp3: ["audio/mpeg", "audio/mp3"],
+  wav: ["audio/wav", "audio/x-wav", "audio/wave"],
+  ogg: ["audio/ogg"],
+  oga: ["audio/ogg"],
+  opus: ["audio/ogg", "audio/opus"],
+  m4a: ["audio/mp4", "audio/x-m4a", "audio/m4a"],
+  aac: ["audio/aac"],
+  flac: ["audio/flac"],
+  weba: ["audio/webm"],
 };
 
 interface UploadFileOptions extends FileValidationOptions {

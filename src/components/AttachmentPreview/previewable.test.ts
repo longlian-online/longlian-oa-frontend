@@ -14,10 +14,13 @@ describe("attachment preview decisions", () => {
     expect(rejectPreview("设定集.PDF")).toBeNull();
     expect(rejectPreview("样片.mp4")).toBeNull();
     expect(rejectPreview("样片.webm")).toBeNull();
+    expect(rejectPreview("对白.mp3")).toBeNull();
+    expect(rejectPreview("对白.m4a")).toBeNull();
     expect(rejectPreview("术语表.xlsx")).toBeNull();
     expect(rejectPreview("原图包.7z", ARCHIVE_PREVIEW_LIMIT)).toBeNull();
     expect(rejectPreview("脚本.exe")).toBe("unsupported");
     expect(rejectPreview("样片.mov")).toBe("unsupported");
+    expect(rejectPreview("乐谱.mid")).toBe("unsupported");
     expect(rejectPreview("没有扩展名")).toBe("unsupported");
     expect(previewRejectionMessage("unsupported")).toBe("这个类型不能在页面内预览，请下载后查看。");
   });

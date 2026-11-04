@@ -22,6 +22,15 @@ const PREVIEWABLE_EXTENSIONS = new Set([
   "7z",
   "mp4",
   "webm",
+  "mp3",
+  "wav",
+  "ogg",
+  "oga",
+  "opus",
+  "m4a",
+  "aac",
+  "flac",
+  "weba",
 ]);
 
 export function fileExtension(fileName: string): string {

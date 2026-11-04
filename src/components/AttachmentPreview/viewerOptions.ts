@@ -25,6 +25,7 @@ const EXTENSIONS_BY_DEFINITION: Record<string, readonly string[]> = {
   "office-presentation": ["pptx"],
   image: ["jpg", "jpeg", "png", "gif", "webp", "avif", "bmp"],
   video: ["mp4", "webm"],
+  audio: ["mp3", "wav", "ogg", "oga", "opus", "m4a", "aac", "flac", "weba"],
   code: ["txt"],
   archive: ["zip", "rar", "7z"],
 };
