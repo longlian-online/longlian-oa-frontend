@@ -49,8 +49,6 @@ export type TaskAttachment =
       sizeText: string;
       mediaType: "image" | "document" | "archive" | "other";
       availability: "available";
-      readUrl: string;
-      expiresAt: number;
     }
   | { id: string; name: string; availability: "unavailable" };
 

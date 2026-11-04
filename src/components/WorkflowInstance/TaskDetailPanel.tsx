@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, ExternalLink, FileText, Loader2 } from "lucide-react";
 
 import { ApiError } from "@/api/apiError";
-import { getTaskInstanceDetail, getTaskSubmissionVersions } from "@/api/workflowInstance";
+import {
+  getTaskAttachmentDownload,
+  getTaskInstanceDetail,
+  getTaskSubmissionVersions,
+} from "@/api/workflowInstance";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { isPlanningResourceNotFound, readPlanningResource } from "@/lib/planningResourceError";
 import RemoteImage from "@/components/RemoteImage";
@@ -101,7 +105,6 @@ interface AttachmentCardProps {
 }
 
 function AttachmentCard({ attachment, opening, disabled, onOpen }: AttachmentCardProps) {
-  const [previewFailed, setPreviewFailed] = useState(false);
   const available = attachment.availability === "available";
   return (
     <button
@@ -111,30 +114,14 @@ function AttachmentCard({ attachment, opening, disabled, onOpen }: AttachmentCar
       className="flex min-w-0 items-center gap-3 rounded-xl border bg-background p-3 text-left transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
       aria-label={`${available ? "打开" : "暂不可用"}：${attachment.name}`}
     >
-      {available && attachment.mediaType === "image" && !previewFailed ? (
-        <RemoteImage
-          src={attachment.readUrl}
-          alt={attachment.name}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          className="size-16 shrink-0 rounded-lg border"
-          onError={() => setPreviewFailed(true)}
-        />
-      ) : (
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <FileText className="size-5" />
-        </span>
-      )}
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+        <FileText className="size-5" />
+      </span>
       <span className="min-w-0 flex-1">
         <span className="block break-words text-sm font-medium">{attachment.name}</span>
         <span className="mt-1 block text-xs text-muted-foreground">
           {available ? `${attachment.sizeText} · 打开附件` : "附件暂不可用，请联系任务提交人"}
         </span>
-        {available && previewFailed && (
-          <span className="mt-1 block text-xs text-muted-foreground">
-            预览暂不可用，可打开原文件查看
-          </span>
-        )}
       </span>
       {available &&
         (opening ? (
@@ -167,7 +154,7 @@ function VersionFields({
             {field.type === "file" ? (
               field.file ? (
                 <AttachmentCard
-                  key={`${field.file.id}:${field.file.availability === "available" ? field.file.readUrl : "unavailable"}`}
+                  key={field.file.id}
                   attachment={field.file}
                   opening={openingId === field.file.id}
                   disabled={openingId !== null}
@@ -324,12 +311,10 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
     const isActive = (): boolean => isCurrent() && Boolean(signal) && !signal?.aborted;
     try {
       await openTaskAttachment(attachment, {
-        now: () => Date.now() / 1000,
         isCurrent: isActive,
-        loadFields: async () => {
-          const result = await versionsQuery.refetch();
-          if (result.error || !result.data) throw result.error ?? new Error("版本记录加载失败");
-          return result.data.flatMap((version) => version.fields);
+        loadUrl: async () => {
+          const { readUrl } = await getTaskAttachmentDownload(instanceId, attachment.id, signal);
+          return readUrl;
         },
         openPopup: () => {
           const tab = window.open("", "_blank");
