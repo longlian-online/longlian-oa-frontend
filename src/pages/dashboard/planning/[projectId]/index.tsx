@@ -23,6 +23,7 @@ import {
 } from "@/api/planning";
 import { projectDetailQuery } from "@/queries/planning";
 import ProjectItemSection from "@/components/ProjectItem";
+import ProjectAttachments from "@/components/ProjectAttachments";
 import PlanningDetailNavigation from "@/components/PlanningDetailNavigation";
 import ProjectCustomFields from "@/components/ProjectCustomFields";
 import ProjectMetadataTag from "@/components/ProjectMetadataTag";
@@ -453,6 +454,8 @@ export default function ProjectDetail() {
             )}
           </div>
         </section>
+
+        <ProjectAttachments projectId={projectId!} isCreator={project.isCreator} />
       </div>
       <PlanningDetailNavigation key={projectId} pageRef={pageRef} />
     </div>

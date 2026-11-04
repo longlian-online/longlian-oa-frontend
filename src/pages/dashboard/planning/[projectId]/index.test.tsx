@@ -15,12 +15,14 @@ let root: Root;
 let container: HTMLDivElement;
 let client: QueryClient;
 let isCreator: boolean;
+let attachments: unknown[];
 const calls: string[] = [];
 
 beforeEach((): void => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   saveSession({ token: "test-token", userId: "1", defaultOrgId: "11" });
   isCreator = false;
+  attachments = [];
   calls.length = 0;
   vi.stubGlobal("fetch", async (input: string, init?: RequestInit): Promise<Response> => {
     const url = new URL(input, "http://localhost");
@@ -46,6 +48,9 @@ beforeEach((): void => {
     }
     if (url.pathname === "/app/projects/21/items") {
       return json({ list: [], total: 0, pageNum: 1, pageSize: 4, hasNext: false });
+    }
+    if (url.pathname === "/app/projects/21/attachments") {
+      return json(attachments);
     }
     throw new Error(`未预期请求：${url.pathname}`);
   });
@@ -125,6 +130,7 @@ test("删除企划后返回列表，不再请求该企划详情和项目列表",
   expect(calls).toEqual([
     "GET /app/projects/21",
     "GET /app/projects/21/items",
+    "GET /app/projects/21/attachments",
     "DELETE /app/projects/21",
   ]);
 });
@@ -152,3 +158,65 @@ test.each(["/dashboard/planning/21", "/dashboard/planning/21?view=about"])(
     expect(container.textContent).toContain("作者");
   },
 );
+
+const ATTACHMENT = {
+  id: "900",
+  fileId: "800",
+  fileName: "设定集.pdf",
+  fileSize: 2048,
+  fileMime: "application/pdf",
+  uploaderId: "1",
+  uploaderName: "阿澄",
+  createdAt: "2026-10-02 09:30:00",
+};
+
+function attachmentSection(): HTMLElement {
+  const section = container.querySelector<HTMLElement>("#project-attachments");
+  if (!section) throw new Error("缺少附件区域");
+  return section;
+}
+
+test("附件区域展示文件名、大小、上传人与上传时间", async (): Promise<void> => {
+  attachments = [ATTACHMENT];
+  await mount("/dashboard/planning/21");
+  await waitFor(() => expect(attachmentSection().textContent).toContain("设定集.pdf"));
+
+  const text = attachmentSection().textContent ?? "";
+  expect(text).toContain("2 KB");
+  expect(text).toContain("阿澄");
+  expect(text).toContain("2026");
+  expect(attachmentSection().querySelector("h2")?.textContent).toBe("附件");
+});
+
+test("非负责人只看到下载", async (): Promise<void> => {
+  attachments = [ATTACHMENT];
+  await mount("/dashboard/planning/21");
+  await waitFor(() => expect(attachmentSection().textContent).toContain("设定集.pdf"));
+  expect(container.textContent).not.toContain("添加附件");
+  expect(container.querySelector("[aria-label='删除 设定集.pdf']")).toBeNull();
+  expect(container.querySelector("[aria-label='下载 设定集.pdf']")).not.toBeNull();
+});
+
+test("负责人可以添加和删除附件", async (): Promise<void> => {
+  isCreator = true;
+  attachments = [ATTACHMENT];
+  await mount("/dashboard/planning/21");
+  await waitFor(() => expect(attachmentSection().textContent).toContain("设定集.pdf"));
+  expect(container.textContent).toContain("添加附件");
+  expect(container.querySelector("[aria-label='删除 设定集.pdf']")).not.toBeNull();
+});
+
+test("右上角导航包含附件入口", async (): Promise<void> => {
+  await mount("/dashboard/planning/21");
+  await waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("春季企划"));
+  const nav = container.querySelector("nav[aria-label='本页目录']");
+  const labels = [...(nav?.querySelectorAll("a") ?? [])].map((link) => link.textContent);
+  expect(labels).toEqual(["企划概览", "项目", "关于作品", "附件"]);
+  expect(nav?.querySelector("a[href='#project-attachments']")).not.toBeNull();
+  const about = container.querySelector("#project-info");
+  const attachments = container.querySelector("#project-attachments");
+  if (!about || !attachments) throw new Error("缺少页面区块");
+  expect(about.compareDocumentPosition(attachments) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+});

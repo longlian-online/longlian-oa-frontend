@@ -6,6 +6,7 @@ const SECTIONS = [
   { id: "project-overview", label: "企划概览" },
   { id: "project-workspace", label: "项目" },
   { id: "project-info", label: "关于作品" },
+  { id: "project-attachments", label: "附件" },
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number]["id"];
@@ -31,7 +32,7 @@ export default function PlanningDetailNavigation({
         return;
       }
       if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2) {
-        setActiveSection("project-info");
+        setActiveSection(SECTIONS[SECTIONS.length - 1].id);
         return;
       }
       const threshold = scroller.getBoundingClientRect().top + 80;

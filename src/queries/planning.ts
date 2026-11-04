@@ -1,6 +1,7 @@
 import {
   getPresetFields,
   getPresetTags,
+  getProjectAttachments,
   getProjectDetail,
   getProjectList,
   getProjectTypes,
@@ -21,6 +22,7 @@ import type {
   ProjectTypeInfoVO,
   PresetTagVO,
 } from "@/types/planning";
+import type { ProjectAttachmentVO } from "@/types/projectAttachment";
 import type { PlazaProjectGroup, PlazaSortBy, PlazaTaskTypeOption } from "@/types/plaza";
 import type { ProjectItemListFilter, ProjectItemListVO } from "@/types/projectItem";
 import type { ItemTaskFlowVO, ItemTaskInstanceVO } from "@/types/workflowInstance";
@@ -78,6 +80,17 @@ export function projectDetailQuery(
   return {
     key: ["projects", "detail", projectId],
     queryFn: () => readPlanningResource("project", () => getProjectDetail(projectId!)),
+    throwOnError: isPlanningResourceNotFound,
+    enabled: Boolean(projectId),
+  };
+}
+
+export function projectAttachmentsQuery(
+  projectId: string | undefined,
+): ApiQueryOptions<ProjectAttachmentVO[]> {
+  return {
+    key: ["projects", "attachments", projectId],
+    queryFn: () => readPlanningResource("project", () => getProjectAttachments(projectId!)),
     throwOnError: isPlanningResourceNotFound,
     enabled: Boolean(projectId),
   };
