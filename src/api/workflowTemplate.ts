@@ -1,7 +1,6 @@
 import { request } from "@/api/request";
 import type { PageResult } from "@/types/planning";
 import type {
-  TaskTemplateOptionVO,
   WorkshopTaskTemplateCreateDTO,
   WorkshopTaskTemplateDTO,
   WorkshopTaskTemplateVO,
@@ -33,8 +32,4 @@ export async function updateWorkshopTaskTemplate(
     method: "PUT",
     body: JSON.stringify(dto),
   });
-}
-
-export async function getTaskTemplateOptions(): Promise<TaskTemplateOptionVO[]> {
-  return request("/task-template/options");
 }

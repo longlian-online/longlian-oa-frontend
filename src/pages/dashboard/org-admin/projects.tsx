@@ -1,18 +1,19 @@
 import { useLocation, useNavigate } from "react-router";
 import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
-import { Ban, CheckCircle2, FolderOpen, Loader2, Search } from "lucide-react";
+import { Ban, CheckCircle2, FolderOpen, Loader2 } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { changeProjectStatus } from "@/api/organizationAdmin";
+import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
+import KeywordSearch from "@/components/KeywordSearch";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -92,21 +93,12 @@ function OrganizationAdminProjectsContent() {
           <h1 className="text-xl font-bold text-foreground">企划管理</h1>
         </div>
         <div className="flex gap-2">
-          <div className="relative w-64 max-w-full">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchText}
-              placeholder="搜索企划"
-              className="pl-9"
-              onChange={(event) => setSearchText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleSearch();
-              }}
-            />
-          </div>
-          <Button variant="outline" onClick={handleSearch}>
-            搜索
-          </Button>
+          <KeywordSearch
+            value={searchText}
+            placeholder="搜索企划"
+            onChange={setSearchText}
+            onSearch={handleSearch}
+          />
         </div>
       </div>
 
@@ -115,10 +107,7 @@ function OrganizationAdminProjectsContent() {
           加载失败，重试
         </Button>
       ) : loading ? (
-        <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 size-4 animate-spin" />
-          正在加载企划...
-        </div>
+        <CenteredLoading message="正在加载企划..." />
       ) : projects.length === 0 ? (
         <EmptyState
           icon={<FolderOpen className="size-5 text-muted-foreground" />}

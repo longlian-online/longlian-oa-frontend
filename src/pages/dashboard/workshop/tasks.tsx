@@ -23,6 +23,7 @@ import {
 } from "@/api/organizationAdmin";
 import BaseTaskFieldsEditor from "@/components/BaseTaskFieldsEditor";
 import EmptyState from "@/components/EmptyState";
+import KeywordSearch from "@/components/KeywordSearch";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
@@ -294,19 +295,12 @@ function BaseTaskManagementContent() {
           <h1 className="text-xl font-bold text-foreground">任务</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative w-64 max-w-full">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchText}
-              placeholder="搜索任务"
-              className="pl-9"
-              onChange={(event) => setSearchText(event.target.value)}
-              onKeyDown={(event) => event.key === "Enter" && handleSearch()}
-            />
-          </div>
-          <Button variant="outline" onClick={handleSearch}>
-            搜索
-          </Button>
+          <KeywordSearch
+            value={searchText}
+            placeholder="搜索任务"
+            onChange={setSearchText}
+            onSearch={handleSearch}
+          />
           <Button onClick={openCreate}>
             <Plus data-icon="inline-start" />
             创建任务

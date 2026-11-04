@@ -1,7 +1,8 @@
 import { Link, useLocation } from "react-router";
-import { Check, Clock3, ExternalLink, Loader2, X } from "lucide-react";
+import { Check, Clock3, ExternalLink, X } from "lucide-react";
 
 import { reviewDeletionRequest } from "@/api/organizationAdmin";
+import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
@@ -67,10 +68,7 @@ function DeletionRequestsContent() {
           加载失败，重试
         </Button>
       ) : listQuery.isLoading ? (
-        <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 size-4 animate-spin" />
-          正在加载删除请求...
-        </div>
+        <CenteredLoading message="正在加载删除请求..." />
       ) : requests.length === 0 ? (
         <EmptyState
           icon={<Clock3 className="size-5 text-muted-foreground" />}

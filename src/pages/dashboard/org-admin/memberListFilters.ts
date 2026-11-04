@@ -9,6 +9,13 @@ export type MemberListFilters = {
   orderDir: NonNullable<OrganizationMemberListDTO["orderDir"]>;
 };
 
+export const MEMBER_LIST_DEFAULTS: MemberListFilters = {
+  keyword: "",
+  startJoinedTime: "",
+  endJoinedTime: "",
+  orderDir: "DESC",
+};
+
 /** 草稿与已提交条件一致时返回 null，避免空白键入重置页码并重复请求。 */
 export function commitMemberListFilters(
   applied: MemberListFilters,
