@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { canReset, canReject, canOwnerAct, canAssign, canProxySubmit } from "./taskPermissions";
+import { canReset, canReject, canOwnerCancel, canAssign, canProxySubmit } from "./taskPermissions";
 import type { ItemTaskInstanceVO, ItemTaskNodeVO } from "@/types/workflowInstance";
 const task = (
   id: string,
@@ -48,6 +48,7 @@ describe("task permissions", () => {
       ),
     ).toBe(true);
     expect(canReject(task("a", 5, "COMPLETED"), nodes, [], "me")).toBe(false);
+    expect(canReject(completed, nodes, [task("b", 3, "CLAIMED")], "me", true)).toBe(true);
   });
   test("reject shares the later-completion guard and requires a server revision", () => {
     const completed = task("a", 1, "COMPLETED", "other");
@@ -63,52 +64,49 @@ describe("task permissions", () => {
 });
 
 describe("project creator task permissions", () => {
-  test("only explicit project creator capability grants owner actions, not assignee or admin membership", () => {
-    for (const action of ["cancel", "reject"] as const) {
-      const target = task("a", 1, action === "cancel" ? "CLAIMED" : "COMPLETED");
-      expect(canOwnerAct(action, target, [], true)).toBe(true);
-      expect(canOwnerAct(action, target, [], false)).toBe(false);
-      expect(canOwnerAct(action, { ...target, assigneeId: "admin" }, [], false)).toBe(false);
-      expect(canOwnerAct(action, { ...target, assigneeId: "other" }, [], true)).toBe(true);
+  test("creator rejection uses the shared reject rule and does not require the next stage", () => {
+    const completed = task("a", 1, "COMPLETED", "other");
+    expect(canReject(completed, nodes, [], null, true)).toBe(true);
+    expect(canReject(completed, nodes, [], "admin", false)).toBe(false);
+    expect(canReject(task("a", 1, "CLAIMED"), nodes, [], "me", true)).toBe(false);
+    expect(canReject(completed, nodes, [task("farther", 9, "COMPLETED")], "me", true)).toBe(false);
+    for (const revision of [undefined, "", "-1", "1.5", " 0 "]) {
+      expect(canReject({ ...completed, revision: revision as string }, nodes, [], "me", true)).toBe(
+        false,
+      );
     }
   });
 
-  test("each action requires its exact state and a valid server revision", () => {
-    for (const action of ["cancel", "reject"] as const) {
-      for (const status of ["PENDING", "CLAIMED", "COMPLETED"] as const) {
-        expect(canOwnerAct(action, task("a", 1, status), [], true)).toBe(
-          status === (action === "cancel" ? "CLAIMED" : "COMPLETED"),
-        );
-      }
-      for (const revision of [undefined, "", "-1", "1.5", " 0 "]) {
-        expect(
-          canOwnerAct(
-            action,
-            {
-              ...task("a", 1, action === "cancel" ? "CLAIMED" : "COMPLETED"),
-              revision: revision as string,
-            },
-            [],
-            true,
-          ),
-        ).toBe(false);
-      }
-    }
+  test("only explicit project creator capability grants owner cancellation, not assignee or admin membership", () => {
+    const target = task("a", 1, "CLAIMED");
+    expect(canOwnerCancel(target, [], true)).toBe(true);
+    expect(canOwnerCancel(target, [], false)).toBe(false);
+    expect(canOwnerCancel({ ...target, assigneeId: "admin" }, [], false)).toBe(false);
+    expect(canOwnerCancel({ ...target, assigneeId: "other" }, [], true)).toBe(true);
   });
 
-  test("parallel completions and later claims are allowed, any later completed stage blocks both actions", () => {
-    for (const action of ["cancel", "reject"] as const) {
-      const target = task("a", 3, action === "cancel" ? "CLAIMED" : "COMPLETED");
-      const retained = [
-        task("earlier", 1, "COMPLETED"),
-        task("parallel", 3, "COMPLETED"),
-        task("later", 5, "CLAIMED"),
-      ];
-      expect(canOwnerAct(action, target, retained, true)).toBe(true);
+  test("cancellation requires a claimed task and a valid server revision", () => {
+    for (const status of ["PENDING", "CLAIMED", "COMPLETED"] as const) {
+      expect(canOwnerCancel(task("a", 1, status), [], true)).toBe(status === "CLAIMED");
+    }
+    for (const revision of [undefined, "", "-1", "1.5", " 0 "]) {
       expect(
-        canOwnerAct(action, target, [...retained, task("farther", 9, "COMPLETED")], true),
+        canOwnerCancel({ ...task("a", 1, "CLAIMED"), revision: revision as string }, [], true),
       ).toBe(false);
     }
+  });
+
+  test("parallel completions and later claims are allowed, any later completed stage blocks cancellation", () => {
+    const target = task("a", 3, "CLAIMED");
+    const retained = [
+      task("earlier", 1, "COMPLETED"),
+      task("parallel", 3, "COMPLETED"),
+      task("later", 5, "CLAIMED"),
+    ];
+    expect(canOwnerCancel(target, retained, true)).toBe(true);
+    expect(canOwnerCancel(target, [...retained, task("farther", 9, "COMPLETED")], true)).toBe(
+      false,
+    );
   });
 });
 

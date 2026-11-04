@@ -28,14 +28,7 @@ import { itemFlowQuery, itemInstancesQuery } from "@/queries/planning";
 import { buildParticipantRoster } from "./participantRoster";
 import ItemDeletionRequestButton from "./ItemDeletionRequestButton";
 import TaskDetailPanel from "./TaskDetailPanel";
-import {
-  canReset,
-  canReject,
-  canOwnerAct,
-  canAssign,
-  canProxySubmit,
-  type OwnerTaskAction,
-} from "./taskPermissions";
+import { canReset, canReject, canOwnerCancel, canAssign, canProxySubmit } from "./taskPermissions";
 import AssignTaskDialog from "./AssignTaskDialog";
 import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
 import TaskFlowViewer from "./TaskFlowViewer";
@@ -153,7 +146,6 @@ function ItemWorkflowInstance({
   const [rejectTarget, setRejectTarget] = useState<ItemTaskInstanceVO | null>(null);
   const [rejectComment, setRejectComment] = useState("");
   const [ownerTarget, setOwnerTarget] = useState<{
-    action: OwnerTaskAction;
     instance: ItemTaskInstanceVO;
     title: string;
   } | null>(null);
@@ -282,7 +274,7 @@ function ItemWorkflowInstance({
       current.revision !== rejectTarget.revision ||
       !rejectComment.trim() ||
       rejectComment.trim().length > 500 ||
-      !canReject(current, taskFlow?.nodes ?? [], instances, currentUserId)
+      !canReject(current, taskFlow?.nodes ?? [], instances, currentUserId, isProjectCreator)
     )
       return;
 
@@ -301,30 +293,22 @@ function ItemWorkflowInstance({
     }
   }
 
-  async function handleOwnerAction(reason?: string): Promise<boolean> {
+  async function handleOwnerCancel(): Promise<boolean> {
     if (!ownerTarget) return false;
-    if (ownerTarget.action === "reject" && (!reason?.trim() || reason.trim().length > 500))
-      return false;
-    const { action, instance } = ownerTarget;
+    const { instance } = ownerTarget;
     const current = instances.find((candidate) => candidate.id === instance.id);
     if (
       !current ||
       current.revision !== instance.revision ||
-      !canOwnerAct(action, current, instances, isProjectCreator)
+      !canOwnerCancel(current, instances, isProjectCreator)
     ) {
       $tip("任务状态已变更或无操作权限，请刷新后重新操作", "error");
       return false;
     }
     return runInstanceAction(
       instance.id,
-      () =>
-        action === "cancel"
-          ? abandonTask(instance.id, { expectedRevision: instance.revision })
-          : rejectTask(instance.id, {
-              expectedRevision: instance.revision,
-              reviewComment: reason!.trim(),
-            }),
-      action === "cancel" ? "已取消接取" : "任务已打回",
+      () => abandonTask(instance.id, { expectedRevision: instance.revision }),
+      "已取消接取",
     );
   }
 
@@ -500,28 +484,17 @@ function ItemWorkflowInstance({
                       taskFlow.nodes,
                       instances,
                       currentUserId,
-                    ),
-                    canOwnerCancel: canOwnerAct(
-                      "cancel",
-                      selectedInstance,
-                      instances,
                       isProjectCreator,
                     ),
-                    canOwnerReject: canOwnerAct(
-                      "reject",
-                      selectedInstance,
-                      instances,
-                      isProjectCreator,
-                    ),
+                    canOwnerCancel: canOwnerCancel(selectedInstance, instances, isProjectCreator),
                     canAssign: canAssign(selectedInstance, isProjectCreator),
                     canProxySubmit: canProxySubmit(
                       selectedInstance,
                       taskFlow.nodes,
                       isProjectCreator,
                     ),
-                    onOwnerAction: (action) =>
+                    onOwnerCancel: () =>
                       setOwnerTarget({
-                        action,
                         instance: selectedInstance,
                         title: formatTaskTitle(
                           taskFlow.itemTitle,
@@ -602,12 +575,11 @@ function ItemWorkflowInstance({
 
       {ownerTarget && (
         <OwnerTaskActionDialog
-          key={`${itemId}:${ownerTarget.instance.id}:${ownerTarget.action}:${ownerTarget.instance.revision}`}
-          action={ownerTarget.action}
+          key={`${itemId}:${ownerTarget.instance.id}:${ownerTarget.instance.revision}`}
           instance={ownerTarget.instance}
           taskTitle={ownerTarget.title}
           onClose={() => setOwnerTarget(null)}
-          onConfirm={handleOwnerAction}
+          onConfirm={handleOwnerCancel}
         />
       )}
 

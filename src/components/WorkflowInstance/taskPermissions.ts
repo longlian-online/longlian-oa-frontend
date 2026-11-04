@@ -20,15 +20,17 @@ export function canReject(
   nodes: ItemTaskNodeVO[],
   instances: ItemTaskInstanceVO[],
   currentUserId?: string | null,
+  isProjectCreator = false,
 ): boolean {
   if (
-    !currentUserId ||
     instance.status !== "COMPLETED" ||
     typeof instance.revision !== "string" ||
     !/^\d+$/.test(instance.revision) ||
     hasLaterCompletion(instance, instances)
   )
     return false;
+  if (isProjectCreator) return true;
+  if (!currentUserId) return false;
   const nextStage = nodes.reduce<number | undefined>(
     (next, node) =>
       node.sort > instance.sort && (next === undefined || node.sort < next) ? node.sort : next,
@@ -45,10 +47,7 @@ export function canReject(
   );
 }
 
-export type OwnerTaskAction = "cancel" | "reject";
-
-export function canOwnerAct(
-  action: OwnerTaskAction,
+export function canOwnerCancel(
   instance: ItemTaskInstanceVO,
   instances: ItemTaskInstanceVO[],
   isProjectCreator: boolean,
@@ -57,7 +56,7 @@ export function canOwnerAct(
     isProjectCreator &&
     typeof instance.revision === "string" &&
     /^\d+$/.test(instance.revision) &&
-    instance.status === (action === "cancel" ? "CLAIMED" : "COMPLETED") &&
+    instance.status === "CLAIMED" &&
     !hasLaterCompletion(instance, instances)
   );
 }
