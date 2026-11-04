@@ -39,7 +39,7 @@ beforeEach((): void => {
     const body = typeof init?.body === "string" ? init.body : "";
     calls.push({ method: init?.method ?? "GET", path, body });
     if (path === "/app/projects/21") {
-      return json({ id: "21", title: "示例企划", isCreator: true });
+      return json({ id: "21", title: "示例企划", isCreator: true, canManage: true });
     }
     if (path === "/app/task-template/options") {
       return json([

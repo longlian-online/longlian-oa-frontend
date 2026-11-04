@@ -57,6 +57,8 @@ export interface ProjectDetailInfoVO {
   pendingTaskCount: number;
   inWorkshop: boolean;
   isCreator: boolean;
+  /** 可执行负责人操作。组织所有者和组织管理员对本组织企划为 true，不表示其为创建者。旧接口没有该字段时按 isCreator。 */
+  canManage?: boolean;
   hasItems: boolean;
   createdAt?: string;
 }

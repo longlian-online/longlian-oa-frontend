@@ -146,10 +146,10 @@ function CreateProjectItem({ projectId }: { projectId: string }) {
     return <div className="py-8 text-center text-sm text-muted-foreground">正在加载...</div>;
   }
 
-  if (projectQuery.data && projectQuery.data.isCreator !== true) {
+  if (projectQuery.data && (projectQuery.data.canManage ?? projectQuery.data.isCreator) !== true) {
     return (
       <div className="py-8 text-center text-sm text-muted-foreground">
-        <p>仅企划负责人可创建项目</p>
+        <p>无权创建项目</p>
         <Button variant="outline" className="mt-4" onClick={back}>
           返回企划
         </Button>
