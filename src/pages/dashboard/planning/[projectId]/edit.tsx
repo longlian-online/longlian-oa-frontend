@@ -26,7 +26,7 @@ export default function EditProjectPage() {
     return <div className="py-8 text-center text-sm text-muted-foreground">企划不存在</div>;
   }
 
-  if (!project.isCreator) {
+  if (!(project.canManage ?? project.isCreator)) {
     return <div className="py-8 text-center text-sm text-muted-foreground">无权编辑该企划</div>;
   }
 

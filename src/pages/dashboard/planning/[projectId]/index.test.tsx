@@ -15,6 +15,7 @@ let root: Root;
 let container: HTMLDivElement;
 let client: QueryClient;
 let isCreator: boolean;
+let canManage: boolean | undefined;
 let attachments: unknown[];
 const calls: string[] = [];
 
@@ -22,6 +23,7 @@ beforeEach((): void => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   saveSession({ token: "test-token", userId: "1", defaultOrgId: "11" });
   isCreator = false;
+  canManage = undefined;
   attachments = [];
   calls.length = 0;
   vi.stubGlobal("fetch", async (input: string, init?: RequestInit): Promise<Response> => {
@@ -42,6 +44,7 @@ beforeEach((): void => {
         pendingTaskCount: 3,
         inWorkshop: true,
         isCreator,
+        canManage: canManage ?? isCreator,
         hasItems: false,
         createdAt: "2026-10-01 10:00:00",
       });
@@ -204,6 +207,39 @@ test("负责人可以添加和删除附件", async (): Promise<void> => {
   await waitFor(() => expect(attachmentSection().textContent).toContain("设定集.pdf"));
   expect(container.textContent).toContain("添加附件");
   expect(container.querySelector("[aria-label='删除 设定集.pdf']")).not.toBeNull();
+});
+
+test("组织管理者可以操作企划，但不会被标成负责人", async (): Promise<void> => {
+  isCreator = false;
+  canManage = true;
+  attachments = [ATTACHMENT];
+  await mount("/dashboard/planning/21");
+  await waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("春季企划"));
+  expect(container.textContent).toContain("创建项目");
+  expect(container.textContent).toContain("编辑资料");
+  expect(container.textContent).toContain("已加入");
+  expect(container.textContent).not.toContain("负责人");
+  await waitFor(() => expect(attachmentSection().textContent).toContain("设定集.pdf"));
+  expect(container.textContent).toContain("添加附件");
+  expect(container.querySelector("[aria-label='删除 设定集.pdf']")).not.toBeNull();
+  await act(async () =>
+    [...document.querySelectorAll("button")]
+      .find((button) => button.textContent?.includes("更多"))
+      ?.click(),
+  );
+  const items = [...document.querySelectorAll<HTMLElement>("[role=menuitem]")];
+  expect(items.some((item) => item.textContent?.trim() === "退出企划")).toBe(true);
+  expect(items.some((item) => item.textContent?.trim() === "删除企划")).toBe(true);
+});
+
+test("明确拒绝管理权限时，不把创建者身份当作授权", async (): Promise<void> => {
+  isCreator = true;
+  canManage = false;
+  await mount("/dashboard/planning/21");
+  await waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("春季企划"));
+  expect(container.textContent).toContain("负责人");
+  expect(container.textContent).not.toContain("编辑资料");
+  expect(container.textContent).not.toContain("创建项目");
 });
 
 test("右上角导航包含附件入口", async (): Promise<void> => {

@@ -62,10 +62,10 @@ function EditItemWorkflow({ projectId, itemId }: { projectId: string; itemId: st
     }
   }
 
-  if (projectQuery.data && projectQuery.data.isCreator !== true) {
+  if (projectQuery.data && (projectQuery.data.canManage ?? projectQuery.data.isCreator) !== true) {
     return (
       <div className="py-8 text-center text-sm text-muted-foreground">
-        <p>仅企划负责人可编辑项目工作流</p>
+        <p>无权编辑项目工作流</p>
         <Button
           variant="outline"
           className="mt-4"

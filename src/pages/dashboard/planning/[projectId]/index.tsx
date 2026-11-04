@@ -182,7 +182,7 @@ export default function ProjectDetail() {
         <ProjectItemSection
           key={projectId}
           projectId={projectId!}
-          isCreator={project.isCreator}
+          isCreator={project.canManage ?? project.isCreator}
           renderHeader={(onCreate) => (
             <header id="project-overview" className="flex scroll-mt-6 flex-col gap-5 border-b pb-6">
               <div className="flex flex-wrap items-start justify-between gap-5">
@@ -219,7 +219,7 @@ export default function ProjectDetail() {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  {project.isCreator ? (
+                  {(project.canManage ?? project.isCreator) ? (
                     <>
                       <Button onClick={onCreate}>
                         <Plus data-icon="inline-start" />
@@ -237,7 +237,8 @@ export default function ProjectDetail() {
                         编辑资料
                       </Button>
                     </>
-                  ) : !project.inWorkshop ? (
+                  ) : null}
+                  {!project.isCreator && !project.inWorkshop ? (
                     <Button disabled={workshopLoading} onClick={handleToggleWorkshop}>
                       {workshopLoading ? <Loader2 className="animate-spin" /> : <CirclePlus />}
                       加入企划
@@ -280,7 +281,7 @@ export default function ProjectDetail() {
                               </Menu.Item>
                             )}
                           </Menu.Group>
-                          {project.isCreator && (
+                          {(project.canManage ?? project.isCreator) && (
                             <>
                               <Menu.Separator className="my-1 h-px bg-border" />
                               <Menu.Group>
@@ -455,7 +456,10 @@ export default function ProjectDetail() {
           </div>
         </section>
 
-        <ProjectAttachments projectId={projectId!} isCreator={project.isCreator} />
+        <ProjectAttachments
+          projectId={projectId!}
+          isCreator={project.canManage ?? project.isCreator}
+        />
       </div>
       <PlanningDetailNavigation key={projectId} pageRef={pageRef} />
     </div>
