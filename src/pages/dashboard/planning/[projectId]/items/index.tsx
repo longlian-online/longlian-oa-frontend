@@ -32,7 +32,10 @@ export default function ProjectItemListPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <ProjectItemSection projectId={projectId} isCreator={project.isCreator} />
+      <ProjectItemSection
+        projectId={projectId}
+        isCreator={project.canManage ?? project.isCreator}
+      />
     </div>
   );
 }
