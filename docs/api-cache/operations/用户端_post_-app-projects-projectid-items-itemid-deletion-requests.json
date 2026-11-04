@@ -2,7 +2,7 @@
   "document": "用户端",
   "method": "POST",
   "operation": {
-    "description": "项目存在已提交任务时，由企划负责人填写原因后提交，组织管理员审核通过后软删除",
+    "description": "项目存在过提交记录（含已打回、已重置）时，由企划负责人填写原因后提交，组织管理员审核通过后软删除",
     "operationId": "createItemDeletionRequest",
     "parameters": [
       {

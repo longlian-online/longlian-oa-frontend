@@ -1,0 +1,47 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "description": "仅企划负责人可将尚未接取的任务直接记为指定组员已提交。组员必须是当前组织的启用成员。提交时间使用请求中的设定值，不使用当前时间。已接取或已提交的任务不可调用",
+    "operationId": "proxySubmitTask",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "任务实例ID",
+        "in": "path",
+        "name": "instanceId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TaskProxySubmitDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "代提交任务",
+    "tags": ["任务实例接口"]
+  },
+  "path": "/app/task/instance/{instanceId}/proxy-submit",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

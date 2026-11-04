@@ -1,0 +1,46 @@
+{
+  "document": "用户端",
+  "method": "PUT",
+  "operation": {
+    "description": "仅企划负责人可操作。可添加启用中的原子任务、删除尚未接取且没有提交记录的节点，并调整顺序。已有节点的修订号必须与当前任务一致，否则整次拒绝。",
+    "operationId": "updateItemTaskFlow",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "itemId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ItemTaskFlowUpdateDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "保存项目工作流",
+    "tags": ["项目任务流接口"]
+  },
+  "path": "/app/item/{itemId}/flow",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

@@ -1,0 +1,44 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "description": "只返回当前组织尚未过期且尚未手动失效的邀请码，按创建时间倒序",
+    "operationId": "listJoinInviteCodes",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/JoinInviteCodeListDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOJoinInviteCodeVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询加入组织邀请码",
+    "tags": ["组织成员管理"]
+  },
+  "path": "/orgadmin/members/invite-codes",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

@@ -23,6 +23,7 @@ import {
 } from "@/api/planning";
 import { projectDetailQuery } from "@/queries/planning";
 import ProjectItemSection from "@/components/ProjectItem";
+import ProjectMembers from "@/components/ProjectMembers";
 import ProjectAttachments from "@/components/ProjectAttachments";
 import PlanningDetailNavigation from "@/components/PlanningDetailNavigation";
 import ProjectCustomFields from "@/components/ProjectCustomFields";
@@ -357,6 +358,8 @@ export default function ProjectDetail() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <ProjectMembers projectId={projectId!} />
 
         <section aria-labelledby="project-info-title" className="border-t pt-6">
           <details

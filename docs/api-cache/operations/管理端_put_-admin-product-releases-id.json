@@ -1,0 +1,37 @@
+{
+  "document": "管理端",
+  "method": "PUT",
+  "operation": {
+    "operationId": "update",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "id",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ProductReleaseSaveDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "修改产品版本",
+    "tags": ["产品版本"]
+  },
+  "path": "/admin/product-releases/{id}",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%AE%A1%E7%90%86%E7%AB%AF"
+}

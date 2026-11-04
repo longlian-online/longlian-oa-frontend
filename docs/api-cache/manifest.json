@@ -1,16 +1,16 @@
 {
   "version": 1,
   "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
-  "generatedAt": "2026-10-26T01:45:08.004Z",
+  "generatedAt": "2026-11-04T07:21:14.896Z",
   "documents": [
     {
       "name": "全部",
       "slug": "全部",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs",
       "file": "openapi/全部.json",
-      "sha256": "4fcf5ad37dc80530dc9991a28277e13f646ce8f80646fec698e6ffd548ee170b",
-      "pathCount": 80,
-      "operationCount": 100
+      "sha256": "8b1fd18cb41c9b577edb7c273d7e4e40cbc09e9c38e45bde479cdb2a4fe6fa3a",
+      "pathCount": 101,
+      "operationCount": 126
     },
     {
       "name": "公共端",
@@ -26,27 +26,27 @@
       "slug": "用户端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF",
       "file": "openapi/用户端.json",
-      "sha256": "4ae4e6c20309c3a867ab2a3ce3497abf20534fab7212e599723f06f61bd57a49",
-      "pathCount": 44,
-      "operationCount": 54
+      "sha256": "f552538cd7bb4c5294f36b350ed5d61199c67ed485ac1dd61e4cc944d1d0c7f7",
+      "pathCount": 54,
+      "operationCount": 65
     },
     {
       "name": "管理端",
       "slug": "管理端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%AE%A1%E7%90%86%E7%AB%AF",
       "file": "openapi/管理端.json",
-      "sha256": "f77f8b03c31eff171eee5d6234b107077f5d4f6f07e412d2b760af4d2dcff6cb",
-      "pathCount": 8,
-      "operationCount": 10
+      "sha256": "931c513149c167fb80bb36c69e192d4cb9dc897b5db050ba27a68ea9b45919cd",
+      "pathCount": 14,
+      "operationCount": 18
     },
     {
       "name": "组织管理端",
       "slug": "组织管理端",
       "url": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF",
       "file": "openapi/组织管理端.json",
-      "sha256": "a1904a65faeee1628b7f65dfd7337130ca65e4b22ae83730d5b3eb1b4cfa88bb",
-      "pathCount": 25,
-      "operationCount": 32
+      "sha256": "cf75214abb2b6278c41bd366e2004abe038961bb31d57ff892b60d4d6f1dc4e4",
+      "pathCount": 30,
+      "operationCount": 39
     }
   ],
   "operations": [
@@ -98,7 +98,7 @@
       "summary": "分页查询管理员列表",
       "tags": ["管理员接口"],
       "file": "operations/管理端_get_-admin-admins.json",
-      "sha256": "c00ce1f74f1136f3d486edf4bec23b2b8163626cb1554418cec209c263da31b0"
+      "sha256": "7f8b271bcbf770fc2c8a9aa6a61b8fe207de4e9a7ccd3493451cafc56048b45d"
     },
     {
       "id": "管理端_post_-admin-admins",
@@ -108,7 +108,7 @@
       "summary": "创建管理员",
       "tags": ["管理员接口"],
       "file": "operations/管理端_post_-admin-admins.json",
-      "sha256": "7038c26b0b40f5a966dfa4313da0bb1b7f52a8573ee21e1bf584a68ebefc9386"
+      "sha256": "2620a7c677f1d4b81a0fa6d76cef0287f6e617c692365fca7c89b72735c87807"
     },
     {
       "id": "管理端_delete_-admin-admins-id",
@@ -148,7 +148,77 @@
       "summary": "生成邀请码（超管）",
       "tags": ["组织接口"],
       "file": "operations/管理端_post_-admin-organizations-invite-codes-create-org.json",
-      "sha256": "4e540bd88874a8f4a6abe5512a4be81fecc90f3f6db1285574620184291e457d"
+      "sha256": "528531a972cd26b3cfa67f38068208d5939dc38ee88d9f4e3b3a35f03f23b56d"
+    },
+    {
+      "id": "管理端_get_-admin-product-releases",
+      "document": "管理端",
+      "method": "GET",
+      "path": "/admin/product-releases/",
+      "summary": "分页查询产品版本",
+      "tags": ["产品版本"],
+      "file": "operations/管理端_get_-admin-product-releases.json",
+      "sha256": "c5bd77ce232f5d8a43c30ce5106d78ee27e2ba9f612da970f08b92d480a0b6b8"
+    },
+    {
+      "id": "管理端_post_-admin-product-releases",
+      "document": "管理端",
+      "method": "POST",
+      "path": "/admin/product-releases/",
+      "summary": "新建产品版本",
+      "tags": ["产品版本"],
+      "file": "operations/管理端_post_-admin-product-releases.json",
+      "sha256": "bc52779aed5b49a2d6345a6c5a4aafb53b5340075d554dc2c543c0b7fc8a4126"
+    },
+    {
+      "id": "管理端_get_-admin-product-releases-id",
+      "document": "管理端",
+      "method": "GET",
+      "path": "/admin/product-releases/{id}",
+      "summary": "产品版本详情",
+      "tags": ["产品版本"],
+      "file": "operations/管理端_get_-admin-product-releases-id.json",
+      "sha256": "a407d2d66893fa7d3963d5caca5857bb382c9c90e1e9c3f4e0e7b2344f42af86"
+    },
+    {
+      "id": "管理端_put_-admin-product-releases-id",
+      "document": "管理端",
+      "method": "PUT",
+      "path": "/admin/product-releases/{id}",
+      "summary": "修改产品版本",
+      "tags": ["产品版本"],
+      "file": "operations/管理端_put_-admin-product-releases-id.json",
+      "sha256": "c7d5a3d7005682461e1e2d6846251b75cc3a57a3c4a8a6f0bdcc666d2f5cbe06"
+    },
+    {
+      "id": "管理端_post_-admin-product-releases-id-publish",
+      "document": "管理端",
+      "method": "POST",
+      "path": "/admin/product-releases/{id}/publish",
+      "summary": "发布草稿",
+      "tags": ["产品版本"],
+      "file": "operations/管理端_post_-admin-product-releases-id-publish.json",
+      "sha256": "792e1e3eef87609fb36c827d5ccc188b590c716ae70aa49cbef75e3c8666b9ed"
+    },
+    {
+      "id": "管理端_post_-admin-product-releases-id-withdraw",
+      "document": "管理端",
+      "method": "POST",
+      "path": "/admin/product-releases/{id}/withdraw",
+      "summary": "撤回已发布的产品版本",
+      "tags": ["产品版本"],
+      "file": "operations/管理端_post_-admin-product-releases-id-withdraw.json",
+      "sha256": "b95a09ee308bce98a11f868d57751ed4f816c1aa699f030878b292bb66a544ba"
+    },
+    {
+      "id": "管理端_get_-admin-product-releases-baseline",
+      "document": "管理端",
+      "method": "GET",
+      "path": "/admin/product-releases/baseline",
+      "summary": "当前已发布产品版本的信息",
+      "tags": ["产品版本"],
+      "file": "operations/管理端_get_-admin-product-releases-baseline.json",
+      "sha256": "279c095aa5445fae95ced94e463849aac3f16abb2f44e7ac62009f34442b72cf"
     },
     {
       "id": "管理端_get_-admin-scheduled-tasks",
@@ -191,6 +261,16 @@
       "sha256": "cb50be6e48307b19dea27a7d2d1150ebcd5f04a1ed5653114eb3c6fb0046b217"
     },
     {
+      "id": "管理端_get_-admin-storage-stats",
+      "document": "管理端",
+      "method": "GET",
+      "path": "/admin/storage-stats/",
+      "summary": "分页查询组织存储统计",
+      "tags": ["存储统计"],
+      "file": "operations/管理端_get_-admin-storage-stats.json",
+      "sha256": "a33739f3ed8dcbae643aae2f276c047d1f084caeae89091b67ffe9b7a21b7ea2"
+    },
+    {
       "id": "全部_get_-admin-admins",
       "document": "全部",
       "method": "GET",
@@ -198,7 +278,7 @@
       "summary": "分页查询管理员列表",
       "tags": ["管理员接口"],
       "file": "operations/全部_get_-admin-admins.json",
-      "sha256": "59940d3f232e2192efc61751c68405bca8cbd89d2e895882c0b1d4f64c58b19d"
+      "sha256": "2a90376e9b66366e7f7307ad517f86669f3c364b252183808aa6adeeacd4581c"
     },
     {
       "id": "全部_post_-admin-admins",
@@ -208,7 +288,7 @@
       "summary": "创建管理员",
       "tags": ["管理员接口"],
       "file": "operations/全部_post_-admin-admins.json",
-      "sha256": "794f09f7a93db0a53c66a929b30234bf84d95915b13d6d1148d1c9e2d6549606"
+      "sha256": "6f98391cb4a0a1227fbd5ebe42f05da5a405735fa73041fb413faededc35cc86"
     },
     {
       "id": "全部_delete_-admin-admins-id",
@@ -248,7 +328,77 @@
       "summary": "生成邀请码（超管）",
       "tags": ["组织接口"],
       "file": "operations/全部_post_-admin-organizations-invite-codes-create-org.json",
-      "sha256": "6e8813ff668fb5cd402c27dc8199fa09f490e9cba0b0cfce84772faa564ad8c6"
+      "sha256": "d9d17e1a3fa4ef2b8e93f6e68f0b95a5c8502e5b5a739882cfcaacb73fed4431"
+    },
+    {
+      "id": "全部_get_-admin-product-releases",
+      "document": "全部",
+      "method": "GET",
+      "path": "/admin/product-releases/",
+      "summary": "分页查询产品版本",
+      "tags": ["产品版本"],
+      "file": "operations/全部_get_-admin-product-releases.json",
+      "sha256": "ee115520100ec94348df2e31599f997adcc0558ba754b631bc5fb383c2d9d39f"
+    },
+    {
+      "id": "全部_post_-admin-product-releases",
+      "document": "全部",
+      "method": "POST",
+      "path": "/admin/product-releases/",
+      "summary": "新建产品版本",
+      "tags": ["产品版本"],
+      "file": "operations/全部_post_-admin-product-releases.json",
+      "sha256": "038adbe4f850edd9b66d6ae14f271c6e525a8d63c4a22fcb39550e5b6fa4b2ba"
+    },
+    {
+      "id": "全部_get_-admin-product-releases-id",
+      "document": "全部",
+      "method": "GET",
+      "path": "/admin/product-releases/{id}",
+      "summary": "产品版本详情",
+      "tags": ["产品版本"],
+      "file": "operations/全部_get_-admin-product-releases-id.json",
+      "sha256": "f8a2f047e3e7f1325f77dcc19b3f3a0d4b9623363e64d7b6d4d18d45eac649a7"
+    },
+    {
+      "id": "全部_put_-admin-product-releases-id",
+      "document": "全部",
+      "method": "PUT",
+      "path": "/admin/product-releases/{id}",
+      "summary": "修改产品版本",
+      "tags": ["产品版本"],
+      "file": "operations/全部_put_-admin-product-releases-id.json",
+      "sha256": "3defb14d89db9f57007c1aa6a802b7c5d81b1cd03bf6d018c0493af0e7df3a29"
+    },
+    {
+      "id": "全部_post_-admin-product-releases-id-publish",
+      "document": "全部",
+      "method": "POST",
+      "path": "/admin/product-releases/{id}/publish",
+      "summary": "发布草稿",
+      "tags": ["产品版本"],
+      "file": "operations/全部_post_-admin-product-releases-id-publish.json",
+      "sha256": "00884d006feab568499de9d9141dbbc2341b38d6cd68c49237b579596baf3cec"
+    },
+    {
+      "id": "全部_post_-admin-product-releases-id-withdraw",
+      "document": "全部",
+      "method": "POST",
+      "path": "/admin/product-releases/{id}/withdraw",
+      "summary": "撤回已发布的产品版本",
+      "tags": ["产品版本"],
+      "file": "operations/全部_post_-admin-product-releases-id-withdraw.json",
+      "sha256": "f0eb27baefb44b2aaa0108a178b33780b35eb6a53ff939233f801adef668ee18"
+    },
+    {
+      "id": "全部_get_-admin-product-releases-baseline",
+      "document": "全部",
+      "method": "GET",
+      "path": "/admin/product-releases/baseline",
+      "summary": "当前已发布产品版本的信息",
+      "tags": ["产品版本"],
+      "file": "operations/全部_get_-admin-product-releases-baseline.json",
+      "sha256": "6856c360ce4f09d5d460694886d1026e63637a59dd1bfa6fce8c53ab96e585ba"
     },
     {
       "id": "全部_get_-admin-scheduled-tasks",
@@ -291,6 +441,16 @@
       "sha256": "ca2c7c5b470b009fc2ce5044e593a31e86982a2a0dd4b4a486b4dc803cdfbcfa"
     },
     {
+      "id": "全部_get_-admin-storage-stats",
+      "document": "全部",
+      "method": "GET",
+      "path": "/admin/storage-stats/",
+      "summary": "分页查询组织存储统计",
+      "tags": ["存储统计"],
+      "file": "operations/全部_get_-admin-storage-stats.json",
+      "sha256": "1c6ff0709705494571ef1c6a46a9dab9c40d7adc76ca4d1ae04f897639f6c518"
+    },
+    {
       "id": "全部_get_-app-item-itemid-flow",
       "document": "全部",
       "method": "GET",
@@ -301,6 +461,26 @@
       "sha256": "ac3b2fdc5af15c33e2adced73dee079d30fb6926bc0bcf96c6b58862a31a200a"
     },
     {
+      "id": "全部_put_-app-item-itemid-flow",
+      "document": "全部",
+      "method": "PUT",
+      "path": "/app/item/{itemId}/flow",
+      "summary": "保存项目工作流",
+      "tags": ["项目任务流接口"],
+      "file": "operations/全部_put_-app-item-itemid-flow.json",
+      "sha256": "621bba397957802ea4f9f579ab69e48b0bd85c4bbeb2034be790ed2033c919ad"
+    },
+    {
+      "id": "全部_get_-app-members",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/members",
+      "summary": "查询当前组织组员",
+      "tags": ["组织组员选项"],
+      "file": "operations/全部_get_-app-members.json",
+      "sha256": "1aa66a14dbfc6cd541d1735006c223550caa009d68069789d38c794424366ad9"
+    },
+    {
       "id": "全部_get_-app-notifications",
       "document": "全部",
       "method": "GET",
@@ -308,7 +488,7 @@
       "summary": "按游标读取最新 20 条通知及当前来源内容",
       "tags": ["站内通知接口"],
       "file": "operations/全部_get_-app-notifications.json",
-      "sha256": "38ea4d13447104335653750ba49a739cdfcfb7fc1e16d7af9f321b4fb931ff8a"
+      "sha256": "da6e80ca02990c237ce1f0a8e5c936a75a71078935b53a9ca39208c941c8292d"
     },
     {
       "id": "全部_put_-app-notifications-id-read",
@@ -341,6 +521,16 @@
       "sha256": "db1fcd81c84626576b331690dd1a992648aec525755877b9877b3871b1d6284e"
     },
     {
+      "id": "全部_get_-app-preset-fields",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/preset-fields",
+      "summary": "查询当前组织预置表单字段",
+      "tags": ["组织预置表单字段"],
+      "file": "operations/全部_get_-app-preset-fields.json",
+      "sha256": "509d1da533bfe0bb3f45a0f8b8db9a1123db5712bac043e27c74af32261226f6"
+    },
+    {
       "id": "全部_get_-app-preset-tags",
       "document": "全部",
       "method": "GET",
@@ -349,6 +539,36 @@
       "tags": ["组织预制标签"],
       "file": "operations/全部_get_-app-preset-tags.json",
       "sha256": "b63c3f306319ead450c16327c1fbb8008ca3e6c9db35bdea0e049635589a1ab3"
+    },
+    {
+      "id": "全部_get_-app-product-releases",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/product-releases/",
+      "summary": "已发布的更新说明",
+      "tags": ["更新说明"],
+      "file": "operations/全部_get_-app-product-releases.json",
+      "sha256": "aa57c9edd1a99b4c57c5a4306441283f58db2e1d747d394bf4294134da054968"
+    },
+    {
+      "id": "全部_post_-app-product-releases-id-seen",
+      "document": "全部",
+      "method": "POST",
+      "path": "/app/product-releases/{id}/seen",
+      "summary": "把已读位置移到这条已发布更新",
+      "tags": ["更新说明"],
+      "file": "operations/全部_post_-app-product-releases-id-seen.json",
+      "sha256": "52a4d5473ded4f13bee3fbe1a80fd9e0eb2727e578a3d43b87da65e6d9255353"
+    },
+    {
+      "id": "全部_get_-app-product-releases-current",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/product-releases/current",
+      "summary": "当前未读的最新更新说明",
+      "tags": ["更新说明"],
+      "file": "operations/全部_get_-app-product-releases-current.json",
+      "sha256": "051331a732fd67b24dca2dff7ddb7fb08e4bd4a20ce059b9a3c9061a842f254f"
     },
     {
       "id": "全部_get_-app-projects",
@@ -428,7 +648,17 @@
       "summary": "创建项目",
       "tags": ["项目相关接口"],
       "file": "operations/全部_post_-app-projects-projectid-items.json",
-      "sha256": "854ef2785c8d3c78ad087960c18465593b4ca88107aa95a36930ebbcc0bdb1e0"
+      "sha256": "8f7269ba4a70c6179f3e7370fbd76c2e955c76d08be736046b35e8d22914d7de"
+    },
+    {
+      "id": "全部_delete_-app-projects-projectid-items-itemid",
+      "document": "全部",
+      "method": "DELETE",
+      "path": "/app/projects/{projectId}/items/{itemId}",
+      "summary": "删除项目",
+      "tags": ["项目相关接口"],
+      "file": "operations/全部_delete_-app-projects-projectid-items-itemid.json",
+      "sha256": "c1fc76dfc9e042988ea6a209fedfcf0934ab5cff0b5a7cac40010e85f8b6ca86"
     },
     {
       "id": "全部_post_-app-projects-projectid-items-itemid-deletion-requests",
@@ -438,7 +668,7 @@
       "summary": "提交项目删除申请",
       "tags": ["项目相关接口"],
       "file": "operations/全部_post_-app-projects-projectid-items-itemid-deletion-requests.json",
-      "sha256": "11b13e5c21afabf74ca7e6270350b9ec637f811bf66fd55a356703b58648d234"
+      "sha256": "ba3bd651b8a19e76d8796d6250613e856f9dc51cb6eb1d153ab180e651cd9799"
     },
     {
       "id": "全部_get_-app-projects-projectid-items-order",
@@ -551,6 +781,16 @@
       "sha256": "a6fb067123e015196574cb3faabe2df1ca742086f8f78eabf6b060cf38df101b"
     },
     {
+      "id": "全部_get_-app-task-base-options",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/task/base/options",
+      "summary": "查询可添加的原子任务",
+      "tags": ["原子任务选项"],
+      "file": "operations/全部_get_-app-task-base-options.json",
+      "sha256": "6b6ae0eb284302bb35f6782a8de8eb298bed85215c82c0824cad606d1cc3166b"
+    },
+    {
       "id": "全部_post_-app-task-instance-instanceid-abandon",
       "document": "全部",
       "method": "POST",
@@ -559,6 +799,16 @@
       "tags": ["任务实例接口"],
       "file": "operations/全部_post_-app-task-instance-instanceid-abandon.json",
       "sha256": "b302e25168039487a94d7114192113a76a2a55ead233da32c463386781d051a2"
+    },
+    {
+      "id": "全部_post_-app-task-instance-instanceid-assign",
+      "document": "全部",
+      "method": "POST",
+      "path": "/app/task/instance/{instanceId}/assign",
+      "summary": "分配任务",
+      "tags": ["任务实例接口"],
+      "file": "operations/全部_post_-app-task-instance-instanceid-assign.json",
+      "sha256": "74ff7bf3387f6511207169d1e3a4da96fd2500db607242edf4d163259ce51259"
     },
     {
       "id": "全部_post_-app-task-instance-instanceid-claim",
@@ -579,6 +829,16 @@
       "tags": ["任务实例接口"],
       "file": "operations/全部_get_-app-task-instance-instanceid-detail.json",
       "sha256": "2142fdb0521d027e71668676eb87f946864e0fc0e472bd8bd277114614a39a97"
+    },
+    {
+      "id": "全部_post_-app-task-instance-instanceid-proxy-submit",
+      "document": "全部",
+      "method": "POST",
+      "path": "/app/task/instance/{instanceId}/proxy-submit",
+      "summary": "代提交任务",
+      "tags": ["任务实例接口"],
+      "file": "operations/全部_post_-app-task-instance-instanceid-proxy-submit.json",
+      "sha256": "c6e0175a569bb32f3195f45188d1b104866fa0fa74ed7db3d4a1177dbfdba67e"
     },
     {
       "id": "全部_post_-app-task-instance-instanceid-reject",
@@ -649,6 +909,16 @@
       "tags": ["任务实例接口"],
       "file": "operations/全部_get_-app-task-instance-plaza.json",
       "sha256": "16485772213c40b6838ce3f0ddec033177ed3aa4f1a88d2271815b198ef6be6f"
+    },
+    {
+      "id": "全部_get_-app-task-instance-plaza-task-types",
+      "document": "全部",
+      "method": "GET",
+      "path": "/app/task/instance/plaza/task-types",
+      "summary": "任务大厅任务类型选项",
+      "tags": ["任务实例接口"],
+      "file": "operations/全部_get_-app-task-instance-plaza-task-types.json",
+      "sha256": "bfd8e88f0e44e77dbadb15096d6f59969a8ba6f680446fabbfa26ec30b51d275"
     },
     {
       "id": "全部_get_-app-user",
@@ -911,6 +1181,16 @@
       "sha256": "0ccacbbc9e96b44d39a5c9887691a8b42ad3ed3d9fda5d7b32d082e079524b88"
     },
     {
+      "id": "全部_get_-orgadmin-members-memberid-claimed-tasks",
+      "document": "全部",
+      "method": "GET",
+      "path": "/orgadmin/members/{memberId}/claimed-tasks",
+      "summary": "查询组员当前接取的任务",
+      "tags": ["组织成员管理"],
+      "file": "operations/全部_get_-orgadmin-members-memberid-claimed-tasks.json",
+      "sha256": "e41eefa35a33e1c6399e76953387c6c91ff53dfb4b1e2c2129ded520d326a406"
+    },
+    {
       "id": "全部_patch_-orgadmin-members-memberid-role",
       "document": "全部",
       "method": "PATCH",
@@ -951,6 +1231,26 @@
       "sha256": "4ff8a42632c003302905f66bed8c8454a8e2ecb6f1f6dea631bd7c665c032b57"
     },
     {
+      "id": "全部_post_-orgadmin-members-invite-codes",
+      "document": "全部",
+      "method": "POST",
+      "path": "/orgadmin/members/invite-codes",
+      "summary": "分页查询加入组织邀请码",
+      "tags": ["组织成员管理"],
+      "file": "operations/全部_post_-orgadmin-members-invite-codes.json",
+      "sha256": "6619dc5c8f9b3f81c52c8967c0d5f39857555c899b2fd3ecd635f0ac4e9b41f6"
+    },
+    {
+      "id": "全部_post_-orgadmin-members-invite-codes-inviteid-revoke",
+      "document": "全部",
+      "method": "POST",
+      "path": "/orgadmin/members/invite-codes/{inviteId}/revoke",
+      "summary": "手动失效加入组织邀请码",
+      "tags": ["组织成员管理"],
+      "file": "operations/全部_post_-orgadmin-members-invite-codes-inviteid-revoke.json",
+      "sha256": "fd8b160439d3d6d51f0fc8ddfc6b320ce916ef7eb24b356257a58e9d2435eddc"
+    },
+    {
       "id": "全部_post_-orgadmin-members-invite-codes-join-org",
       "document": "全部",
       "method": "POST",
@@ -958,7 +1258,7 @@
       "summary": "生成加入组织邀请码（管理员）",
       "tags": ["组织成员管理"],
       "file": "operations/全部_post_-orgadmin-members-invite-codes-join-org.json",
-      "sha256": "4d4ee6241984a88ea9032d24cb998956b88c5b417ce4748ac77c0a1982ea1236"
+      "sha256": "7af3f75414ef517762e68981340ac52f3a946ad75373baa440daf18f6630ec3a"
     },
     {
       "id": "全部_get_-orgadmin-organizations",
@@ -979,6 +1279,46 @@
       "tags": ["组织信息管理接口"],
       "file": "operations/全部_put_-orgadmin-organizations.json",
       "sha256": "3f052221b27d718f27e0e6afd8ecb791172581d148f8f265e3ac9e41d974c66b"
+    },
+    {
+      "id": "全部_get_-orgadmin-preset-fields",
+      "document": "全部",
+      "method": "GET",
+      "path": "/orgadmin/preset-fields",
+      "summary": "分页查询组织预置表单字段",
+      "tags": ["组织预置表单字段"],
+      "file": "operations/全部_get_-orgadmin-preset-fields.json",
+      "sha256": "7b12c1b76474fa363be4fcb69ab94aa335497ed471bf5129d910b89652b80032"
+    },
+    {
+      "id": "全部_post_-orgadmin-preset-fields",
+      "document": "全部",
+      "method": "POST",
+      "path": "/orgadmin/preset-fields",
+      "summary": "创建组织预置表单字段",
+      "tags": ["组织预置表单字段"],
+      "file": "operations/全部_post_-orgadmin-preset-fields.json",
+      "sha256": "e9cc5e99c16b91675d93892826a4e0f5137624a8f8ac0fcc87740ec802434877"
+    },
+    {
+      "id": "全部_delete_-orgadmin-preset-fields-fieldid",
+      "document": "全部",
+      "method": "DELETE",
+      "path": "/orgadmin/preset-fields/{fieldId}",
+      "summary": "删除组织预置表单字段",
+      "tags": ["组织预置表单字段"],
+      "file": "operations/全部_delete_-orgadmin-preset-fields-fieldid.json",
+      "sha256": "68452058d8f80fd284a20247edb24f1833462acee5c5a130ea9ea5f05055a5aa"
+    },
+    {
+      "id": "全部_put_-orgadmin-preset-fields-fieldid",
+      "document": "全部",
+      "method": "PUT",
+      "path": "/orgadmin/preset-fields/{fieldId}",
+      "summary": "修改组织预置表单字段",
+      "tags": ["组织预置表单字段"],
+      "file": "operations/全部_put_-orgadmin-preset-fields-fieldid.json",
+      "sha256": "ce0015914ea06ce68b82c012df4b2fee55b9a41c4233bcf668548c2664089d2d"
     },
     {
       "id": "全部_get_-orgadmin-preset-tags",
@@ -1055,10 +1395,10 @@
       "document": "全部",
       "method": "PUT",
       "path": "/orgadmin/project-types/{typeId}",
-      "summary": "修改企划类型名称与优先级",
+      "summary": "修改企划类型",
       "tags": ["企划类型管理"],
       "file": "operations/全部_put_-orgadmin-project-types-typeid.json",
-      "sha256": "b7291db3bab541897248a7972a81200972328a0911992c553b73442272c89510"
+      "sha256": "71e556b64c605f740d7bea5c6104621e071701e37fba8260fb6e8b660f7024ee"
     },
     {
       "id": "全部_patch_-orgadmin-project-types-typeid-status",
@@ -1201,6 +1541,26 @@
       "sha256": "e1be84473adfdd27e7fa1ad96e3db95b71ff3097f7c42bf32b96e31af7ccb52d"
     },
     {
+      "id": "用户端_put_-app-item-itemid-flow",
+      "document": "用户端",
+      "method": "PUT",
+      "path": "/app/item/{itemId}/flow",
+      "summary": "保存项目工作流",
+      "tags": ["项目任务流接口"],
+      "file": "operations/用户端_put_-app-item-itemid-flow.json",
+      "sha256": "ddda4ae86e4476b58c00f0dbca1d731a56f81f6af98d396458c8a45e6961aa81"
+    },
+    {
+      "id": "用户端_get_-app-members",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/members",
+      "summary": "查询当前组织组员",
+      "tags": ["组织组员选项"],
+      "file": "operations/用户端_get_-app-members.json",
+      "sha256": "aa34b3617af743634890cbe42e70ea4cbaffe52032826b690561bb2843b8b46e"
+    },
+    {
       "id": "用户端_get_-app-notifications",
       "document": "用户端",
       "method": "GET",
@@ -1208,7 +1568,7 @@
       "summary": "按游标读取最新 20 条通知及当前来源内容",
       "tags": ["站内通知接口"],
       "file": "operations/用户端_get_-app-notifications.json",
-      "sha256": "a745583e837abcc9e1185090707b7c680850e6b6b975f032f2f6b66726d72e54"
+      "sha256": "ef6c8eeb85ecb8ac0f6d9878a9b2cb675182f47c67fcb64337ec2c8aa8b2d995"
     },
     {
       "id": "用户端_put_-app-notifications-id-read",
@@ -1241,6 +1601,16 @@
       "sha256": "82d2ca7c0aa872920b1d9d4c208b6e68fd9477106916921c70dd8b7b6c6a5912"
     },
     {
+      "id": "用户端_get_-app-preset-fields",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/preset-fields",
+      "summary": "查询当前组织预置表单字段",
+      "tags": ["组织预置表单字段"],
+      "file": "operations/用户端_get_-app-preset-fields.json",
+      "sha256": "a004e85bb9795ce34aa2073a98b80aa6b7a521f5556a624cc25a9dcc965e5118"
+    },
+    {
       "id": "用户端_get_-app-preset-tags",
       "document": "用户端",
       "method": "GET",
@@ -1249,6 +1619,36 @@
       "tags": ["组织预制标签"],
       "file": "operations/用户端_get_-app-preset-tags.json",
       "sha256": "ee65e7df8425fa2366a7306176a1403ee7baef2a42c3c0c24090679fe807cb2f"
+    },
+    {
+      "id": "用户端_get_-app-product-releases",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/product-releases/",
+      "summary": "已发布的更新说明",
+      "tags": ["更新说明"],
+      "file": "operations/用户端_get_-app-product-releases.json",
+      "sha256": "5206d0673b72718b4c97c770df11be08ea87af202b2b6a13f49b2b5cd1dc461f"
+    },
+    {
+      "id": "用户端_post_-app-product-releases-id-seen",
+      "document": "用户端",
+      "method": "POST",
+      "path": "/app/product-releases/{id}/seen",
+      "summary": "把已读位置移到这条已发布更新",
+      "tags": ["更新说明"],
+      "file": "operations/用户端_post_-app-product-releases-id-seen.json",
+      "sha256": "387a89e4344b5455418a86166024b03bcbcd8b8defe159f76ec5d115dfd0ef20"
+    },
+    {
+      "id": "用户端_get_-app-product-releases-current",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/product-releases/current",
+      "summary": "当前未读的最新更新说明",
+      "tags": ["更新说明"],
+      "file": "operations/用户端_get_-app-product-releases-current.json",
+      "sha256": "87e447e170429bc7245e28cc75243889d3e242760cf82072c987b9dc16019d1d"
     },
     {
       "id": "用户端_get_-app-projects",
@@ -1328,7 +1728,17 @@
       "summary": "创建项目",
       "tags": ["项目相关接口"],
       "file": "operations/用户端_post_-app-projects-projectid-items.json",
-      "sha256": "68f8e371568c4fe5b739577eceac9181d79553e332e36e5819342008610d50db"
+      "sha256": "35c9e9805dfc9b5035ebf8adb6b70485226b66edb22a52b46532dcc79af758aa"
+    },
+    {
+      "id": "用户端_delete_-app-projects-projectid-items-itemid",
+      "document": "用户端",
+      "method": "DELETE",
+      "path": "/app/projects/{projectId}/items/{itemId}",
+      "summary": "删除项目",
+      "tags": ["项目相关接口"],
+      "file": "operations/用户端_delete_-app-projects-projectid-items-itemid.json",
+      "sha256": "3e32ba1ff94295f673d9be1e7e18f905e3eb5c7f9b8eea4db0ea16d7c0aec975"
     },
     {
       "id": "用户端_post_-app-projects-projectid-items-itemid-deletion-requests",
@@ -1338,7 +1748,7 @@
       "summary": "提交项目删除申请",
       "tags": ["项目相关接口"],
       "file": "operations/用户端_post_-app-projects-projectid-items-itemid-deletion-requests.json",
-      "sha256": "2c5a3d4dd9f1805f74019b50adfed66b10812fd9bcfc0f1957b2a560346552b1"
+      "sha256": "5058723a164574d3103a5e80e193c83408efeffb2d14dad1da32ebcbfb818503"
     },
     {
       "id": "用户端_get_-app-projects-projectid-items-order",
@@ -1451,6 +1861,16 @@
       "sha256": "43f7f90b8ae1016b5a107311e68498c965d3f3d6d748f191d15d1789064e171a"
     },
     {
+      "id": "用户端_get_-app-task-base-options",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/task/base/options",
+      "summary": "查询可添加的原子任务",
+      "tags": ["原子任务选项"],
+      "file": "operations/用户端_get_-app-task-base-options.json",
+      "sha256": "b7687ccfdf44bd95195dac68a62fef9193dcd2399feabe9de245abcff44263b6"
+    },
+    {
       "id": "用户端_post_-app-task-instance-instanceid-abandon",
       "document": "用户端",
       "method": "POST",
@@ -1459,6 +1879,16 @@
       "tags": ["任务实例接口"],
       "file": "operations/用户端_post_-app-task-instance-instanceid-abandon.json",
       "sha256": "d76fb9010e81a305ef3984692702be12af7f12a9ee5a05b7cb56b1773e686a84"
+    },
+    {
+      "id": "用户端_post_-app-task-instance-instanceid-assign",
+      "document": "用户端",
+      "method": "POST",
+      "path": "/app/task/instance/{instanceId}/assign",
+      "summary": "分配任务",
+      "tags": ["任务实例接口"],
+      "file": "operations/用户端_post_-app-task-instance-instanceid-assign.json",
+      "sha256": "179d4e93c96182a6aab25319d187a988da41afe0816319ce6a35519bc8f1dd33"
     },
     {
       "id": "用户端_post_-app-task-instance-instanceid-claim",
@@ -1479,6 +1909,16 @@
       "tags": ["任务实例接口"],
       "file": "operations/用户端_get_-app-task-instance-instanceid-detail.json",
       "sha256": "cd98cc44538fe90aaa0f01bfb0b7d5fe73aabe91738eeb7901a6a9fb0886abf1"
+    },
+    {
+      "id": "用户端_post_-app-task-instance-instanceid-proxy-submit",
+      "document": "用户端",
+      "method": "POST",
+      "path": "/app/task/instance/{instanceId}/proxy-submit",
+      "summary": "代提交任务",
+      "tags": ["任务实例接口"],
+      "file": "operations/用户端_post_-app-task-instance-instanceid-proxy-submit.json",
+      "sha256": "a4d4335c81e65b7e42ee516f592cb04bdb77bf2e91371a257421df36ba594c71"
     },
     {
       "id": "用户端_post_-app-task-instance-instanceid-reject",
@@ -1549,6 +1989,16 @@
       "tags": ["任务实例接口"],
       "file": "operations/用户端_get_-app-task-instance-plaza.json",
       "sha256": "c4496b56c803d02825c22e25a81e7d5bb8a5009b591e67b5dd8fb99ad72867b0"
+    },
+    {
+      "id": "用户端_get_-app-task-instance-plaza-task-types",
+      "document": "用户端",
+      "method": "GET",
+      "path": "/app/task/instance/plaza/task-types",
+      "summary": "任务大厅任务类型选项",
+      "tags": ["任务实例接口"],
+      "file": "operations/用户端_get_-app-task-instance-plaza-task-types.json",
+      "sha256": "b754332411c7b9308e9c666118d028291eb596caca7c42dc2a46ab00afd53824"
     },
     {
       "id": "用户端_get_-app-user",
@@ -1771,6 +2221,16 @@
       "sha256": "3702c1792b5cd02ff6a383230bf7e7fe361422172fea10634de8269e079087dc"
     },
     {
+      "id": "组织管理端_get_-orgadmin-members-memberid-claimed-tasks",
+      "document": "组织管理端",
+      "method": "GET",
+      "path": "/orgadmin/members/{memberId}/claimed-tasks",
+      "summary": "查询组员当前接取的任务",
+      "tags": ["组织成员管理"],
+      "file": "operations/组织管理端_get_-orgadmin-members-memberid-claimed-tasks.json",
+      "sha256": "66115ed6b213c32cb6c66b136ef5011f50224c0e93481d718a4b9cb213789d71"
+    },
+    {
       "id": "组织管理端_patch_-orgadmin-members-memberid-role",
       "document": "组织管理端",
       "method": "PATCH",
@@ -1811,6 +2271,26 @@
       "sha256": "f7b107d849fa11d1425720d78335e44b1db543dbf9fa7af054c90bea1fb1dead"
     },
     {
+      "id": "组织管理端_post_-orgadmin-members-invite-codes",
+      "document": "组织管理端",
+      "method": "POST",
+      "path": "/orgadmin/members/invite-codes",
+      "summary": "分页查询加入组织邀请码",
+      "tags": ["组织成员管理"],
+      "file": "operations/组织管理端_post_-orgadmin-members-invite-codes.json",
+      "sha256": "7bf68e4a94ed03a91fadafdace346d2062e6d07b69840014510be021b11745ec"
+    },
+    {
+      "id": "组织管理端_post_-orgadmin-members-invite-codes-inviteid-revoke",
+      "document": "组织管理端",
+      "method": "POST",
+      "path": "/orgadmin/members/invite-codes/{inviteId}/revoke",
+      "summary": "手动失效加入组织邀请码",
+      "tags": ["组织成员管理"],
+      "file": "operations/组织管理端_post_-orgadmin-members-invite-codes-inviteid-revoke.json",
+      "sha256": "98f4c2486170e0b31afe7d69c227e7a0d64f5af06810b030b17ee638250bdc99"
+    },
+    {
       "id": "组织管理端_post_-orgadmin-members-invite-codes-join-org",
       "document": "组织管理端",
       "method": "POST",
@@ -1818,7 +2298,7 @@
       "summary": "生成加入组织邀请码（管理员）",
       "tags": ["组织成员管理"],
       "file": "operations/组织管理端_post_-orgadmin-members-invite-codes-join-org.json",
-      "sha256": "7f7ad1549c115b4a95bd2a74acbedbb7f2c346b5eb042ead12a037557cac5283"
+      "sha256": "6eff9b2da43367110c5d8efd018fbbddb5cab4c4c0da461c24d010a6f6cc0af7"
     },
     {
       "id": "组织管理端_get_-orgadmin-organizations",
@@ -1839,6 +2319,46 @@
       "tags": ["组织信息管理接口"],
       "file": "operations/组织管理端_put_-orgadmin-organizations.json",
       "sha256": "81f19e0ac46e35c3559efac8fe542038dda95a98bfab423dc7b863870664b420"
+    },
+    {
+      "id": "组织管理端_get_-orgadmin-preset-fields",
+      "document": "组织管理端",
+      "method": "GET",
+      "path": "/orgadmin/preset-fields",
+      "summary": "分页查询组织预置表单字段",
+      "tags": ["组织预置表单字段"],
+      "file": "operations/组织管理端_get_-orgadmin-preset-fields.json",
+      "sha256": "1e2bf9a8740b6495f80ad2f14a5d91804d4d843efb946685ab62be69c38af62d"
+    },
+    {
+      "id": "组织管理端_post_-orgadmin-preset-fields",
+      "document": "组织管理端",
+      "method": "POST",
+      "path": "/orgadmin/preset-fields",
+      "summary": "创建组织预置表单字段",
+      "tags": ["组织预置表单字段"],
+      "file": "operations/组织管理端_post_-orgadmin-preset-fields.json",
+      "sha256": "7562d5bc5d38c05073c8203e85b69917c263f8747787155af92f27c11f5b33ba"
+    },
+    {
+      "id": "组织管理端_delete_-orgadmin-preset-fields-fieldid",
+      "document": "组织管理端",
+      "method": "DELETE",
+      "path": "/orgadmin/preset-fields/{fieldId}",
+      "summary": "删除组织预置表单字段",
+      "tags": ["组织预置表单字段"],
+      "file": "operations/组织管理端_delete_-orgadmin-preset-fields-fieldid.json",
+      "sha256": "add0e8666a178d8be6748e6b05a18b8b7782950c350fa3212088e57ce515d276"
+    },
+    {
+      "id": "组织管理端_put_-orgadmin-preset-fields-fieldid",
+      "document": "组织管理端",
+      "method": "PUT",
+      "path": "/orgadmin/preset-fields/{fieldId}",
+      "summary": "修改组织预置表单字段",
+      "tags": ["组织预置表单字段"],
+      "file": "operations/组织管理端_put_-orgadmin-preset-fields-fieldid.json",
+      "sha256": "b20b6e0a9930ae2b2f64306c092b8b1b16a08e038379434ec10ea400c803d1db"
     },
     {
       "id": "组织管理端_get_-orgadmin-preset-tags",
@@ -1915,10 +2435,10 @@
       "document": "组织管理端",
       "method": "PUT",
       "path": "/orgadmin/project-types/{typeId}",
-      "summary": "修改企划类型名称与优先级",
+      "summary": "修改企划类型",
       "tags": ["企划类型管理"],
       "file": "operations/组织管理端_put_-orgadmin-project-types-typeid.json",
-      "sha256": "013c0f1025180782080390d518fb05a881233768ba606e89490575f48518a524"
+      "sha256": "e2fa996f427eb7ca7dcbffcdb8b949b5e938dac56f53bf61016bfba66acdc253"
     },
     {
       "id": "组织管理端_patch_-orgadmin-project-types-typeid-status",

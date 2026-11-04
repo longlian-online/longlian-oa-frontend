@@ -2,7 +2,7 @@
   "document": "全部",
   "method": "POST",
   "operation": {
-    "operationId": "create",
+    "operationId": "create_1",
     "requestBody": {
       "content": {
         "application/json": {

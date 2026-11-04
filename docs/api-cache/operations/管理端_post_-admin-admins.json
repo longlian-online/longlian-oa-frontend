@@ -2,7 +2,7 @@
   "document": "管理端",
   "method": "POST",
   "operation": {
-    "operationId": "create",
+    "operationId": "create_1",
     "requestBody": {
       "content": {
         "application/json": {

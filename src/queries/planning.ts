@@ -4,6 +4,7 @@ import {
   getProjectAttachments,
   getProjectDetail,
   getProjectList,
+  getProjectMembers,
   getProjectTypes,
 } from "@/api/planning";
 import { getPlazaTaskTypes, getTaskPlaza } from "@/api/plaza";
@@ -18,6 +19,7 @@ import type {
   ProjectDetailInfoVO,
   ProjectInfoVO,
   ProjectListDTO,
+  ProjectMemberVO,
   PresetFieldVO,
   ProjectTypeInfoVO,
   PresetTagVO,
@@ -29,6 +31,7 @@ import type { ItemTaskFlowVO, ItemTaskInstanceVO } from "@/types/workflowInstanc
 
 export const PLANNING_PAGE_SIZE = 12;
 export const PROJECT_ITEMS_PAGE_SIZE = 4;
+export const PROJECT_MEMBERS_PAGE_SIZE = 12;
 export const PLAZA_PAGE_SIZE = 8;
 export const DEFAULT_PROJECT_TIME_SORT: Required<Pick<ProjectListDTO, "sortByTime" | "orderDir">> =
   {
@@ -92,6 +95,17 @@ export function projectAttachmentsQuery(
     key: ["projects", "attachments", projectId],
     queryFn: () => readPlanningResource("project", () => getProjectAttachments(projectId!)),
     throwOnError: isPlanningResourceNotFound,
+    enabled: Boolean(projectId),
+  };
+}
+
+export function projectMembersQuery(
+  projectId: string,
+  pageNum = 1,
+): ApiQueryOptions<PageResult<ProjectMemberVO>> {
+  return {
+    key: ["projects", "members", projectId, pageNum],
+    queryFn: () => getProjectMembers(projectId, pageNum, PROJECT_MEMBERS_PAGE_SIZE),
     enabled: Boolean(projectId),
   };
 }

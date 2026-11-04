@@ -1,0 +1,44 @@
+{
+  "document": "组织管理端",
+  "method": "GET",
+  "operation": {
+    "description": "按进行中（前置阶段已全部完成）和等待中（存在未完成前置阶段）拆分，返回全部任务与各分组数量",
+    "operationId": "getMemberClaimedTasks",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "成员ID",
+        "in": "path",
+        "name": "memberId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/OrgMemberClaimedTaskVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "查询组员当前接取的任务",
+    "tags": ["组织成员管理"]
+  },
+  "path": "/orgadmin/members/{memberId}/claimed-tasks",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86%E7%AB%AF"
+}

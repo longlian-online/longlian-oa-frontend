@@ -49,6 +49,9 @@ beforeEach((): void => {
     if (url.pathname === "/app/projects/21/items") {
       return json({ list: [], total: 0, pageNum: 1, pageSize: 4, hasNext: false });
     }
+    if (url.pathname === "/app/projects/21/members") {
+      return json({ list: [{ userId: "1", nickname: "林间", isCreator: true }], total: 1 });
+    }
     if (url.pathname === "/app/projects/21/attachments") {
       return json(attachments);
     }
@@ -130,6 +133,7 @@ test("删除企划后返回列表，不再请求该企划详情和项目列表",
   expect(calls).toEqual([
     "GET /app/projects/21",
     "GET /app/projects/21/items",
+    "GET /app/projects/21/members",
     "GET /app/projects/21/attachments",
     "DELETE /app/projects/21",
   ]);
@@ -156,6 +160,20 @@ test.each(["/dashboard/planning/21", "/dashboard/planning/21?view=about"])(
     expect(container.textContent).toContain("进行中");
     expect(container.textContent).toContain("40%");
     expect(container.textContent).toContain("作者");
+    await waitFor(() =>
+      expect(container.querySelector("#project-members")?.textContent).toContain("林间"),
+    );
+    expect(container.querySelector("a[href='#project-members']")?.textContent).toBe("企划成员");
+    const sections = [
+      ...container.querySelectorAll(
+        "#project-workspace, #project-members, section[aria-labelledby='project-info-title']",
+      ),
+    ];
+    expect(sections.map((section) => section.id || "project-info-section")).toEqual([
+      "project-workspace",
+      "project-members",
+      "project-info-section",
+    ]);
   },
 );
 
@@ -211,7 +229,7 @@ test("右上角导航包含附件入口", async (): Promise<void> => {
   await waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("春季企划"));
   const nav = container.querySelector("nav[aria-label='本页目录']");
   const labels = [...(nav?.querySelectorAll("a") ?? [])].map((link) => link.textContent);
-  expect(labels).toEqual(["企划概览", "项目", "关于作品", "附件"]);
+  expect(labels).toEqual(["企划概览", "项目", "企划成员", "关于作品", "附件"]);
   expect(nav?.querySelector("a[href='#project-attachments']")).not.toBeNull();
   const about = container.querySelector("#project-info");
   const attachments = container.querySelector("#project-attachments");

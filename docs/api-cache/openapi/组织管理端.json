@@ -299,6 +299,25 @@
         "required": ["status"],
         "type": "object"
       },
+      "GenerateJoinInviteCodeDTO": {
+        "description": "生成加入组织邀请码请求参数",
+        "properties": {
+          "expiredAt": {
+            "description": "邀请人选择的到期时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "maxUses": {
+            "description": "使用上限；不传表示不限次数",
+            "example": 5,
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": ["expiredAt"],
+        "type": "object"
+      },
       "InviteCodeVO": {
         "description": "邀请码（可用于创建组织、注册入组或已注册用户申请入组）",
         "properties": {
@@ -306,9 +325,79 @@
             "description": "邀请码过期时间",
             "type": "string"
           },
-          "inviteCode": {
-            "description": "邀请码（6位字母数字，一次性使用，有效期30分钟）",
+          "id": {
+            "description": "邀请记录 ID，仅加入组织邀请码返回",
             "type": "string"
+          },
+          "inviteCode": {
+            "description": "邀请码（6位字母数字）",
+            "type": "string"
+          },
+          "maxUses": {
+            "description": "使用上限，为空表示不限次数；创建组织邀请码不返回",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "JoinInviteCodeListDTO": {
+        "description": "加入组织邀请码列表查询参数",
+        "properties": {
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "status": {
+            "description": "状态筛选：PENDING 待使用，USED 已用尽；不传返回尚未手动失效的全部邀请码",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "JoinInviteCodeVO": {
+        "description": "加入组织邀请码",
+        "properties": {
+          "createdAt": {
+            "description": "创建时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiredAt": {
+            "description": "到期时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "邀请记录 ID",
+            "type": "string"
+          },
+          "inviteCode": {
+            "description": "邀请码",
+            "type": "string"
+          },
+          "maxUses": {
+            "description": "使用上限，为空表示不限次数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "description": "状态：PENDING 待使用，USED 已用尽",
+            "type": "string"
+          },
+          "useCount": {
+            "description": "已使用次数",
+            "format": "int32",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -419,12 +508,127 @@
         "required": ["orgRole"],
         "type": "object"
       },
+      "OrgMemberClaimedTaskItemVO": {
+        "description": "组员名下已接取的任务",
+        "properties": {
+          "bucket": {
+            "description": "SUBMITTABLE-进行中，WAITING-等待中",
+            "enum": ["SUBMITTABLE", "WAITING"],
+            "type": "string"
+          },
+          "claimedAt": {
+            "description": "接取时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "instanceId": {
+            "description": "任务实例ID",
+            "type": "string"
+          },
+          "itemId": {
+            "description": "项目ID",
+            "type": "string"
+          },
+          "itemTitle": {
+            "description": "项目名",
+            "type": "string"
+          },
+          "nodeName": {
+            "description": "阶段名",
+            "type": "string"
+          },
+          "projectId": {
+            "description": "企划ID",
+            "type": "string"
+          },
+          "projectName": {
+            "description": "企划名",
+            "type": "string"
+          },
+          "serialStep": {
+            "description": "同名节点跨阶段时的阶段位次；名称只出现在一个阶段时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "slotIndex": {
+            "description": "本节点在所属阶段并行组中的位次，从 1 开始",
+            "format": "int32",
+            "type": "integer"
+          },
+          "slotTotal": {
+            "description": "所属阶段的任务节点数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingSerialStep": {
+            "description": "等待的前置节点同名跨阶段位次；进行中或名称不跨阶段时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingSlotIndex": {
+            "description": "等待的前置节点在其并行组中的位次；进行中时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingSlotTotal": {
+            "description": "等待的前置节点所属阶段的任务节点数；进行中时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingStageName": {
+            "description": "最近的未完成前置节点名；没有前置或前置都已完成时为 null",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrgMemberClaimedTaskVO": {
+        "description": "组员当前接取的任务",
+        "properties": {
+          "list": {
+            "description": "任务列表，按接取时间从早到晚",
+            "items": {
+              "$ref": "#/components/schemas/OrgMemberClaimedTaskItemVO"
+            },
+            "type": "array"
+          },
+          "memberId": {
+            "description": "成员ID",
+            "type": "string"
+          },
+          "submittableCount": {
+            "description": "进行中任务数：前置阶段已全部完成，当前可提交",
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalCount": {
+            "description": "全部任务数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "userId": {
+            "description": "用户ID",
+            "type": "string"
+          },
+          "waitingCount": {
+            "description": "等待中任务数：存在未完成的前置阶段",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "OrgMemberInfoVO": {
         "description": "组员信息",
         "properties": {
           "avatarUrl": {
             "description": "头像URL",
             "type": "string"
+          },
+          "claimedTaskCount": {
+            "description": "当前接取的任务数",
+            "format": "int32",
+            "type": "integer"
           },
           "id": {
             "description": "成员ID",
@@ -507,6 +711,85 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "OrganizationPresetFieldAdminVO": {
+        "description": "组织预置表单字段管理列表信息",
+        "properties": {
+          "createdAt": {
+            "description": "创建时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "creatorNickname": {
+            "description": "创建人昵称，空白时为空",
+            "type": "string"
+          },
+          "id": {
+            "description": "组织预置表单字段ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "字段名",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrganizationPresetFieldCreateDTO": {
+        "description": "创建组织预置表单字段请求参数",
+        "properties": {
+          "name": {
+            "description": "字段名",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "type": "object"
+      },
+      "OrganizationPresetFieldListDTO": {
+        "description": "组织预置表单字段列表查询请求参数",
+        "properties": {
+          "keyword": {
+            "description": "字段名模糊搜索关键词",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orderDir": {
+            "description": "排序方式，默认创建时间倒序",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "OrganizationPresetFieldUpdateDTO": {
+        "description": "修改组织预置表单字段请求参数",
+        "properties": {
+          "name": {
+            "description": "字段名",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["name"],
         "type": "object"
       },
       "OrganizationPresetTagAdminVO": {
@@ -664,6 +947,24 @@
         },
         "type": "object"
       },
+      "PageResultVOJoinInviteCodeVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/JoinInviteCodeVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "PageResultVOOrgMemberInfoVO": {
         "description": "通用分页返回结果",
         "properties": {
@@ -671,6 +972,24 @@
             "description": "数据列表",
             "items": {
               "$ref": "#/components/schemas/OrgMemberInfoVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOOrganizationPresetFieldAdminVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationPresetFieldAdminVO"
             },
             "type": "array"
           },
@@ -859,6 +1178,13 @@
             "description": "创建人昵称",
             "type": "string"
           },
+          "customFields": {
+            "description": "默认自定义表单",
+            "items": {
+              "$ref": "#/components/schemas/ProjectTypeCustomFieldVO"
+            },
+            "type": "array"
+          },
           "id": {
             "description": "企划类型ID",
             "type": "string"
@@ -888,6 +1214,13 @@
       "ProjectTypeCreateDTO": {
         "description": "创建企划类型请求参数",
         "properties": {
+          "customFields": {
+            "description": "默认自定义表单。省略或空数组表示不设置",
+            "items": {
+              "$ref": "#/components/schemas/ProjectTypeCustomFieldDTO"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "类型名称",
             "maxLength": 20,
@@ -901,6 +1234,45 @@
           }
         },
         "required": ["name"],
+        "type": "object"
+      },
+      "ProjectTypeCustomFieldDTO": {
+        "description": "企划类型默认自定义表单中的一项",
+        "properties": {
+          "name": {
+            "description": "字段名；引用预置字段时忽略，自行编辑时必填",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "presetFieldId": {
+            "description": "预置表单字段ID；自行编辑的字段不传",
+            "type": "string"
+          },
+          "required": {
+            "description": "是否必填",
+            "type": "boolean"
+          }
+        },
+        "required": ["required"],
+        "type": "object"
+      },
+      "ProjectTypeCustomFieldVO": {
+        "description": "企划类型默认自定义表单中的一项",
+        "properties": {
+          "name": {
+            "description": "字段名",
+            "type": "string"
+          },
+          "presetFieldId": {
+            "description": "预置表单字段ID",
+            "type": "string"
+          },
+          "required": {
+            "description": "是否必填",
+            "type": "boolean"
+          }
+        },
         "type": "object"
       },
       "ProjectTypeListDTO": {
@@ -936,6 +1308,13 @@
       "ProjectTypeUpdateDTO": {
         "description": "修改企划类型请求参数",
         "properties": {
+          "customFields": {
+            "description": "默认自定义表单。省略时保持原设置，空数组表示清空",
+            "items": {
+              "$ref": "#/components/schemas/ProjectTypeCustomFieldDTO"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "类型名称",
             "maxLength": 20,
@@ -1479,9 +1858,49 @@
         "tags": ["组织成员管理"]
       }
     },
+    "/orgadmin/members/invite-codes": {
+      "post": {
+        "description": "只返回当前组织尚未过期且尚未手动失效的邀请码，按创建时间倒序",
+        "operationId": "listJoinInviteCodes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinInviteCodeListDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOJoinInviteCodeVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询加入组织邀请码",
+        "tags": ["组织成员管理"]
+      }
+    },
     "/orgadmin/members/invite-codes/join-org": {
       "post": {
-        "description": "生成一次性邀请码（6位字母数字），有效期30分钟；供组织管理员邀请用户加入当前组织使用",
+        "description": "生成 6 位字母数字邀请码。必须指定到期时间；不传使用上限表示不限次数",
         "operationId": "generateJoinOrgInviteCode",
         "parameters": [
           {
@@ -1493,6 +1912,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateJoinInviteCodeDTO"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -1506,6 +1935,39 @@
           }
         },
         "summary": "生成加入组织邀请码（管理员）",
+        "tags": ["组织成员管理"]
+      }
+    },
+    "/orgadmin/members/invite-codes/{inviteId}/revoke": {
+      "post": {
+        "description": "只能失效当前组织仍待使用的邀请码，失效后不再展示",
+        "operationId": "revokeJoinInviteCode",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "邀请记录 ID",
+            "in": "path",
+            "name": "inviteId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "手动失效加入组织邀请码",
         "tags": ["组织成员管理"]
       }
     },
@@ -1545,6 +2007,46 @@
           }
         },
         "summary": "查询组员各原子任务提交数",
+        "tags": ["组织成员管理"]
+      }
+    },
+    "/orgadmin/members/{memberId}/claimed-tasks": {
+      "get": {
+        "description": "按进行中（前置阶段已全部完成）和等待中（存在未完成前置阶段）拆分，返回全部任务与各分组数量",
+        "operationId": "getMemberClaimedTasks",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "成员ID",
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgMemberClaimedTaskVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "查询组员当前接取的任务",
         "tags": ["组织成员管理"]
       }
     },
@@ -1691,6 +2193,145 @@
         },
         "summary": "更新组织信息",
         "tags": ["组织信息管理接口"]
+      }
+    },
+    "/orgadmin/preset-fields": {
+      "get": {
+        "description": "支持字段名模糊搜索，默认按创建时间倒序",
+        "operationId": "listPresetFields",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "query",
+            "name": "listDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/OrganizationPresetFieldListDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOOrganizationPresetFieldAdminVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询组织预置表单字段",
+        "tags": ["组织预置表单字段"]
+      },
+      "post": {
+        "operationId": "createPresetField",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationPresetFieldCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "创建组织预置表单字段",
+        "tags": ["组织预置表单字段"]
+      }
+    },
+    "/orgadmin/preset-fields/{fieldId}": {
+      "delete": {
+        "description": "删除后不能再选择。已经写入企划的字段不受影响，类型默认表单中的引用会去掉",
+        "operationId": "deletePresetField",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "fieldId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "删除组织预置表单字段",
+        "tags": ["组织预置表单字段"]
+      },
+      "put": {
+        "operationId": "updatePresetField",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "fieldId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationPresetFieldUpdateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "修改组织预置表单字段",
+        "tags": ["组织预置表单字段"]
       }
     },
     "/orgadmin/preset-tags": {
@@ -1933,6 +2574,7 @@
         "tags": ["企划类型管理"]
       },
       "put": {
+        "description": "可修改名称、优先级和默认自定义表单。自定义表单省略时保持原设置",
         "operationId": "updateProjectType",
         "parameters": [
           {
@@ -1968,7 +2610,7 @@
             "description": "OK"
           }
         },
-        "summary": "修改企划类型名称与优先级",
+        "summary": "修改企划类型",
         "tags": ["企划类型管理"]
       }
     },
@@ -2511,6 +3153,10 @@
     {
       "description": "任务流模板的增删改查与状态管理，仅管理员可操作",
       "name": "任务模板管理"
+    },
+    {
+      "description": "组织预置表单字段的增删改查，仅管理员可操作",
+      "name": "组织预置表单字段"
     },
     {
       "description": "组织管理员审核企划和项目删除申请",

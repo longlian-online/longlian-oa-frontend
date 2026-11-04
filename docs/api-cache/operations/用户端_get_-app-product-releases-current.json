@@ -1,0 +1,33 @@
+{
+  "document": "用户端",
+  "method": "GET",
+  "operation": {
+    "operationId": "current",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/ProductReleaseCurrentVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "当前未读的最新更新说明",
+    "tags": ["更新说明"]
+  },
+  "path": "/app/product-releases/current",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}
