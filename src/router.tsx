@@ -5,17 +5,15 @@ import App from "@/App";
 import PageLoading from "@/components/PageLoading";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import { createRoutes } from "@/lib/createRoutes";
+import { routeLoaderModules } from "@/lib/routeLoaderModules";
 
 import type { ComponentType } from "react";
-import type { LoaderFunction } from "react-router";
 
 const pages = import.meta.glob<{ default: ComponentType }>([
   "/src/pages/**/*.tsx",
   "!/src/pages/**/*.test.*",
 ]);
-const loaders = import.meta.glob<{ loader: LoaderFunction }>("/src/routeLoaders/**/*.ts", {
-  eager: true,
-});
+const loaders = routeLoaderModules;
 
 export const router = createBrowserRouter([
   {
