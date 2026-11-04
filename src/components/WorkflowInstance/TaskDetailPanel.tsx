@@ -20,8 +20,6 @@ import type {
 } from "@/types/workflowInstance";
 import { createItemLifecycle } from "./itemLifecycle";
 import { AttachmentOpenError, openTaskAttachment, type AttachmentPopup } from "./taskAttachments";
-import type { OwnerTaskAction } from "./taskPermissions";
-
 interface TaskDetailActions {
   currentUserId?: string | null;
   mutating: boolean;
@@ -29,10 +27,9 @@ interface TaskDetailActions {
   canReset: boolean;
   canReject: boolean;
   canOwnerCancel: boolean;
-  canOwnerReject: boolean;
   canAssign: boolean;
   canProxySubmit: boolean;
-  onOwnerAction: (action: OwnerTaskAction) => void;
+  onOwnerCancel: () => void;
   onClaim: () => void;
   onAssign: () => void;
   onSubmit: () => void;
@@ -261,19 +258,9 @@ function TaskActions({
           size="sm"
           variant="destructive"
           disabled={actions.mutating}
-          onClick={() => actions.onOwnerAction("cancel")}
+          onClick={actions.onOwnerCancel}
         >
           取消接取
-        </Button>
-      )}
-      {actions.canOwnerReject && (
-        <Button
-          size="sm"
-          variant="destructive"
-          disabled={actions.mutating}
-          onClick={() => actions.onOwnerAction("reject")}
-        >
-          负责人打回
         </Button>
       )}
     </div>
