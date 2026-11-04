@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import {
   abandonTask,
@@ -94,6 +94,7 @@ function ItemWorkflowInstance({
 }: WorkflowInstanceProps) {
   const confirm = useConfirm();
   const navigate = useNavigate();
+  const location = useLocation();
   const currentUserId = getUserId();
   const mounted = useRef(true);
   useEffect(() => {
@@ -430,7 +431,9 @@ function ItemWorkflowInstance({
               variant="outline"
               size="sm"
               onClick={() =>
-                void navigate(`/dashboard/planning/${projectId}/items/${itemId}/workflow`)
+                void navigate(`/dashboard/planning/${projectId}/items/${itemId}/workflow`, {
+                  state: location.state,
+                })
               }
             >
               编辑工作流

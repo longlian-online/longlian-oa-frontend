@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { useSearchParams } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 
 import { readPage, withPage } from "@/lib/pageQuery";
 
@@ -7,6 +7,9 @@ export function usePageQuery(
   key = "page",
 ): [number, (page: number | ((current: number) => number)) => void] {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const stateRef = useRef(location.state);
+  stateRef.current = location.state;
   const paramsRef = useRef(searchParams);
   const setSearchParamsRef = useRef(setSearchParams);
   paramsRef.current = searchParams;
@@ -19,7 +22,10 @@ export function usePageQuery(
       const nextPage = typeof next === "function" ? next(current) : next;
       const updated = withPage(currentParams, nextPage, key);
       if (updated.toString() === currentParams.toString()) return;
-      setSearchParamsRef.current(updated, { preventScrollReset: true });
+      setSearchParamsRef.current(updated, {
+        preventScrollReset: true,
+        state: stateRef.current,
+      });
     },
     [key],
   );

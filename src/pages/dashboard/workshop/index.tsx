@@ -42,11 +42,21 @@ export default function WorkshopPage() {
 
   function updateView(values: Record<string, string | number | null>): void {
     const next = new URLSearchParams(searchParams);
+    const defaults: Record<string, string | number> = {
+      type: "all",
+      sort: "RECENT_SUBMISSION",
+      taskSort: "ASC",
+      mine: "0",
+      page: 1,
+      submitPage: 1,
+      waitingPage: 1,
+    };
     for (const [key, value] of Object.entries(values)) {
-      if (value === null || value === "" || value === 1) next.delete(key);
+      if (value === null || value === "" || value === defaults[key]) next.delete(key);
       else next.set(key, String(value));
     }
-    setSearchParams(next, { preventScrollReset: true });
+    if (next.toString() === searchParams.toString()) return;
+    setSearchParams(next, { preventScrollReset: true, state: location.state });
   }
 
   useEffect(() => setSearchText(keyword), [keyword]);

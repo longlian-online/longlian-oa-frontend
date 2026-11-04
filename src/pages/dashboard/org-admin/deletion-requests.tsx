@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { Check, Clock3, ExternalLink, Loader2, X } from "lucide-react";
 
 import { reviewDeletionRequest } from "@/api/organizationAdmin";
@@ -33,6 +33,7 @@ function targetPath(request: DeletionRequestVO): string {
 }
 
 function DeletionRequestsContent() {
+  const location = useLocation();
   const [page, setPage] = usePageQuery();
   const listQuery = useApiQuery(organizationDeletionRequestsQuery(page));
   const requests = listQuery.data?.list ?? [];
@@ -111,7 +112,15 @@ function DeletionRequestsContent() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          render={<Link to={targetPath(request)} />}
+                          render={
+                            <Link
+                              to={targetPath(request)}
+                              state={{
+                                ...location.state,
+                                listReturnTo: location.pathname + location.search,
+                              }}
+                            />
+                          }
                         >
                           <ExternalLink className="size-4" />
                           查看

@@ -8,6 +8,8 @@ import {
 } from "react-router";
 
 import { planningListReturnTo } from "@/lib/pageQuery";
+import { getListReturnTo, getProjectItemsReturnTo } from "@/lib/listReturnTo";
+import { workshopReturnTo } from "@/lib/workshopNavigation";
 import { isPlanningResourceNotFound } from "@/lib/planningResourceError";
 
 import type { ReactElement } from "react";
@@ -71,10 +73,18 @@ export default function RouteErrorBoundary(): ReactElement | null {
     const segments = location.pathname.split("/").filter(Boolean);
     const projectId =
       segments[0] === "dashboard" && segments[1] === "planning" ? segments[2] : undefined;
+    const listSource = getListReturnTo(location.state);
+    const validListSource =
+      projectId && listSource?.startsWith(`/dashboard/planning/${projectId}/`)
+        ? undefined
+        : listSource;
     const target =
       error.resource === "item" && projectId
-        ? `/dashboard/planning/${projectId}`
-        : (planningListReturnTo(location.state) ?? "/dashboard/planning");
+        ? (getProjectItemsReturnTo(location.state, projectId) ?? `/dashboard/planning/${projectId}`)
+        : (planningListReturnTo(location.state) ??
+          workshopReturnTo(location.state) ??
+          validListSource ??
+          "/dashboard/planning");
     // 已失效的历史地址不再占用当前历史项，避免后退时反复回到已删除的详情。
     return <Navigate to={target} replace state={location.state} />;
   }

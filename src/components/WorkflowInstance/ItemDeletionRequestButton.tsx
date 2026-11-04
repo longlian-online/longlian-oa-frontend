@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { useDeleteProjectItem } from "@/hooks/queries/usePlanningDeletion";
 import { useConfirm } from "@/hooks/useConfirm";
+import { getProjectItemsReturnTo } from "@/lib/listReturnTo";
 
 interface ItemDeletionRequestButtonProps {
   projectId: string;
@@ -62,7 +63,10 @@ export default function ItemDeletionRequestButton({
     try {
       await deleteMutation.mutateAsync(itemId);
       $tip("项目已删除", "success");
-      void navigate(`/dashboard/planning/${projectId}`, { replace: true, state: location.state });
+      void navigate(
+        getProjectItemsReturnTo(location.state, projectId) ?? `/dashboard/planning/${projectId}`,
+        { replace: true, state: location.state },
+      );
     } catch {
       // Mutation 的最终失败由共享错误入口提示，保留当前项目。
     } finally {

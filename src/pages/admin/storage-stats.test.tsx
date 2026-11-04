@@ -73,12 +73,12 @@ afterEach(() => {
   clearAdminSession();
 });
 
-async function renderPage(): Promise<void> {
+async function renderPage(entry = "/admin/storage-stats"): Promise<void> {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   await act(async () => {
     root?.render(
       <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={["/admin/storage-stats"]}>
+        <MemoryRouter initialEntries={[entry]}>
           <StorageStatsPage />
         </MemoryRouter>
       </QueryClientProvider>,
@@ -88,6 +88,12 @@ async function renderPage(): Promise<void> {
 }
 
 describe("storage stats panel", () => {
+  test("restores keyword and page from a direct list URL", async () => {
+    await renderPage("/admin/storage-stats?keyword=%20team%20&page=3");
+    expect(getStorageStats).toHaveBeenCalledWith({ orgName: "team", pageNum: 3, pageSize: 10 });
+    expect(container?.querySelector("input")?.value).toBe("team");
+  });
+
   test("shows occupied and reclaimed bytes without collapsing real files to zero", async () => {
     await renderPage();
 

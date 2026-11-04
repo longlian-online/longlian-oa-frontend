@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { Ban, CheckCircle2, FolderOpen, Loader2, Search } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
@@ -37,6 +37,7 @@ function getStatusLabel(status: OrganizationProjectStatus): string {
 
 function OrganizationAdminProjectsContent() {
   const navigate = useNavigate();
+  const location = useLocation();
   const confirm = useConfirm();
   const changeProjectStatusMutation = useApiMutation<
     Awaited<ReturnType<typeof changeProjectStatus>>,
@@ -45,8 +46,8 @@ function OrganizationAdminProjectsContent() {
     mutationFn: (args) => changeProjectStatus(...args),
     invalidate: [["projects"], ["workshop"], ["plaza"], ["members"], ["memberClaimedTasks"]],
   });
-  const [keyword, setKeyword] = useState("");
-  const [searchText, setSearchText] = useState("");
+  const [{ keyword }, update] = useListQueryState({ keyword: "" });
+  const [searchText, setSearchText] = useListSearchDraft(keyword);
   const [page, setPage] = usePageQuery();
   const mutatingId = changeProjectStatusMutation.isPending
     ? String(changeProjectStatusMutation.variables?.[0] ?? "new")
@@ -58,8 +59,7 @@ function OrganizationAdminProjectsContent() {
   const loading = listQuery.isLoading;
 
   function handleSearch(): void {
-    setKeyword(searchText.trim());
-    setPage(1);
+    update({ keyword: searchText.trim() });
   }
 
   async function handleChangeStatus(project: OrganizationProjectVO): Promise<void> {
@@ -148,7 +148,11 @@ function OrganizationAdminProjectsContent() {
                         <button
                           type="button"
                           className="min-w-52 text-left"
-                          onClick={() => void navigate(`/dashboard/planning/${project.id}`)}
+                          onClick={() =>
+                            void navigate(`/dashboard/planning/${project.id}`, {
+                              state: { listReturnTo: location.pathname + location.search },
+                            })
+                          }
                         >
                           <span className="truncate font-medium text-foreground">
                             {project.title ?? "未命名企划"}

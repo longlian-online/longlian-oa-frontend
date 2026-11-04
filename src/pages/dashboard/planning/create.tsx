@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Check, Info, Loader2 } from "lucide-react";
 
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
@@ -24,6 +24,7 @@ import {
   parseProjectMetadataTags,
 } from "@/lib/projectMetadata";
 import { getStatusLabel } from "@/lib/projectStatus";
+import { planningListReturnTo } from "@/lib/pageQuery";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
 import { centerCropSquare, PROJECT_IMAGE_MAX_BYTES } from "@/lib/imageCrop";
@@ -51,6 +52,7 @@ interface CreateProjectProps {
 
 export default function CreateProject({ project }: CreateProjectProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { projectTypes, loading: loadingProjectTypes } = useProjectTypes();
   const presetTagQuery = useApiQuery(presetTagsQuery());
   const presetTags = (presetTagQuery.data ?? []).map((tag) => ({
@@ -293,7 +295,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
         succeeded = true;
         setSaveSucceeded(true);
         $tip("企划已更新", "success");
-        void navigate(`/dashboard/planning/${project.id}`);
+        void navigate(`/dashboard/planning/${project.id}`, { state: location.state });
       } else if (coverFile) {
         await createMutation.mutateAsync({
           title: formData.title.trim(),
@@ -307,7 +309,9 @@ export default function CreateProject({ project }: CreateProjectProps) {
         succeeded = true;
         setSaveSucceeded(true);
         $tip("企划创建成功", "success");
-        void navigate("/dashboard/planning");
+        void navigate(planningListReturnTo(location.state) ?? "/dashboard/planning", {
+          state: location.state,
+        });
       }
     } catch {
       /* 保留表单，由共享 Mutation 提示错误。 */

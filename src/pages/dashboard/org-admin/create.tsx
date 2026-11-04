@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { getListReturnTo } from "@/lib/listReturnTo";
 import { Loader2 } from "lucide-react";
 
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
@@ -50,6 +51,8 @@ function toEditorBaseTask(task: OrganizationBaseTaskVO): BaseTaskVO {
 
 function OrganizationAdminCreateWorkflowContent() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = getListReturnTo(location.state, "/dashboard/org-admin/workflows")!;
   const [searchParams] = useSearchParams();
   const templateId = searchParams.get("templateId");
   const isEditing = Boolean(templateId);
@@ -134,7 +137,7 @@ function OrganizationAdminCreateWorkflowContent() {
         setSaveSucceeded(true);
         $tip("流程模板已创建", "success");
       }
-      void navigate("/dashboard/org-admin/workflows");
+      void navigate(returnTo);
     } catch {
       /* QueryClient 统一显示最终错误，草稿保留。 */
     } finally {

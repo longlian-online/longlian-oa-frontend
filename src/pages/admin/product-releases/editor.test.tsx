@@ -76,13 +76,15 @@ afterEach(() => {
   clearAdminSession();
 });
 
-async function render(node: ReactNode): Promise<void> {
+async function render(node: ReactNode, state?: unknown): Promise<void> {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   await act(async () => {
     root?.render(
       <QueryClientProvider client={client}>
         <ConfirmDialogProvider>
-          <MemoryRouter>{node}</MemoryRouter>
+          <MemoryRouter initialEntries={[{ pathname: "/admin/product-releases/create", state }]}>
+            {node}
+          </MemoryRouter>
         </ConfirmDialogProvider>
       </QueryClientProvider>,
     );
@@ -110,6 +112,20 @@ function inputDisabled(label: string): boolean {
 }
 
 describe("product release editor", () => {
+  test.each([
+    ["/admin/product-releases?status=DRAFT&page=3", "/admin/product-releases?status=DRAFT&page=3"],
+    ["https://evil.example", "/admin/product-releases"],
+  ])("return link validates the saved list destination %s", async (listReturnTo, expected) => {
+    getSystemInfo.mockResolvedValue({ version: "1.0.53" });
+    getProductReleaseBaseline.mockResolvedValue(null);
+    await render(<CreateProductReleasePage />, { listReturnTo });
+    await vi.waitFor(() => expect(inputValue("后端版本")).toBe("1.0.53"));
+    const link = [...(container?.querySelectorAll("a") ?? [])].find(
+      (item) => item.textContent === "返回",
+    );
+    expect(link?.getAttribute("href")).toBe(expected);
+  });
+
   test("prefills the two component versions from the current build and leaves the product version empty", async () => {
     getSystemInfo.mockResolvedValue({ displayName: "longlian-oa", version: "1.0.53-SNAPSHOT" });
     getProductReleaseBaseline.mockResolvedValue({

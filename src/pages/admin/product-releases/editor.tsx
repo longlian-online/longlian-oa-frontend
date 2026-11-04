@@ -1,4 +1,5 @@
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
+import { getListReturnTo } from "@/lib/listReturnTo";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,8 @@ export default function ProductReleaseEditor({
   onPublish,
   onWithdraw,
 }: ProductReleaseEditorProps): ReactElement {
+  const location = useLocation();
+  const returnTo = getListReturnTo(location.state, "/admin/product-releases");
   const locked = mode === "published" || mode === "withdrawn";
   const readOnly = mode === "withdrawn";
 
@@ -111,7 +114,7 @@ export default function ProductReleaseEditor({
           type="button"
           variant="ghost"
           nativeButton={false}
-          render={<Link to="/admin/product-releases" />}
+          render={<Link to={returnTo!} state={location.state} />}
         >
           返回
         </Button>

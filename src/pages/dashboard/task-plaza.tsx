@@ -1,21 +1,27 @@
 import { Popover } from "@base-ui/react/popover";
 import { useMutationState } from "@tanstack/react-query";
-import { useId, useRef, useState, type ReactElement } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useEffect, useId, useRef, useState, type ReactElement } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { ArrowUpDown, ChevronLeft, ChevronRight, Info, Filter, Sparkles } from "lucide-react";
 
 import { scopedKey } from "@/lib/queryKeys";
+import { readPage, withPage } from "@/lib/pageQuery";
+import {
+  plazaListDefaults,
+  plazaListChoices,
+  plazaPageKeys,
+  plazaTaskPageKey,
+} from "@/lib/plazaListQueryState";
 import { cn } from "@/lib/utils";
 import { projectThumbnailSrc } from "@/lib/projectThumbnail";
 import { formatSlotLabel } from "@/lib/slotLabel";
 import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { claimTask } from "@/api/workflowInstance";
 import {
-  DEFAULT_PLAZA_SORT as DEFAULT_SORT,
   PLAZA_PAGE_SIZE as PAGE_SIZE,
   plazaListQuery,
-  plazaStageScope,
   plazaTaskTypesQuery,
 } from "@/queries/planning";
 import EmptyState from "@/components/EmptyState";
@@ -91,17 +97,23 @@ function StageScopeHelp({ label, children }: StageScopeHelpProps): ReactElement 
 
 export default function TaskPlaza() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const stageScope = plazaStageScope(searchParams);
+  const [filters, updateQuery] = useListQueryState(
+    plazaListDefaults,
+    plazaListChoices,
+    plazaPageKeys(searchParams),
+  );
+  const stageScope = filters.stageScope as "ALL" | "CURRENT";
   const [pageNum, setPageNum] = usePageQuery();
   const { projectTypes } = useProjectTypes();
-  const [keyword, setKeyword] = useState("");
-  const [submittedKeyword, setSubmittedKeyword] = useState("");
-  const [selectedType, setSelectedType] = useState("all");
-  const [selectedTaskType, setSelectedTaskType] = useState("all");
+  const [keyword, setKeyword] = useListSearchDraft(filters.keyword);
+  const submittedKeyword = filters.keyword;
+  const selectedType = filters.projectType;
+  const selectedTaskType = filters.taskType;
   const taskTypesQuery = useApiQuery(plazaTaskTypesQuery());
   const taskTypes = taskTypesQuery.data ?? [];
-  const [sortBy, setSortBy] = useState<PlazaSortBy>(DEFAULT_SORT);
+  const sortBy = filters.sortBy as PlazaSortBy;
   const session = useSessionSnapshot();
   const pendingClaims = useMutationState({
     filters: { mutationKey: scopedKey(["claimTask"], "org", session), status: "pending" },
@@ -115,9 +127,21 @@ export default function TaskPlaza() {
   const groups = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;
+  useEffect(() => {
+    if (!listQuery.data || listQuery.isFetching) return;
+    let next = new URLSearchParams(searchParams);
+    for (const group of listQuery.data.list) {
+      const key = plazaTaskPageKey(group.projectId);
+      const lastPage = Math.max(1, Math.ceil(group.tasks.length / TASK_PAGE_SIZE));
+      const page = readPage(next, key);
+      if (page > lastPage) next = withPage(next, lastPage, key);
+    }
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true, preventScrollReset: true, state: location.state });
+    }
+  }, [listQuery.data, listQuery.isFetching, searchParams, setSearchParams, location.state]);
   function handleSearch(): void {
-    setSubmittedKeyword(keyword.trim());
-    setPageNum(1);
+    updateQuery({ keyword: keyword.trim() });
     if (submittedKeyword === keyword.trim() && pageNum === 1) void listQuery.refetch();
   }
 
@@ -185,10 +209,7 @@ export default function TaskPlaza() {
               className="pr-0"
               onClick={() => {
                 if (scope === stageScope) return;
-                const next = new URLSearchParams(searchParams);
-                next.set("stageScope", scope);
-                next.delete("page");
-                setSearchParams(next);
+                updateQuery({ stageScope: scope });
               }}
             >
               {scope === "ALL" ? "全部阶段" : "当前阶段"}
@@ -213,8 +234,7 @@ export default function TaskPlaza() {
               value={sortBy}
               onValueChange={(value: string | null) => {
                 if (value === "WAIT" || value === "LATEST" || value === "MOST") {
-                  setSortBy(value);
-                  setPageNum(1);
+                  updateQuery({ sortBy: value });
                 }
               }}
             >
@@ -239,8 +259,7 @@ export default function TaskPlaza() {
               value={selectedType}
               onValueChange={(value: string | null) => {
                 if (value) {
-                  setSelectedType(value);
-                  setPageNum(1);
+                  updateQuery({ projectType: value });
                 }
               }}
             >
@@ -269,8 +288,7 @@ export default function TaskPlaza() {
               }
               onValueChange={(value: string | null): void => {
                 if (value) {
-                  setSelectedTaskType(value);
-                  setPageNum(1);
+                  updateQuery({ taskType: value });
                 }
               }}
             >
@@ -351,10 +369,10 @@ interface ProjectGroupSectionProps {
 }
 
 function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionProps): ReactElement {
-  const [page, setPage] = useState(1);
+  const location = useLocation();
+  const [page, setPage] = usePageQuery(plazaTaskPageKey(group.projectId));
   const totalPages = Math.max(1, Math.ceil(group.tasks.length / TASK_PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  if (page !== currentPage) setPage(currentPage);
   const visibleTasks = group.tasks.slice(
     (currentPage - 1) * TASK_PAGE_SIZE,
     currentPage * TASK_PAGE_SIZE,
@@ -366,6 +384,7 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
       <div className="flex items-center gap-2 sm:gap-3">
         <Link
           to={`/dashboard/planning/${group.projectId}`}
+          state={{ ...location.state, listReturnTo: location.pathname + location.search }}
           className="group flex min-w-0 flex-1 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-3"
         >
           {imageUrl ? (
@@ -470,6 +489,7 @@ interface PlazaTaskCardProps {
 
 function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const slotLabel = formatSlotLabel({
     name: task.nodeName,
     slotIndex: task.slotIndex,
@@ -488,7 +508,11 @@ function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
 
       <button
         type="button"
-        onClick={() => navigate(`/dashboard/planning/${group.projectId}/items/${task.itemId}`)}
+        onClick={() =>
+          navigate(`/dashboard/planning/${group.projectId}/items/${task.itemId}`, {
+            state: { ...location.state, listReturnTo: location.pathname + location.search },
+          })
+        }
         className="mt-1.5 block w-full truncate text-left text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
         title={task.itemTitle}
       >

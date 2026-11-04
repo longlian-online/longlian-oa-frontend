@@ -7,6 +7,7 @@ import {
   Outlet,
   RouterProvider,
   useParams,
+  useSearchParams,
   type RouteObject,
 } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
@@ -17,6 +18,7 @@ import TaskDetailPanel from "@/components/WorkflowInstance/TaskDetailPanel";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { apiQueryOptions } from "@/lib/apiQuery";
 import { queryClient } from "@/lib/queryClient";
+import { readPlanningListView } from "@/lib/planningListView";
 import { scopedKey } from "@/lib/queryKeys";
 import { clearSession, saveSession } from "@/lib/session";
 import {
@@ -99,7 +101,9 @@ function Item(): ReactElement {
 }
 
 function ProjectList(): ReactElement {
-  const projects = useApiQuery(projectListQuery());
+  const [searchParams] = useSearchParams();
+  const { pageNum, keyword, selectedType, timeSort } = readPlanningListView(searchParams);
+  const projects = useApiQuery(projectListQuery(pageNum, keyword, selectedType, timeSort));
   return (
     <>
       <h1>企划列表</h1>
@@ -203,7 +207,10 @@ function json(data: unknown, code = 0): Response {
   return new Response(JSON.stringify({ code, msg: code === 6 ? "项目不存在" : "无权操作", data }));
 }
 
-async function mount(path: string): Promise<void> {
+async function mount(
+  path: string,
+  state: unknown = { planningListReturnTo: "/dashboard/planning?page=3" },
+): Promise<void> {
   router = createMemoryRouter(
     [
       {
@@ -214,9 +221,7 @@ async function mount(path: string): Promise<void> {
       },
     ],
     {
-      initialEntries: [
-        { pathname: path, state: { planningListReturnTo: "/dashboard/planning?page=3" } },
-      ],
+      initialEntries: [{ pathname: path, state }],
     },
   );
   await act(async () =>
@@ -237,6 +242,16 @@ async function waitAt(path: string): Promise<void> {
     expect(router.state.navigation.state).toBe("idle");
   });
 }
+
+test("从工坊进入已删除企划时回到原工坊筛选和页码", async (): Promise<void> => {
+  missingProject = true;
+  await mount("/dashboard/planning/21", {
+    workshopReturnTo: "/dashboard/workshop?keyword=百合&page=4&submitPage=2",
+  });
+  await waitAt("/dashboard/workshop?keyword=百合&page=4&submitPage=2");
+  expect(router.state.historyAction).toBe("REPLACE");
+  expect(container.querySelector("h1")?.textContent).toBe("工坊");
+});
 
 test.each([
   "/dashboard/planning/21",

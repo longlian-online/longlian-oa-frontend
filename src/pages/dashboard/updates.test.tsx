@@ -60,12 +60,12 @@ afterEach(() => {
   clearSession();
 });
 
-async function renderPage(): Promise<void> {
+async function renderPage(entry = "/dashboard/updates"): Promise<void> {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   await act(async () => {
     root?.render(
       <QueryClientProvider client={client}>
-        <MemoryRouter>
+        <MemoryRouter initialEntries={[entry]}>
           <ProductReleaseHistoryPage />
         </MemoryRouter>
       </QueryClientProvider>,
@@ -74,6 +74,13 @@ async function renderPage(): Promise<void> {
 }
 
 describe("product release history", () => {
+  test("restores a later page without marking its first entry as latest", async () => {
+    listProductReleases.mockResolvedValue({ list: [], total: 30 });
+    await renderPage("/dashboard/updates?page=3");
+    await vi.waitFor(() => expect(listProductReleases).toHaveBeenCalledWith(3, 10));
+    expect(markProductReleaseSeen).not.toHaveBeenCalled();
+  });
+
   test("shows an empty history without component versions", async () => {
     listProductReleases.mockResolvedValue({ list: [], total: 0 });
     await renderPage();

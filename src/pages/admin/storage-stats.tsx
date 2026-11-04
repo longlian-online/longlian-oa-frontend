@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { HardDrive, Loader2 } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
@@ -102,16 +103,15 @@ function OrganizationStorage({ organization }: { organization: StorageStatsVO })
 }
 
 export default function StorageStatsPage() {
-  const [page, setPage] = useState(1);
-  const [keyword, setKeyword] = useState("");
-  const [searchText, setSearchText] = useState("");
+  const [page, setPage] = usePageQuery();
+  const [{ keyword }, updateQuery] = useListQueryState({ keyword: "" });
+  const [searchText, setSearchText] = useListSearchDraft(keyword);
   const listQuery = useApiQuery(storageStatsQuery(page, keyword));
   const organizations = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
 
   function handleSearch(): void {
-    setPage(1);
-    setKeyword(searchText.trim());
+    updateQuery({ keyword: searchText });
   }
 
   return (

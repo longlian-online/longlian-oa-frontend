@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { Loader2, Search, Workflow } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
@@ -23,10 +23,12 @@ import type { OrganizationResourceStatus } from "@/types/organizationAdmin";
 
 function OrganizationAdminWorkflowsContent() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnState = { listReturnTo: location.pathname + location.search };
   const confirm = useConfirm();
   const [page, setPage] = usePageQuery();
-  const [keyword, setKeyword] = useState("");
-  const [searchText, setSearchText] = useState("");
+  const [{ keyword }, update] = useListQueryState({ keyword: "" });
+  const [searchText, setSearchText] = useListSearchDraft(keyword);
   const listQuery = useApiQuery(organizationTemplatesQuery(keyword, page));
   const templates = (listQuery.data?.list ?? []).map(toOrganizationWorkflowCard);
   const templateStatuses = Object.fromEntries(
@@ -42,12 +44,13 @@ function OrganizationAdminWorkflowsContent() {
   const mutatingTemplateId = statusMutation.isPending ? statusMutation.variables?.id : null;
 
   function handleSearch(): void {
-    setKeyword(searchText.trim());
-    setPage(1);
+    update({ keyword: searchText.trim() });
   }
 
   function handleEdit(template: WorkshopTaskTemplateVO): void {
-    void navigate(`/dashboard/org-admin/create?templateId=${encodeURIComponent(template.id)}`);
+    void navigate(`/dashboard/org-admin/create?templateId=${encodeURIComponent(template.id)}`, {
+      state: returnState,
+    });
   }
 
   async function handleStatusChange(template: WorkshopTaskTemplateVO): Promise<void> {
@@ -94,7 +97,11 @@ function OrganizationAdminWorkflowsContent() {
           <Button type="button" variant="outline" size="sm" onClick={handleSearch}>
             搜索
           </Button>
-          <Button type="button" size="sm" onClick={() => navigate("/dashboard/org-admin/create")}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => navigate("/dashboard/org-admin/create", { state: returnState })}
+          >
             创建流程
           </Button>
         </div>
@@ -112,7 +119,11 @@ function OrganizationAdminWorkflowsContent() {
           icon={<Workflow className="h-5 w-5 text-muted-foreground" />}
           title="暂无工作流模板"
           description="创建一个流程模板后，就可以在企划项目里复用它。"
-          action={<Button onClick={() => navigate("/dashboard/org-admin/create")}>创建流程</Button>}
+          action={
+            <Button onClick={() => navigate("/dashboard/org-admin/create", { state: returnState })}>
+              创建流程
+            </Button>
+          }
         />
       ) : (
         <>
