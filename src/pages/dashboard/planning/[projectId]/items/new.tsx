@@ -158,7 +158,7 @@ function CreateProjectItem({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="-mx-6 -mb-6 flex h-[calc(100svh-6.25rem)] flex-col bg-background">
+    <div className="-mx-6 -mb-6 flex min-h-[calc(100svh-6.25rem)] flex-col bg-background">
       <div className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-4">
         <h1 className="text-lg font-bold leading-6 text-foreground">创建项目</h1>
         <div className="flex-1" />
@@ -200,7 +200,7 @@ function CreateProjectItem({ projectId }: { projectId: string }) {
         </label>
       </div>
       {templateId ? (
-        <div className="flex min-h-0 flex-1 items-start gap-4 overflow-hidden p-4">
+        <div className="flex min-h-0 flex-1 gap-4 overflow-x-clip p-4">
           <WorkflowEditor
             value={nodes}
             baseTasks={baseTasks}

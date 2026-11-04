@@ -242,7 +242,7 @@ export default function WorkflowCanvas({
 
   if (nodes.length === 0) {
     return (
-      <section className="flex h-[520px] flex-col overflow-hidden rounded-xl border bg-card">
+      <section className="flex h-full flex-col overflow-hidden rounded-xl border bg-card">
         <div className="flex h-12 items-center justify-between border-b px-4">
           <span className="flex items-center gap-2 text-sm font-medium">
             <Layers2 className="size-4 text-muted-foreground" />
@@ -268,7 +268,7 @@ export default function WorkflowCanvas({
   }
 
   return (
-    <section className="relative h-[520px] overflow-hidden rounded-xl border bg-card">
+    <section className="relative h-full overflow-hidden rounded-xl border bg-card">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex h-12 items-center justify-between border-b bg-card px-4">
         <span className="flex shrink-0 items-center gap-2 text-sm font-medium">
           <Layers2 className="size-4 text-muted-foreground" />

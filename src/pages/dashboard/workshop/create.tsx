@@ -108,7 +108,7 @@ function CreateWorkflowPageContent() {
   }
 
   return (
-    <div className="-mx-6 -mb-6 flex h-[calc(100svh-6.25rem)] flex-col bg-background">
+    <div className="-mx-6 -mb-6 flex min-h-[calc(100svh-6.25rem)] flex-col bg-background">
       {baseTasksQuery.isError && !baseTasksQuery.data && (
         <div role="alert">
           {baseTasksQuery.error.message}
@@ -146,7 +146,7 @@ function CreateWorkflowPageContent() {
         </label>
       </div>
 
-      <div className="flex flex-1 items-start gap-4 overflow-hidden p-4">
+      <div className="flex flex-1 gap-4 overflow-x-clip p-4">
         <WorkflowEditor
           value={nodes}
           baseTasks={baseTasks}
