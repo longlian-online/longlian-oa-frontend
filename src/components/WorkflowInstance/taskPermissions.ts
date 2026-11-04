@@ -20,7 +20,7 @@ export function canReject(
   nodes: ItemTaskNodeVO[],
   instances: ItemTaskInstanceVO[],
   currentUserId?: string | null,
-  isProjectCreator = false,
+  canManage = false,
 ): boolean {
   if (
     instance.status !== "COMPLETED" ||
@@ -29,7 +29,7 @@ export function canReject(
     hasLaterCompletion(instance, instances)
   )
     return false;
-  if (isProjectCreator) return true;
+  if (canManage) return true;
   if (!currentUserId) return false;
   const nextStage = nodes.reduce<number | undefined>(
     (next, node) =>
@@ -50,10 +50,10 @@ export function canReject(
 export function canOwnerCancel(
   instance: ItemTaskInstanceVO,
   instances: ItemTaskInstanceVO[],
-  isProjectCreator: boolean,
+  canManage: boolean,
 ): boolean {
   return (
-    isProjectCreator &&
+    canManage &&
     typeof instance.revision === "string" &&
     /^\d+$/.test(instance.revision) &&
     instance.status === "CLAIMED" &&
@@ -61,9 +61,9 @@ export function canOwnerCancel(
   );
 }
 
-export function canAssign(instance: ItemTaskInstanceVO, isProjectCreator: boolean): boolean {
+export function canAssign(instance: ItemTaskInstanceVO, canManage: boolean): boolean {
   return (
-    isProjectCreator &&
+    canManage &&
     instance.status === "PENDING" &&
     typeof instance.revision === "string" &&
     /^\d+$/.test(instance.revision)
@@ -73,10 +73,10 @@ export function canAssign(instance: ItemTaskInstanceVO, isProjectCreator: boolea
 export function canProxySubmit(
   instance: ItemTaskInstanceVO,
   nodes: ItemTaskNodeVO[],
-  isProjectCreator: boolean,
+  canManage: boolean,
 ): boolean {
   if (
-    !isProjectCreator ||
+    !canManage ||
     instance.status !== "PENDING" ||
     typeof instance.revision !== "string" ||
     !/^\d+$/.test(instance.revision)

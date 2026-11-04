@@ -249,7 +249,7 @@ function open(entry: Entry): HTMLButtonElement {
     render(<TaskPlaza />);
     return button("接取", entry === "大厅后续阶段" ? 1 : 0);
   }
-  render(<WorkflowInstance itemId="21" isProjectCreator={false} />);
+  render(<WorkflowInstance itemId="21" canManage={false} />);
   if (entry === "流程详情") {
     act(() => click(button("查看翻译任务详情")));
     return button("接取");
@@ -378,7 +378,7 @@ test("切换项目后旧流程接取响应不误报成功", async (): Promise<vo
   act(() => click(card));
   await vi.waitFor(() => expect(claimIds).toHaveLength(1));
   seed("22");
-  render(<WorkflowInstance itemId="22" isProjectCreator={false} />);
+  render(<WorkflowInstance itemId="22" canManage={false} />);
   await finish(ok({ autoJoinedProject: true }));
   expect(tip).not.toHaveBeenCalled();
 });

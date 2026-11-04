@@ -118,27 +118,27 @@ afterEach(async () => {
 
 async function render(
   itemId = "item",
-  isProjectCreator = true,
+  canManage = true,
   entry: { taskInstanceId?: string; projectId?: string } = {},
 ): Promise<void> {
   await act(async () =>
     root?.render(
       <QueryClientProvider client={client}>
         <MemoryRouter>
-          <WorkflowInstance itemId={itemId} isProjectCreator={isProjectCreator} {...entry} />
+          <WorkflowInstance itemId={itemId} canManage={canManage} {...entry} />
         </MemoryRouter>
       </QueryClientProvider>,
     ),
   );
 }
 
-async function mount(isProjectCreator = true, projectId?: string): Promise<void> {
+async function mount(canManage = true, projectId?: string): Promise<void> {
   await act(async () => root?.unmount());
   container?.remove();
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
-  await render("item", isProjectCreator, projectId ? { projectId } : {});
+  await render("item", canManage, projectId ? { projectId } : {});
   await vi.waitFor(async () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -248,7 +248,7 @@ function dialogButton(text: string): HTMLButtonElement {
   return submit;
 }
 
-test("creator rejection uses the shared reject dialog and retries with the same comment", async () => {
+test("planning manager rejection uses the shared reject dialog and retries with the same comment", async () => {
   tasks = [task({ status: "COMPLETED" })];
   api.rejectTask.mockRejectedValueOnce(new Error("任务已变更")).mockResolvedValueOnce(undefined);
   await mount();
@@ -286,7 +286,7 @@ test("stale open dialog cannot act on an ABA replacement, even with the same sta
   expect(document.querySelector("[role='alert']")).not.toBeNull();
 });
 
-test("noncreator member or administrator gets no owner action and cannot submit somebody else's task", async () => {
+test("missing canManage hides manager actions and cannot submit somebody else's task", async () => {
   await mount(false);
   expect(findButton("取消接取")).toBeUndefined();
   expect(findButton("打回")).toBeUndefined();
@@ -307,7 +307,7 @@ test("missing server revision cannot expose a command", async () => {
   expect(findButton("取消接取")).toBeUndefined();
 });
 
-test("next-stage reject uses the shared endpoint with its captured revision for a noncreator", async () => {
+test("next-stage reject uses the shared endpoint when the user cannot manage the planning", async () => {
   tasks = [task({ status: "COMPLETED" }), task({ id: "next", sort: 3, assigneeId: "creator" })];
   await mount(false);
   expect(findButton("负责人打回")).toBeUndefined();

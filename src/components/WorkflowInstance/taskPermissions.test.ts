@@ -63,8 +63,8 @@ describe("task permissions", () => {
   });
 });
 
-describe("project creator task permissions", () => {
-  test("creator rejection uses the shared reject rule and does not require the next stage", () => {
+describe("planning manager task permissions", () => {
+  test("canManage covers creator and organization administrator rejection without the next stage", () => {
     const completed = task("a", 1, "COMPLETED", "other");
     expect(canReject(completed, nodes, [], null, true)).toBe(true);
     expect(canReject(completed, nodes, [], "admin", false)).toBe(false);
@@ -77,7 +77,7 @@ describe("project creator task permissions", () => {
     }
   });
 
-  test("only explicit project creator capability grants owner cancellation, not assignee or admin membership", () => {
+  test("only canManage grants cancellation, not being the assignee", () => {
     const target = task("a", 1, "CLAIMED");
     expect(canOwnerCancel(target, [], true)).toBe(true);
     expect(canOwnerCancel(target, [], false)).toBe(false);
@@ -111,7 +111,7 @@ describe("project creator task permissions", () => {
 });
 
 describe("task assignment permission", () => {
-  test("only the project creator can assign a pending task with a valid revision", () => {
+  test("only canManage can assign a pending task with a valid revision", () => {
     expect(canAssign(task("a", 1, "PENDING"), true)).toBe(true);
     expect(canAssign(task("a", 1, "PENDING"), false)).toBe(false);
     expect(canAssign(task("a", 1, "CLAIMED"), true)).toBe(false);
@@ -148,7 +148,7 @@ describe("proxy submit permission", () => {
     },
   ];
 
-  test("only the project creator can proxy-submit an unclaimed unlocked task", () => {
+  test("only canManage can proxy-submit an unclaimed unlocked task", () => {
     const pending = task("b", 2, "PENDING", undefined);
     expect(canProxySubmit(pending, pendingNodes, true)).toBe(true);
     expect(canProxySubmit(pending, pendingNodes, false)).toBe(false);
