@@ -1,0 +1,42 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "支持字段名模糊搜索，默认按创建时间倒序",
+    "operationId": "listPresetFields",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "query",
+        "name": "listDTO",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/OrganizationPresetFieldListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOOrganizationPresetFieldAdminVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询组织预置表单字段",
+    "tags": ["组织预置表单字段"]
+  },
+  "path": "/orgadmin/preset-fields",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

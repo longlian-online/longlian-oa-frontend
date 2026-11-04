@@ -1,0 +1,37 @@
+{
+  "document": "用户端",
+  "method": "GET",
+  "operation": {
+    "description": "当前组织未删除且启用的原子任务，供编辑项目工作流和个人模板使用。不含提交字段，不要求组织管理员。",
+    "operationId": "listOptions",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/BaseTaskOptionVO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "查询可添加的原子任务",
+    "tags": ["原子任务选项"]
+  },
+  "path": "/app/task/base/options",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

@@ -1,0 +1,45 @@
+{
+  "document": "全部",
+  "method": "PUT",
+  "operation": {
+    "operationId": "updatePresetField",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "fieldId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/OrganizationPresetFieldUpdateDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "修改组织预置表单字段",
+    "tags": ["组织预置表单字段"]
+  },
+  "path": "/orgadmin/preset-fields/{fieldId}",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

@@ -23,6 +23,8 @@ import {
 } from "@/api/planning";
 import { projectDetailQuery } from "@/queries/planning";
 import ProjectItemSection from "@/components/ProjectItem";
+import ProjectMembers from "@/components/ProjectMembers";
+import ProjectAttachments from "@/components/ProjectAttachments";
 import PlanningDetailNavigation from "@/components/PlanningDetailNavigation";
 import ProjectCustomFields from "@/components/ProjectCustomFields";
 import ProjectMetadataTag from "@/components/ProjectMetadataTag";
@@ -43,6 +45,9 @@ import {
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
 import { getStatusLabel } from "@/lib/projectStatus";
+import { planningListReturnTo } from "@/lib/pageQuery";
+import { getListReturnTo } from "@/lib/listReturnTo";
+import { workshopReturnTo } from "@/lib/workshopNavigation";
 import { parseProjectCustomFields, parseProjectMetadataTags } from "@/lib/projectMetadata";
 
 export default function ProjectDetail() {
@@ -137,7 +142,15 @@ export default function ProjectDetail() {
     try {
       await deleteMutation.mutateAsync();
       $tip("企划已删除", "success");
-      void navigate("/dashboard/planning", { replace: true });
+      const source =
+        planningListReturnTo(location.state) ??
+        workshopReturnTo(location.state) ??
+        getListReturnTo(location.state);
+      const target = source?.startsWith(`/dashboard/planning/${project.id}/`) ? undefined : source;
+      void navigate(target ?? "/dashboard/planning", {
+        replace: true,
+        state: location.state,
+      });
     } catch {
       /* 全局 Mutation 错误提示保留当前数据。 */
     } finally {
@@ -181,7 +194,7 @@ export default function ProjectDetail() {
         <ProjectItemSection
           key={projectId}
           projectId={projectId!}
-          isCreator={project.isCreator}
+          isCreator={project.canManage ?? project.isCreator}
           renderHeader={(onCreate) => (
             <header id="project-overview" className="flex scroll-mt-6 flex-col gap-5 border-b pb-6">
               <div className="flex flex-wrap items-start justify-between gap-5">
@@ -218,7 +231,7 @@ export default function ProjectDetail() {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  {project.isCreator ? (
+                  {(project.canManage ?? project.isCreator) ? (
                     <>
                       <Button onClick={onCreate}>
                         <Plus data-icon="inline-start" />
@@ -236,7 +249,8 @@ export default function ProjectDetail() {
                         编辑资料
                       </Button>
                     </>
-                  ) : !project.inWorkshop ? (
+                  ) : null}
+                  {!project.isCreator && !project.inWorkshop ? (
                     <Button disabled={workshopLoading} onClick={handleToggleWorkshop}>
                       {workshopLoading ? <Loader2 className="animate-spin" /> : <CirclePlus />}
                       加入企划
@@ -279,7 +293,7 @@ export default function ProjectDetail() {
                               </Menu.Item>
                             )}
                           </Menu.Group>
-                          {project.isCreator && (
+                          {(project.canManage ?? project.isCreator) && (
                             <>
                               <Menu.Separator className="my-1 h-px bg-border" />
                               <Menu.Group>
@@ -356,6 +370,8 @@ export default function ProjectDetail() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <ProjectMembers projectId={projectId!} />
 
         <section aria-labelledby="project-info-title" className="border-t pt-6">
           <details
@@ -453,6 +469,11 @@ export default function ProjectDetail() {
             )}
           </div>
         </section>
+
+        <ProjectAttachments
+          projectId={projectId!}
+          isCreator={project.canManage ?? project.isCreator}
+        />
       </div>
       <PlanningDetailNavigation key={projectId} pageRef={pageRef} />
     </div>

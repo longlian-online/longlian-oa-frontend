@@ -120,6 +120,18 @@
         "required": ["status"],
         "type": "object"
       },
+      "GenerateInviteCodeDTO": {
+        "description": "生成邀请码请求参数",
+        "properties": {
+          "expiredAt": {
+            "description": "邀请人选择的到期时间",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["expiredAt"],
+        "type": "object"
+      },
       "InviteCodeVO": {
         "description": "邀请码（可用于创建组织、注册入组或已注册用户申请入组）",
         "properties": {
@@ -127,9 +139,18 @@
             "description": "邀请码过期时间",
             "type": "string"
           },
-          "inviteCode": {
-            "description": "邀请码（6位字母数字，一次性使用，有效期30分钟）",
+          "id": {
+            "description": "邀请记录 ID，仅加入组织邀请码返回",
             "type": "string"
+          },
+          "inviteCode": {
+            "description": "邀请码（6位字母数字）",
+            "type": "string"
+          },
+          "maxUses": {
+            "description": "使用上限，为空表示不限次数；创建组织邀请码不返回",
+            "format": "int32",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -238,6 +259,196 @@
         },
         "type": "object"
       },
+      "PageResultVOProductReleaseListItemVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/ProductReleaseListItemVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOStorageStatsVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/StorageStatsVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ProductReleaseBaselineVO": {
+        "properties": {
+          "backendVersion": {
+            "type": "string"
+          },
+          "frontendVersion": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProductReleaseDetailVO": {
+        "properties": {
+          "backendVersion": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "frontendVersion": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": ["DRAFT", "PUBLISHED", "WITHDRAWN"],
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProductReleaseListDTO": {
+        "description": "产品版本列表查询",
+        "properties": {
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "status": {
+            "description": "状态，不传则全部",
+            "enum": ["DRAFT", "PUBLISHED", "WITHDRAWN"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProductReleaseListItemVO": {
+        "description": "数据列表",
+        "properties": {
+          "backendVersion": {
+            "type": "string"
+          },
+          "frontendVersion": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": ["DRAFT", "PUBLISHED", "WITHDRAWN"],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProductReleaseSaveDTO": {
+        "description": "保存产品版本",
+        "properties": {
+          "backendVersion": {
+            "pattern": "^[vV]?(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})$",
+            "type": "string"
+          },
+          "content": {
+            "description": "更新说明，Markdown",
+            "maxLength": 4000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "frontendVersion": {
+            "pattern": "^[vV]?(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})$",
+            "type": "string"
+          },
+          "publish": {
+            "description": "为 true 时创建并发布；更新接口忽略",
+            "type": "boolean"
+          },
+          "summary": {
+            "maxLength": 120,
+            "minLength": 0,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          },
+          "version": {
+            "pattern": "^[vV]?(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})$",
+            "type": "string"
+          }
+        },
+        "required": ["backendVersion", "frontendVersion", "version"],
+        "type": "object"
+      },
       "ScheduleTriggerDTO": {
         "description": "手动触发定时任务请求",
         "properties": {
@@ -270,6 +481,103 @@
           }
         },
         "type": "object"
+      },
+      "StorageCategoryStatsVO": {
+        "description": "一类资源的四种存储状态",
+        "properties": {
+          "active": {
+            "$ref": "#/components/schemas/StorageStateStatsVO"
+          },
+          "recycled": {
+            "$ref": "#/components/schemas/StorageStateStatsVO"
+          },
+          "retention": {
+            "$ref": "#/components/schemas/StorageStateStatsVO"
+          },
+          "unbound": {
+            "$ref": "#/components/schemas/StorageStateStatsVO"
+          }
+        },
+        "type": "object"
+      },
+      "StorageStateStatsVO": {
+        "description": "一种存储状态的数量和字节",
+        "properties": {
+          "bytes": {
+            "description": "字节数",
+            "format": "int64",
+            "type": "integer"
+          },
+          "count": {
+            "description": "文件数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "StorageStatsQueryDTO": {
+        "description": "存储统计查询参数",
+        "properties": {
+          "orgName": {
+            "description": "组织名",
+            "maxLength": 32,
+            "minLength": 0,
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "StorageStatsVO": {
+        "description": "组织存储统计",
+        "properties": {
+          "cover": {
+            "$ref": "#/components/schemas/StorageCategoryStatsVO"
+          },
+          "id": {
+            "description": "组织ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "组织名称",
+            "type": "string"
+          },
+          "occupiedBytes": {
+            "description": "仍占用的字节，不含已回收和头像",
+            "format": "int64",
+            "type": "integer"
+          },
+          "reclaimedBytes": {
+            "description": "已物理回收的字节，不含头像",
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "description": "组织状态",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          },
+          "taskSubmit": {
+            "$ref": "#/components/schemas/StorageCategoryStatsVO"
+          },
+          "thumbnail": {
+            "$ref": "#/components/schemas/StorageCategoryStatsVO"
+          }
+        },
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -294,7 +602,7 @@
   "paths": {
     "/admin/admins/": {
       "get": {
-        "operationId": "list",
+        "operationId": "list_2",
         "parameters": [
           {
             "in": "query",
@@ -321,7 +629,7 @@
         "tags": ["管理员接口"]
       },
       "post": {
-        "operationId": "create",
+        "operationId": "create_1",
         "requestBody": {
           "content": {
             "application/json": {
@@ -402,8 +710,18 @@
     },
     "/admin/organizations/invite-codes/create-org": {
       "post": {
-        "description": "生成一次性邀请码，有效期30分钟；供超管邀请新用户注册并创建组织使用",
+        "description": "生成一次性邀请码，到期时间由邀请人指定；供超管邀请新用户注册并创建组织使用",
         "operationId": "generateCreateOrgInviteCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateInviteCodeDTO"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -452,6 +770,189 @@
         },
         "summary": "操作组织状态",
         "tags": ["组织接口"]
+      }
+    },
+    "/admin/product-releases/": {
+      "get": {
+        "operationId": "list_1",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dto",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ProductReleaseListDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOProductReleaseListItemVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询产品版本",
+        "tags": ["产品版本"]
+      },
+      "post": {
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductReleaseSaveDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "format": "int64",
+                  "type": "integer"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "新建产品版本",
+        "tags": ["产品版本"]
+      }
+    },
+    "/admin/product-releases/baseline": {
+      "get": {
+        "operationId": "baseline",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReleaseBaselineVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "当前已发布产品版本的信息",
+        "tags": ["产品版本"]
+      }
+    },
+    "/admin/product-releases/{id}": {
+      "get": {
+        "operationId": "detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReleaseDetailVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "产品版本详情",
+        "tags": ["产品版本"]
+      },
+      "put": {
+        "operationId": "update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductReleaseSaveDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "修改产品版本",
+        "tags": ["产品版本"]
+      }
+    },
+    "/admin/product-releases/{id}/publish": {
+      "post": {
+        "operationId": "publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "发布草稿",
+        "tags": ["产品版本"]
+      }
+    },
+    "/admin/product-releases/{id}/withdraw": {
+      "post": {
+        "operationId": "withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "撤回已发布的产品版本",
+        "tags": ["产品版本"]
       }
     },
     "/admin/scheduled-tasks/": {
@@ -548,6 +1049,35 @@
         "summary": "管理员登录",
         "tags": ["管理员会话接口"]
       }
+    },
+    "/admin/storage-stats/": {
+      "get": {
+        "operationId": "list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dto",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/StorageStatsQueryDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOStorageStatsVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询组织存储统计",
+        "tags": ["存储统计"]
+      }
     }
   },
   "security": [
@@ -577,6 +1107,14 @@
     {
       "description": "组织相关接口",
       "name": "组织接口"
+    },
+    {
+      "description": "系统管理员维护面向用户的更新说明",
+      "name": "产品版本"
+    },
+    {
+      "description": "按组织查看存储占用",
+      "name": "存储统计"
     }
   ]
 }

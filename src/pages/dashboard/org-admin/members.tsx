@@ -1,5 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useSearchParams } from "react-router";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
+import {
+  MEMBER_LIST_DEFAULTS,
+  MEMBER_LIST_CHOICES,
+  readMemberListFilters,
+} from "./orgAdminListView";
 import {
   Ban,
   CheckCircle2,
@@ -59,7 +65,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
 import {
-  INITIAL_MEMBER_LIST_FILTERS,
   memberClaimedTasksQuery,
   ORGANIZATION_ADMIN_PAGE_SIZE as PAGE_SIZE,
   organizationMembersQuery,
@@ -87,9 +92,22 @@ function memberName(member: OrganizationMemberVO): string {
 
 function OrganizationMembersContent() {
   const confirm = useConfirm();
-  const [filters, setFilters] = useState<MemberListFilters>(INITIAL_MEMBER_LIST_FILTERS);
-  const [appliedFilters, setAppliedFilters] = useState(filters);
-  const appliedFiltersRef = useRef(appliedFilters);
+  const location = useLocation();
+  const [params] = useSearchParams();
+  const [, update] = useListQueryState(MEMBER_LIST_DEFAULTS, MEMBER_LIST_CHOICES);
+  const appliedFilters = readMemberListFilters(params);
+  const source = location.key + JSON.stringify(appliedFilters);
+  const [searchText, setSearchText] = useListSearchDraft(appliedFilters.keyword);
+  const [draft, setDraft] = useState({ source, values: appliedFilters });
+  const filters = {
+    ...(draft.source === source ? draft.values : appliedFilters),
+    keyword: searchText,
+  };
+  function setFilters(change: (current: MemberListFilters) => MemberListFilters): void {
+    const values = change(filters);
+    setSearchText(values.keyword);
+    setDraft({ source, values });
+  }
   const changeMemberRoleMutation = useApiMutation<
     Awaited<ReturnType<typeof changeMemberRole>>,
     Parameters<typeof changeMemberRole>
@@ -131,15 +149,13 @@ function OrganizationMembersContent() {
   const savingRole = changeMemberRoleMutation.isPending;
 
   useEffect(() => {
-    const next = commitMemberListFilters(appliedFiltersRef.current, filters);
+    const next = commitMemberListFilters(appliedFilters, filters);
     if (!next) return;
     const timer = window.setTimeout(() => {
-      appliedFiltersRef.current = next;
-      setAppliedFilters(next);
-      setPage(1);
+      update(next);
     }, MEMBER_SEARCH_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
-  }, [filters]);
+  }, [filters, source]);
 
   const listQuery = useApiQuery(organizationMembersQuery(appliedFilters, page));
   const members = listQuery.data?.list ?? [];
@@ -242,10 +258,10 @@ function OrganizationMembersContent() {
           <Select
             value={filters.orderDir}
             onValueChange={(value) => {
-              if (!value) return;
+              if (value !== "ASC" && value !== "DESC") return;
               setFilters((current) => ({
                 ...current,
-                orderDir: value as MemberListFilters["orderDir"],
+                orderDir: value,
               }));
             }}
           >
@@ -504,6 +520,7 @@ function OrganizationMembersContent() {
                             <Link
                               key={task.instanceId}
                               to={claimedTaskPath(task)}
+                              state={{ listReturnTo: location.pathname + location.search }}
                               className="group flex min-w-0 items-center gap-3 rounded-lg border px-3 py-2 transition-colors hover:border-primary/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               aria-label={`查看任务：${claimedTaskTitle(task)}，${task.projectName ?? ""}`}
                             >

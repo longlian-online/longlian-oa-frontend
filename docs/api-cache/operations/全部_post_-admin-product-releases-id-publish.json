@@ -1,0 +1,27 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "operationId": "publish",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "id",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "发布草稿",
+    "tags": ["产品版本"]
+  },
+  "path": "/admin/product-releases/{id}/publish",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

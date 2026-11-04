@@ -24,7 +24,7 @@ export default function ProjectItemTaskPage() {
       <WorkflowInstance
         projectId={projectId}
         itemId={itemId}
-        isProjectCreator={projectQuery.data?.isCreator === true}
+        isProjectCreator={(projectQuery.data?.canManage ?? projectQuery.data?.isCreator) === true}
         taskInstanceId={searchParams.get("taskInstanceId") ?? undefined}
       />
     </div>

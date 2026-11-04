@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import { Loader2 } from "lucide-react";
 
 import { ApiError } from "@/api/apiError";
@@ -17,7 +18,7 @@ import type { ReactElement } from "react";
 import type { ProductReleaseNotice } from "@/types/productRelease";
 
 export default function ProductReleaseHistoryPage(): ReactElement {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQuery();
   const query = useApiQuery(productReleaseHistoryQuery(page));
   const latestId = page === 1 ? query.data?.list[0]?.id : undefined;
 

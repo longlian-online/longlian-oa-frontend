@@ -31,6 +31,7 @@ import {
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { formatDate } from "@/lib/format";
 import {
   ORGANIZATION_ADMIN_PAGE_SIZE as PAGE_SIZE,
@@ -44,8 +45,8 @@ import type {
 
 function OrganizationPresetFieldsContent() {
   const confirm = useConfirm();
-  const [searchText, setSearchText] = useState("");
-  const [keyword, setKeyword] = useState("");
+  const [{ keyword }, update] = useListQueryState({ keyword: "" });
+  const [searchText, setSearchText] = useListSearchDraft(keyword);
   const [page, setPage] = usePageQuery();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingField, setEditingField] = useState<OrganizationPresetFieldVO | null>(null);
@@ -72,8 +73,7 @@ function OrganizationPresetFieldsContent() {
   const loading = listQuery.isLoading;
 
   function handleSearch(): void {
-    setKeyword(searchText.trim());
-    setPage(1);
+    update({ keyword: searchText.trim() });
   }
 
   function openCreateDialog(): void {

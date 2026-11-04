@@ -1,0 +1,23 @@
+{
+  "document": "管理端",
+  "method": "GET",
+  "operation": {
+    "operationId": "baseline",
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/ProductReleaseBaselineVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "当前已发布产品版本的信息",
+    "tags": ["产品版本"]
+  },
+  "path": "/admin/product-releases/baseline",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%AE%A1%E7%90%86%E7%AB%AF"
+}

@@ -22,6 +22,8 @@ import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { useDeleteProjectItem } from "@/hooks/queries/usePlanningDeletion";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState } from "@/hooks/useListQueryState";
+import { projectItemsDefaults, projectItemsChoices } from "@/lib/projectItemsListQuery";
 import { PROJECT_ITEMS_PAGE_SIZE as PAGE_SIZE, projectItemsQuery } from "@/queries/planning";
 import ProjectItemNodeList from "./ProjectItemNodeList";
 import ProjectItemOrderDialog from "./ProjectItemOrderDialog";
@@ -43,7 +45,12 @@ export default function ProjectItemSection({
   const location = useLocation();
   const confirm = useConfirm();
   const [page, setPage] = usePageQuery();
-  const [status, setStatus] = useState<ProjectItemListFilter | "">("IN_PROGRESS");
+  const [filters, updateQuery] = useListQueryState(projectItemsDefaults, projectItemsChoices);
+  const status = filters.status === "ALL" ? "" : (filters.status as ProjectItemListFilter);
+  const itemState = {
+    ...location.state,
+    projectItemsReturnTo: location.pathname + location.search,
+  };
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [reasonItem, setReasonItem] = useState<ProjectItemListVO | null>(null);
   const [reason, setReason] = useState("");
@@ -78,7 +85,7 @@ export default function ProjectItemSection({
   const loading = itemsQuery.isLoading;
 
   function openCreate(): void {
-    void navigate(`/dashboard/planning/${projectId}/items/new`, { state: location.state });
+    void navigate(`/dashboard/planning/${projectId}/items/new`, { state: itemState });
   }
 
   async function handleDeleteItem(item: ProjectItemListVO): Promise<void> {
@@ -161,8 +168,7 @@ export default function ProjectItemSection({
             value={status || "ALL"}
             onValueChange={(value) => {
               if (value === "IN_PROGRESS" || value === "COMPLETED" || value === "ALL") {
-                setStatus(value === "ALL" ? "" : value);
-                setPage(1);
+                updateQuery({ status: value });
               }
             }}
           >
@@ -232,7 +238,7 @@ export default function ProjectItemSection({
                     variant="outline"
                     onClick={() =>
                       void navigate(`/dashboard/planning/${projectId}/items/${item.id}`, {
-                        state: location.state,
+                        state: itemState,
                       })
                     }
                   >

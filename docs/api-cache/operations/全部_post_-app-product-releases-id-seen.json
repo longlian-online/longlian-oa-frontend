@@ -1,0 +1,35 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "operationId": "seen",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "in": "path",
+        "name": "id",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "把已读位置移到这条已发布更新",
+    "tags": ["更新说明"]
+  },
+  "path": "/app/product-releases/{id}/seen",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

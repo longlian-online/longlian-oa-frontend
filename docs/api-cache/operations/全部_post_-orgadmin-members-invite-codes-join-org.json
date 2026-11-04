@@ -2,7 +2,7 @@
   "document": "全部",
   "method": "POST",
   "operation": {
-    "description": "生成一次性邀请码（6位字母数字），有效期30分钟；供组织管理员邀请用户加入当前组织使用",
+    "description": "生成 6 位字母数字邀请码。必须指定到期时间；不传使用上限表示不限次数",
     "operationId": "generateJoinOrgInviteCode",
     "parameters": [
       {
@@ -14,6 +14,16 @@
         }
       }
     ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/GenerateJoinInviteCodeDTO"
+          }
+        }
+      },
+      "required": true
+    },
     "responses": {
       "200": {
         "content": {

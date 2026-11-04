@@ -1,0 +1,54 @@
+{
+  "document": "用户端",
+  "method": "POST",
+  "operation": {
+    "description": "企划负责人将 PENDING 任务直接分配给当前组织的启用组员。分配后任务变为 CLAIMED 并归属该组员，组员无需再领取；同时发送站内信和邮件",
+    "operationId": "assignTask",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "任务实例ID",
+        "in": "path",
+        "name": "instanceId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TaskAssignDTO"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/TaskClaimResultVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分配任务",
+    "tags": ["任务实例接口"]
+  },
+  "path": "/app/task/instance/{instanceId}/assign",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

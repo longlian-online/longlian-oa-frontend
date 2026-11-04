@@ -2,7 +2,7 @@
   "document": "全部",
   "method": "GET",
   "operation": {
-    "operationId": "list_1",
+    "operationId": "list_4",
     "parameters": [
       {
         "in": "query",

@@ -3,6 +3,7 @@ import { Check, Clock3, Loader2, Search, UserRound, X } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { reviewJoinApplication } from "@/api/organizationAdmin";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
@@ -51,8 +52,8 @@ function OrganizationApplicationsContent() {
     mutationFn: (args) => reviewJoinApplication(...args),
     invalidate: [["applications"], ["members"], ["memberSubmitCounts"], ["currentUser"]],
   });
-  const [searchText, setSearchText] = useState("");
-  const [keyword, setKeyword] = useState("");
+  const [{ keyword }, update] = useListQueryState({ keyword: "" });
+  const [searchText, setSearchText] = useListSearchDraft(keyword);
   const [page, setPage] = usePageQuery();
   const [reviewing, setReviewing] = useState<JoinApplicationVO | null>(null);
   const [reviewAction, setReviewAction] = useState<ReviewAction>("APPROVED");
@@ -65,8 +66,7 @@ function OrganizationApplicationsContent() {
   const loading = listQuery.isLoading;
 
   function handleSearch(): void {
-    setKeyword(searchText.trim());
-    setPage(1);
+    update({ keyword: searchText.trim() });
   }
 
   function openReview(application: JoinApplicationVO, action: ReviewAction): void {

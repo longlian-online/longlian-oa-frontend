@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
+import { getListReturnTo } from "@/lib/listReturnTo";
 
 import { createProductRelease } from "@/api/adminProductRelease";
 import AdminLayout from "@/components/AdminLayout";
@@ -22,6 +23,7 @@ import type { ProductReleaseFormValues } from "@/types/productRelease";
 
 export default function CreateProductReleasePage(): ReactElement {
   const navigate = useNavigate();
+  const location = useLocation();
   const baseline = useApiQuery(productReleaseBaselineQuery());
   const system = useApiQuery(systemInfoQuery());
   const [values, setValues] = useState<ProductReleaseFormValues | null>(null);
@@ -51,7 +53,12 @@ export default function CreateProductReleasePage(): ReactElement {
     try {
       const id = await createMutation.mutateAsync(toProductReleasePayload(form, publish));
       $tip(publish ? "已发布" : "已保存草稿", "success");
-      void navigate(publish ? "/admin/product-releases" : `/admin/product-releases/${id}`);
+      void navigate(
+        publish
+          ? getListReturnTo(location.state, "/admin/product-releases")!
+          : `/admin/product-releases/${id}`,
+        { state: location.state },
+      );
     } catch {
       /* 全局提示失败，草稿保留。 */
     }

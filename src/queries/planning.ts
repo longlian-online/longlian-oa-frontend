@@ -1,8 +1,10 @@
 import {
   getPresetFields,
   getPresetTags,
+  getProjectAttachments,
   getProjectDetail,
   getProjectList,
+  getProjectMembers,
   getProjectTypes,
 } from "@/api/planning";
 import { getPlazaTaskTypes, getTaskPlaza } from "@/api/plaza";
@@ -17,16 +19,19 @@ import type {
   ProjectDetailInfoVO,
   ProjectInfoVO,
   ProjectListDTO,
+  ProjectMemberVO,
   PresetFieldVO,
   ProjectTypeInfoVO,
   PresetTagVO,
 } from "@/types/planning";
+import type { ProjectAttachmentVO } from "@/types/projectAttachment";
 import type { PlazaProjectGroup, PlazaSortBy, PlazaTaskTypeOption } from "@/types/plaza";
 import type { ProjectItemListFilter, ProjectItemListVO } from "@/types/projectItem";
 import type { ItemTaskFlowVO, ItemTaskInstanceVO } from "@/types/workflowInstance";
 
 export const PLANNING_PAGE_SIZE = 12;
 export const PROJECT_ITEMS_PAGE_SIZE = 4;
+export const PROJECT_MEMBERS_PAGE_SIZE = 12;
 export const PLAZA_PAGE_SIZE = 8;
 export const DEFAULT_PROJECT_TIME_SORT: Required<Pick<ProjectListDTO, "sortByTime" | "orderDir">> =
   {
@@ -79,6 +84,28 @@ export function projectDetailQuery(
     key: ["projects", "detail", projectId],
     queryFn: () => readPlanningResource("project", () => getProjectDetail(projectId!)),
     throwOnError: isPlanningResourceNotFound,
+    enabled: Boolean(projectId),
+  };
+}
+
+export function projectAttachmentsQuery(
+  projectId: string | undefined,
+): ApiQueryOptions<ProjectAttachmentVO[]> {
+  return {
+    key: ["projects", "attachments", projectId],
+    queryFn: () => readPlanningResource("project", () => getProjectAttachments(projectId!)),
+    throwOnError: isPlanningResourceNotFound,
+    enabled: Boolean(projectId),
+  };
+}
+
+export function projectMembersQuery(
+  projectId: string,
+  pageNum = 1,
+): ApiQueryOptions<PageResult<ProjectMemberVO>> {
+  return {
+    key: ["projects", "members", projectId, pageNum],
+    queryFn: () => getProjectMembers(projectId, pageNum, PROJECT_MEMBERS_PAGE_SIZE),
     enabled: Boolean(projectId),
   };
 }

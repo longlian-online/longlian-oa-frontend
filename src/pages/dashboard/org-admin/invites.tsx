@@ -32,6 +32,7 @@ import {
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState } from "@/hooks/useListQueryState";
 import { formatDate } from "@/lib/format";
 import { defaultInviteExpiry, toInviteExpiredAt } from "@/lib/inviteExpiry";
 import {
@@ -50,7 +51,10 @@ function usageLabel(invite: JoinInviteCodeVO): string {
 function OrganizationInvitesContent(): React.JSX.Element {
   const confirm = useConfirm();
   const [page, setPage] = usePageQuery();
-  const [status, setStatus] = useState<StatusFilter>("");
+  const [{ status }, update] = useListQueryState<{ status: StatusFilter }>(
+    { status: "" },
+    { status: ["", "PENDING", "USED"] },
+  );
   const [usageMode, setUsageMode] = useState<UsageMode>("limited");
   const [maxUses, setMaxUses] = useState("1");
   const [expiredAt, setExpiredAt] = useState("");
@@ -155,8 +159,7 @@ function OrganizationInvitesContent(): React.JSX.Element {
           value={status || "ALL"}
           onValueChange={(value) => {
             if (value !== "ALL" && value !== "PENDING" && value !== "USED") return;
-            setStatus(value === "ALL" ? "" : value);
-            setPage(1);
+            update({ status: value === "ALL" ? "" : value });
           }}
         >
           <SelectTrigger aria-label="状态" className="ml-auto w-36">

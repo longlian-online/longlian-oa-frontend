@@ -1,0 +1,37 @@
+{
+  "document": "全部",
+  "method": "POST",
+  "operation": {
+    "description": "只能失效当前组织仍待使用的邀请码，失效后不再展示",
+    "operationId": "revokeJoinInviteCode",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      },
+      {
+        "description": "邀请记录 ID",
+        "in": "path",
+        "name": "inviteId",
+        "required": true,
+        "schema": {
+          "format": "int64",
+          "type": "integer"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK"
+      }
+    },
+    "summary": "手动失效加入组织邀请码",
+    "tags": ["组织成员管理"]
+  },
+  "path": "/orgadmin/members/invite-codes/{inviteId}/revoke",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

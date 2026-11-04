@@ -1,4 +1,4 @@
-export type UploadBizType = "avatar" | "cover" | "thumbnail" | "task_submit";
+export type UploadBizType = "avatar" | "cover" | "thumbnail" | "task_submit" | "project_attachment";
 
 export type StorageType = "NONE" | "LOCAL" | "OSS";
 

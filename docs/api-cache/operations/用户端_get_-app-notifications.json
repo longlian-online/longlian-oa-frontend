@@ -2,7 +2,7 @@
   "document": "用户端",
   "method": "GET",
   "operation": {
-    "operationId": "list",
+    "operationId": "list_1",
     "parameters": [
       {
         "in": "query",

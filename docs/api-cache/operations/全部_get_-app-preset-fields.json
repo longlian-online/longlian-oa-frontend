@@ -1,0 +1,37 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "按创建时间倒序、ID 升序，不含值",
+    "operationId": "listPresetFields_1",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/OrganizationPresetFieldVO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "查询当前组织预置表单字段",
+    "tags": ["组织预置表单字段"]
+  },
+  "path": "/app/preset-fields",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}
