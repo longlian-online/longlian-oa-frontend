@@ -228,6 +228,7 @@ test("非负责人只看到下载", async (): Promise<void> => {
   await waitFor(() => expect(attachmentSection().textContent).toContain("设定集.pdf"));
   expect(container.textContent).not.toContain("添加附件");
   expect(container.querySelector("[aria-label='删除 设定集.pdf']")).toBeNull();
+  expect(container.querySelector("[aria-label='预览 设定集.pdf']")).not.toBeNull();
   expect(container.querySelector("[aria-label='下载 设定集.pdf']")).not.toBeNull();
 });
 

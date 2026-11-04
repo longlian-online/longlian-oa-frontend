@@ -108,6 +108,8 @@ test("默认白名单接受 ppt/pptx/txt/csv/webp/rar/7z 等新增格式", async
     ["scan.bmp", "image/bmp"],
     ["backup.rar", "application/vnd.rar"],
     ["archive.7z", "application/x-7z-compressed"],
+    ["clip.mp4", "video/mp4"],
+    ["clip.webm", "video/webm"],
   ];
   for (const [name, mime] of cases) {
     await upload!(new File(["x"], name, { type: mime }), {

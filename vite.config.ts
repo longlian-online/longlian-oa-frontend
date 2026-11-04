@@ -1,3 +1,4 @@
+import { fileViewerRenderers } from "@file-viewer/vite-plugin";
 import { defineConfig } from "vite-plus";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -77,6 +78,7 @@ export default defineConfig({
     fileRoutes(),
     react(),
     tailwindcss(),
+    fileViewerRenderers({ copyAssets: true, inject: false }),
   ],
   resolve: {
     alias: {

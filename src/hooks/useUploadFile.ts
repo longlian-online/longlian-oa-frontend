@@ -40,6 +40,8 @@ const DEFAULT_ACCEPT = [
   "zip",
   "rar",
   "7z",
+  "mp4",
+  "webm",
 ];
 
 const MIME_BY_EXT: Record<string, string[]> = {
@@ -62,6 +64,8 @@ const MIME_BY_EXT: Record<string, string[]> = {
   zip: ["application/zip", "application/x-zip-compressed"],
   rar: ["application/vnd.rar", "application/x-rar-compressed"],
   "7z": ["application/x-7z-compressed"],
+  mp4: ["video/mp4"],
+  webm: ["video/webm"],
 };
 
 interface UploadFileOptions extends FileValidationOptions {

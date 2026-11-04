@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, ExternalLink, FileText, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, Eye, FileText, Loader2 } from "lucide-react";
 
 import { ApiError } from "@/api/apiError";
 import { getTaskInstanceDetail, getTaskSubmissionVersions } from "@/api/workflowInstance";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { isPlanningResourceNotFound, readPlanningResource } from "@/lib/planningResourceError";
+import {
+  archiveBytesFromSizeText,
+  isArchiveFile,
+} from "@/components/AttachmentPreview/previewable";
+import {
+  closeAttachmentPreview,
+  openAttachmentPreview,
+} from "@/components/AttachmentPreview/previewSession";
 import RemoteImage from "@/components/RemoteImage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +27,12 @@ import type {
   TaskSubmissionVersionVO,
 } from "@/types/workflowInstance";
 import { createItemLifecycle } from "./itemLifecycle";
-import { AttachmentOpenError, openTaskAttachment, type AttachmentPopup } from "./taskAttachments";
+import {
+  AttachmentOpenError,
+  openTaskAttachment,
+  refreshTaskAttachment,
+  type AttachmentPopup,
+} from "./taskAttachments";
 interface TaskDetailActions {
   currentUserId?: string | null;
   mutating: boolean;
@@ -97,20 +110,21 @@ interface AttachmentCardProps {
   attachment: TaskAttachment;
   opening: boolean;
   disabled: boolean;
-  onOpen: () => void;
+  onPreview: () => void;
+  onDownload: () => void;
 }
 
-function AttachmentCard({ attachment, opening, disabled, onOpen }: AttachmentCardProps) {
+function AttachmentCard({
+  attachment,
+  opening,
+  disabled,
+  onPreview,
+  onDownload,
+}: AttachmentCardProps) {
   const [previewFailed, setPreviewFailed] = useState(false);
   const available = attachment.availability === "available";
   return (
-    <button
-      type="button"
-      disabled={!available || disabled}
-      onClick={onOpen}
-      className="flex min-w-0 items-center gap-3 rounded-xl border bg-background p-3 text-left transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60"
-      aria-label={`${available ? "打开" : "暂不可用"}：${attachment.name}`}
-    >
+    <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-background p-3">
       {available && attachment.mediaType === "image" && !previewFailed ? (
         <RemoteImage
           src={attachment.readUrl}
@@ -128,32 +142,51 @@ function AttachmentCard({ attachment, opening, disabled, onOpen }: AttachmentCar
       <span className="min-w-0 flex-1">
         <span className="block break-words text-sm font-medium">{attachment.name}</span>
         <span className="mt-1 block text-xs text-muted-foreground">
-          {available ? `${attachment.sizeText} · 打开附件` : "附件暂不可用，请联系任务提交人"}
+          {available ? attachment.sizeText : "附件暂不可用，请联系任务提交人"}
         </span>
         {available && previewFailed && (
           <span className="mt-1 block text-xs text-muted-foreground">
-            预览暂不可用，可打开原文件查看
+            缩略图暂不可用，可预览或下载原文件
           </span>
         )}
       </span>
-      {available &&
-        (opening ? (
-          <Loader2 className="size-4 shrink-0 animate-spin" />
-        ) : (
-          <ExternalLink className="size-4 shrink-0 text-muted-foreground" />
-        ))}
-    </button>
+      {available && (
+        <span className="flex shrink-0 items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`预览 ${attachment.name}`}
+            onClick={onPreview}
+          >
+            <Eye />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`下载 ${attachment.name}`}
+            disabled={disabled}
+            onClick={onDownload}
+          >
+            {opening ? <Loader2 className="animate-spin" /> : <Download />}
+          </Button>
+        </span>
+      )}
+    </div>
   );
 }
 
 function VersionFields({
   fields,
   openingId,
-  onOpenAttachment,
+  onPreviewAttachment,
+  onDownloadAttachment,
 }: {
   fields: TaskDetailField[];
   openingId: string | null;
-  onOpenAttachment: (attachment: TaskAttachment) => void;
+  onPreviewAttachment: (attachment: TaskAttachment) => void;
+  onDownloadAttachment: (attachment: TaskAttachment) => void;
 }) {
   if (fields.length === 0) {
     return <p className="text-sm text-muted-foreground">该版本未填写其他提交内容。</p>;
@@ -171,7 +204,8 @@ function VersionFields({
                   attachment={field.file}
                   opening={openingId === field.file.id}
                   disabled={openingId !== null}
-                  onOpen={() => field.file && onOpenAttachment(field.file)}
+                  onPreview={() => field.file && onPreviewAttachment(field.file)}
+                  onDownload={() => field.file && onDownloadAttachment(field.file)}
                 />
               ) : (
                 <p className="text-sm">未填写</p>
@@ -295,6 +329,7 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [expandedVersion, setExpandedVersion] = useState<number | null>(null);
   const opening = useRef(false);
+  const previewOwner = useRef(Symbol("task-attachment-preview"));
   const popupRef = useRef<AttachmentPopup | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
   const versionsView = versionList ?? (detail ? versionFromDetail(detail) : []);
@@ -308,12 +343,37 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
     opening.current = false;
     return () => {
       controller.abort();
+      closeAttachmentPreview(previewOwner.current);
       popupRef.current?.close();
       popupRef.current = null;
       controllerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextKey]);
+
+  function handlePreviewAttachment(attachment: TaskAttachment): void {
+    if (!instanceId || !isCurrent() || attachment.availability !== "available") return;
+    openAttachmentPreview({
+      owner: previewOwner.current,
+      fileName: attachment.name,
+      fileSize: isArchiveFile(attachment.name)
+        ? archiveBytesFromSizeText(attachment.sizeText)
+        : undefined,
+      resolveUrl: async (signal) => {
+        const fresh = await refreshTaskAttachment(attachment, {
+          now: () => Date.now() / 1000,
+          isCurrent: () => isCurrent() && !signal.aborted,
+          loadFields: async () => {
+            const result = await versionsQuery.refetch();
+            if (result.error || !result.data) throw result.error ?? new Error("版本记录加载失败");
+            return result.data.flatMap((version) => version.fields);
+          },
+        });
+        if (!fresh || signal.aborted) throw new DOMException("已取消", "AbortError");
+        return fresh.readUrl;
+      },
+    });
+  }
 
   async function handleOpenAttachment(attachment: TaskAttachment): Promise<void> {
     if (!instanceId || !isCurrent() || opening.current) return;
@@ -512,7 +572,8 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
                                   <VersionFields
                                     fields={version.fields}
                                     openingId={openingId}
-                                    onOpenAttachment={(attachment) =>
+                                    onPreviewAttachment={handlePreviewAttachment}
+                                    onDownloadAttachment={(attachment) =>
                                       void handleOpenAttachment(attachment)
                                     }
                                   />
