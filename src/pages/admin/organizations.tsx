@@ -3,6 +3,7 @@ import { Ban, Building2, CheckCircle2, Copy, KeyRound, Loader2 } from "lucide-re
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { changeAdminOrganizationStatus, createOrganizationInviteCode } from "@/api/admin";
 import AdminLayout from "@/components/AdminLayout";
 import InviteExpiryField from "@/components/InviteExpiryField";
@@ -54,8 +55,8 @@ export default function AdminOrganizationsPage() {
     scope: "admin",
   });
   const [page, setPage] = usePageQuery();
-  const [keyword, setKeyword] = useState("");
-  const [searchText, setSearchText] = useState("");
+  const [{ keyword }, updateQuery] = useListQueryState({ keyword: "" });
+  const [searchText, setSearchText] = useListSearchDraft(keyword);
   const invite = createOrganizationInviteCodeMutation.data;
   const [expiredAt, setExpiredAt] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -70,8 +71,7 @@ export default function AdminOrganizationsPage() {
   const loading = listQuery.isLoading;
 
   async function handleSearch(): Promise<void> {
-    setPage(1);
-    setKeyword(searchText.trim());
+    updateQuery({ keyword: searchText });
   }
 
   async function handleStatusChange(organization: AdminOrganizationVO): Promise<void> {

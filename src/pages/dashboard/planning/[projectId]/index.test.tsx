@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act } from "react";
+import { act, type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
@@ -76,15 +76,22 @@ function json(data: unknown): Response {
   return new Response(JSON.stringify({ code: 0, data }));
 }
 
-async function mount(entry: string): Promise<void> {
+function Address(): ReactElement {
+  const location = useLocation();
+  return <output>{location.pathname + location.search}</output>;
+}
+
+async function mount(entry: string, state?: unknown): Promise<void> {
   await act(async () => {
     root.render(
       <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={[entry]}>
+        <MemoryRouter initialEntries={state ? [{ pathname: entry, state }] : [entry]}>
+          <Address />
           <ConfirmDialogProvider>
             <Routes>
               <Route path="/dashboard/planning/:projectId" element={<ProjectDetail />} />
               <Route path="/dashboard/planning" element={<h1>企划列表</h1>} />
+              <Route path="/dashboard/workshop" element={<h1>工坊</h1>} />
             </Routes>
           </ConfirmDialogProvider>
         </MemoryRouter>
@@ -110,33 +117,39 @@ function descriptionParagraphs(): HTMLParagraphElement[] {
   );
 }
 
-test("删除企划后返回列表，不再请求该企划详情和项目列表", async (): Promise<void> => {
-  isCreator = true;
-  await mount("/dashboard/planning/21");
-  await waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("春季企划"));
-  await act(async () =>
-    [...document.querySelectorAll("button")]
-      .find((button) => button.textContent?.includes("更多"))
-      ?.click(),
-  );
-  await act(async () =>
-    [...document.querySelectorAll<HTMLElement>("[role=menuitem]")]
-      .find((item) => item.textContent?.trim() === "删除企划")
-      ?.click(),
-  );
-  await act(async () =>
-    [...document.querySelectorAll("button")]
-      .find((button) => button.textContent?.trim() === "删除")
-      ?.click(),
-  );
-  await waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("企划列表"));
-  expect(calls).toEqual([
-    "GET /app/projects/21",
-    "GET /app/projects/21/items",
-    "GET /app/projects/21/attachments",
-    "DELETE /app/projects/21",
-  ]);
-});
+test.each([undefined, "/dashboard/workshop?keyword=百合&page=4&submitPage=2"])(
+  "删除企划后返回列表来源 %s，不再请求该企划详情和项目列表",
+  async (returnTo): Promise<void> => {
+    isCreator = true;
+    await mount("/dashboard/planning/21", returnTo ? { workshopReturnTo: returnTo } : undefined);
+    await waitFor(() => expect(container.querySelector("h1")?.textContent).toBe("春季企划"));
+    await act(async () =>
+      [...document.querySelectorAll("button")]
+        .find((button) => button.textContent?.includes("更多"))
+        ?.click(),
+    );
+    await act(async () =>
+      [...document.querySelectorAll<HTMLElement>("[role=menuitem]")]
+        .find((item) => item.textContent?.trim() === "删除企划")
+        ?.click(),
+    );
+    await act(async () =>
+      [...document.querySelectorAll("button")]
+        .find((button) => button.textContent?.trim() === "删除")
+        ?.click(),
+    );
+    await waitFor(() =>
+      expect(container.querySelector("h1")?.textContent).toBe(returnTo ? "工坊" : "企划列表"),
+    );
+    expect(container.querySelector("output")?.textContent).toBe(returnTo ?? "/dashboard/planning");
+    expect(calls).toEqual([
+      "GET /app/projects/21",
+      "GET /app/projects/21/items",
+      "GET /app/projects/21/attachments",
+      "DELETE /app/projects/21",
+    ]);
+  },
+);
 
 test.each(["/dashboard/planning/21", "/dashboard/planning/21?view=about"])(
   "detail page %s keeps typed line breaks only in the about section",

@@ -3,6 +3,7 @@ import { CheckCircle2, Edit3, Loader2, Plus, Search, Trash2, XCircle } from "luc
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import {
   changeProjectTypeStatus,
   createOrganizationProjectType,
@@ -74,8 +75,8 @@ function OrganizationProjectTypesContent() {
     mutationFn: (args) => updateOrganizationProjectType(...args),
     invalidate: [["projectTypes"], ["projects"], ["workshop"], ["plaza"]],
   });
-  const [keyword, setKeyword] = useState("");
-  const [searchText, setSearchText] = useState("");
+  const [{ keyword }, update] = useListQueryState({ keyword: "" });
+  const [searchText, setSearchText] = useListSearchDraft(keyword);
   const [page, setPage] = usePageQuery();
   const mutatingId =
     (changeProjectTypeStatusMutation.isPending
@@ -101,8 +102,7 @@ function OrganizationProjectTypesContent() {
   const loading = listQuery.isLoading;
 
   function handleSearch(): void {
-    setKeyword(searchText.trim());
-    setPage(1);
+    update({ keyword: searchText.trim() });
   }
 
   function openCreateDialog(): void {

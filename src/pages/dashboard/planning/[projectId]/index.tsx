@@ -44,6 +44,9 @@ import {
 import { useConfirm } from "@/hooks/useConfirm";
 import { formatDate } from "@/lib/format";
 import { getStatusLabel } from "@/lib/projectStatus";
+import { planningListReturnTo } from "@/lib/pageQuery";
+import { getListReturnTo } from "@/lib/listReturnTo";
+import { workshopReturnTo } from "@/lib/workshopNavigation";
 import { parseProjectCustomFields, parseProjectMetadataTags } from "@/lib/projectMetadata";
 
 export default function ProjectDetail() {
@@ -138,7 +141,15 @@ export default function ProjectDetail() {
     try {
       await deleteMutation.mutateAsync();
       $tip("企划已删除", "success");
-      void navigate("/dashboard/planning", { replace: true });
+      const source =
+        planningListReturnTo(location.state) ??
+        workshopReturnTo(location.state) ??
+        getListReturnTo(location.state);
+      const target = source?.startsWith(`/dashboard/planning/${project.id}/`) ? undefined : source;
+      void navigate(target ?? "/dashboard/planning", {
+        replace: true,
+        state: location.state,
+      });
     } catch {
       /* 全局 Mutation 错误提示保留当前数据。 */
     } finally {

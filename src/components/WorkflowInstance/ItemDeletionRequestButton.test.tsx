@@ -77,7 +77,7 @@ function button(name: string): HTMLButtonElement | undefined {
 
 function Address(): ReactElement {
   const location = useLocation();
-  return <output aria-label="地址">{location.pathname}</output>;
+  return <output aria-label="地址">{location.pathname + location.search}</output>;
 }
 
 function json(data: unknown, code = 0): Response {
@@ -94,12 +94,23 @@ function ItemQueries(): null {
   return null;
 }
 
-async function mount(hasSubmissionRecord: boolean, observeItem = false): Promise<void> {
+async function mount(
+  hasSubmissionRecord: boolean,
+  observeItem = false,
+  returnTo?: string,
+): Promise<void> {
   await act(async () => {
     root.render(
       <QueryClientProvider client={client}>
         <ConfirmDialogProvider>
-          <MemoryRouter initialEntries={["/dashboard/planning/21/items/31"]}>
+          <MemoryRouter
+            initialEntries={[
+              {
+                pathname: "/dashboard/planning/21/items/31",
+                state: returnTo ? { projectItemsReturnTo: returnTo } : undefined,
+              },
+            ]}
+          >
             <Address />
             <Routes>
               <Route
@@ -117,6 +128,7 @@ async function mount(hasSubmissionRecord: boolean, observeItem = false): Promise
                 }
               />
               <Route path="/dashboard/planning/21" element={<p>企划详情</p>} />
+              <Route path="/dashboard/planning/21/items" element={<p>项目列表</p>} />
             </Routes>
           </MemoryRouter>
         </ConfirmDialogProvider>
@@ -153,14 +165,20 @@ test("填写原因后提交项目删除申请，空白原因不能提交", async
   expect(document.querySelector("output")?.textContent).toBe("/dashboard/planning/21/items/31");
 });
 
-test("没有提交记录时确认后直接删除并回到企划详情", async (): Promise<void> => {
-  await mount(false);
+test.each([
+  undefined,
+  "/dashboard/planning/21?status=ALL&page=2",
+  "/dashboard/planning/21/items?status=COMPLETED&page=3",
+])("没有提交记录时确认后直接删除并回到来源 %s", async (returnTo): Promise<void> => {
+  await mount(false, false, returnTo);
   await act(async () => button("删除项目")?.click());
   expect(document.body.textContent).toContain("删除后「第一话」的流程与任务记录将不可恢复。");
   await act(async () => button("删除")?.click());
   await vi.waitFor(() => {
     expect(calls).toEqual([{ method: "DELETE", path: "/app/projects/21/items/31", body: "" }]);
-    expect(document.querySelector("output")?.textContent).toBe("/dashboard/planning/21");
+    expect(document.querySelector("output")?.textContent).toBe(
+      returnTo ?? "/dashboard/planning/21",
+    );
   });
 });
 

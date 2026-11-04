@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 
 import { updateItemTaskFlow } from "@/api/workflowInstance";
 import WorkflowEditor, { type WorkflowEditorNode } from "@/components/WorkflowEditor";
@@ -25,6 +25,7 @@ export default function EditItemWorkflowPage() {
 
 function EditItemWorkflow({ projectId, itemId }: { projectId: string; itemId: string }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const projectQuery = useApiQuery(projectDetailQuery(projectId));
   const flowQuery = useApiQuery(itemFlowQuery(itemId));
   const baseTasksQuery = useApiQuery(baseTaskOptionsQuery());
@@ -54,7 +55,7 @@ function EditItemWorkflow({ projectId, itemId }: { projectId: string; itemId: st
       succeeded = true;
       setSaveSucceeded(true);
       $tip("工作流已保存", "success");
-      void navigate(`/dashboard/planning/${projectId}/items/${itemId}`);
+      void navigate(`/dashboard/planning/${projectId}/items/${itemId}`, { state: location.state });
     } catch {
       /* 失败保留画板草稿。 */
     } finally {
@@ -69,7 +70,11 @@ function EditItemWorkflow({ projectId, itemId }: { projectId: string; itemId: st
         <Button
           variant="outline"
           className="mt-4"
-          onClick={() => void navigate(`/dashboard/planning/${projectId}/items/${itemId}`)}
+          onClick={() =>
+            void navigate(`/dashboard/planning/${projectId}/items/${itemId}`, {
+              state: location.state,
+            })
+          }
         >
           返回任务流
         </Button>

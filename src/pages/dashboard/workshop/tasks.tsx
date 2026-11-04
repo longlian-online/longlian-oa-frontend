@@ -14,6 +14,7 @@ import {
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import {
   changeBaseTaskStatus,
   createOrganizationBaseTask,
@@ -68,8 +69,8 @@ const EMPTY_FORM: BaseTaskForm = {
 function BaseTaskManagementContent() {
   const confirm = useConfirm();
   const [page, setPage] = usePageQuery();
-  const [keyword, setKeyword] = useState("");
-  const [searchText, setSearchText] = useState("");
+  const [{ keyword }, updateQuery] = useListQueryState({ keyword: "" });
+  const [searchText, setSearchText] = useListSearchDraft(keyword);
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<OrganizationBaseTaskVO | null>(null);
   const [form, setForm] = useState<BaseTaskForm>(EMPTY_FORM);
@@ -110,8 +111,7 @@ function BaseTaskManagementContent() {
       ? statusMutation.variables?.id
       : null;
   function handleSearch(): void {
-    setKeyword(searchText.trim());
-    setPage(1);
+    updateQuery({ keyword: searchText.trim() });
   }
 
   function openCreate(): void {

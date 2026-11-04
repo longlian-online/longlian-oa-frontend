@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
+import { usePageQuery } from "@/hooks/usePageQuery";
+import { useListQueryState } from "@/hooks/useListQueryState";
 import { Loader2, ScrollText } from "lucide-react";
 
 import AdminLayout from "@/components/AdminLayout";
@@ -24,8 +25,14 @@ const FILTERS: { label: string; value?: ProductReleaseStatus }[] = [
 ];
 
 export default function ProductReleaseListPage(): ReactElement {
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<ProductReleaseStatus | undefined>();
+  const location = useLocation();
+  const returnState = { ...location.state, listReturnTo: location.pathname + location.search };
+  const [page, setPage] = usePageQuery();
+  const [{ status: statusValue }, updateQuery] = useListQueryState(
+    { status: "" },
+    { status: ["DRAFT", "PUBLISHED", "WITHDRAWN"] },
+  );
+  const status = (statusValue || undefined) as ProductReleaseStatus | undefined;
   const query = useApiQuery(adminProductReleasesQuery(page, status));
 
   return (
@@ -46,8 +53,7 @@ export default function ProductReleaseListPage(): ReactElement {
                   variant={selected ? "secondary" : "ghost"}
                   aria-pressed={selected}
                   onClick={() => {
-                    setStatus(filter.value);
-                    setPage(1);
+                    updateQuery({ status: filter.value ?? "" });
                   }}
                 >
                   {filter.label}
@@ -55,7 +61,10 @@ export default function ProductReleaseListPage(): ReactElement {
               );
             })}
           </div>
-          <Button nativeButton={false} render={<Link to="/admin/product-releases/create" />}>
+          <Button
+            nativeButton={false}
+            render={<Link to="/admin/product-releases/create" state={returnState} />}
+          >
             新建
           </Button>
         </div>
@@ -80,6 +89,7 @@ export default function ProductReleaseListPage(): ReactElement {
               <Link
                 key={release.id}
                 to={`/admin/product-releases/${release.id}`}
+                state={returnState}
                 className="flex flex-col gap-1 rounded-xl border p-4 transition-colors hover:bg-muted/40"
               >
                 <div className="flex flex-wrap items-center gap-2">
