@@ -2,7 +2,7 @@
   "document": "全部",
   "method": "POST",
   "operation": {
-    "description": "创建项目并关联流程模板，自动生成任务流和所有任务实例",
+    "description": "创建项目并按请求中的步骤和执行人生成流程，不按模板补齐",
     "operationId": "createProjectItem",
     "parameters": [
       {

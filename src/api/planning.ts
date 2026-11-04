@@ -6,6 +6,7 @@ import type {
   ProjectDetailInfoVO,
   ProjectInfoVO,
   ProjectListDTO,
+  ProjectMemberVO,
   ProjectTypeInfoVO,
   PresetFieldVO,
   PresetTagVO,
@@ -47,6 +48,14 @@ export async function getProjectList(dto: ProjectListDTO): Promise<PageResult<Pr
 
 export async function getProjectDetail(projectId: number | string): Promise<ProjectDetailInfoVO> {
   return request(`/projects/${projectId}`);
+}
+
+export async function getProjectMembers(
+  projectId: string,
+  pageNum: number,
+  pageSize: number,
+): Promise<PageResult<ProjectMemberVO>> {
+  return request(`/projects/${projectId}/members${toQueryString({ pageNum, pageSize })}`);
 }
 
 export async function createProject(dto: ProjectCreateDTO): Promise<void> {

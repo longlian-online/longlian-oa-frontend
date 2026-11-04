@@ -2,6 +2,7 @@
   "document": "组织管理端",
   "method": "PUT",
   "operation": {
+    "description": "可修改名称、优先级和默认自定义表单。自定义表单省略时保持原设置",
     "operationId": "updateProjectType",
     "parameters": [
       {
@@ -37,7 +38,7 @@
         "description": "OK"
       }
     },
-    "summary": "修改企划类型名称与优先级",
+    "summary": "修改企划类型",
     "tags": ["企划类型管理"]
   },
   "path": "/orgadmin/project-types/{typeId}",

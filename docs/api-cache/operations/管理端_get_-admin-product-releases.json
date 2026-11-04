@@ -1,0 +1,33 @@
+{
+  "document": "管理端",
+  "method": "GET",
+  "operation": {
+    "operationId": "list_1",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "dto",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/ProductReleaseListDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOProductReleaseListItemVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "分页查询产品版本",
+    "tags": ["产品版本"]
+  },
+  "path": "/admin/product-releases/",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%AE%A1%E7%90%86%E7%AB%AF"
+}

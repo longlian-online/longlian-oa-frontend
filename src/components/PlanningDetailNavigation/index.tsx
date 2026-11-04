@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 const SECTIONS = [
   { id: "project-overview", label: "企划概览" },
   { id: "project-workspace", label: "项目" },
+  { id: "project-members", label: "企划成员" },
   { id: "project-info", label: "关于作品" },
   { id: "project-attachments", label: "附件" },
 ] as const;

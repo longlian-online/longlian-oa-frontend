@@ -1,0 +1,33 @@
+{
+  "document": "用户端",
+  "method": "GET",
+  "operation": {
+    "operationId": "list",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "dto",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/PageRequestDTO"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "$ref": "#/components/schemas/PageResultVOProductReleaseNoticeVO"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "已发布的更新说明",
+    "tags": ["更新说明"]
+  },
+  "path": "/app/product-releases/",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs/%E7%94%A8%E6%88%B7%E7%AB%AF"
+}

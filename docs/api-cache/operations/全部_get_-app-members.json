@@ -1,0 +1,37 @@
+{
+  "document": "全部",
+  "method": "GET",
+  "operation": {
+    "description": "返回当前组织全部启用组员，按昵称、用户 ID 排序",
+    "operationId": "listMembers_1",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "sessionContext",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/SessionContext"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "*/*": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/MemberOptionVO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "OK"
+      }
+    },
+    "summary": "查询当前组织组员",
+    "tags": ["组织组员选项"]
+  },
+  "path": "/app/members",
+  "sourceUrl": "https://sit.neo.oa.api.longlian.online/v3/api-docs"
+}

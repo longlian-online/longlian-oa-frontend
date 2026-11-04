@@ -293,6 +293,33 @@
         },
         "type": "object"
       },
+      "BaseTaskOptionVO": {
+        "description": "可添加到工作流的原子任务",
+        "properties": {
+          "description": {
+            "description": "任务说明",
+            "type": "string"
+          },
+          "icon": {
+            "description": "Lucide 图标组件名",
+            "type": "string"
+          },
+          "id": {
+            "description": "原子任务ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "任务名称",
+            "type": "string"
+          },
+          "status": {
+            "description": "状态：ENABLED-启用，DISABLED-禁用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "BaseTaskVO": {
         "description": "原子任务信息",
         "properties": {
@@ -360,9 +387,10 @@
         "description": "修改密码请求参数",
         "properties": {
           "newPassword": {
-            "description": "新密码，6-20位，禁止使用常见弱密码",
+            "description": "新密码，6-20位，须同时包含大写字母、小写字母和数字",
             "maxLength": 20,
             "minLength": 6,
+            "pattern": "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).+$",
             "type": "string"
           },
           "oldPassword": {
@@ -560,6 +588,37 @@
         },
         "type": "object"
       },
+      "GenerateInviteCodeDTO": {
+        "description": "生成邀请码请求参数",
+        "properties": {
+          "expiredAt": {
+            "description": "邀请人选择的到期时间",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["expiredAt"],
+        "type": "object"
+      },
+      "GenerateJoinInviteCodeDTO": {
+        "description": "生成加入组织邀请码请求参数",
+        "properties": {
+          "expiredAt": {
+            "description": "邀请人选择的到期时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "maxUses": {
+            "description": "使用上限；不传表示不限次数",
+            "example": 5,
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": ["expiredAt"],
+        "type": "object"
+      },
       "InviteCodeVO": {
         "description": "邀请码（可用于创建组织、注册入组或已注册用户申请入组）",
         "properties": {
@@ -567,9 +626,18 @@
             "description": "邀请码过期时间",
             "type": "string"
           },
-          "inviteCode": {
-            "description": "邀请码（6位字母数字，一次性使用，有效期30分钟）",
+          "id": {
+            "description": "邀请记录 ID，仅加入组织邀请码返回",
             "type": "string"
+          },
+          "inviteCode": {
+            "description": "邀请码（6位字母数字）",
+            "type": "string"
+          },
+          "maxUses": {
+            "description": "使用上限，为空表示不限次数；创建组织邀请码不返回",
+            "format": "int32",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -588,12 +656,89 @@
         },
         "type": "object"
       },
+      "ItemTaskFlowNodeUpdateDTO": {
+        "description": "项目工作流节点",
+        "properties": {
+          "baseTaskId": {
+            "description": "原子任务 ID",
+            "type": "string"
+          },
+          "id": {
+            "description": "已有节点 ID。新节点不传",
+            "type": "string"
+          },
+          "name": {
+            "description": "节点名称。留空时已有节点保持原名，新节点使用原子任务名称",
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "parallelSort": {
+            "description": "并行组内顺序",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "revision": {
+            "description": "已有节点的任务修订号。新节点不传",
+            "type": "string"
+          },
+          "sort": {
+            "description": "步骤顺序，相同值表示并行",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": ["baseTaskId", "parallelSort", "sort"],
+        "type": "object"
+      },
+      "ItemTaskFlowRemovedNodeDTO": {
+        "description": "要删除的项目工作流节点",
+        "properties": {
+          "id": {
+            "description": "节点 ID",
+            "type": "string"
+          },
+          "revision": {
+            "description": "打开编辑时看到的任务修订号",
+            "type": "string"
+          }
+        },
+        "required": ["id", "revision"],
+        "type": "object"
+      },
+      "ItemTaskFlowUpdateDTO": {
+        "description": "保存项目工作流",
+        "properties": {
+          "nodes": {
+            "description": "保存后的节点。已有节点带 id 和修订号，新节点不带 id",
+            "items": {
+              "$ref": "#/components/schemas/ItemTaskFlowNodeUpdateDTO"
+            },
+            "type": "array"
+          },
+          "removed": {
+            "description": "从当前工作流中删除的节点。必须带上打开编辑时看到的修订号",
+            "items": {
+              "$ref": "#/components/schemas/ItemTaskFlowRemovedNodeDTO"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["nodes"],
+        "type": "object"
+      },
       "ItemTaskFlowVO": {
         "description": "项目任务流信息（含节点执行状态，用于流程图可视化）",
         "properties": {
           "description": {
             "description": "任务流说明",
             "type": "string"
+          },
+          "hasSubmissionRecord": {
+            "description": "是否存在提交记录（含已打回、已重置），决定删除项目是直接删除还是提交删除申请",
+            "type": "boolean"
           },
           "itemTitle": {
             "description": "项目名称",
@@ -693,6 +838,14 @@
             "format": "int32",
             "type": "integer"
           },
+          "removable": {
+            "description": "是否可从工作流中删除。已接取、已完成或已有提交记录时为 false",
+            "type": "boolean"
+          },
+          "revision": {
+            "description": "任务修订号。保存工作流时回传，用于发现期间发生的接取或提交",
+            "type": "string"
+          },
           "sort": {
             "description": "步骤顺序（相同 sort 值为并行节点）",
             "format": "int32",
@@ -726,6 +879,67 @@
           }
         },
         "required": ["inviteCode"],
+        "type": "object"
+      },
+      "JoinInviteCodeListDTO": {
+        "description": "加入组织邀请码列表查询参数",
+        "properties": {
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "status": {
+            "description": "状态筛选：PENDING 待使用，USED 已用尽；不传返回尚未手动失效的全部邀请码",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "JoinInviteCodeVO": {
+        "description": "加入组织邀请码",
+        "properties": {
+          "createdAt": {
+            "description": "创建时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiredAt": {
+            "description": "到期时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "邀请记录 ID",
+            "type": "string"
+          },
+          "inviteCode": {
+            "description": "邀请码",
+            "type": "string"
+          },
+          "maxUses": {
+            "description": "使用上限，为空表示不限次数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "description": "状态：PENDING 待使用，USED 已用尽",
+            "type": "string"
+          },
+          "useCount": {
+            "description": "已使用次数",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
         "type": "object"
       },
       "LocalFileReadDTO": {
@@ -804,6 +1018,20 @@
           },
           "userId": {
             "description": "用户id",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MemberOptionVO": {
+        "description": "当前组织可选组员",
+        "properties": {
+          "nickname": {
+            "description": "组员昵称",
+            "type": "string"
+          },
+          "userId": {
+            "description": "组员用户ID",
             "type": "string"
           }
         },
@@ -972,6 +1200,11 @@
         "description": "已授权来源的当前基础数据；来源不可访问时为 null",
         "nullable": true,
         "properties": {
+          "applicantName": {
+            "description": "入组申请人显示名",
+            "nullable": true,
+            "type": "string"
+          },
           "itemId": {
             "description": "项目ID",
             "type": "string"
@@ -984,6 +1217,22 @@
             "type": "string"
           },
           "projectTitle": {
+            "type": "string"
+          },
+          "requesterName": {
+            "description": "删除申请人显示名",
+            "nullable": true,
+            "type": "string"
+          },
+          "targetTitle": {
+            "description": "删除目标提交时的名称",
+            "nullable": true,
+            "type": "string"
+          },
+          "targetType": {
+            "description": "删除目标类型",
+            "enum": ["PROJECT", "ITEM"],
+            "nullable": true,
             "type": "string"
           },
           "taskSlot": {
@@ -1033,7 +1282,13 @@
             "type": "string"
           },
           "kind": {
-            "enum": ["TASK_READY", "ITEM_COMPLETED"],
+            "enum": [
+              "TASK_READY",
+              "ITEM_COMPLETED",
+              "TASK_ASSIGNED",
+              "JOIN_APPLICATION",
+              "DELETION_REQUEST"
+            ],
             "type": "string"
           },
           "readAt": {
@@ -1240,12 +1495,127 @@
         "required": ["orgRole"],
         "type": "object"
       },
+      "OrgMemberClaimedTaskItemVO": {
+        "description": "组员名下已接取的任务",
+        "properties": {
+          "bucket": {
+            "description": "SUBMITTABLE-进行中，WAITING-等待中",
+            "enum": ["SUBMITTABLE", "WAITING"],
+            "type": "string"
+          },
+          "claimedAt": {
+            "description": "接取时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "instanceId": {
+            "description": "任务实例ID",
+            "type": "string"
+          },
+          "itemId": {
+            "description": "项目ID",
+            "type": "string"
+          },
+          "itemTitle": {
+            "description": "项目名",
+            "type": "string"
+          },
+          "nodeName": {
+            "description": "阶段名",
+            "type": "string"
+          },
+          "projectId": {
+            "description": "企划ID",
+            "type": "string"
+          },
+          "projectName": {
+            "description": "企划名",
+            "type": "string"
+          },
+          "serialStep": {
+            "description": "同名节点跨阶段时的阶段位次；名称只出现在一个阶段时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "slotIndex": {
+            "description": "本节点在所属阶段并行组中的位次，从 1 开始",
+            "format": "int32",
+            "type": "integer"
+          },
+          "slotTotal": {
+            "description": "所属阶段的任务节点数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingSerialStep": {
+            "description": "等待的前置节点同名跨阶段位次；进行中或名称不跨阶段时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingSlotIndex": {
+            "description": "等待的前置节点在其并行组中的位次；进行中时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingSlotTotal": {
+            "description": "等待的前置节点所属阶段的任务节点数；进行中时为 null",
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingStageName": {
+            "description": "最近的未完成前置节点名；没有前置或前置都已完成时为 null",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrgMemberClaimedTaskVO": {
+        "description": "组员当前接取的任务",
+        "properties": {
+          "list": {
+            "description": "任务列表，按接取时间从早到晚",
+            "items": {
+              "$ref": "#/components/schemas/OrgMemberClaimedTaskItemVO"
+            },
+            "type": "array"
+          },
+          "memberId": {
+            "description": "成员ID",
+            "type": "string"
+          },
+          "submittableCount": {
+            "description": "进行中任务数：前置阶段已全部完成，当前可提交",
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalCount": {
+            "description": "全部任务数",
+            "format": "int32",
+            "type": "integer"
+          },
+          "userId": {
+            "description": "用户ID",
+            "type": "string"
+          },
+          "waitingCount": {
+            "description": "等待中任务数：存在未完成的前置阶段",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "OrgMemberInfoVO": {
         "description": "组员信息",
         "properties": {
           "avatarUrl": {
             "description": "头像URL",
             "type": "string"
+          },
+          "claimedTaskCount": {
+            "description": "当前接取的任务数",
+            "format": "int32",
+            "type": "integer"
           },
           "id": {
             "description": "成员ID",
@@ -1343,6 +1713,99 @@
           },
           "name": {
             "description": "组织名称",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrganizationPresetFieldAdminVO": {
+        "description": "组织预置表单字段管理列表信息",
+        "properties": {
+          "createdAt": {
+            "description": "创建时间",
+            "format": "date-time",
+            "type": "string"
+          },
+          "creatorNickname": {
+            "description": "创建人昵称，空白时为空",
+            "type": "string"
+          },
+          "id": {
+            "description": "组织预置表单字段ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "字段名",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrganizationPresetFieldCreateDTO": {
+        "description": "创建组织预置表单字段请求参数",
+        "properties": {
+          "name": {
+            "description": "字段名",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "type": "object"
+      },
+      "OrganizationPresetFieldListDTO": {
+        "description": "组织预置表单字段列表查询请求参数",
+        "properties": {
+          "keyword": {
+            "description": "字段名模糊搜索关键词",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "orderDir": {
+            "description": "排序方式，默认创建时间倒序",
+            "enum": ["DESC", "ASC"],
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "OrganizationPresetFieldUpdateDTO": {
+        "description": "修改组织预置表单字段请求参数",
+        "properties": {
+          "name": {
+            "description": "字段名",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": ["name"],
+        "type": "object"
+      },
+      "OrganizationPresetFieldVO": {
+        "description": "组织预置表单字段",
+        "properties": {
+          "id": {
+            "description": "组织预置表单字段ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "字段名",
             "type": "string"
           }
         },
@@ -1467,6 +1930,25 @@
         },
         "type": "object"
       },
+      "PageRequestDTO": {
+        "description": "查询请求参数",
+        "properties": {
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "PageResultVOAdminVO": {
         "description": "通用分页返回结果",
         "properties": {
@@ -1539,6 +2021,24 @@
         },
         "type": "object"
       },
+      "PageResultVOJoinInviteCodeVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/JoinInviteCodeVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "PageResultVOMyTaskVO": {
         "description": "通用分页返回结果",
         "properties": {
@@ -1593,6 +2093,24 @@
         },
         "type": "object"
       },
+      "PageResultVOOrganizationPresetFieldAdminVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationPresetFieldAdminVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "PageResultVOOrganizationPresetTagAdminVO": {
         "description": "通用分页返回结果",
         "properties": {
@@ -1618,6 +2136,42 @@
             "description": "数据列表",
             "items": {
               "$ref": "#/components/schemas/PlazaProjectGroupVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOProductReleaseListItemVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/ProductReleaseListItemVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOProductReleaseNoticeVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/ProductReleaseNoticeVO"
             },
             "type": "array"
           },
@@ -1690,6 +2244,24 @@
             "description": "数据列表",
             "items": {
               "$ref": "#/components/schemas/ProjectTypeAdminVO"
+            },
+            "type": "array"
+          },
+          "total": {
+            "description": "总条数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PageResultVOStorageStatsVO": {
+        "description": "通用分页返回结果",
+        "properties": {
+          "list": {
+            "description": "数据列表",
+            "items": {
+              "$ref": "#/components/schemas/StorageStatsVO"
             },
             "type": "array"
           },
@@ -1828,6 +2400,19 @@
         },
         "type": "object"
       },
+      "PlazaTaskTypeOptionVO": {
+        "description": "任务大厅任务类型选项",
+        "properties": {
+          "id": {
+            "description": "原子任务ID",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PlazaTaskVO": {
         "description": "缺人任务（任务广场）",
         "properties": {
@@ -1897,6 +2482,197 @@
             "type": "integer"
           }
         },
+        "type": "object"
+      },
+      "ProductReleaseBaselineVO": {
+        "properties": {
+          "backendVersion": {
+            "type": "string"
+          },
+          "frontendVersion": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProductReleaseCurrentVO": {
+        "properties": {
+          "olderCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "release": {
+            "$ref": "#/components/schemas/ProductReleaseNoticeVO"
+          }
+        },
+        "type": "object"
+      },
+      "ProductReleaseDetailVO": {
+        "properties": {
+          "backendVersion": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "frontendVersion": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": ["DRAFT", "PUBLISHED", "WITHDRAWN"],
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProductReleaseListDTO": {
+        "description": "产品版本列表查询",
+        "properties": {
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "status": {
+            "description": "状态，不传则全部",
+            "enum": ["DRAFT", "PUBLISHED", "WITHDRAWN"],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProductReleaseListItemVO": {
+        "description": "数据列表",
+        "properties": {
+          "backendVersion": {
+            "type": "string"
+          },
+          "frontendVersion": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": ["DRAFT", "PUBLISHED", "WITHDRAWN"],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProductReleaseNoticeVO": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProductReleaseSaveDTO": {
+        "description": "保存产品版本",
+        "properties": {
+          "backendVersion": {
+            "pattern": "^[vV]?(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})$",
+            "type": "string"
+          },
+          "content": {
+            "description": "更新说明，Markdown",
+            "maxLength": 4000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "frontendVersion": {
+            "pattern": "^[vV]?(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})$",
+            "type": "string"
+          },
+          "publish": {
+            "description": "为 true 时创建并发布；更新接口忽略",
+            "type": "boolean"
+          },
+          "summary": {
+            "maxLength": 120,
+            "minLength": 0,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 40,
+            "minLength": 0,
+            "type": "string"
+          },
+          "version": {
+            "pattern": "^[vV]?(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})\\.(0|[1-9]\\d{0,6})$",
+            "type": "string"
+          }
+        },
+        "required": ["backendVersion", "frontendVersion", "version"],
         "type": "object"
       },
       "ProjectAdminInfoVO": {
@@ -2004,8 +2780,8 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅允许 key、value、color。key 为非空白字符串且可重复；value 可省略，提供时必须为字符串且可为空；color 可省略，提供时仅允许 blue、green、amber、rose、violet。数组顺序和原始 JSON 保留",
-            "example": "{\"tags\":[{\"key\":\"加急\",\"color\":\"amber\"},{\"key\":\"作者\",\"value\":\"smile_snow\",\"color\":\"blue\"}]}",
+            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅允许 key、value、color。key 为非空白字符串且可重复；value 可省略，提供时必须为字符串且可为空；color 可省略，提供时仅允许 blue、green、amber、rose、violet。fields 可省略；提供时必须是数组且可为空，每项仅允许 name、value。name 为非空白字符串且可重复，空白 name 拒绝保存；value 必须为字符串且可为空。数组顺序和原始 JSON 保留。若企划类型配置了必填预置字段，fields 中必须有同名字段且 value 去掉首尾空白后非空",
+            "example": "{\"tags\":[{\"key\":\"加急\",\"color\":\"amber\"},{\"key\":\"作者\",\"value\":\"smile_snow\",\"color\":\"blue\"}],\"fields\":[{\"name\":\"作者\",\"value\":\"xxxx\"}]}",
             "type": "string"
           },
           "thumbnailFileId": {
@@ -2066,7 +2842,7 @@
             "type": "boolean"
           },
           "metadata": {
-            "description": "扩展信息(JSON对象字符串，包含 tags 数组，每项含 key 及可选的 value、color；value 缺失或为空串表示单键标签，color 为 blue、green、amber、rose、violet 之一；按保存顺序原样返回)",
+            "description": "扩展信息(JSON对象字符串，包含 tags 数组，每项含 key 及可选的 value、color；value 缺失或为空串表示单键标签，color 为 blue、green、amber、rose、violet 之一。可选 fields 数组，每项含 name 与 value；按保存顺序原样返回)",
             "type": "string"
           },
           "pendingTaskCount": {
@@ -2132,7 +2908,7 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON对象字符串，包含 tags 数组，每项含 key 及可选的 value、color；color 为 blue、green、amber、rose、violet 之一；搜索结果中命中 value 的 tags 稳定前置并保留完整标签，数据库中的顺序不变)",
+            "description": "扩展信息(JSON对象字符串，包含 tags 数组，每项含 key 及可选的 value、color；color 为 blue、green、amber、rose、violet 之一；搜索结果中命中的 tags 稳定前置并保留完整标签。可选 fields 数组按保存顺序返回，搜索命中不调整 fields。数据库中的顺序不变)",
             "type": "string"
           },
           "projectStatus": {
@@ -2154,6 +2930,15 @@
       "ProjectItemCreateDTO": {
         "description": "创建项目请求参数",
         "properties": {
+          "nodes": {
+            "description": "创建时的步骤和执行人。只按这些节点生成，不按模板补齐",
+            "items": {
+              "$ref": "#/components/schemas/ProjectItemNodeCreateDTO"
+            },
+            "maxItems": 2147483647,
+            "minItems": 1,
+            "type": "array"
+          },
           "taskTemplateId": {
             "description": "流程模板ID（任务模板ID）",
             "type": "string"
@@ -2163,7 +2948,7 @@
             "type": "string"
           }
         },
-        "required": ["taskTemplateId", "title"],
+        "required": ["nodes", "taskTemplateId", "title"],
         "type": "object"
       },
       "ProjectItemListDTO": {
@@ -2213,8 +2998,8 @@
             "description": "当前节点名称",
             "type": "string"
           },
-          "hasSubmittedTask": {
-            "description": "是否存在状态为已提交的任务",
+          "hasSubmissionRecord": {
+            "description": "是否存在提交记录（含已打回、已重置）",
             "type": "boolean"
           },
           "id": {
@@ -2243,6 +3028,39 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "ProjectItemNodeCreateDTO": {
+        "description": "创建项目时的流程节点",
+        "properties": {
+          "assigneeId": {
+            "description": "执行人用户ID，空表示待接取",
+            "type": "string"
+          },
+          "baseTaskId": {
+            "description": "原子任务ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "节点名称，空则使用原子任务名称",
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "parallelSort": {
+            "description": "阶段内序号",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "sort": {
+            "description": "阶段序号",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": ["baseTaskId", "parallelSort", "sort"],
         "type": "object"
       },
       "ProjectItemNodeVO": {
@@ -2314,7 +3132,7 @@
         "description": "企划查询请求参数",
         "properties": {
           "keyword": {
-            "description": "搜索关键词（标题、别名、元数据），按加权相关性优先排序",
+            "description": "搜索关键词（标题、别名、标签和自定义字段），按加权相关性优先排序",
             "maxLength": 50,
             "minLength": 0,
             "type": "string"
@@ -2373,6 +3191,13 @@
             "description": "创建人昵称",
             "type": "string"
           },
+          "customFields": {
+            "description": "默认自定义表单",
+            "items": {
+              "$ref": "#/components/schemas/ProjectTypeCustomFieldVO"
+            },
+            "type": "array"
+          },
           "id": {
             "description": "企划类型ID",
             "type": "string"
@@ -2402,6 +3227,13 @@
       "ProjectTypeCreateDTO": {
         "description": "创建企划类型请求参数",
         "properties": {
+          "customFields": {
+            "description": "默认自定义表单。省略或空数组表示不设置",
+            "items": {
+              "$ref": "#/components/schemas/ProjectTypeCustomFieldDTO"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "类型名称",
             "maxLength": 20,
@@ -2417,9 +3249,55 @@
         "required": ["name"],
         "type": "object"
       },
+      "ProjectTypeCustomFieldDTO": {
+        "description": "企划类型默认自定义表单中的一项",
+        "properties": {
+          "name": {
+            "description": "字段名；引用预置字段时忽略，自行编辑时必填",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "presetFieldId": {
+            "description": "预置表单字段ID；自行编辑的字段不传",
+            "type": "string"
+          },
+          "required": {
+            "description": "是否必填",
+            "type": "boolean"
+          }
+        },
+        "required": ["required"],
+        "type": "object"
+      },
+      "ProjectTypeCustomFieldVO": {
+        "description": "企划类型默认自定义表单中的一项",
+        "properties": {
+          "name": {
+            "description": "字段名",
+            "type": "string"
+          },
+          "presetFieldId": {
+            "description": "预置表单字段ID",
+            "type": "string"
+          },
+          "required": {
+            "description": "是否必填",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "ProjectTypeInfoVO": {
         "description": "企划类型信息",
         "properties": {
+          "customFields": {
+            "description": "默认自定义表单，按类型中的顺序",
+            "items": {
+              "$ref": "#/components/schemas/ProjectTypeCustomFieldVO"
+            },
+            "type": "array"
+          },
           "id": {
             "description": "企划类型ID",
             "type": "string"
@@ -2464,6 +3342,13 @@
       "ProjectTypeUpdateDTO": {
         "description": "修改企划类型请求参数",
         "properties": {
+          "customFields": {
+            "description": "默认自定义表单。省略时保持原设置，空数组表示清空",
+            "items": {
+              "$ref": "#/components/schemas/ProjectTypeCustomFieldDTO"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "类型名称",
             "maxLength": 20,
@@ -2495,8 +3380,8 @@
             "type": "string"
           },
           "metadata": {
-            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅允许 key、value、color。key 为非空白字符串且可重复；value 可省略，提供时必须为字符串且可为空；color 可省略，提供时仅允许 blue、green、amber、rose、violet。数组顺序和原始 JSON 保留",
-            "example": "{\"tags\":[{\"key\":\"加急\",\"color\":\"amber\"},{\"key\":\"作者\",\"value\":\"smile_snow\",\"color\":\"blue\"}]}",
+            "description": "扩展信息(JSON对象字符串)：tags 数组可为空；每项仅允许 key、value、color。key 为非空白字符串且可重复；value 可省略，提供时必须为字符串且可为空；color 可省略，提供时仅允许 blue、green、amber、rose、violet。fields 可省略；提供时必须是数组且可为空，每项仅允许 name、value。name 为非空白字符串且可重复，空白 name 拒绝保存；value 必须为字符串且可为空。数组顺序和原始 JSON 保留。若企划类型配置了必填预置字段，fields 中必须有同名字段且 value 去掉首尾空白后非空",
+            "example": "{\"tags\":[{\"key\":\"加急\",\"color\":\"amber\"},{\"key\":\"作者\",\"value\":\"smile_snow\",\"color\":\"blue\"}],\"fields\":[{\"name\":\"作者\",\"value\":\"xxxx\"}]}",
             "type": "string"
           },
           "status": {
@@ -2560,9 +3445,10 @@
             "type": "string"
           },
           "password": {
-            "description": "密码，6-20位，禁止使用常见弱密码",
+            "description": "密码，6-20位，须同时包含大写字母、小写字母和数字",
             "maxLength": 20,
             "minLength": 6,
+            "pattern": "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).+$",
             "type": "string"
           },
           "username": {
@@ -2592,10 +3478,11 @@
             "type": "string"
           },
           "password": {
-            "description": "新密码，6-20位，禁止使用常见弱密码",
+            "description": "新密码，6-20位，须同时包含大写字母、小写字母和数字",
             "example": "River!82Maple",
             "maxLength": 20,
             "minLength": 6,
+            "pattern": "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).+$",
             "type": "string"
           }
         },
@@ -2689,6 +3576,103 @@
         },
         "type": "object"
       },
+      "StorageCategoryStatsVO": {
+        "description": "一类资源的四种存储状态",
+        "properties": {
+          "active": {
+            "$ref": "#/components/schemas/StorageStateStatsVO"
+          },
+          "recycled": {
+            "$ref": "#/components/schemas/StorageStateStatsVO"
+          },
+          "retention": {
+            "$ref": "#/components/schemas/StorageStateStatsVO"
+          },
+          "unbound": {
+            "$ref": "#/components/schemas/StorageStateStatsVO"
+          }
+        },
+        "type": "object"
+      },
+      "StorageStateStatsVO": {
+        "description": "一种存储状态的数量和字节",
+        "properties": {
+          "bytes": {
+            "description": "字节数",
+            "format": "int64",
+            "type": "integer"
+          },
+          "count": {
+            "description": "文件数",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "StorageStatsQueryDTO": {
+        "description": "存储统计查询参数",
+        "properties": {
+          "orgName": {
+            "description": "组织名",
+            "maxLength": 32,
+            "minLength": 0,
+            "type": "string"
+          },
+          "pageNum": {
+            "description": "当前页码",
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pageSize": {
+            "description": "每页条数",
+            "format": "int32",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "StorageStatsVO": {
+        "description": "组织存储统计",
+        "properties": {
+          "cover": {
+            "$ref": "#/components/schemas/StorageCategoryStatsVO"
+          },
+          "id": {
+            "description": "组织ID",
+            "type": "string"
+          },
+          "name": {
+            "description": "组织名称",
+            "type": "string"
+          },
+          "occupiedBytes": {
+            "description": "仍占用的字节，不含已回收和头像",
+            "format": "int64",
+            "type": "integer"
+          },
+          "reclaimedBytes": {
+            "description": "已物理回收的字节，不含头像",
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "description": "组织状态",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          },
+          "taskSubmit": {
+            "$ref": "#/components/schemas/StorageCategoryStatsVO"
+          },
+          "thumbnail": {
+            "$ref": "#/components/schemas/StorageCategoryStatsVO"
+          }
+        },
+        "type": "object"
+      },
       "Submission": {
         "properties": {
           "fields": {
@@ -2760,6 +3744,23 @@
           }
         },
         "required": ["expectedRevision"],
+        "type": "object"
+      },
+      "TaskAssignDTO": {
+        "description": "企划负责人分配未接取任务",
+        "properties": {
+          "assigneeId": {
+            "description": "被分配的组织成员用户ID",
+            "type": "string"
+          },
+          "expectedRevision": {
+            "description": "当前任务列表中的 revision，旧修订号不会执行操作",
+            "example": "0",
+            "pattern": "0|[1-9][0-9]{0,18}",
+            "type": "string"
+          }
+        },
+        "required": ["assigneeId", "expectedRevision"],
         "type": "object"
       },
       "TaskAttachmentVO": {
@@ -2840,6 +3841,11 @@
       "TaskPlazaListDTO": {
         "description": "任务广场（缺人任务）查询参数",
         "properties": {
+          "baseTaskId": {
+            "description": "原子任务ID，空表示全部任务类型",
+            "format": "int64",
+            "type": "integer"
+          },
           "keyword": {
             "description": "搜索关键词（匹配企划名、条目名、任务名）",
             "maxLength": 50,
@@ -2876,6 +3882,34 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "TaskProxySubmitDTO": {
+        "description": "代提交任务请求参数",
+        "properties": {
+          "assigneeId": {
+            "description": "归属组员的用户ID",
+            "type": "string"
+          },
+          "expectedRevision": {
+            "description": "打开代提交时看到的任务修订号",
+            "type": "string"
+          },
+          "submittedAt": {
+            "description": "记入提交记录的时间，不能晚于当前时间",
+            "example": "2026-10-01 12:00:00",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": {
+              "description": "按服务器提交字段定义填写的值；文件仅传 fileId",
+              "type": "object"
+            },
+            "description": "按服务器提交字段定义填写的值；文件仅传 fileId",
+            "type": "object"
+          }
+        },
+        "required": ["assigneeId", "expectedRevision", "submittedAt", "values"],
         "type": "object"
       },
       "TaskRejectDTO": {
@@ -3224,6 +4258,35 @@
         },
         "type": "object"
       },
+      "TaskTemplateOptionNodeVO": {
+        "description": "创建项目时可选模板的步骤",
+        "properties": {
+          "baseTaskId": {
+            "description": "原子任务ID",
+            "type": "string"
+          },
+          "baseTaskName": {
+            "description": "原子任务名称",
+            "type": "string"
+          },
+          "baseTaskStatus": {
+            "description": "原子任务状态：ENABLED-启用，DISABLED-禁用",
+            "enum": ["ENABLED", "DISABLED"],
+            "type": "string"
+          },
+          "parallelSort": {
+            "description": "阶段内序号",
+            "format": "int32",
+            "type": "integer"
+          },
+          "sort": {
+            "description": "阶段序号",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "TaskTemplateOptionVO": {
         "description": "流程模板选项",
         "properties": {
@@ -3234,6 +4297,13 @@
           "name": {
             "description": "流程模板名称",
             "type": "string"
+          },
+          "nodes": {
+            "description": "模板步骤，供创建项目时载入编辑",
+            "items": {
+              "$ref": "#/components/schemas/TaskTemplateOptionNodeVO"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -3607,7 +4677,7 @@
   "paths": {
     "/admin/admins/": {
       "get": {
-        "operationId": "list_1",
+        "operationId": "list_4",
         "parameters": [
           {
             "in": "query",
@@ -3634,7 +4704,7 @@
         "tags": ["管理员接口"]
       },
       "post": {
-        "operationId": "create",
+        "operationId": "create_1",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3715,8 +4785,18 @@
     },
     "/admin/organizations/invite-codes/create-org": {
       "post": {
-        "description": "生成一次性邀请码，有效期30分钟；供超管邀请新用户注册并创建组织使用",
+        "description": "生成一次性邀请码，到期时间由邀请人指定；供超管邀请新用户注册并创建组织使用",
         "operationId": "generateCreateOrgInviteCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateInviteCodeDTO"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -3765,6 +4845,189 @@
         },
         "summary": "操作组织状态",
         "tags": ["组织接口"]
+      }
+    },
+    "/admin/product-releases/": {
+      "get": {
+        "operationId": "list_3",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dto",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ProductReleaseListDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOProductReleaseListItemVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询产品版本",
+        "tags": ["产品版本"]
+      },
+      "post": {
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductReleaseSaveDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "format": "int64",
+                  "type": "integer"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "新建产品版本",
+        "tags": ["产品版本"]
+      }
+    },
+    "/admin/product-releases/baseline": {
+      "get": {
+        "operationId": "baseline",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReleaseBaselineVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "当前已发布产品版本的信息",
+        "tags": ["产品版本"]
+      }
+    },
+    "/admin/product-releases/{id}": {
+      "get": {
+        "operationId": "detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReleaseDetailVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "产品版本详情",
+        "tags": ["产品版本"]
+      },
+      "put": {
+        "operationId": "update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductReleaseSaveDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "修改产品版本",
+        "tags": ["产品版本"]
+      }
+    },
+    "/admin/product-releases/{id}/publish": {
+      "post": {
+        "operationId": "publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "发布草稿",
+        "tags": ["产品版本"]
+      }
+    },
+    "/admin/product-releases/{id}/withdraw": {
+      "post": {
+        "operationId": "withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "撤回已发布的产品版本",
+        "tags": ["产品版本"]
       }
     },
     "/admin/scheduled-tasks/": {
@@ -3862,6 +5125,35 @@
         "tags": ["管理员会话接口"]
       }
     },
+    "/admin/storage-stats/": {
+      "get": {
+        "operationId": "list_2",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dto",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/StorageStatsQueryDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOStorageStatsVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询组织存储统计",
+        "tags": ["存储统计"]
+      }
+    },
     "/app/item/{itemId}/flow": {
       "get": {
         "description": "返回任务流基本信息及各节点当前执行状态，节点 taskStatus 为 null 表示前序节点未完成、当前节点尚未解锁",
@@ -3899,11 +5191,84 @@
         },
         "summary": "获取项目任务流（含节点执行状态）",
         "tags": ["项目任务流接口"]
+      },
+      "put": {
+        "description": "仅企划负责人可操作。可添加启用中的原子任务、删除尚未接取且没有提交记录的节点，并调整顺序。已有节点的修订号必须与当前任务一致，否则整次拒绝。",
+        "operationId": "updateItemTaskFlow",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemTaskFlowUpdateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "保存项目工作流",
+        "tags": ["项目任务流接口"]
+      }
+    },
+    "/app/members": {
+      "get": {
+        "description": "返回当前组织全部启用组员，按昵称、用户 ID 排序",
+        "operationId": "listMembers_1",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberOptionVO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "查询当前组织组员",
+        "tags": ["组织组员选项"]
       }
     },
     "/app/notifications": {
       "get": {
-        "operationId": "list",
+        "operationId": "list_1",
         "parameters": [
           {
             "in": "query",
@@ -4034,6 +5399,39 @@
         "tags": ["站内通知接口"]
       }
     },
+    "/app/preset-fields": {
+      "get": {
+        "description": "按创建时间倒序、ID 升序，不含值",
+        "operationId": "listPresetFields_1",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationPresetFieldVO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "查询当前组织预置表单字段",
+        "tags": ["组织预置表单字段"]
+      }
+    },
     "/app/preset-tags": {
       "get": {
         "description": "按优先级降序、ID 升序，不含值",
@@ -4065,6 +5463,95 @@
         },
         "summary": "查询当前组织预制标签",
         "tags": ["组织预制标签"]
+      }
+    },
+    "/app/product-releases/": {
+      "get": {
+        "operationId": "list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dto",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PageRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOProductReleaseNoticeVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "已发布的更新说明",
+        "tags": ["更新说明"]
+      }
+    },
+    "/app/product-releases/current": {
+      "get": {
+        "operationId": "current",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReleaseCurrentVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "当前未读的最新更新说明",
+        "tags": ["更新说明"]
+      }
+    },
+    "/app/product-releases/{id}/seen": {
+      "post": {
+        "operationId": "seen",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "把已读位置移到这条已发布更新",
+        "tags": ["更新说明"]
       }
     },
     "/app/projects": {
@@ -4371,7 +5858,7 @@
         "tags": ["项目相关接口"]
       },
       "post": {
-        "description": "创建项目并关联流程模板，自动生成任务流和所有任务实例",
+        "description": "创建项目并按请求中的步骤和执行人生成流程，不按模板补齐",
         "operationId": "createProjectItem",
         "parameters": [
           {
@@ -4494,9 +5981,52 @@
         "tags": ["项目相关接口"]
       }
     },
+    "/app/projects/{projectId}/items/{itemId}": {
+      "delete": {
+        "description": "仅企划负责人可删除从未提交过的项目。存在过提交记录（含已打回、已重置）时必须提交删除申请",
+        "operationId": "deleteProjectItem",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "企划ID",
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "项目ID",
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "删除项目",
+        "tags": ["项目相关接口"]
+      }
+    },
     "/app/projects/{projectId}/items/{itemId}/deletion-requests": {
       "post": {
-        "description": "项目存在已提交任务时，由企划负责人填写原因后提交，组织管理员审核通过后软删除",
+        "description": "项目存在过提交记录（含已打回、已重置）时，由企划负责人填写原因后提交，组织管理员审核通过后软删除",
         "operationId": "createItemDeletionRequest",
         "parameters": [
           {
@@ -4768,6 +6298,39 @@
         "tags": ["流程模板接口"]
       }
     },
+    "/app/task/base/options": {
+      "get": {
+        "description": "当前组织未删除且启用的原子任务，供编辑项目工作流和个人模板使用。不含提交字段，不要求组织管理员。",
+        "operationId": "listOptions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BaseTaskOptionVO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "查询可添加的原子任务",
+        "tags": ["原子任务选项"]
+      }
+    },
     "/app/task/instance/item/{itemId}": {
       "get": {
         "description": "返回当前项目所有已生成的任务实例",
@@ -4887,6 +6450,39 @@
         "tags": ["任务实例接口"]
       }
     },
+    "/app/task/instance/plaza/task-types": {
+      "get": {
+        "description": "当前组织启用的原子任务及已有流程仍引用的停用原子任务",
+        "operationId": "listPlazaTaskTypes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlazaTaskTypeOptionVO"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "任务大厅任务类型选项",
+        "tags": ["任务实例接口"]
+      }
+    },
     "/app/task/instance/{instanceId}/abandon": {
       "post": {
         "description": "接取人可主动放弃；企划创建人可取消他人接取。须匹配 revision，且后续阶段没有完成任务",
@@ -4927,6 +6523,56 @@
           }
         },
         "summary": "放弃任务",
+        "tags": ["任务实例接口"]
+      }
+    },
+    "/app/task/instance/{instanceId}/assign": {
+      "post": {
+        "description": "企划负责人将 PENDING 任务直接分配给当前组织的启用组员。分配后任务变为 CLAIMED 并归属该组员，组员无需再领取；同时发送站内信和邮件",
+        "operationId": "assignTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务实例ID",
+            "in": "path",
+            "name": "instanceId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskAssignDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskClaimResultVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分配任务",
         "tags": ["任务实例接口"]
       }
     },
@@ -5007,6 +6653,49 @@
           }
         },
         "summary": "查看任务实例详情",
+        "tags": ["任务实例接口"]
+      }
+    },
+    "/app/task/instance/{instanceId}/proxy-submit": {
+      "post": {
+        "description": "仅企划负责人可将尚未接取的任务直接记为指定组员已提交。组员必须是当前组织的启用成员。提交时间使用请求中的设定值，不使用当前时间。已接取或已提交的任务不可调用",
+        "operationId": "proxySubmitTask",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "任务实例ID",
+            "in": "path",
+            "name": "instanceId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskProxySubmitDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "代提交任务",
         "tags": ["任务实例接口"]
       }
     },
@@ -6075,9 +7764,49 @@
         "tags": ["组织成员管理"]
       }
     },
+    "/orgadmin/members/invite-codes": {
+      "post": {
+        "description": "只返回当前组织尚未过期且尚未手动失效的邀请码，按创建时间倒序",
+        "operationId": "listJoinInviteCodes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinInviteCodeListDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOJoinInviteCodeVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询加入组织邀请码",
+        "tags": ["组织成员管理"]
+      }
+    },
     "/orgadmin/members/invite-codes/join-org": {
       "post": {
-        "description": "生成一次性邀请码（6位字母数字），有效期30分钟；供组织管理员邀请用户加入当前组织使用",
+        "description": "生成 6 位字母数字邀请码。必须指定到期时间；不传使用上限表示不限次数",
         "operationId": "generateJoinOrgInviteCode",
         "parameters": [
           {
@@ -6089,6 +7818,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateJoinInviteCodeDTO"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -6102,6 +7841,39 @@
           }
         },
         "summary": "生成加入组织邀请码（管理员）",
+        "tags": ["组织成员管理"]
+      }
+    },
+    "/orgadmin/members/invite-codes/{inviteId}/revoke": {
+      "post": {
+        "description": "只能失效当前组织仍待使用的邀请码，失效后不再展示",
+        "operationId": "revokeJoinInviteCode",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "邀请记录 ID",
+            "in": "path",
+            "name": "inviteId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "手动失效加入组织邀请码",
         "tags": ["组织成员管理"]
       }
     },
@@ -6141,6 +7913,46 @@
           }
         },
         "summary": "查询组员各原子任务提交数",
+        "tags": ["组织成员管理"]
+      }
+    },
+    "/orgadmin/members/{memberId}/claimed-tasks": {
+      "get": {
+        "description": "按进行中（前置阶段已全部完成）和等待中（存在未完成前置阶段）拆分，返回全部任务与各分组数量",
+        "operationId": "getMemberClaimedTasks",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "description": "成员ID",
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgMemberClaimedTaskVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "查询组员当前接取的任务",
         "tags": ["组织成员管理"]
       }
     },
@@ -6287,6 +8099,145 @@
         },
         "summary": "更新组织信息",
         "tags": ["组织信息管理接口"]
+      }
+    },
+    "/orgadmin/preset-fields": {
+      "get": {
+        "description": "支持字段名模糊搜索，默认按创建时间倒序",
+        "operationId": "listPresetFields",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "query",
+            "name": "listDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/OrganizationPresetFieldListDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResultVOOrganizationPresetFieldAdminVO"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "分页查询组织预置表单字段",
+        "tags": ["组织预置表单字段"]
+      },
+      "post": {
+        "operationId": "createPresetField",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationPresetFieldCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "创建组织预置表单字段",
+        "tags": ["组织预置表单字段"]
+      }
+    },
+    "/orgadmin/preset-fields/{fieldId}": {
+      "delete": {
+        "description": "删除后不能再选择。已经写入企划的字段不受影响，类型默认表单中的引用会去掉",
+        "operationId": "deletePresetField",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "fieldId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "删除组织预置表单字段",
+        "tags": ["组织预置表单字段"]
+      },
+      "put": {
+        "operationId": "updatePresetField",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sessionContext",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SessionContext"
+            }
+          },
+          {
+            "in": "path",
+            "name": "fieldId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationPresetFieldUpdateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "修改组织预置表单字段",
+        "tags": ["组织预置表单字段"]
       }
     },
     "/orgadmin/preset-tags": {
@@ -6529,6 +8480,7 @@
         "tags": ["企划类型管理"]
       },
       "put": {
+        "description": "可修改名称、优先级和默认自定义表单。自定义表单省略时保持原设置",
         "operationId": "updateProjectType",
         "parameters": [
           {
@@ -6564,7 +8516,7 @@
             "description": "OK"
           }
         },
-        "summary": "修改企划类型名称与优先级",
+        "summary": "修改企划类型",
         "tags": ["企划类型管理"]
       }
     },
@@ -7093,10 +9045,6 @@
       "name": "企划类型管理"
     },
     {
-      "description": "原子任务（最小任务单元）的创建、编辑、启用/禁用和引用安全删除管理",
-      "name": "原子任务管理"
-    },
-    {
       "description": "项目列表、创建、排序和删除申请",
       "name": "项目相关接口"
     },
@@ -7105,24 +9053,76 @@
       "name": "工坊接口"
     },
     {
-      "description": "用户会话相关接口",
-      "name": "用户会话接口"
-    },
-    {
-      "description": "组织相关接口",
-      "name": "组织信息管理接口"
-    },
-    {
-      "description": "任务接取、放弃、提交、重置、打回、查看详情、按项目查询实例列表",
-      "name": "任务实例接口"
-    },
-    {
       "description": "管理员会话相关接口",
       "name": "管理员会话接口"
     },
     {
       "description": "用户相关的基础操作接口",
       "name": "用户接口"
+    },
+    {
+      "description": "系统管理员维护面向用户的更新说明",
+      "name": "产品版本"
+    },
+    {
+      "description": "组织成员管理：入组申请审核、组员列表、邀请",
+      "name": "组织成员管理"
+    },
+    {
+      "description": "用户端选择可添加到工作流的原子任务",
+      "name": "原子任务选项"
+    },
+    {
+      "description": "任务接取、分配、放弃、提交、代提交、重置、打回、查看详情、按项目查询实例列表",
+      "name": "任务实例接口"
+    },
+    {
+      "description": "任务流模板的增删改查与状态管理，仅管理员可操作",
+      "name": "任务模板管理"
+    },
+    {
+      "description": "组织预置表单字段的增删改查，仅管理员可操作",
+      "name": "组织预置表单字段"
+    },
+    {
+      "description": "用户端流程模板查询，提供创建项目时的模板下拉选项",
+      "name": "流程模板接口"
+    },
+    {
+      "description": "组织管理员审核企划和项目删除申请",
+      "name": "删除申请"
+    },
+    {
+      "description": "用户查看产品版本更新说明",
+      "name": "更新说明"
+    },
+    {
+      "description": "组织预制标签的增删改查，仅管理员可操作",
+      "name": "组织预制标签"
+    },
+    {
+      "description": "按组织查看存储占用",
+      "name": "存储统计"
+    },
+    {
+      "description": "当前组织可供填写企划标签时选择的预制标签",
+      "name": "组织预制标签"
+    },
+    {
+      "description": "当前组织可供选择的启用组员，不绑定具体业务",
+      "name": "组织组员选项"
+    },
+    {
+      "description": "原子任务（最小任务单元）的创建、编辑、启用/禁用和引用安全删除管理",
+      "name": "原子任务管理"
+    },
+    {
+      "description": "用户会话相关接口",
+      "name": "用户会话接口"
+    },
+    {
+      "description": "组织相关接口",
+      "name": "组织信息管理接口"
     },
     {
       "description": "文件预签名上传(用户端/管理端共用)，支持本地存储/OSS/COS",
@@ -7141,36 +9141,16 @@
       "name": "定时任务管理"
     },
     {
+      "description": "当前组织可供填写企划自定义字段时选择的预置字段",
+      "name": "组织预置表单字段"
+    },
+    {
       "description": "项目任务流查询",
       "name": "项目任务流接口"
     },
     {
-      "description": "组织成员管理：入组申请审核、组员列表、邀请",
-      "name": "组织成员管理"
-    },
-    {
-      "description": "任务流模板的增删改查与状态管理，仅管理员可操作",
-      "name": "任务模板管理"
-    },
-    {
-      "description": "用户端流程模板查询，提供创建项目时的模板下拉选项",
-      "name": "流程模板接口"
-    },
-    {
       "description": "企划相关接口",
       "name": "企划接口"
-    },
-    {
-      "description": "组织管理员审核企划和项目删除申请",
-      "name": "删除申请"
-    },
-    {
-      "description": "组织预制标签的增删改查，仅管理员可操作",
-      "name": "组织预制标签"
-    },
-    {
-      "description": "当前组织可供填写企划标签时选择的预制标签",
-      "name": "组织预制标签"
     }
   ]
 }

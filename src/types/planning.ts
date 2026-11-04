@@ -63,6 +63,13 @@ export interface ProjectDetailInfoVO {
   createdAt?: string;
 }
 
+export interface ProjectMemberVO {
+  userId: string;
+  nickname: string;
+  avatarUrl?: string | null;
+  isCreator: boolean;
+}
+
 export interface ProjectListDTO {
   keyword?: string;
   projectType?: string;

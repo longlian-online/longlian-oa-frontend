@@ -2,7 +2,7 @@
   "document": "管理端",
   "method": "GET",
   "operation": {
-    "operationId": "list",
+    "operationId": "list_2",
     "parameters": [
       {
         "in": "query",
