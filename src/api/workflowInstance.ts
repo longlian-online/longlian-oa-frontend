@@ -45,6 +45,14 @@ export async function getTaskSubmissionVersions(
   return request(`/task/instance/${instanceId}/submissions`, { signal });
 }
 
+export async function getTaskAttachmentDownload(
+  instanceId: string,
+  fileId: string,
+  signal?: AbortSignal,
+): Promise<{ readUrl: string }> {
+  return request(`/task/instance/${instanceId}/attachments/${fileId}/download`, { signal });
+}
+
 export async function claimTask(instanceId: string): Promise<TaskClaimResultVO> {
   return request(`/task/instance/${instanceId}/claim`, {
     method: "POST",

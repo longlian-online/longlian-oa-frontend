@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, Download, Eye, FileText, Loader2 } from "lucide-react";
 
 import { ApiError } from "@/api/apiError";
-import { getTaskInstanceDetail, getTaskSubmissionVersions } from "@/api/workflowInstance";
+import {
+  getTaskAttachmentDownload,
+  getTaskInstanceDetail,
+  getTaskSubmissionVersions,
+} from "@/api/workflowInstance";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { isPlanningResourceNotFound, readPlanningResource } from "@/lib/planningResourceError";
 import {
@@ -27,12 +31,7 @@ import type {
   TaskSubmissionVersionVO,
 } from "@/types/workflowInstance";
 import { createItemLifecycle } from "./itemLifecycle";
-import {
-  AttachmentOpenError,
-  openTaskAttachment,
-  refreshTaskAttachment,
-  type AttachmentPopup,
-} from "./taskAttachments";
+import { AttachmentOpenError, openTaskAttachment, type AttachmentPopup } from "./taskAttachments";
 interface TaskDetailActions {
   currentUserId?: string | null;
   mutating: boolean;
@@ -121,34 +120,17 @@ function AttachmentCard({
   onPreview,
   onDownload,
 }: AttachmentCardProps) {
-  const [previewFailed, setPreviewFailed] = useState(false);
   const available = attachment.availability === "available";
   return (
     <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-background p-3">
-      {available && attachment.mediaType === "image" && !previewFailed ? (
-        <RemoteImage
-          src={attachment.readUrl}
-          alt={attachment.name}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          className="size-16 shrink-0 rounded-lg border"
-          onError={() => setPreviewFailed(true)}
-        />
-      ) : (
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <FileText className="size-5" />
-        </span>
-      )}
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+        <FileText className="size-5" />
+      </span>
       <span className="min-w-0 flex-1">
         <span className="block break-words text-sm font-medium">{attachment.name}</span>
         <span className="mt-1 block text-xs text-muted-foreground">
           {available ? attachment.sizeText : "附件暂不可用，请联系任务提交人"}
         </span>
-        {available && previewFailed && (
-          <span className="mt-1 block text-xs text-muted-foreground">
-            缩略图暂不可用，可预览或下载原文件
-          </span>
-        )}
       </span>
       {available && (
         <span className="flex shrink-0 items-center gap-1">
@@ -200,7 +182,7 @@ function VersionFields({
             {field.type === "file" ? (
               field.file ? (
                 <AttachmentCard
-                  key={`${field.file.id}:${field.file.availability === "available" ? field.file.readUrl : "unavailable"}`}
+                  key={field.file.id}
                   attachment={field.file}
                   opening={openingId === field.file.id}
                   disabled={openingId !== null}
@@ -360,17 +342,10 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
         ? archiveBytesFromSizeText(attachment.sizeText)
         : undefined,
       resolveUrl: async (signal) => {
-        const fresh = await refreshTaskAttachment(attachment, {
-          now: () => Date.now() / 1000,
-          isCurrent: () => isCurrent() && !signal.aborted,
-          loadFields: async () => {
-            const result = await versionsQuery.refetch();
-            if (result.error || !result.data) throw result.error ?? new Error("版本记录加载失败");
-            return result.data.flatMap((version) => version.fields);
-          },
-        });
-        if (!fresh || signal.aborted) throw new DOMException("已取消", "AbortError");
-        return fresh.readUrl;
+        if (!isCurrent() || signal.aborted) throw new DOMException("已取消", "AbortError");
+        const { readUrl } = await getTaskAttachmentDownload(instanceId, attachment.id, signal);
+        if (!isCurrent() || signal.aborted) throw new DOMException("已取消", "AbortError");
+        return readUrl;
       },
     });
   }
@@ -384,12 +359,10 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
     const isActive = (): boolean => isCurrent() && Boolean(signal) && !signal?.aborted;
     try {
       await openTaskAttachment(attachment, {
-        now: () => Date.now() / 1000,
         isCurrent: isActive,
-        loadFields: async () => {
-          const result = await versionsQuery.refetch();
-          if (result.error || !result.data) throw result.error ?? new Error("版本记录加载失败");
-          return result.data.flatMap((version) => version.fields);
+        loadUrl: async () => {
+          const { readUrl } = await getTaskAttachmentDownload(instanceId, attachment.id, signal);
+          return readUrl;
         },
         openPopup: () => {
           const tab = window.open("", "_blank");
