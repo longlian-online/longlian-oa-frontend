@@ -78,7 +78,13 @@ export default defineConfig({
     fileRoutes(),
     react(),
     tailwindcss(),
-    fileViewerRenderers({ copyAssets: true, inject: false }),
+    fileViewerRenderers({
+      copyAssets: true,
+      inject: false,
+      autoPresets: true,
+      // 已安装的 office/lite 不会带上压缩包 Worker。RAR、7z 需要 libarchive。
+      renderers: ["archive"],
+    }),
   ],
   resolve: {
     alias: {
