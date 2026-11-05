@@ -12,6 +12,8 @@ dist
 dist-ssr
 release
 *.local
+public/vendor/
+public/flyfish-viewer-assets.json
 
 # Editor directories and files
 .vscode/*

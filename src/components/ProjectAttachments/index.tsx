@@ -1,7 +1,11 @@
-import { useRef, useState, type ChangeEvent, type ReactElement } from "react";
-import { Download, FileText, Loader2, Paperclip, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent, type ReactElement } from "react";
+import { Download, Eye, FileText, Loader2, Paperclip, Trash2 } from "lucide-react";
 
 import { ApiError } from "@/api/apiError";
+import {
+  closeAttachmentPreview,
+  openAttachmentPreview,
+} from "@/components/AttachmentPreview/previewSession";
 import {
   createProjectAttachment,
   deleteProjectAttachment,
@@ -26,6 +30,7 @@ export default function ProjectAttachments({
   isCreator,
 }: ProjectAttachmentsProps): ReactElement {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const previewOwner = useRef(Symbol("project-attachment-preview"));
   const attachmentsQuery = useApiQuery(projectAttachmentsQuery(projectId));
   const attachments = attachmentsQuery.data ?? [];
   const { uploading, uploadFile } = useUploadFile();
@@ -55,6 +60,20 @@ export default function ProjectAttachments({
     } catch {
       /* 上传与绑定失败提示由接口层负责。 */
     }
+  }
+
+  useEffect(() => () => closeAttachmentPreview(previewOwner.current), []);
+
+  function handlePreview(attachment: ProjectAttachmentVO): void {
+    openAttachmentPreview({
+      owner: previewOwner.current,
+      fileName: attachment.fileName,
+      fileSize: attachment.fileSize,
+      resolveUrl: async () => {
+        const { readUrl } = await getProjectAttachmentDownload(projectId, attachment.id);
+        return readUrl;
+      },
+    });
   }
 
   async function handleDownload(attachment: ProjectAttachmentVO): Promise<void> {
@@ -157,6 +176,14 @@ export default function ProjectAttachments({
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`预览 ${attachment.fileName}`}
+                  onClick={() => handlePreview(attachment)}
+                >
+                  <Eye />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon-sm"

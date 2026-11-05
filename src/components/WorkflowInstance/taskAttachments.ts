@@ -1,4 +1,4 @@
-import type { TaskAttachment, TaskDetailField } from "@/types/workflowInstance";
+import type { TaskAttachment } from "@/types/workflowInstance";
 
 export class AttachmentOpenError extends Error {}
 
@@ -9,13 +9,12 @@ export interface AttachmentPopup {
 }
 
 interface OpenTaskAttachmentOptions {
-  now: () => number;
   openPopup: () => AttachmentPopup | null;
-  loadFields: () => Promise<TaskDetailField[]>;
+  loadUrl: () => Promise<string>;
   isCurrent: () => boolean;
 }
 
-/** Reserve the browser tab in the click handler, before any signed-link refresh. */
+/** 先占住标签页，再向服务端取当次签名链接。详情里没有读取地址。 */
 export async function openTaskAttachment(
   attachment: TaskAttachment,
   options: OpenTaskAttachmentOptions,
@@ -25,30 +24,13 @@ export async function openTaskAttachment(
   const popup = options.openPopup();
   if (!popup) throw new AttachmentOpenError("浏览器阻止了附件窗口，请允许弹出窗口后重试");
   try {
-    let currentAttachment = attachment;
-    if (attachment.expiresAt <= options.now() + 10) {
-      const freshFields = await options.loadFields();
-      if (!options.isCurrent()) {
-        popup.close();
-        return;
-      }
-      const freshAttachment = freshFields
-        .map((field) => (field.type === "file" ? field.file : null))
-        .find((file) => file?.id === attachment.id);
-      if (!freshAttachment || freshAttachment.availability !== "available") {
-        throw new AttachmentOpenError("附件已不可用，请联系任务提交人");
-      }
-      if (freshAttachment.expiresAt <= options.now()) {
-        throw new AttachmentOpenError("附件链接未能更新，请稍后重试");
-      }
-      currentAttachment = freshAttachment;
-    }
+    const readUrl = await options.loadUrl();
     if (!options.isCurrent()) {
       popup.close();
       return;
     }
     if (popup.isClosed()) throw new AttachmentOpenError("附件窗口已关闭，请重新打开附件");
-    popup.navigate(currentAttachment.readUrl);
+    popup.navigate(readUrl);
   } catch (error) {
     popup.close();
     throw error;
