@@ -88,6 +88,9 @@ describe("product release notice", () => {
     });
     await renderNotice();
     await vi.waitFor(() => expect(document.body.textContent).toContain("v1.3.0"));
+    const dialog = document.body.querySelector("[data-slot='dialog-content']");
+    expect(dialog?.className).toContain("sm:max-w-lg");
+    expect(dialog?.querySelector(".max-h-96")).not.toBeNull();
     expect(document.body.textContent).toContain("另有 2 条更早的更新");
     expect(document.body.textContent).not.toContain("0.0.18");
     expect(document.body.textContent).not.toContain("1.0.52");
