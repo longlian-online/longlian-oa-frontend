@@ -474,7 +474,7 @@ function OrganizationMembersContent() {
         open={claimedTaskMember !== null}
         onOpenChange={(open) => !open && setClaimedTaskMember(null)}
       >
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="grid-cols-[minmax(0,1fr)] overflow-hidden sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {claimedTaskMember ? `${memberName(claimedTaskMember)}的接取任务` : "接取任务"}
@@ -493,10 +493,11 @@ function OrganizationMembersContent() {
             <Tabs
               value={claimedTaskTab}
               onValueChange={(value) => setClaimedTaskTab(value as ClaimedTaskTab)}
+              className="min-w-0"
             >
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full min-w-0 max-w-full grid-cols-3">
                 {CLAIMED_TASK_TABS.map((tab) => (
-                  <TabsTrigger key={tab.value} value={tab.value}>
+                  <TabsTrigger key={tab.value} value={tab.value} className="min-w-0">
                     {tab.label}
                     <span className="tabular-nums text-muted-foreground">
                       {claimedTaskTabCount(tab.value, claimedTaskCounts)}
@@ -507,11 +508,11 @@ function OrganizationMembersContent() {
               {CLAIMED_TASK_TABS.map((tab) => {
                 const tasks = filterClaimedTasks(claimedTasks, tab.value);
                 return (
-                  <TabsContent key={tab.value} value={tab.value}>
+                  <TabsContent key={tab.value} value={tab.value} className="min-w-0">
                     {tasks.length === 0 ? (
                       <p className="py-6 text-center text-sm text-muted-foreground">暂无任务</p>
                     ) : (
-                      <div className="flex max-h-80 flex-col gap-2 overflow-y-auto p-1">
+                      <div className="flex max-h-80 min-w-0 flex-col gap-2 overflow-x-hidden overflow-y-auto p-1">
                         {tasks.map((task) => {
                           const waitingLabel = claimedTaskWaitingLabel(task);
                           return (
