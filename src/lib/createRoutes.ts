@@ -39,6 +39,8 @@ export function createRoutes(
       loader: page
         ? async (args) => {
             const session = getSessionSnapshot();
+            if (page === "/src/pages/login.tsx" && session.token)
+              throw redirect("/dashboard/planning");
             if (page.startsWith("/src/pages/dashboard") && !session.token) throw redirect("/login");
             if (
               page.startsWith("/src/pages/admin/") &&
