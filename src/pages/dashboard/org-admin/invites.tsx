@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Copy, Loader2, Ticket, TicketX } from "lucide-react";
 
 import { createJoinInviteCode, revokeJoinInviteCode } from "@/api/organizationAdmin";
+import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import InviteExpiryField from "@/components/InviteExpiryField";
@@ -242,10 +243,7 @@ function OrganizationInvitesContent(): React.JSX.Element {
           加载失败，重试
         </Button>
       ) : loading ? (
-        <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 size-4 animate-spin" />
-          正在加载邀请码...
-        </div>
+        <CenteredLoading message="正在加载邀请码..." />
       ) : invites.length === 0 ? (
         <EmptyState
           icon={<Ticket className="size-5 text-muted-foreground" />}

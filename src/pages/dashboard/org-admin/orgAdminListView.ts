@@ -1,12 +1,7 @@
 import { readListQuery } from "@/lib/listQueryState";
-import type { MemberListFilters } from "./memberListFilters";
+import { MEMBER_LIST_DEFAULTS, type MemberListFilters } from "./memberListFilters";
 
-export const MEMBER_LIST_DEFAULTS: MemberListFilters = {
-  keyword: "",
-  startJoinedTime: "",
-  endJoinedTime: "",
-  orderDir: "DESC",
-};
+export { MEMBER_LIST_DEFAULTS };
 export const MEMBER_LIST_CHOICES = { orderDir: ["ASC", "DESC"] } as const;
 
 function validDate(value: string): string {

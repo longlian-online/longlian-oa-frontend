@@ -17,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 
+import CenteredLoading from "@/components/CenteredLoading";
 import { canEditOrganizationMemberRole, organizationMemberRoleLabel } from "@/lib/organizationRole";
 import { getSessionSnapshot, saveCurrentOrganization } from "@/lib/session";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
@@ -281,10 +282,7 @@ function OrganizationMembersContent() {
           加载失败，重试
         </Button>
       ) : loading ? (
-        <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 size-4 animate-spin" />
-          正在加载成员...
-        </div>
+        <CenteredLoading message="正在加载成员..." />
       ) : members.length === 0 ? (
         <EmptyState
           icon={<Users className="size-5 text-muted-foreground" />}

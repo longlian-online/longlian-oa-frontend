@@ -1,3 +1,4 @@
+import { withQuery } from "@/api/queryString";
 import { adminRequest } from "@/api/request";
 
 import type {
@@ -29,15 +30,6 @@ function detail(raw: ProductReleaseDetail): ProductReleaseDetail {
     summary: raw.summary ?? "",
     content: raw.content ?? "",
   };
-}
-
-function withQuery(path: string, params: Record<string, string | number | undefined>): string {
-  const search = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== "") search.set(key, String(value));
-  });
-  const query = search.toString();
-  return query ? `${path}?${query}` : path;
 }
 
 export async function listAdminProductReleases(query: {

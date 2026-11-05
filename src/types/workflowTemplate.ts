@@ -41,18 +41,6 @@ export interface WorkshopTaskTemplateNodeVO {
   parallelSort?: number;
 }
 
-export interface TaskTemplateOptionVO {
-  id: string;
-  name: string;
-  nodes?: {
-    baseTaskId: string;
-    baseTaskName?: string;
-    baseTaskStatus?: BaseTaskStatus;
-    sort: number;
-    parallelSort?: number;
-  }[];
-}
-
 export type BaseTaskStatus = "ENABLED" | "DISABLED";
 
 export interface BaseTaskOption {

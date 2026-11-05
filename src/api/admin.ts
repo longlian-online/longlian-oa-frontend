@@ -1,3 +1,4 @@
+import { withQuery } from "@/api/queryString";
 import { adminRequest } from "@/api/request";
 import type {
   AdminCreateDTO,
@@ -13,17 +14,6 @@ import type {
   StorageStatsVO,
 } from "@/types/admin";
 import type { GenerateInviteCodeDTO, OrganizationResourceStatus } from "@/types/organizationAdmin";
-
-function withQuery(path: string, params: Record<string, string | number | undefined>): string {
-  const searchParams = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== "") {
-      searchParams.set(key, String(value));
-    }
-  });
-  const query = searchParams.toString();
-  return query ? `${path}?${query}` : path;
-}
 
 export async function getAdminList(dto: AdminListDTO): Promise<AdminPageResult<AdminVO>> {
   return adminRequest(

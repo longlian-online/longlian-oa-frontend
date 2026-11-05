@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Edit3, Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { Edit3, Loader2, Plus, Trash2 } from "lucide-react";
 
 import {
   createOrganizationPresetField,
   deleteOrganizationPresetField,
   updateOrganizationPresetField,
 } from "@/api/organizationAdmin";
+import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
+import KeywordSearch from "@/components/KeywordSearch";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
@@ -131,21 +133,12 @@ function OrganizationPresetFieldsContent() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-bold text-foreground">表单字段</h1>
         <div className="flex flex-wrap gap-2">
-          <div className="relative w-64 max-w-full">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchText}
-              placeholder="搜索字段名"
-              className="pl-9"
-              onChange={(event) => setSearchText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleSearch();
-              }}
-            />
-          </div>
-          <Button type="button" variant="outline" onClick={handleSearch}>
-            搜索
-          </Button>
+          <KeywordSearch
+            value={searchText}
+            placeholder="搜索字段名"
+            onChange={setSearchText}
+            onSearch={handleSearch}
+          />
           <Button type="button" onClick={openCreateDialog}>
             <Plus className="size-4" />
             新增字段
@@ -158,10 +151,7 @@ function OrganizationPresetFieldsContent() {
           加载失败，重试
         </Button>
       ) : loading ? (
-        <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 size-4 animate-spin" />
-          正在加载字段...
-        </div>
+        <CenteredLoading message="正在加载字段..." />
       ) : fields.length === 0 ? (
         <EmptyState
           title={keyword ? "没有匹配的字段" : "暂无字段"}

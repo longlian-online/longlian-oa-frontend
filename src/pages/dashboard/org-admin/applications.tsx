@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Check, Clock3, Loader2, Search, UserRound, X } from "lucide-react";
+import { Check, Clock3, Loader2, UserRound, X } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { reviewJoinApplication } from "@/api/organizationAdmin";
+import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
+import KeywordSearch from "@/components/KeywordSearch";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import RemoteImage from "@/components/RemoteImage";
@@ -20,7 +22,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
@@ -99,19 +100,12 @@ function OrganizationApplicationsContent() {
           <h1 className="text-xl font-bold text-foreground">入组申请</h1>
         </div>
         <div className="flex gap-2">
-          <div className="relative w-64 max-w-full">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchText}
-              placeholder="搜索申请人"
-              className="pl-9"
-              onChange={(event) => setSearchText(event.target.value)}
-              onKeyDown={(event) => event.key === "Enter" && handleSearch()}
-            />
-          </div>
-          <Button variant="outline" onClick={handleSearch}>
-            搜索
-          </Button>
+          <KeywordSearch
+            value={searchText}
+            placeholder="搜索申请人"
+            onChange={setSearchText}
+            onSearch={handleSearch}
+          />
         </div>
       </div>
 
@@ -120,10 +114,7 @@ function OrganizationApplicationsContent() {
           加载失败，重试
         </Button>
       ) : loading ? (
-        <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 size-4 animate-spin" />
-          正在加载申请...
-        </div>
+        <CenteredLoading message="正在加载申请..." />
       ) : applications.length === 0 ? (
         <EmptyState
           icon={<Clock3 className="size-5 text-muted-foreground" />}
