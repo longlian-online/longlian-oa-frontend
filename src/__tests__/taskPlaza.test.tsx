@@ -165,6 +165,10 @@ function visibleTaskNames(projectId: string): string[] {
   );
 }
 
+async function expandGroup(projectId: string): Promise<void> {
+  await click(`展开企划${projectId}`, section(projectId));
+}
+
 async function chooseTaskPage(projectId: string, page: number): Promise<void> {
   await click("选择任务页码", section(projectId));
   let option: HTMLElement | undefined;
@@ -201,10 +205,13 @@ test("URL 直达恢复所有筛选及独立任务页码，不发送默认列表�
     "?keyword=百合&projectType=漫画&taskType=102&sortBy=MOST&stageScope=CURRENT&page=2&taskPage_21=3&taskPage_22=2",
   );
   await waitFor((): void => {
-    expect(visibleTaskNames("21")).toEqual(["21任务12"]);
-    expect(visibleTaskNames("22")).toEqual(["22任务6"]);
     expect(button("任务类型").textContent).toContain("校对");
+    expect(button("展开企划21", section("21"))).toBeDefined();
   });
+  await expandGroup("21");
+  await expandGroup("22");
+  expect(visibleTaskNames("21")).toEqual(["21任务12"]);
+  expect(visibleTaskNames("22")).toEqual(["22任务6"]);
   expect(container.querySelector<HTMLInputElement>("input")?.value).toBe("百合");
   for (const request of requests.filter((url) => url.pathname.endsWith("/plaza"))) {
     expect(Object.fromEntries(request.searchParams)).toMatchObject({
@@ -223,6 +230,7 @@ test("任务类型按 ID 查询，切换重置两层页码，清除恢复全部"
   await mount("?keep=1&page=2");
   await waitFor((): void => expect(button("任务类型").disabled).toBe(false));
   expect(lastPlazaRequest()?.searchParams.has("baseTaskId")).toBe(false);
+  await expandGroup("21");
   await chooseTaskPage("21", 2);
   expect(visibleTaskNames("21")[0]).toBe("21任务6");
   await chooseFilter("任务类型", "翻译");
@@ -230,8 +238,10 @@ test("任务类型按 ID 查询，切换重置两层页码，清除恢复全部"
     expect(lastPlazaRequest()?.searchParams.get("baseTaskId")).toBe("101");
     expect(lastPlazaRequest()?.searchParams.get("pageNum")).toBe("1");
     expect(container.querySelector("output")?.textContent).toBe("?keep=1&taskType=101");
-    expect(visibleTaskNames("21")[0]).toBe("21任务0");
+    expect(visibleTaskNames("21")).toEqual([]);
   });
+  await expandGroup("21");
+  expect(visibleTaskNames("21")[0]).toBe("21任务0");
   await click("下一页");
   await waitFor((): void => {
     expect(lastPlazaRequest()?.searchParams.get("pageNum")).toBe("2");
@@ -270,6 +280,7 @@ test("任务类型与关键词、企划类型、排序和阶段组合并在接�
     expect(lastPlazaRequest()?.searchParams.get("sortBy")).toBe("MOST");
     expect(lastPlazaRequest()?.searchParams.get("stageScope")).toBe("CURRENT");
   });
+  await expandGroup("21");
   groups = [];
   await click("接取");
   await waitFor((): void => expect(container.textContent).toContain("当前没有待接取任务"));
@@ -283,6 +294,8 @@ test("任务类型选项失败可重试，不影响大厅列表", async (): Prom
   await mount();
   await waitFor((): void => expect(container.textContent).toContain("任务类型加载失败"));
   expect(button("任务类型").disabled).toBe(true);
+  expect(visibleTaskNames("21")).toEqual([]);
+  await expandGroup("21");
   expect(visibleTaskNames("21")).toEqual(["21任务0"]);
   taskTypesFail = false;
   await click("重试任务类型");
@@ -294,16 +307,18 @@ test("任务类型选项失败可重试，不影响大厅列表", async (): Prom
 test("切换阶段重置企划和任务页码，说明操作保留任务页码", async (): Promise<void> => {
   groups = [makeGroup("21", 7)];
   await mount();
-  await waitFor((): void =>
-    expect(visibleTaskNames("21")).toEqual(
-      groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
-    ),
+  await waitFor((): void => expect(section("21").textContent).toContain("组缺 7"));
+  expect(visibleTaskNames("21")).toEqual([]);
+  await expandGroup("21");
+  expect(visibleTaskNames("21")).toEqual(
+    groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
   );
   await click("下一页");
   await waitFor((): void => {
     expect(requests.at(-1)?.searchParams.get("pageNum")).toBe("2");
     expect(container.querySelector("output")?.textContent).toBe("?keep=1&page=2");
   });
+  await expandGroup("21");
   await click("下一页任务");
   expect(visibleTaskNames("21")).toEqual(["21任务6"]);
   await click("当前阶段说明");
@@ -316,26 +331,33 @@ test("切换阶段重置企划和任务页码，说明操作保留任务页码",
     expect(requests.at(-1)?.searchParams.get("stageScope")).toBe("CURRENT");
     expect(requests.at(-1)?.searchParams.get("sortBy")).toBe("WAIT");
     expect(container.querySelector("output")?.textContent).toBe("?keep=1&stageScope=CURRENT");
-    expect(visibleTaskNames("21")).toEqual(
-      groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
-    );
+    expect(visibleTaskNames("21")).toEqual([]);
+    expect(button("展开企划21", section("21"))).toBeDefined();
   });
+  await expandGroup("21");
+  expect(visibleTaskNames("21")).toEqual(
+    groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
+  );
   await click("后退");
   await waitFor((): void => {
     expect(container.querySelector("output")?.textContent).toBe("?keep=1&page=2&taskPage_21=2");
-    expect(visibleTaskNames("21")).toEqual(["21任务6"]);
+    expect(visibleTaskNames("21")).toEqual([]);
     expect(button("全部阶段").getAttribute("aria-pressed")).toBe("true");
     expect(button("当前阶段").getAttribute("aria-pressed")).toBe("false");
   });
+  await expandGroup("21");
+  expect(visibleTaskNames("21")).toEqual(["21任务6"]);
 });
 
 test("企划独立翻页，末页只展示剩余任务，单页不显示分页", async (): Promise<void> => {
   groups = [makeGroup("21", 13), makeGroup("22", 7), makeGroup("23", 6)];
   await mount();
-  await waitFor((): void =>
-    expect(visibleTaskNames("21")).toEqual(
-      groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
-    ),
+  await waitFor((): void => expect(section("23").textContent).toContain("组缺 6"));
+  await expandGroup("21");
+  await expandGroup("22");
+  await expandGroup("23");
+  expect(visibleTaskNames("21")).toEqual(
+    groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
   );
   expect(button("上一页任务", section("21")).disabled).toBe(true);
   expect(section("23").querySelector("nav")).toBeNull();
@@ -359,10 +381,11 @@ test("企划独立翻页，末页只展示剩余任务，单页不显示分页",
 test("选择页码直接跳转，其他企划和企划列表页码保持不变", async (): Promise<void> => {
   groups = [makeGroup("21", 19), makeGroup("22", 7)];
   await mount("?keep=1&page=2");
-  await waitFor((): void =>
-    expect(visibleTaskNames("21")).toEqual(
-      groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
-    ),
+  await waitFor((): void => expect(section("22").textContent).toContain("组缺 7"));
+  await expandGroup("21");
+  await expandGroup("22");
+  expect(visibleTaskNames("21")).toEqual(
+    groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
   );
   await chooseTaskPage("21", 4);
   expect(visibleTaskNames("21")).toEqual(["21任务18"]);
@@ -381,10 +404,10 @@ test("选择页码直接跳转，其他企划和企划列表页码保持不变",
 test("刷新后末页任务减少时回退到有效页，任务恢复后不跳回旧页", async (): Promise<void> => {
   groups = [makeGroup("21", 13)];
   await mount();
-  await waitFor((): void =>
-    expect(visibleTaskNames("21")).toEqual(
-      groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
-    ),
+  await waitFor((): void => expect(section("21").textContent).toContain("组缺 13"));
+  await expandGroup("21");
+  expect(visibleTaskNames("21")).toEqual(
+    groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
   );
   await click("下一页任务");
   await click("下一页任务");
@@ -405,6 +428,30 @@ test("刷新后末页任务减少时回退到有效页，任务恢复后不跳�
       groups[0]!.tasks.slice(6, 12).map((task): string => task.nodeName),
     );
   });
+});
+
+test("企划可独立展开收起，任务翻页在卡片网格底部居中", async (): Promise<void> => {
+  groups = [makeGroup("21", 7), makeGroup("22", 1)];
+  await mount();
+  await waitFor((): void => expect(section("22").textContent).toContain("组缺 1"));
+  expect(visibleTaskNames("21")).toEqual([]);
+  expect(visibleTaskNames("22")).toEqual([]);
+  await expandGroup("21");
+  expect(visibleTaskNames("21")).toHaveLength(6);
+  expect(visibleTaskNames("22")).toEqual([]);
+  const nav = section("21").querySelector("nav");
+  const header = section("21").firstElementChild;
+  expect(nav?.className).toContain("justify-center");
+  expect(header?.contains(nav)).toBe(false);
+  expect(nav?.previousElementSibling?.id).toBeTruthy();
+  await expandGroup("22");
+  expect(visibleTaskNames("22")).toEqual(["22任务0"]);
+  expect(section("22").querySelector("nav")).toBeNull();
+  await click("收起企划21", section("21"));
+  expect(visibleTaskNames("21")).toEqual([]);
+  expect(section("21").querySelector("nav")).toBeNull();
+  expect(visibleTaskNames("22")).toEqual(["22任务0"]);
+  expect(button("收起企划22", section("22"))).toBeDefined();
 });
 
 test("默认全部阶段，说明点击不改变筛选或 URL，切换与历史保持原值", async (): Promise<void> => {

@@ -245,6 +245,41 @@ test.each([
   expect(loader).not.toHaveBeenCalled();
 });
 
+test("已登录直接访问登录页时进入企划列表", async (): Promise<void> => {
+  const loader = vi.fn(() => null);
+  const page = "/src/pages/login.tsx";
+  const routes = createRoutes(
+    [{ path: "/login", handle: { page } }],
+    {
+      [page]: async () => {
+        throw new TypeError("missing module");
+      },
+    },
+    {
+      "/src/routeLoaders/login.ts": { loader },
+    },
+  );
+  await mount([...routes, { path: "/dashboard/planning", element: <h2>企划列表</h2> }], "/login");
+  expect(router.state.location.pathname).toBe("/dashboard/planning");
+  expect(container.textContent).toContain("企划列表");
+  expect(container.querySelector("[role=alert]")).toBeNull();
+  expect(loader).not.toHaveBeenCalled();
+});
+
+test("未登录仍可以打开登录页", async (): Promise<void> => {
+  session.token = "";
+  const routes = createRoutes(
+    [{ path: "/login", handle: { page: "/src/pages/login.tsx" } }],
+    {
+      "/src/pages/login.tsx": async () => ({ default: () => <h2>登录页面</h2> }),
+    },
+    {},
+  );
+  await mount(routes, "/login");
+  expect(router.state.location.pathname).toBe("/login");
+  expect(container.textContent).toContain("登录页面");
+});
+
 test("普通页面渲染异常由静态边界捕获", async (): Promise<void> => {
   const routes = createRoutes(
     fileRoutes,
