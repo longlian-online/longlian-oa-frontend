@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Loader2, Plus, Trash2, UserRound } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { useConfirm } from "@/hooks/useConfirm";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { createAdmin, deleteAdmin } from "@/api/admin";
 import AdminLayout from "@/components/AdminLayout";
@@ -42,6 +43,7 @@ export default function AdminsPage() {
     Awaited<ReturnType<typeof deleteAdmin>>,
     Parameters<typeof deleteAdmin>
   >({ mutationFn: (args) => deleteAdmin(...args), invalidate: [["adminAdmins"]], scope: "admin" });
+  const confirm = useConfirm();
   const [page, setPage] = usePageQuery();
   const saving = createAdminMutation.isPending || deleteAdminMutation.isPending;
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -72,7 +74,13 @@ export default function AdminsPage() {
 
   async function handleDelete(admin: AdminVO): Promise<void> {
     try {
-      if (!window.confirm(`确定删除管理员「${admin.username}」吗？`)) return;
+      const confirmed = await confirm({
+        title: "删除管理员？",
+        description: `确定删除管理员「${admin.username}」吗？`,
+        confirmText: "删除",
+        variant: "destructive",
+      });
+      if (!confirmed) return;
       await deleteAdminMutation.mutateAsync([admin.id]);
       $tip("管理员已删除", "success");
     } catch {

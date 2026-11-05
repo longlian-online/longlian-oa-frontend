@@ -1,3 +1,4 @@
+import { withQuery } from "@/api/queryString";
 import { orgAdminRequest } from "@/api/request";
 
 import type {
@@ -40,17 +41,6 @@ import type {
 } from "@/types/organizationAdmin";
 
 export type { OrganizationResourceStatus } from "@/types/organizationAdmin";
-
-function withQuery(path: string, params: Record<string, string | number | undefined>): string {
-  const searchParams = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== "") {
-      searchParams.set(key, String(value));
-    }
-  });
-  const query = searchParams.toString();
-  return query ? `${path}?${query}` : path;
-}
 
 export async function getOrganizationInfo(): Promise<OrganizationInfoVO> {
   return orgAdminRequest("/orgadmin/organizations");
@@ -356,8 +346,6 @@ export async function changeBaseTaskStatus(
     body: JSON.stringify({ status }),
   });
 }
-
-export const changeOrganizationBaseTaskStatus = changeBaseTaskStatus;
 
 export async function createOrganizationTaskTemplate(
   dto: OrganizationTaskTemplateCreateDTO,

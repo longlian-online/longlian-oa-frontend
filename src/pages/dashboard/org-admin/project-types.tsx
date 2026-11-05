@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, Edit3, Loader2, Plus, Search, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, Edit3, Loader2, Plus, Trash2, XCircle } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
@@ -10,11 +10,14 @@ import {
   deleteOrganizationProjectType,
   updateOrganizationProjectType,
 } from "@/api/organizationAdmin";
+import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
+import KeywordSearch from "@/components/KeywordSearch";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import ProjectTypeCustomFormEditor from "@/components/ProjectTypeCustomFormEditor";
 import { $tip } from "@/components/tip";
+import { readInt32 } from "@/lib/int32";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -135,13 +138,8 @@ function OrganizationProjectTypesContent() {
         $tip("请输入企划类型名称", "error");
         return;
       }
-      const normalizedPriority = Number(priority);
-      if (
-        !priority.trim() ||
-        !Number.isInteger(normalizedPriority) ||
-        normalizedPriority < -2147483648 ||
-        normalizedPriority > 2147483647
-      ) {
+      const normalizedPriority = readInt32(priority);
+      if (normalizedPriority === null) {
         $tip("优先级必须为 32 位整数", "error");
         return;
       }
@@ -217,21 +215,12 @@ function OrganizationProjectTypesContent() {
           <h1 className="text-xl font-bold text-foreground">企划类型</h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <div className="relative w-64 max-w-full">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchText}
-              placeholder="搜索类型"
-              className="pl-9"
-              onChange={(event) => setSearchText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleSearch();
-              }}
-            />
-          </div>
-          <Button type="button" variant="outline" onClick={handleSearch}>
-            搜索
-          </Button>
+          <KeywordSearch
+            value={searchText}
+            placeholder="搜索类型"
+            onChange={setSearchText}
+            onSearch={handleSearch}
+          />
           <Button type="button" onClick={openCreateDialog}>
             <Plus className="size-4" />
             新增类型
@@ -244,10 +233,7 @@ function OrganizationProjectTypesContent() {
           加载失败，重试
         </Button>
       ) : loading ? (
-        <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 size-4 animate-spin" />
-          正在加载企划类型...
-        </div>
+        <CenteredLoading message="正在加载企划类型..." />
       ) : types.length === 0 ? (
         <EmptyState
           title={keyword ? "没有匹配的企划类型" : "暂无企划类型"}

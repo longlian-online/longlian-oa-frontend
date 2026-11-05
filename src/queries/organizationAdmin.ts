@@ -14,7 +14,10 @@ import {
   getOrganizationTaskTemplateList,
 } from "@/api/organizationAdmin";
 import type { ApiQueryOptions } from "@/lib/apiQuery";
-import type { MemberListFilters } from "@/pages/dashboard/org-admin/memberListFilters";
+import {
+  MEMBER_LIST_DEFAULTS,
+  type MemberListFilters,
+} from "@/pages/dashboard/org-admin/memberListFilters";
 import type {
   DeletionRequestVO,
   JoinApplicationVO,
@@ -36,15 +39,8 @@ import type {
 export const ORGANIZATION_ADMIN_PAGE_SIZE = 10;
 export const ORGANIZATION_ADMIN_CARD_PAGE_SIZE = 8;
 
-export const INITIAL_MEMBER_LIST_FILTERS: MemberListFilters = {
-  keyword: "",
-  startJoinedTime: "",
-  endJoinedTime: "",
-  orderDir: "DESC",
-};
-
 export function organizationMembersQuery(
-  appliedFilters: MemberListFilters = INITIAL_MEMBER_LIST_FILTERS,
+  appliedFilters: MemberListFilters = MEMBER_LIST_DEFAULTS,
   page = 1,
 ): ApiQueryOptions<OrganizationPageResult<OrganizationMemberVO>> {
   return {

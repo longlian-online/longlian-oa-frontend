@@ -1,6 +1,10 @@
-import { useRef, useState } from "react";
-import { FileUp, ImagePlus, Loader2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Eye, FileUp, ImagePlus, Loader2, X } from "lucide-react";
 
+import {
+  closeAttachmentPreview,
+  openAttachmentPreview,
+} from "@/components/AttachmentPreview/previewSession";
 import RemoteImage from "@/components/RemoteImage";
 import { Button } from "@/components/ui/button";
 import { useUploadFile } from "@/hooks/useUploadFile";
@@ -39,8 +43,12 @@ export default function FileUpload({
   onChange,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const previewOwner = useRef(Symbol("task-submit-preview"));
   const { uploading, uploadFile } = useUploadFile();
   const [isDragging, setIsDragging] = useState(false);
+  const [localFile, setLocalFile] = useState<File | null>(null);
+
+  useEffect(() => () => closeAttachmentPreview(previewOwner.current), []);
 
   const handleUpload = async (file: File): Promise<void> => {
     if (!file) return;
@@ -52,6 +60,7 @@ export default function FileUpload({
         accept,
         maxSize,
       });
+      if (bizType === "task_submit") setLocalFile(file);
       onChange(uploadedFile);
     } catch {
       // 失败提示由接口层或预签名上传逻辑显示。
@@ -177,7 +186,34 @@ export default function FileUpload({
           >
             {value.fileName}
           </p>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={() => onChange(null)}>
+          {bizType === "task_submit" && localFile && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`预览 ${localFile.name}`}
+              onClick={() =>
+                openAttachmentPreview({
+                  owner: previewOwner.current,
+                  fileName: localFile.name,
+                  file: localFile,
+                })
+              }
+            >
+              <Eye />
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="移除文件"
+            onClick={() => {
+              setLocalFile(null);
+              closeAttachmentPreview(previewOwner.current);
+              onChange(null);
+            }}
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>

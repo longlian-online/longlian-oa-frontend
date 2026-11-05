@@ -4,6 +4,7 @@ import { Building2, ImagePlus, Loader2, Save } from "lucide-react";
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { updateOrganizationInfo } from "@/api/organizationAdmin";
 import { organizationInfoQuery } from "@/queries/organizationAdmin";
+import CenteredLoading from "@/components/CenteredLoading";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import FileUpload from "@/components/FileUpload";
 import { $tip } from "@/components/tip";
@@ -82,12 +83,7 @@ function OrganizationSettingsContent() {
     return <Button onClick={() => void organizationQuery.refetch()}>加载失败，重试</Button>;
 
   if (loading) {
-    return (
-      <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 size-4 animate-spin" />
-        正在加载组织信息...
-      </div>
-    );
+    return <CenteredLoading message="正在加载组织信息..." />;
   }
 
   return (

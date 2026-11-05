@@ -51,7 +51,7 @@ export default function ProductReleaseNotice(): ReactElement | null {
         if (!next) void dismiss(false);
       }}
     >
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{formatProductVersion(release.version)}</DialogTitle>
           <DialogDescription>{release.summary}</DialogDescription>
@@ -78,7 +78,7 @@ function ReleaseBody({
   olderCount: number;
 }): ReactElement {
   return (
-    <div className="flex max-h-80 flex-col gap-4 overflow-y-auto">
+    <div className="flex max-h-96 flex-col gap-4 overflow-y-auto">
       <ReleaseMarkdown text={content} />
       {olderCount > 0 ? (
         <p className="text-sm text-muted-foreground">另有 {olderCount} 条更早的更新</p>

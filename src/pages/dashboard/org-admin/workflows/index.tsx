@@ -1,10 +1,11 @@
 import { useLocation, useNavigate } from "react-router";
 import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
-import { Loader2, Search, Workflow } from "lucide-react";
+import { Search, Workflow } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { changeTaskTemplateStatus } from "@/api/organizationAdmin";
+import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
@@ -110,10 +111,7 @@ function OrganizationAdminWorkflowsContent() {
       {listQuery.isError && !listQuery.data ? (
         <Button onClick={() => void listQuery.refetch()}>加载失败，重试</Button>
       ) : loading ? (
-        <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          正在加载工作流...
-        </div>
+        <CenteredLoading message="正在加载工作流..." />
       ) : templates.length === 0 ? (
         <EmptyState
           icon={<Workflow className="h-5 w-5 text-muted-foreground" />}
