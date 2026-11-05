@@ -305,7 +305,7 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
         </div>
         <StageTimeline groups={groups} currentStageSort={currentStageSort} />
       </div>
-      <div className="h-[520px] bg-muted/20">
+      <div className="h-[420px] bg-muted/20">
         <ReactFlow<TaskFlowNode, Edge>
           nodes={flowNodes}
           edges={edges}
