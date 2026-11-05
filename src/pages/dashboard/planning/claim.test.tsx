@@ -247,6 +247,7 @@ type Entry = (typeof entries)[number];
 function open(entry: Entry): HTMLButtonElement {
   if (entry.startsWith("大厅")) {
     render(<TaskPlaza />);
+    act(() => click(button("展开测试企划")));
     return button("接取", entry === "大厅后续阶段" ? 1 : 0);
   }
   render(<WorkflowInstance itemId="21" canManage={false} />);
@@ -342,6 +343,7 @@ for (const entry of entries) {
 
 test("大厅允许不同任务并发接取且各自只反馈本次自动加入结果", async (): Promise<void> => {
   render(<TaskPlaza />);
+  act(() => click(button("展开测试企划")));
   const first = button("接取", 0);
   const second = button("接取", 1);
   const firstResponse = claimResponse;

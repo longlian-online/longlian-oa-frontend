@@ -2,7 +2,15 @@ import { Popover } from "@base-ui/react/popover";
 import { useMutationState } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState, type ReactElement } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
-import { ArrowUpDown, ChevronLeft, ChevronRight, Info, Filter, Sparkles } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Filter,
+  Sparkles,
+} from "lucide-react";
 
 import { scopedKey } from "@/lib/queryKeys";
 import { readPage, withPage } from "@/lib/pageQuery";
@@ -370,6 +378,8 @@ interface ProjectGroupSectionProps {
 
 function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionProps): ReactElement {
   const location = useLocation();
+  const panelId = useId();
+  const [expanded, setExpanded] = useState(false);
   const [page, setPage] = usePageQuery(plazaTaskPageKey(group.projectId));
   const totalPages = Math.max(1, Math.ceil(group.tasks.length / TASK_PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -410,72 +420,92 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
           </Badge>
         </Link>
         <span className="shrink-0 text-xs text-muted-foreground">组缺 {group.pendingCount}</span>
-        {totalPages > 1 && (
-          <nav aria-label={`${group.title}任务分页`} className="flex shrink-0 items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              aria-label="上一页任务"
-              disabled={currentPage === 1}
-              onClick={() => setPage(currentPage - 1)}
-            >
-              <ChevronLeft aria-hidden="true" />
-            </Button>
-            <Select
-              value={String(currentPage)}
-              onValueChange={(value: string | null): void => {
-                if (value !== null) setPage(Number(value));
-              }}
-            >
-              <SelectTrigger
-                aria-label="选择任务页码"
-                title="选择页码，快速跳转"
-                className="min-w-20"
-              >
-                <SelectValue aria-live="polite" aria-atomic="true">
-                  {currentPage} / {totalPages}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent
-                align="end"
-                alignItemWithTrigger={false}
-                className="max-h-[min(16rem,var(--available-height))]"
-              >
-                <SelectGroup>
-                  {Array.from({ length: totalPages }, (_, index) => (
-                    <SelectItem key={index + 1} value={String(index + 1)}>
-                      第 {index + 1} 页
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              aria-label="下一页任务"
-              disabled={currentPage === totalPages}
-              onClick={() => setPage(currentPage + 1)}
-            >
-              <ChevronRight aria-hidden="true" />
-            </Button>
-          </nav>
-        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="shrink-0 text-muted-foreground"
+          aria-expanded={expanded}
+          aria-controls={expanded ? panelId : undefined}
+          aria-label={expanded ? `收起${group.title}` : `展开${group.title}`}
+          onClick={() => setExpanded((open) => !open)}
+        >
+          {expanded ? "收起" : "展开"}
+          {expanded ? <ChevronDown aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
+        </Button>
       </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {visibleTasks.map((task) => (
-          <PlazaTaskCard
-            key={task.instanceId}
-            group={group}
-            task={task}
-            claiming={claiming.has(task.instanceId)}
-            onClaim={onClaim}
-          />
-        ))}
-      </div>
+      {expanded && (
+        <>
+          <div id={panelId} className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {visibleTasks.map((task) => (
+              <PlazaTaskCard
+                key={task.instanceId}
+                group={group}
+                task={task}
+                claiming={claiming.has(task.instanceId)}
+                onClaim={onClaim}
+              />
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <nav
+              aria-label={`${group.title}任务分页`}
+              className="mt-3 flex items-center justify-center gap-1"
+            >
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                aria-label="上一页任务"
+                disabled={currentPage === 1}
+                onClick={() => setPage(currentPage - 1)}
+              >
+                <ChevronLeft aria-hidden="true" />
+              </Button>
+              <Select
+                value={String(currentPage)}
+                onValueChange={(value: string | null): void => {
+                  if (value !== null) setPage(Number(value));
+                }}
+              >
+                <SelectTrigger
+                  aria-label="选择任务页码"
+                  title="选择页码，快速跳转"
+                  className="min-w-20"
+                >
+                  <SelectValue aria-live="polite" aria-atomic="true">
+                    {currentPage} / {totalPages}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent
+                  align="center"
+                  alignItemWithTrigger={false}
+                  className="max-h-[min(16rem,var(--available-height))]"
+                >
+                  <SelectGroup>
+                    {Array.from({ length: totalPages }, (_, index) => (
+                      <SelectItem key={index + 1} value={String(index + 1)}>
+                        第 {index + 1} 页
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                aria-label="下一页任务"
+                disabled={currentPage === totalPages}
+                onClick={() => setPage(currentPage + 1)}
+              >
+                <ChevronRight aria-hidden="true" />
+              </Button>
+            </nav>
+          )}
+        </>
+      )}
     </section>
   );
 }
