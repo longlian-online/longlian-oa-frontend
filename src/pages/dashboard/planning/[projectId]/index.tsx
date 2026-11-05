@@ -462,11 +462,6 @@ export default function ProjectDetail() {
                 )}
               </div>
             )}
-            {customFields.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                {customFields.length} 个自定义字段，展开查看
-              </p>
-            )}
           </div>
         </section>
 
