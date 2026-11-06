@@ -107,7 +107,7 @@ export default function TaskSubmitPanel({
     void getTaskDraft(taskInstanceId)
       .then((draft) => {
         if (!alive) return;
-        const restored = draft.values ?? {};
+        const restored = draft?.values ?? {};
         setValues(restored);
         setUploads(uploadsFromDraft(restored));
       })
