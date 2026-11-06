@@ -22,14 +22,16 @@ import {
 } from "@/components/AttachmentPreview/previewSession";
 import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
+import PaginationBar from "@/components/PaginationBar";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePageQuery } from "@/hooks/usePageQuery";
 import { formatBytes, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { organizationFilesQuery } from "@/queries/organizationAdmin";
+import { ORGANIZATION_FILE_PAGE_SIZE, organizationFilesQuery } from "@/queries/organizationAdmin";
 import type { OrgFileEntryVO } from "@/types/organizationAdmin";
 
 import {
@@ -58,8 +60,10 @@ function OrganizationFilesContent(): ReactElement {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const location = orgFileLocation(params);
-  const listQuery = useApiQuery(organizationFilesQuery(location.projectId, location.itemId));
+  const [page, setPage] = usePageQuery();
+  const listQuery = useApiQuery(organizationFilesQuery(location.projectId, location.itemId, page));
   const entries = listQuery.data?.entries ?? [];
+  const total = listQuery.data?.total ?? 0;
   const [view, setView] = useState<ExplorerView>("icons");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openingId, setOpeningId] = useState<string | null>(null);
@@ -75,7 +79,13 @@ function OrganizationFilesContent(): ReactElement {
 
   useEffect(() => {
     setSelectedId(null);
-  }, [location.projectId, location.itemId]);
+  }, [location.projectId, location.itemId, page]);
+
+  useEffect(() => {
+    if (!listQuery.data) return;
+    const lastPage = Math.max(1, Math.ceil(listQuery.data.total / ORGANIZATION_FILE_PAGE_SIZE));
+    if (page > lastPage) setPage(lastPage);
+  }, [listQuery.data, page, setPage]);
 
   useEffect(() => () => closeAttachmentPreview(previewOwner.current), []);
 
@@ -299,7 +309,7 @@ function OrganizationFilesContent(): ReactElement {
             <CenteredLoading message="正在读取文件夹" />
           ) : listQuery.isError ? (
             <EmptyState title="文件列表加载失败" description="请稍后重试。" />
-          ) : entries.length === 0 ? (
+          ) : entries.length === 0 && total === 0 ? (
             <EmptyState
               title={emptyText}
               description={
@@ -331,11 +341,18 @@ function OrganizationFilesContent(): ReactElement {
             />
           )}
         </div>
+        {total > ORGANIZATION_FILE_PAGE_SIZE && (
+          <div className="border-border border-t px-3 py-2">
+            <PaginationBar
+              page={page}
+              pageSize={ORGANIZATION_FILE_PAGE_SIZE}
+              total={total}
+              onPageChange={setPage}
+            />
+          </div>
+        )}
         <div className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-1.5 text-xs">
-          <span>
-            {entries.filter((entry) => entry.kind === "FOLDER").length} 个文件夹，
-            {entries.filter((entry) => entry.kind === "FILE").length} 个文件
-          </span>
+          <span>共 {total} 项</span>
           <span className="truncate">
             {selected?.kind === "FILE"
               ? `${selected.taskName ?? "任务"} · ${selected.fieldLabel ?? "文件"}`

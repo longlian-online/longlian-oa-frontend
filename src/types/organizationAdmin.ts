@@ -377,5 +377,6 @@ export interface OrgFileEntriesVO {
   projectTitle?: string | null;
   itemId?: string | null;
   itemTitle?: string | null;
+  total: number;
   entries: OrgFileEntryVO[];
 }
