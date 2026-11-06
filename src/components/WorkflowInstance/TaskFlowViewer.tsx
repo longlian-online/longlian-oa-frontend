@@ -33,6 +33,7 @@ interface TaskFlowViewerProps {
   onSelectNode: (nodeId: string) => void;
   onClaim: (instanceId: string) => void;
   onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
+  onSaveDraft: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
 }
 
 interface NodeGroup {
@@ -135,6 +136,7 @@ type TaskFlowNode = Node<
     canSubmit: boolean;
     onClaim: TaskFlowViewerProps["onClaim"];
     onSubmit: TaskFlowViewerProps["onSubmit"];
+    onSaveDraft: TaskFlowViewerProps["onSaveDraft"];
   },
   "task"
 >;
@@ -235,6 +237,7 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
                   .every((candidate) => candidate.taskStatus === "COMPLETED"),
                 onClaim: props.onClaim,
                 onSubmit: props.onSubmit,
+                onSaveDraft: props.onSaveDraft,
               },
             };
           }),
@@ -250,6 +253,7 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
       props.onSelectNode,
       props.onClaim,
       props.onSubmit,
+      props.onSaveDraft,
     ],
   );
   const [flowNodes, setFlowNodes] = useNodesState<TaskFlowNode>(initialNodes);

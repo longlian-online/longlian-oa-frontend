@@ -1,4 +1,5 @@
 import { request } from "@/api/request";
+import type { TaskSubmitValue } from "@/types/task";
 import type {
   ItemTaskFlowVO,
   ItemTaskInstanceVO,
@@ -81,6 +82,23 @@ export async function submitTask(instanceId: string, dto: TaskSubmitDTO): Promis
     method: "POST",
     body: JSON.stringify(dto),
   });
+}
+
+export async function getTaskDraft(
+  instanceId: string,
+): Promise<{ values: Record<string, TaskSubmitValue> }> {
+  return request(`/task/instance/${instanceId}/draft`);
+}
+
+export async function saveTaskDraft(instanceId: string, dto: TaskSubmitDTO): Promise<string> {
+  return request(`/task/instance/${instanceId}/draft`, {
+    method: "PUT",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function submitTaskDraft(instanceId: string): Promise<void> {
+  return request(`/task/instance/${instanceId}/draft/submit`, { method: "POST" });
 }
 
 export async function proxySubmitTask(instanceId: string, dto: TaskProxySubmitDTO): Promise<void> {

@@ -45,6 +45,8 @@ interface TaskDetailActions {
   onClaim: () => void;
   onAssign: () => void;
   onSubmit: () => void;
+  onSaveDraft: () => void;
+  hasExtraFields: boolean;
   onProxySubmit: () => void;
   onAbandon: () => void;
   onReject: () => void;
@@ -236,6 +238,16 @@ function TaskActions({
       )}
       {instance.status === "CLAIMED" && isMine && (
         <>
+          {actions.canSubmit && actions.hasExtraFields && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={actions.mutating}
+              onClick={actions.onSaveDraft}
+            >
+              暂存
+            </Button>
+          )}
           {actions.canSubmit && (
             <Button size="sm" disabled={actions.mutating} onClick={actions.onSubmit}>
               提交
@@ -453,6 +465,31 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
               </p>
             ) : (
               <>
+                {detail.draft && (
+                  <section className="mb-4 rounded-xl border" aria-label="暂存">
+                    <div className="flex flex-wrap items-center gap-2 p-3">
+                      <h3 className="text-sm font-semibold">暂存</h3>
+                      <Badge variant="outline">仅自己可见</Badge>
+                      <span className="min-w-0 flex-1 text-xs text-muted-foreground">
+                        {detail.draft.updatedAt ?? "时间未知"}
+                      </span>
+                    </div>
+                    <div className="border-t p-3 sm:p-4">
+                      {detail.draft.unreadable ? (
+                        <p className="text-sm text-muted-foreground">暂存内容无法解析展示。</p>
+                      ) : (
+                        <VersionFields
+                          fields={detail.draft.fields}
+                          openingId={openingId}
+                          onPreviewAttachment={handlePreviewAttachment}
+                          onDownloadAttachment={(attachment) =>
+                            void handleOpenAttachment(attachment)
+                          }
+                        />
+                      )}
+                    </div>
+                  </section>
+                )}
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold">版本记录</h3>
                   <span className="break-words text-xs text-muted-foreground">
