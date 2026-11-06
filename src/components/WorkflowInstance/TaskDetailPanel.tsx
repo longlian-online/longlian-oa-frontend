@@ -259,7 +259,7 @@ function TaskActions({
           重置
         </Button>
       )}
-      {instance.status === "COMPLETED" && actions.canReject && (
+      {instance.status === "COMPLETED" && !isMine && actions.canReject && (
         <Button
           size="sm"
           variant="destructive"
@@ -269,7 +269,7 @@ function TaskActions({
           打回
         </Button>
       )}
-      {actions.canOwnerCancel && (
+      {!isMine && actions.canOwnerCancel && (
         <Button
           size="sm"
           variant="destructive"
