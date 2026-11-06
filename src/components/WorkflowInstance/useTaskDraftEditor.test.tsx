@@ -19,6 +19,15 @@ const api = vi.hoisted(() => ({
   getTaskDraft: vi.fn(),
   saveTaskDraft: vi.fn(),
   submitTaskDraft: vi.fn(),
+  getTaskAttachmentDownload: vi.fn(),
+}));
+const preview = vi.hoisted(() => ({
+  openAttachmentPreview: vi.fn(),
+  closeAttachmentPreview: vi.fn(),
+}));
+vi.mock("@/components/AttachmentPreview/previewSession", () => preview);
+vi.mock("@/api/workflowInstance", () => ({
+  getTaskAttachmentDownload: api.getTaskAttachmentDownload,
 }));
 vi.mock("@/api/taskDraft", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/api/taskDraft")>()),
@@ -37,10 +46,8 @@ function createDraftDetail(instanceId = "1"): TaskDraftDetailVO {
     task: { instanceId, itemId: "2", revision: "0", status: "CLAIMED" },
     canSubmit: true,
     submitFields: [{ key: "text", label: "文本", type: "text", required: true, options: [] }],
-    draftRevision: "1",
     draft: {
       id: "3",
-      revision: "1",
       updatedAt: "2026-11-05 12:00:00",
       values: { text: "已暂存" },
       files: {},
@@ -105,15 +112,14 @@ test("restores saved fields and saves edits with their original revision", async
   expect(editor.isDirty).toBe(false);
   await act(async () => editor.changeValue("text", "修改后"));
   const saved = createDraftDetail();
-  saved.draftRevision = "2";
-  saved.draft!.revision = "2";
+  saved.draft!.id = "4";
   saved.draft!.values = { text: "修改后" };
   api.saveTaskDraft.mockResolvedValue(saved);
   await act(async () => editor.saveDraft());
   await flushUpdates();
   expect(api.saveTaskDraft).toHaveBeenCalledExactlyOnceWith("1", {
     expectedTaskRevision: "0",
-    expectedDraftRevision: "1",
+    expectedDraftId: "3",
     values: { text: "修改后" },
   });
   expect(editor.isDirty).toBe(false);
@@ -165,7 +171,7 @@ test("submits only saved revisions and invalidates task resources in the current
   });
   expect(api.submitTaskDraft).toHaveBeenCalledExactlyOnceWith("1", {
     expectedTaskRevision: "0",
-    expectedDraftRevision: "1",
+    draftId: "3",
   });
   for (const key of [
     ["flow"],
@@ -188,7 +194,6 @@ test("allows a partial first save while waiting for predecessors", async () => {
   const empty = createDraftDetail();
   empty.canSubmit = false;
   empty.draft = null;
-  empty.draftRevision = "0";
   api.getTaskDraft.mockResolvedValue(empty);
   api.saveTaskDraft.mockResolvedValue(createDraftDetail());
   await renderEditor();
@@ -198,7 +203,7 @@ test("allows a partial first save while waiting for predecessors", async () => {
   await act(async () => editor.saveDraft());
   expect(api.saveTaskDraft).toHaveBeenCalledExactlyOnceWith("1", {
     expectedTaskRevision: "0",
-    expectedDraftRevision: "0",
+    expectedDraftId: null,
     values: {},
   });
 });
@@ -207,7 +212,7 @@ test("preserves dirty fields across background refresh and adopts changes only o
   await renderEditor();
   await act(async () => editor.changeValue("text", "本地输入"));
   const refreshed = createDraftDetail();
-  refreshed.draftRevision = "2";
+  refreshed.draft!.id = "4";
   refreshed.draft!.values = { text: "其他窗口的修改" };
   await act(async () => {
     client.setQueryData(scopedKey(taskDraftQuery("1").key, "org"), refreshed);
@@ -266,6 +271,36 @@ test("isolates editor values and queries when switching organizations", async ()
 
 test("shares one query for simultaneous readers", async () => {
   await renderEditor("1", true);
+  expect(api.getTaskDraft).toHaveBeenCalledTimes(1);
+});
+
+test("previews saved files using the existing task attachment download endpoint", async () => {
+  const detail = createDraftDetail();
+  detail.submitFields.push({
+    key: "file",
+    label: "附件",
+    type: "file",
+    required: false,
+    options: [],
+  });
+  detail.draft!.values.file = { fileId: "99" };
+  detail.draft!.files["99"] = {
+    fileId: "99",
+    fileName: "成果.txt",
+    fileSize: 8,
+    fileMime: "text/plain",
+    availability: "available",
+  };
+  api.getTaskDraft.mockResolvedValue(detail);
+  api.getTaskAttachmentDownload.mockResolvedValue({ readUrl: "/signed/file" });
+  await renderEditor();
+  editor.previewFile("file");
+  const options = preview.openAttachmentPreview.mock.calls[0][0] as {
+    resolveUrl: (signal: AbortSignal) => Promise<string>;
+  };
+  const signal = new AbortController().signal;
+  expect(await options.resolveUrl(signal)).toBe("/signed/file");
+  expect(api.getTaskAttachmentDownload).toHaveBeenCalledExactlyOnceWith("1", "99", signal);
   expect(api.getTaskDraft).toHaveBeenCalledTimes(1);
 });
 

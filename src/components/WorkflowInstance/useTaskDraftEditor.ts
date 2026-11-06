@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/api/apiError";
 import { TASK_DRAFT_CONFLICT_MESSAGE } from "@/api/taskDraft";
@@ -10,7 +9,7 @@ import {
 import { $tip } from "@/components/tip";
 import { useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { useSaveTaskDraft, useSubmitTaskDraft } from "@/hooks/queries/useTaskDraftMutations";
-import { apiQueryOptions } from "@/lib/apiQuery";
+import { getTaskAttachmentDownload } from "@/api/workflowInstance";
 import { taskDraftQuery } from "@/queries/taskDraft";
 import type { UploadedFileInfo } from "@/types/file";
 import type { TaskSubmitValue } from "@/types/task";
@@ -22,7 +21,7 @@ import { areTaskFormValuesEqual } from "./taskForm";
 interface TaskDraftFormState {
   identity: string;
   taskRevision: string;
-  draftRevision: string;
+  draftId: string | null;
   savedValues: Record<string, TaskSubmitValue>;
   values: Record<string, TaskSubmitValue>;
   uploads: Record<string, UploadedFileInfo | null>;
@@ -65,7 +64,7 @@ function createDraftForm(detail: TaskDraftDetailVO, identity: string): TaskDraft
   return {
     identity,
     taskRevision: detail.task.revision,
-    draftRevision: detail.draftRevision,
+    draftId: detail.draft?.id ?? null,
     savedValues: detail.draft?.values ?? {},
     values: detail.draft?.values ?? {},
     uploads,
@@ -74,7 +73,6 @@ function createDraftForm(detail: TaskDraftDetailVO, identity: string): TaskDraft
 }
 
 export function useTaskDraftEditor(instanceId: string): TaskDraftEditor {
-  const client = useQueryClient();
   const session = useSessionSnapshot();
   const identity = JSON.stringify([session.appScope, session.orgId, instanceId]);
   const lifecycle = useRef(createItemLifecycle(identity));
@@ -111,7 +109,7 @@ export function useTaskDraftEditor(instanceId: string): TaskDraftEditor {
   const hasConflict = Boolean(
     form &&
     (form.hasRevisionConflict ||
-      detail?.draftRevision !== form.draftRevision ||
+      (detail?.draft?.id ?? null) !== form.draftId ||
       detail?.task.revision !== form.taskRevision),
   );
   const isDirty = Boolean(form && !areTaskFormValuesEqual(form.values, form.savedValues));
@@ -163,7 +161,7 @@ export function useTaskDraftEditor(instanceId: string): TaskDraftEditor {
     try {
       const saved = await saveMutation.mutateAsync({
         expectedTaskRevision: form.taskRevision,
-        expectedDraftRevision: form.draftRevision,
+        expectedDraftId: form.draftId,
         values: form.values,
       });
       if (isCurrent()) {
@@ -185,7 +183,7 @@ export function useTaskDraftEditor(instanceId: string): TaskDraftEditor {
     try {
       await submitMutation.mutateAsync({
         expectedTaskRevision: form.taskRevision,
-        expectedDraftRevision: form.draftRevision,
+        draftId: detail.draft.id,
       });
       return isCurrent();
     } catch (error) {
@@ -207,18 +205,10 @@ export function useTaskDraftEditor(instanceId: string): TaskDraftEditor {
       fileSize: file.fileSize ?? undefined,
       resolveUrl: async (signal): Promise<string> => {
         signal.throwIfAborted();
-        const fresh = await client.fetchQuery(apiQueryOptions(taskDraftQuery(instanceId), session));
+        const { readUrl } = await getTaskAttachmentDownload(instanceId, file.fileId, signal);
         signal.throwIfAborted();
         if (!isCurrent()) throw new DOMException("草稿已关闭", "AbortError");
-        if (
-          fresh.draftRevision !== form.draftRevision ||
-          fresh.task.revision !== form.taskRevision
-        ) {
-          throw new Error("草稿已更新，请重新加载后查看");
-        }
-        const url = fresh.draft?.files[file.fileId]?.readUrl;
-        if (!url) throw new Error("附件不可用，请重新上传并暂存");
-        return url;
+        return readUrl;
       },
     });
   }

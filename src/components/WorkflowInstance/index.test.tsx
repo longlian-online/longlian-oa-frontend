@@ -18,6 +18,7 @@ const api = vi.hoisted(() => ({
   getItemTaskInstances: vi.fn(),
   getTaskInstanceDetail: vi.fn(),
   getTaskSubmissionVersions: vi.fn(),
+  getTaskAttachmentDownload: vi.fn(),
   abandonTask: vi.fn(),
   claimTask: vi.fn(),
   assignTask: vi.fn(),
@@ -119,7 +120,6 @@ beforeEach(() => {
     },
     canSubmit: true,
     submitFields: [],
-    draftRevision: "0",
     draft: null,
   }));
   draftApi.saveTaskDraft.mockImplementation(async (id: string) => ({
@@ -131,8 +131,7 @@ beforeEach(() => {
     },
     canSubmit: true,
     submitFields: [],
-    draftRevision: "1",
-    draft: { id: "draft", revision: "1", updatedAt: "2026-11-05", values: {}, files: {} },
+    draft: { id: "9007199254740995", updatedAt: "2026-11-05", values: {}, files: {} },
   }));
   draftApi.submitTaskDraft.mockImplementation(async (id: string) => {
     tasks = tasks.map((entry) => (entry.id === id ? { ...entry, status: "COMPLETED" } : entry));
@@ -489,7 +488,7 @@ test("entry only selects the exact parallel slot; submission requires a separate
   expect(api.submitTask).not.toHaveBeenCalled();
   expect(draftApi.submitTaskDraft).toHaveBeenCalledExactlyOnceWith("slot2", {
     expectedTaskRevision: "9007199254740993",
-    expectedDraftRevision: "1",
+    draftId: "9007199254740995",
   });
   expect(tasks.map((entry) => entry.status)).toEqual(["CLAIMED", "COMPLETED", "CLAIMED"]);
   expect(document.querySelector("h2")?.textContent).toBe("第一话 · 翻译 · 2/3");
