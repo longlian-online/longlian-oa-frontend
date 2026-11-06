@@ -6,6 +6,7 @@ import {
   Download,
   Eye,
   File,
+  Trash2,
   FileImage,
   FileText,
   Folder,
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 
 import { ApiError } from "@/api/apiError";
-import { getOrganizationFileDownload } from "@/api/organizationAdmin";
+import { discardOrganizationFile, getOrganizationFileDownload } from "@/api/organizationAdmin";
 import {
   closeAttachmentPreview,
   openAttachmentPreview,
@@ -25,7 +26,8 @@ import EmptyState from "@/components/EmptyState";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
-import { useApiQuery } from "@/hooks/queries/useApiQuery";
+import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
+import { useConfirm } from "@/hooks/useConfirm";
 import { formatBytes, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { organizationFilesQuery } from "@/queries/organizationAdmin";
@@ -63,6 +65,12 @@ function OrganizationFilesContent(): ReactElement {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openingId, setOpeningId] = useState<string | null>(null);
   const previewOwner = useRef(Symbol("org-file-preview"));
+  const confirm = useConfirm();
+  const discardMutation = useApiMutation({
+    mutationFn: (entry: OrgFileEntryVO) =>
+      discardOrganizationFile(entry.taskInstanceId!, entry.fileId!, entry.fieldKey!),
+    invalidate: [["orgFiles"], ["taskDetail"], ["taskVersions"]],
+  });
   const selected = entries.find((entry) => entry.id === selectedId) ?? null;
   const parent = parentOrgFileLocation(location);
 
@@ -139,6 +147,25 @@ function OrganizationFilesContent(): ReactElement {
   const projectTitle = listQuery.data?.projectTitle || "企划";
   const itemTitle = listQuery.data?.itemTitle || "项目";
   const canOpenFile = selected?.kind === "FILE" && selected.availability === "available";
+  const canDiscard = selected?.kind === "FILE" && Boolean(selected.fieldKey && selected.fileId);
+
+  async function discardSelected(): Promise<void> {
+    if (!selected || !canDiscard || discardMutation.isPending) return;
+    const confirmed = await confirm({
+      title: "删除这个文件？",
+      description: `「${selected.name}」会从文件页消失，并标记为弃置。任务详情、历史版本和暂存里如果还引用它，会变成不可用。`,
+      confirmText: "删除",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+    try {
+      await discardMutation.mutateAsync(selected);
+      setSelectedId(null);
+      $tip("文件已删除", "success");
+    } catch {
+      /* QueryClient 统一显示最终错误。 */
+    }
+  }
   const emptyText = location.itemId
     ? "这个项目还没有提交文件"
     : location.projectId
@@ -147,11 +174,23 @@ function OrganizationFilesContent(): ReactElement {
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">文件</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          企划、项目，以及任务当前有效的提交文件。
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">文件</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            企划、项目，以及任务当前有效的提交文件。
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
+          disabled={!canDiscard || discardMutation.isPending}
+          onClick={() => void discardSelected()}
+        >
+          {discardMutation.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+          删除
+        </Button>
       </div>
       <section className="border-border bg-card flex h-[calc(100svh-13.5rem)] min-h-96 flex-col overflow-hidden rounded-xl border">
         <div className="border-border flex flex-wrap items-center gap-1 border-b px-2 py-2">

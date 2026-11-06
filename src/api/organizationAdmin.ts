@@ -284,6 +284,18 @@ export async function getOrganizationFileDownload(
   return orgAdminRequest(`/orgadmin/files/tasks/${taskInstanceId}/attachments/${fileId}/download`);
 }
 
+export async function discardOrganizationFile(
+  taskInstanceId: string,
+  fileId: string,
+  fieldKey: string,
+): Promise<void> {
+  const params = new URLSearchParams({ fieldKey });
+  return orgAdminRequest(
+    `/orgadmin/files/tasks/${taskInstanceId}/attachments/${fileId}?${params.toString()}`,
+    { method: "DELETE" },
+  );
+}
+
 export async function getOrganizationProjects(
   dto: OrganizationProjectListDTO,
 ): Promise<OrganizationPageResult<OrganizationProjectVO>> {

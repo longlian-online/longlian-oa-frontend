@@ -362,6 +362,7 @@ export interface OrgFileEntryVO {
   name: string;
   taskInstanceId?: string;
   taskName?: string;
+  fieldKey?: string;
   fieldLabel?: string;
   fileId?: string;
   fileSize?: number | null;
