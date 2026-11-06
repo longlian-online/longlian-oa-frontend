@@ -150,7 +150,7 @@ function makeGroup(projectId: string, taskCount: number): PlazaProjectGroup {
 }
 
 function section(projectId: string): HTMLElement {
-  const heading = Array.from(container.querySelectorAll("h2")).find(
+  const heading = Array.from(container.querySelectorAll("button span[title]")).find(
     (element): boolean => element.textContent === `企划${projectId}`,
   );
   const element = heading?.closest("section");
@@ -160,7 +160,7 @@ function section(projectId: string): HTMLElement {
 
 function visibleTaskNames(projectId: string): string[] {
   return Array.from(
-    section(projectId).querySelectorAll("span[title]"),
+    section(projectId).querySelectorAll(":scope > div[id] span[title]"),
     (element): string => element.textContent ?? "",
   );
 }
@@ -307,7 +307,9 @@ test("任务类型选项失败可重试，不影响大厅列表", async (): Prom
 test("切换阶段重置企划和任务页码，说明操作保留任务页码", async (): Promise<void> => {
   groups = [makeGroup("21", 7)];
   await mount();
-  await waitFor((): void => expect(section("21").textContent).toContain("组缺 7"));
+  await waitFor((): void =>
+    expect(section("21").querySelector('[aria-label="待接取任务数 7"]')).not.toBeNull(),
+  );
   expect(visibleTaskNames("21")).toEqual([]);
   await expandGroup("21");
   expect(visibleTaskNames("21")).toEqual(
@@ -352,7 +354,9 @@ test("切换阶段重置企划和任务页码，说明操作保留任务页码",
 test("企划独立翻页，末页只展示剩余任务，单页不显示分页", async (): Promise<void> => {
   groups = [makeGroup("21", 13), makeGroup("22", 7), makeGroup("23", 6)];
   await mount();
-  await waitFor((): void => expect(section("23").textContent).toContain("组缺 6"));
+  await waitFor((): void =>
+    expect(section("23").querySelector('[aria-label="待接取任务数 6"]')).not.toBeNull(),
+  );
   await expandGroup("21");
   await expandGroup("22");
   await expandGroup("23");
@@ -381,7 +385,9 @@ test("企划独立翻页，末页只展示剩余任务，单页不显示分页",
 test("选择页码直接跳转，其他企划和企划列表页码保持不变", async (): Promise<void> => {
   groups = [makeGroup("21", 19), makeGroup("22", 7)];
   await mount("?keep=1&page=2");
-  await waitFor((): void => expect(section("22").textContent).toContain("组缺 7"));
+  await waitFor((): void =>
+    expect(section("22").querySelector('[aria-label="待接取任务数 7"]')).not.toBeNull(),
+  );
   await expandGroup("21");
   await expandGroup("22");
   expect(visibleTaskNames("21")).toEqual(
@@ -404,7 +410,9 @@ test("选择页码直接跳转，其他企划和企划列表页码保持不变",
 test("刷新后末页任务减少时回退到有效页，任务恢复后不跳回旧页", async (): Promise<void> => {
   groups = [makeGroup("21", 13)];
   await mount();
-  await waitFor((): void => expect(section("21").textContent).toContain("组缺 13"));
+  await waitFor((): void =>
+    expect(section("21").querySelector('[aria-label="待接取任务数 13"]')).not.toBeNull(),
+  );
   await expandGroup("21");
   expect(visibleTaskNames("21")).toEqual(
     groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
@@ -433,10 +441,15 @@ test("刷新后末页任务减少时回退到有效页，任务恢复后不跳�
 test("企划可独立展开收起，任务翻页在卡片网格底部居中", async (): Promise<void> => {
   groups = [makeGroup("21", 7), makeGroup("22", 1)];
   await mount();
-  await waitFor((): void => expect(section("22").textContent).toContain("组缺 1"));
+  await waitFor((): void => expect(section("22").textContent).not.toContain("组缺"));
   expect(visibleTaskNames("21")).toEqual([]);
   expect(visibleTaskNames("22")).toEqual([]);
-  await expandGroup("21");
+  const detailsLink = section("21").querySelector("a");
+  expect(detailsLink?.textContent?.trim()).toBe("作品详细");
+  expect(detailsLink?.getAttribute("href")).toBe("/dashboard/planning/21");
+  const title = section("21").querySelector<HTMLElement>('button span[title="企划21"]');
+  await act(async (): Promise<void> => title!.click());
+  expect(button("收起企划21", section("21")).getAttribute("aria-expanded")).toBe("true");
   expect(visibleTaskNames("21")).toHaveLength(6);
   expect(visibleTaskNames("22")).toEqual([]);
   const nav = section("21").querySelector("nav");
