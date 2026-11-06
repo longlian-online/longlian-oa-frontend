@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type ReactElement } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import {
   ArrowUpDown,
+  ArrowRight,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -347,6 +348,15 @@ export default function TaskPlaza() {
       ) : (
         <>
           <div className="space-y-6">
+            <div className="flex items-center gap-4 border-b pb-3 text-xs font-medium text-muted-foreground">
+              <div className="grid min-w-0 flex-1 grid-cols-[1rem_minmax(0,1fr)_5rem_2.5rem] items-center gap-2">
+                <span aria-hidden="true" />
+                <span>作品</span>
+                <span>企划类型</span>
+                <span className="text-right">数量</span>
+              </div>
+              <span className="w-28 shrink-0 text-center">操作</span>
+            </div>
             {groups.map((group) => (
               <ProjectGroupSection
                 key={`${stageScope}-${selectedTaskType}-${group.projectId}`}
@@ -391,48 +401,65 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
 
   return (
     <section>
-      <div className="flex items-center gap-2 sm:gap-3">
-        <Link
-          to={`/dashboard/planning/${group.projectId}`}
-          state={{ ...location.state, listReturnTo: location.pathname + location.search }}
-          className="group flex min-w-0 flex-1 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-3"
-        >
-          {imageUrl ? (
-            <RemoteImage
-              src={imageUrl}
-              alt={group.title}
-              className="size-10 shrink-0 rounded-md border"
-              fallback={<span className="text-sm font-semibold">{group.title.slice(0, 2)}</span>}
-            />
-          ) : (
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-sm font-semibold text-muted-foreground">
-              {group.title.slice(0, 2)}
-            </div>
-          )}
-          <h2
-            title={group.title}
-            className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground group-hover:underline"
-          >
-            {group.title}
-          </h2>
-          <Badge variant="outline" className="shrink-0 font-normal">
-            {group.typeName}
-          </Badge>
-        </Link>
-        <span className="shrink-0 text-xs text-muted-foreground">组缺 {group.pendingCount}</span>
-        <Button
+      <div className="flex items-center gap-4 rounded-lg transition-colors hover:bg-muted/50 focus-within:bg-muted/50">
+        <button
           type="button"
-          variant="ghost"
-          size="sm"
-          className="shrink-0 text-muted-foreground"
+          className="group grid min-w-0 flex-1 cursor-pointer grid-cols-[auto_minmax(0,1fr)_5rem_2.5rem] items-center gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-expanded={expanded}
           aria-controls={expanded ? panelId : undefined}
           aria-label={expanded ? `收起${group.title}` : `展开${group.title}`}
           onClick={() => setExpanded((open) => !open)}
         >
-          {expanded ? "收起" : "展开"}
-          {expanded ? <ChevronDown aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
-        </Button>
+          {expanded ? (
+            <ChevronDown aria-hidden="true" className="size-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" />
+          )}
+          <span className="flex min-w-0 items-center gap-3">
+            {imageUrl ? (
+              <RemoteImage
+                src={imageUrl}
+                alt={group.title}
+                className="size-10 shrink-0 rounded-md border"
+                fallback={<span className="text-sm font-semibold">{group.title.slice(0, 2)}</span>}
+              />
+            ) : (
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-sm font-semibold text-muted-foreground">
+                {group.title.slice(0, 2)}
+              </div>
+            )}
+            <span
+              title={group.title}
+              className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground group-hover:underline"
+            >
+              {group.title}
+            </span>
+          </span>
+          <span className="min-w-0">
+            <Badge variant="outline" className="max-w-full font-normal" title={group.typeName}>
+              <span className="truncate">{group.typeName}</span>
+            </Badge>
+          </span>
+          <span
+            aria-label={`待接取任务数 ${group.pendingCount}`}
+            className="text-right text-xs text-muted-foreground tabular-nums"
+          >
+            {group.pendingCount}
+          </span>
+        </button>
+        <Link
+          to={`/dashboard/planning/${group.projectId}`}
+          state={{ ...location.state, listReturnTo: location.pathname + location.search }}
+          className="group/cta ml-auto inline-flex h-8 w-28 shrink-0 items-center justify-between gap-2 rounded-full border border-primary bg-primary py-1 pl-2.5 pr-1 text-xs font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-primary/30 dark:bg-primary/12 dark:text-primary dark:hover:border-primary/50 dark:hover:bg-primary/20 dark:hover:opacity-100 in-[[data-color-theme=pink]]:border-rose-300/45 in-[[data-color-theme=pink]]:bg-rose-100/70 in-[[data-color-theme=pink]]:text-rose-950 in-[[data-color-theme=pink]]:hover:border-rose-300/70 in-[[data-color-theme=pink]]:hover:bg-rose-100 in-[[data-color-theme=pink]]:hover:opacity-100 dark:in-[[data-color-theme=pink]]:border-rose-300/25 dark:in-[[data-color-theme=pink]]:bg-rose-300/10 dark:in-[[data-color-theme=pink]]:text-rose-100 dark:in-[[data-color-theme=pink]]:hover:border-rose-300/45 dark:in-[[data-color-theme=pink]]:hover:bg-rose-300/16"
+        >
+          作品详细
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15 dark:bg-primary/18 in-[[data-color-theme=pink]]:bg-rose-950/8 dark:in-[[data-color-theme=pink]]:bg-rose-100/12">
+            <ArrowRight
+              aria-hidden="true"
+              className="size-3.5 motion-safe:transition-transform motion-safe:duration-150 motion-safe:group-hover/cta:translate-x-0.5"
+            />
+          </span>
+        </Link>
       </div>
 
       {expanded && (

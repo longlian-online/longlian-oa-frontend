@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import { getTaskDraft } from "@/api/workflowInstance";
 import { Loader2 } from "lucide-react";
 
 import FileUpload from "@/components/FileUpload";
@@ -36,8 +38,29 @@ interface TaskSubmitPanelProps {
   submitting: boolean;
   title?: string;
   confirmLabel?: string;
+  skipRequired?: boolean;
+  restoreDraft?: boolean;
+  onSecondary?: (submission: TaskSubmitDTO) => Promise<boolean>;
+  secondaryLabel?: string;
   extra?: ReactNode;
   extraValid?: boolean;
+}
+
+function uploadsFromDraft(
+  values: Record<string, TaskSubmitValue>,
+): Record<string, UploadedFileInfo | null> {
+  const uploads: Record<string, UploadedFileInfo | null> = {};
+  for (const [key, value] of Object.entries(values)) {
+    if (value && typeof value === "object" && value.fileId) {
+      uploads[key] = {
+        fileId: value.fileId,
+        fileName: "已暂存附件",
+        fileSize: 0,
+        fileMime: "application/octet-stream",
+      };
+    }
+  }
+  return uploads;
 }
 
 export function validateRequiredFields(
@@ -66,24 +89,65 @@ export default function TaskSubmitPanel({
   submitting,
   title,
   confirmLabel = "提交",
+  skipRequired = false,
+  restoreDraft = false,
+  onSecondary,
+  secondaryLabel,
   extra,
   extraValid = true,
 }: TaskSubmitPanelProps) {
   const [values, setValues] = useState<Record<string, TaskSubmitValue>>({});
   const [uploads, setUploads] = useState<Record<string, UploadedFileInfo | null>>({});
+  const [restoring, setRestoring] = useState(restoreDraft);
   const submittingLock = useRef(false);
+
+  useEffect(() => {
+    if (!restoreDraft) return;
+    let alive = true;
+    void getTaskDraft(taskInstanceId)
+      .then((draft) => {
+        if (!alive) return;
+        const restored = draft.values ?? {};
+        setValues(restored);
+        setUploads(uploadsFromDraft(restored));
+      })
+      .finally(() => {
+        if (alive) setRestoring(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [restoreDraft, taskInstanceId]);
 
   async function handleSubmit(): Promise<void> {
     if (submittingLock.current) return;
-    const validationErrors = validateRequiredFields(submitFields, values);
-    if (validationErrors.length > 0) {
-      $tip(validationErrors[0], "error");
-      return;
+    if (!skipRequired) {
+      const validationErrors = validateRequiredFields(submitFields, values);
+      if (validationErrors.length > 0) {
+        $tip(validationErrors[0], "error");
+        return;
+      }
     }
 
     submittingLock.current = true;
     try {
       const succeeded = await onSubmit({ values });
+      if (succeeded) onOpenChange(false);
+    } finally {
+      submittingLock.current = false;
+    }
+  }
+
+  async function handleSecondary(): Promise<void> {
+    if (!onSecondary || submittingLock.current) return;
+    const validationErrors = validateRequiredFields(submitFields, values);
+    if (validationErrors.length > 0) {
+      $tip(validationErrors[0], "error");
+      return;
+    }
+    submittingLock.current = true;
+    try {
+      const succeeded = await onSecondary({ values });
       if (succeeded) onOpenChange(false);
     } finally {
       submittingLock.current = false;
@@ -107,7 +171,11 @@ export default function TaskSubmitPanel({
         </DialogHeader>
 
         {/* fieldset 默认 min-inline-size: min-content，超长文件名会把弹窗撑出边界 */}
-        <fieldset disabled={submitting} className="min-w-0 max-h-[60vh] space-y-3 overflow-y-auto">
+        <fieldset
+          disabled={submitting || restoring}
+          className="min-w-0 max-h-[60vh] space-y-3 overflow-y-auto"
+        >
+          {restoring && <p className="text-sm text-muted-foreground">正在读取暂存</p>}
           {extra}
           {submitFields.length === 0 ? (
             <div className="rounded-xl bg-secondary/60 p-4 text-sm text-muted-foreground">
@@ -188,7 +256,19 @@ export default function TaskSubmitPanel({
         </fieldset>
 
         <DialogFooter>
-          <Button disabled={submitting || !extraValid} onClick={() => void handleSubmit()}>
+          {onSecondary && (
+            <Button
+              variant="outline"
+              disabled={submitting || restoring || !extraValid}
+              onClick={() => void handleSecondary()}
+            >
+              {secondaryLabel}
+            </Button>
+          )}
+          <Button
+            disabled={submitting || restoring || !extraValid}
+            onClick={() => void handleSubmit()}
+          >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             {confirmLabel}
           </Button>

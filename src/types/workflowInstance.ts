@@ -69,6 +69,11 @@ export interface TaskInstanceDetailVO {
     submittedAt?: string;
     fields: TaskDetailField[];
   };
+  draft?: {
+    updatedAt?: string | null;
+    fields: TaskDetailField[];
+    unreadable: boolean;
+  } | null;
 }
 
 export interface ItemTaskFlowNodeUpdateDTO {

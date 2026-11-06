@@ -22,6 +22,7 @@ interface TaskNodeCardProps {
   canSubmit: boolean;
   onClaim: (instanceId: string) => void;
   onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
+  onSaveDraft: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
 }
 
 const STATUS_LABELS: Record<TaskInstanceStatus, string> = {
@@ -58,6 +59,7 @@ export default function TaskNodeCard({
   canSubmit,
   onClaim,
   onSubmit,
+  onSaveDraft,
 }: TaskNodeCardProps) {
   // taskStatus 为 null 明确表示后续节点尚未解锁，不能回退为任务实例状态。
   const status = node.taskStatus === undefined ? (instance?.status ?? null) : node.taskStatus;
@@ -130,14 +132,27 @@ export default function TaskNodeCard({
           </Button>
         )}
         {status === "CLAIMED" && isAssignedToMe && instance && canSubmit && (
-          <Button
-            size="xs"
-            className="relative z-10 w-full"
-            disabled={mutating}
-            onClick={() => onSubmit(instance, node)}
-          >
-            提交任务
-          </Button>
+          <div className="flex w-full gap-1">
+            {node.submitFields.length > 0 && (
+              <Button
+                size="xs"
+                variant="outline"
+                className="relative z-10"
+                disabled={mutating}
+                onClick={() => onSaveDraft(instance, node)}
+              >
+                暂存
+              </Button>
+            )}
+            <Button
+              size="xs"
+              className="relative z-10 min-w-0 flex-1"
+              disabled={mutating}
+              onClick={() => onSubmit(instance, node)}
+            >
+              提交任务
+            </Button>
+          </div>
         )}
         {status === "CLAIMED" && isAssignedToMe && !canSubmit && (
           <span className="text-xs text-muted-foreground">等待前置阶段完成</span>
