@@ -353,3 +353,28 @@ export interface OrganizationTaskTemplateDetailVO extends Omit<
 > {
   nodes: OrganizationTaskTemplateNodeVO[];
 }
+
+export type OrgFileEntryKind = "FOLDER" | "FILE";
+
+export interface OrgFileEntryVO {
+  id: string;
+  kind: OrgFileEntryKind;
+  name: string;
+  taskInstanceId?: string;
+  taskName?: string;
+  fieldLabel?: string;
+  fileId?: string;
+  fileSize?: number | null;
+  fileMime?: string | null;
+  availability?: "available" | "unavailable";
+  submitterName?: string;
+  submittedAt?: string;
+}
+
+export interface OrgFileEntriesVO {
+  projectId?: string | null;
+  projectTitle?: string | null;
+  itemId?: string | null;
+  itemTitle?: string | null;
+  entries: OrgFileEntryVO[];
+}

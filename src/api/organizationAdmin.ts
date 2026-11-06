@@ -28,6 +28,7 @@ import type {
   OrganizationTaskTemplateListDTO,
   OrganizationTaskTemplateVO,
   OrganizationUpdateDTO,
+  OrgFileEntriesVO,
   ProjectTypeCreateDTO,
   ProjectTypeListDTO,
   ProjectTypeUpdateDTO,
@@ -263,6 +264,24 @@ export async function deleteOrganizationPresetField(fieldId: string): Promise<vo
   return orgAdminRequest(`/orgadmin/preset-fields/${fieldId}`, {
     method: "DELETE",
   });
+}
+
+export async function getOrganizationFiles(
+  projectId?: string,
+  itemId?: string,
+): Promise<OrgFileEntriesVO> {
+  const params = new URLSearchParams();
+  if (projectId) params.set("projectId", projectId);
+  if (projectId && itemId) params.set("itemId", itemId);
+  const search = params.toString();
+  return orgAdminRequest(`/orgadmin/files${search ? `?${search}` : ""}`);
+}
+
+export async function getOrganizationFileDownload(
+  taskInstanceId: string,
+  fileId: string,
+): Promise<{ readUrl: string; expireAt: number }> {
+  return orgAdminRequest(`/orgadmin/files/tasks/${taskInstanceId}/attachments/${fileId}/download`);
 }
 
 export async function getOrganizationProjects(
