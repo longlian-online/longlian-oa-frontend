@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/api/apiError";
 import { TASK_DRAFT_CONFLICT_MESSAGE } from "@/api/taskDraft";
@@ -9,7 +10,7 @@ import {
 import { $tip } from "@/components/tip";
 import { useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { useSaveTaskDraft, useSubmitTaskDraft } from "@/hooks/queries/useTaskDraftMutations";
-import { getTaskAttachmentDownload } from "@/api/workflowInstance";
+import { apiQueryOptions } from "@/lib/apiQuery";
 import { taskDraftQuery } from "@/queries/taskDraft";
 import type { UploadedFileInfo } from "@/types/file";
 import type { TaskSubmitValue } from "@/types/task";
@@ -73,6 +74,7 @@ function createDraftForm(detail: TaskDraftDetailVO, identity: string): TaskDraft
 }
 
 export function useTaskDraftEditor(instanceId: string): TaskDraftEditor {
+  const client = useQueryClient();
   const session = useSessionSnapshot();
   const identity = JSON.stringify([session.appScope, session.orgId, instanceId]);
   const lifecycle = useRef(createItemLifecycle(identity));
@@ -205,10 +207,19 @@ export function useTaskDraftEditor(instanceId: string): TaskDraftEditor {
       fileSize: file.fileSize ?? undefined,
       resolveUrl: async (signal): Promise<string> => {
         signal.throwIfAborted();
-        const { readUrl } = await getTaskAttachmentDownload(instanceId, file.fileId, signal);
+        const fresh = await client.fetchQuery(apiQueryOptions(taskDraftQuery(instanceId), session));
         signal.throwIfAborted();
         if (!isCurrent()) throw new DOMException("草稿已关闭", "AbortError");
-        return readUrl;
+        if (
+          !fresh.draft ||
+          fresh.draft.id !== form.draftId ||
+          fresh.task.revision !== form.taskRevision
+        ) {
+          throw new Error("草稿已更新，请重新加载后查看");
+        }
+        const url = fresh.draft.files[file.fileId]?.readUrl;
+        if (!url) throw new Error("附件不可用，请重新上传并暂存");
+        return url;
       },
     });
   }

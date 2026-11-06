@@ -19,16 +19,12 @@ const api = vi.hoisted(() => ({
   getTaskDraft: vi.fn(),
   saveTaskDraft: vi.fn(),
   submitTaskDraft: vi.fn(),
-  getTaskAttachmentDownload: vi.fn(),
 }));
 const preview = vi.hoisted(() => ({
   openAttachmentPreview: vi.fn(),
   closeAttachmentPreview: vi.fn(),
 }));
 vi.mock("@/components/AttachmentPreview/previewSession", () => preview);
-vi.mock("@/api/workflowInstance", () => ({
-  getTaskAttachmentDownload: api.getTaskAttachmentDownload,
-}));
 vi.mock("@/api/taskDraft", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/api/taskDraft")>()),
   ...api,
@@ -274,7 +270,7 @@ test("shares one query for simultaneous readers", async () => {
   expect(api.getTaskDraft).toHaveBeenCalledTimes(1);
 });
 
-test("previews saved files using the existing task attachment download endpoint", async () => {
+test("refreshes draft attachment links and refuses files from a newer draft", async () => {
   const detail = createDraftDetail();
   detail.submitFields.push({
     key: "file",
@@ -290,9 +286,9 @@ test("previews saved files using the existing task attachment download endpoint"
     fileSize: 8,
     fileMime: "text/plain",
     availability: "available",
+    readUrl: "/signed/file",
   };
   api.getTaskDraft.mockResolvedValue(detail);
-  api.getTaskAttachmentDownload.mockResolvedValue({ readUrl: "/signed/file" });
   await renderEditor();
   editor.previewFile("file");
   const options = preview.openAttachmentPreview.mock.calls[0][0] as {
@@ -300,8 +296,11 @@ test("previews saved files using the existing task attachment download endpoint"
   };
   const signal = new AbortController().signal;
   expect(await options.resolveUrl(signal)).toBe("/signed/file");
-  expect(api.getTaskAttachmentDownload).toHaveBeenCalledExactlyOnceWith("1", "99", signal);
-  expect(api.getTaskDraft).toHaveBeenCalledTimes(1);
+  expect(api.getTaskDraft).toHaveBeenCalledTimes(2);
+  const newer = structuredClone(detail);
+  newer.draft!.id = "4";
+  api.getTaskDraft.mockResolvedValue(newer);
+  await expect(options.resolveUrl(signal)).rejects.toThrow("草稿已更新");
 });
 
 test("does not leave a disabled query in a loading state without a session", async () => {

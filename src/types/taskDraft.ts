@@ -6,6 +6,8 @@ export interface TaskDraftFileVO {
   fileSize: number | null;
   fileMime: string | null;
   availability: "available" | "unavailable";
+  readUrl?: string;
+  expiresAt?: number;
 }
 export interface TaskDraftTaskVO {
   instanceId: string;
