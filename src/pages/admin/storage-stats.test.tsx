@@ -31,7 +31,7 @@ const jia: StorageStatsVO = {
   id: "1",
   name: "甲组",
   status: "ENABLED",
-  occupiedBytes: 195,
+  occupiedBytes: 203,
   reclaimedBytes: 7,
   cover: category({
     unbound: { count: 1, bytes: 5 },
@@ -41,6 +41,7 @@ const jia: StorageStatsVO = {
   }),
   thumbnail: category({ active: { count: 1, bytes: 20 } }),
   taskSubmit: category({ active: { count: 1, bytes: 30 } }),
+  taskDraft: category({ active: { count: 1, bytes: 8 } }),
 };
 
 let container: HTMLDivElement | null = null;
@@ -98,12 +99,13 @@ describe("storage stats panel", () => {
     await renderPage();
 
     expect(container?.textContent).toContain("仍占用");
-    expect(container?.textContent).toContain("195 B");
+    expect(container?.textContent).toContain("203 B");
     expect(container?.textContent).toContain("已回收");
     expect(container?.textContent).toContain("7 B");
     expect(cells("封面")).toEqual(["封面", "1 · 5 B", "1 · 100 B", "1 · 40 B", "1 · 7 B"]);
     expect(cells("缩略图")).toEqual(["缩略图", "0", "1 · 20 B", "0", "0"]);
     expect(cells("任务附件")).toEqual(["任务附件", "0", "1 · 30 B", "0", "0"]);
+    expect(cells("任务草稿")).toEqual(["任务草稿", "0", "1 · 8 B", "0", "0"]);
     expect(getStorageStats).toHaveBeenCalledWith({
       orgName: "",
       pageNum: 1,

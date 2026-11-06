@@ -83,4 +83,5 @@ export interface StorageStatsVO {
   cover: StorageCategoryStatsVO;
   thumbnail: StorageCategoryStatsVO;
   taskSubmit: StorageCategoryStatsVO;
+  taskDraft: StorageCategoryStatsVO;
 }

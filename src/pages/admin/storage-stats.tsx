@@ -26,6 +26,7 @@ const CATEGORIES = [
   { key: "cover", label: "封面" },
   { key: "thumbnail", label: "缩略图" },
   { key: "taskSubmit", label: "任务附件" },
+  { key: "taskDraft", label: "任务草稿" },
 ] as const;
 
 function readState(
@@ -117,7 +118,7 @@ export default function StorageStatsPage() {
   return (
     <AdminLayout
       title="存储占用"
-      description="封面、缩略图和任务附件的占用。保留期内的废弃文件仍算占用，物理删除后算已回收。不含头像，数字只供参考。"
+      description="封面、缩略图、任务附件和任务草稿的占用。保留期内的废弃文件仍算占用，物理删除后算已回收。不含头像，数字只供参考。"
     >
       <Card>
         <CardContent className="p-4 sm:p-6">
