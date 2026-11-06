@@ -161,7 +161,7 @@ export default function TaskSubmitPanel({
                     />
                   ) : field.type === "file" ? (
                     <FileUpload
-                      bizType="task_draft"
+                      bizType="task_submit"
                       bizId={taskInstanceId}
                       value={uploads[field.key] ?? null}
                       title={`上传${field.label}`}
