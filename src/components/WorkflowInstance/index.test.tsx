@@ -164,6 +164,39 @@ async function fillReason(value: string): Promise<void> {
   });
 }
 
+test.each([true, false])("本人已接取任务只显示放弃（canManage=%s）", async (canManage) => {
+  tasks = [task({ assigneeId: "creator" })];
+  api.abandonTask.mockImplementation(async () => {
+    tasks = [task({ status: "PENDING", assigneeId: undefined })];
+  });
+  await mount(canManage);
+  expect(findButton("放弃")).toBeDefined();
+  expect(findButton("取消接取")).toBeUndefined();
+  await act(async () => findButton("放弃")?.click());
+  expect(api.abandonTask).toHaveBeenCalledWith("target", {
+    expectedRevision: "9007199254740993",
+  });
+  await vi.waitFor(() => expect(findButton("接取")).toBeDefined());
+});
+
+test.each([true, false])("本人已完成任务只显示重置（canManage=%s）", async (canManage) => {
+  tasks = [
+    task({ status: "COMPLETED", assigneeId: "creator" }),
+    task({ id: "next", sort: 3, assigneeId: "creator" }),
+  ];
+  api.resetTask.mockImplementation(async () => {
+    tasks = tasks.map((entry) => (entry.id === "target" ? { ...entry, status: "CLAIMED" } : entry));
+  });
+  await mount(canManage);
+  expect(findButton("重置")).toBeDefined();
+  expect(findButton("打回")).toBeUndefined();
+  await act(async () => findButton("重置")?.click());
+  expect(api.resetTask).toHaveBeenCalledWith("target");
+  expect(api.rejectTask).not.toHaveBeenCalled();
+  await vi.waitFor(() => expect(findButton("放弃")).toBeDefined());
+  expect(findButton("取消接取")).toBeUndefined();
+});
+
 test("owner cancellation refreshes task actions, while parallel completion and a blocked later assignee remain visible", async () => {
   tasks.push(
     task({ id: "parallel", status: "COMPLETED", parallelSort: 2 }),
