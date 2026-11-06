@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ReactElement } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   ArrowUp,
-  ChevronLeft,
   Download,
   Eye,
   File,
@@ -194,16 +193,6 @@ function OrganizationFilesContent(): ReactElement {
       </div>
       <section className="border-border bg-card flex h-[calc(100svh-13.5rem)] min-h-96 flex-col overflow-hidden rounded-xl border">
         <div className="border-border flex flex-wrap items-center gap-1 border-b px-2 py-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="后退"
-            disabled={!parent}
-            onClick={() => parent && go(parent)}
-          >
-            <ChevronLeft />
-          </Button>
           <Button
             type="button"
             variant="ghost"
