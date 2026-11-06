@@ -45,6 +45,8 @@ interface TaskDetailActions {
   onClaim: () => void;
   onAssign: () => void;
   onSubmit: () => void;
+  onSaveDraft: () => void;
+  hasExtraFields: boolean;
   onProxySubmit: () => void;
   onAbandon: () => void;
   onReject: () => void;
@@ -236,6 +238,16 @@ function TaskActions({
       )}
       {instance.status === "CLAIMED" && isMine && (
         <>
+          {actions.canSubmit && actions.hasExtraFields && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={actions.mutating}
+              onClick={actions.onSaveDraft}
+            >
+              暂存
+            </Button>
+          )}
           {actions.canSubmit && (
             <Button size="sm" disabled={actions.mutating} onClick={actions.onSubmit}>
               提交

@@ -9,7 +9,9 @@ import {
   proxySubmitTask,
   rejectTask,
   resetTask,
+  saveTaskDraft,
   submitTask,
+  submitTaskDraft,
 } from "@/api/workflowInstance";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -136,6 +138,10 @@ function ItemWorkflowInstance({
     instance: ItemTaskInstanceVO;
     node: ItemTaskNodeVO;
   } | null>(null);
+  const [draftTarget, setDraftTarget] = useState<{
+    instance: ItemTaskInstanceVO;
+    node: ItemTaskNodeVO;
+  } | null>(null);
   const [assignTarget, setAssignTarget] = useState<{
     instance: ItemTaskInstanceVO;
     title: string;
@@ -170,6 +176,7 @@ function ItemWorkflowInstance({
     if (handledEntry.current === taskInstanceId) return;
     handledEntry.current = taskInstanceId;
     setSubmitTarget(null);
+    setDraftTarget(null);
     const node = taskFlow.nodes.find((candidate) => candidate.taskInstanceId === taskInstanceId);
     const instance = instancesQuery.data.find((candidate) => candidate.id === taskInstanceId);
     if (!node || !instance) {
@@ -220,10 +227,56 @@ function ItemWorkflowInstance({
       $tip("请先完成前置阶段", "error");
       return;
     }
+    if (targetNode.submitFields.length === 0) {
+      void runInstanceAction(
+        instance.id,
+        () => submitTask(instance.id, { values: {} }),
+        "任务已提交",
+      );
+      return;
+    }
     setSubmitTarget({
       instance,
       node: targetNode,
     });
+  }
+
+  function openDraft(instance: ItemTaskInstanceVO, node?: ItemTaskNodeVO): void {
+    const targetNode = node ?? findNodeByInstance(instance, taskFlow?.nodes ?? []);
+    if (!targetNode || targetNode.submitFields.length === 0) return;
+    if (!isNodeUnlocked(targetNode, taskFlow?.nodes ?? [])) {
+      $tip("请先完成前置阶段", "error");
+      return;
+    }
+    setDraftTarget({ instance, node: targetNode });
+  }
+
+  async function handleSaveDraft(submission: TaskSubmitDTO): Promise<boolean> {
+    if (!draftTarget) return false;
+    const succeeded = await runInstanceAction(
+      draftTarget.instance.id,
+      () => saveTaskDraft(draftTarget.instance.id, submission).then(() => undefined),
+      "已暂存",
+    );
+    if (succeeded) setDraftTarget(null);
+    return succeeded;
+  }
+
+  async function handlePublishDraft(submission: TaskSubmitDTO): Promise<boolean> {
+    if (!draftTarget) return false;
+    const saved = await runInstanceAction(
+      draftTarget.instance.id,
+      () => saveTaskDraft(draftTarget.instance.id, submission).then(() => undefined),
+      "已暂存",
+    );
+    if (!saved) return false;
+    const succeeded = await runInstanceAction(
+      draftTarget.instance.id,
+      () => submitTaskDraft(draftTarget.instance.id),
+      "任务已提交",
+    );
+    if (succeeded) setDraftTarget(null);
+    return succeeded;
   }
 
   async function handleSubmit(submission: TaskSubmitDTO): Promise<boolean> {
@@ -460,6 +513,7 @@ function ItemWorkflowInstance({
           void runInstanceAction(instanceId, () => claimTask(instanceId), "任务已接取")
         }
         onSubmit={(instance, node) => openSubmit(instance, node)}
+        onSaveDraft={(instance, node) => openDraft(instance, node)}
       />
 
       {selectedNode ? (
@@ -509,6 +563,8 @@ function ItemWorkflowInstance({
                         ),
                       }),
                     onSubmit: () => openSubmit(selectedInstance),
+                    onSaveDraft: () => openDraft(selectedInstance),
+                    hasExtraFields: selectedNode.submitFields.length > 0,
                     onProxySubmit: () => openProxySubmit(selectedInstance),
                     onAbandon: () => void handleAbandon(selectedInstance.id),
                     onReject: () => setRejectTarget(selectedInstance),
@@ -522,6 +578,32 @@ function ItemWorkflowInstance({
         <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
           点击流程节点查看任务详情和操作。
         </div>
+      )}
+
+      {draftTarget && (
+        <TaskSubmitPanel
+          key={`draft:${draftTarget.instance.id}`}
+          open
+          taskInstanceId={draftTarget.instance.id}
+          taskName={formatTaskTitle(
+            taskFlow.itemTitle,
+            slotPosition(draftTarget.node, taskFlow.nodes),
+          )}
+          submitFields={draftTarget.node.submitFields}
+          title="暂存任务"
+          confirmLabel="暂存"
+          skipRequired
+          onSecondary={handlePublishDraft}
+          secondaryLabel="提交这份暂存"
+          onOpenChange={(open) => {
+            if (!open) setDraftTarget(null);
+          }}
+          submitting={
+            actionMutation.isPending &&
+            actionMutation.variables?.instanceId === draftTarget.instance.id
+          }
+          onSubmit={handleSaveDraft}
+        />
       )}
 
       {submitTarget && (

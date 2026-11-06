@@ -36,6 +36,9 @@ interface TaskSubmitPanelProps {
   submitting: boolean;
   title?: string;
   confirmLabel?: string;
+  skipRequired?: boolean;
+  onSecondary?: (submission: TaskSubmitDTO) => Promise<boolean>;
+  secondaryLabel?: string;
   extra?: ReactNode;
   extraValid?: boolean;
 }
@@ -66,6 +69,9 @@ export default function TaskSubmitPanel({
   submitting,
   title,
   confirmLabel = "提交",
+  skipRequired = false,
+  onSecondary,
+  secondaryLabel,
   extra,
   extraValid = true,
 }: TaskSubmitPanelProps) {
@@ -75,15 +81,33 @@ export default function TaskSubmitPanel({
 
   async function handleSubmit(): Promise<void> {
     if (submittingLock.current) return;
-    const validationErrors = validateRequiredFields(submitFields, values);
-    if (validationErrors.length > 0) {
-      $tip(validationErrors[0], "error");
-      return;
+    if (!skipRequired) {
+      const validationErrors = validateRequiredFields(submitFields, values);
+      if (validationErrors.length > 0) {
+        $tip(validationErrors[0], "error");
+        return;
+      }
     }
 
     submittingLock.current = true;
     try {
       const succeeded = await onSubmit({ values });
+      if (succeeded) onOpenChange(false);
+    } finally {
+      submittingLock.current = false;
+    }
+  }
+
+  async function handleSecondary(): Promise<void> {
+    if (!onSecondary || submittingLock.current) return;
+    const validationErrors = validateRequiredFields(submitFields, values);
+    if (validationErrors.length > 0) {
+      $tip(validationErrors[0], "error");
+      return;
+    }
+    submittingLock.current = true;
+    try {
+      const succeeded = await onSecondary({ values });
       if (succeeded) onOpenChange(false);
     } finally {
       submittingLock.current = false;
@@ -137,7 +161,7 @@ export default function TaskSubmitPanel({
                     />
                   ) : field.type === "file" ? (
                     <FileUpload
-                      bizType="task_submit"
+                      bizType="task_draft"
                       bizId={taskInstanceId}
                       value={uploads[field.key] ?? null}
                       title={`上传${field.label}`}
@@ -188,6 +212,15 @@ export default function TaskSubmitPanel({
         </fieldset>
 
         <DialogFooter>
+          {onSecondary && (
+            <Button
+              variant="outline"
+              disabled={submitting || !extraValid}
+              onClick={() => void handleSecondary()}
+            >
+              {secondaryLabel}
+            </Button>
+          )}
           <Button disabled={submitting || !extraValid} onClick={() => void handleSubmit()}>
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             {confirmLabel}

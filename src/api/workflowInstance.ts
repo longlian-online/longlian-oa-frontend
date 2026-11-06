@@ -83,6 +83,17 @@ export async function submitTask(instanceId: string, dto: TaskSubmitDTO): Promis
   });
 }
 
+export async function saveTaskDraft(instanceId: string, dto: TaskSubmitDTO): Promise<string> {
+  return request(`/task/instance/${instanceId}/draft`, {
+    method: "PUT",
+    body: JSON.stringify(dto),
+  });
+}
+
+export async function submitTaskDraft(instanceId: string): Promise<void> {
+  return request(`/task/instance/${instanceId}/draft/submit`, { method: "POST" });
+}
+
 export async function proxySubmitTask(instanceId: string, dto: TaskProxySubmitDTO): Promise<void> {
   return request(`/task/instance/${instanceId}/proxy-submit`, {
     method: "POST",
