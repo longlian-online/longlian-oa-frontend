@@ -9,7 +9,6 @@ import {
   proxySubmitTask,
   rejectTask,
   resetTask,
-  submitTask,
 } from "@/api/workflowInstance";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,7 @@ import { canReset, canReject, canOwnerCancel, canAssign, canProxySubmit } from "
 import AssignTaskDialog from "./AssignTaskDialog";
 import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
 import TaskFlowViewer from "./TaskFlowViewer";
-import TaskSubmitPanel from "./TaskSubmitPanel";
+import TaskDraftDialog from "./TaskDraftDialog";
 import ProxySubmitDialog from "./ProxySubmitDialog";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 
@@ -41,7 +40,6 @@ import type {
   ItemTaskNodeVO,
   TaskClaimResultVO,
   TaskProxySubmitDTO,
-  TaskSubmitDTO,
 } from "@/types/workflowInstance";
 
 interface WorkflowInstanceProps {
@@ -132,7 +130,7 @@ function ItemWorkflowInstance({
       ["plaza"],
     ],
   });
-  const [submitTarget, setSubmitTarget] = useState<{
+  const [draftTarget, setDraftTarget] = useState<{
     instance: ItemTaskInstanceVO;
     node: ItemTaskNodeVO;
   } | null>(null);
@@ -169,7 +167,7 @@ function ItemWorkflowInstance({
     if (!taskInstanceId || !taskFlow || !instancesQuery.data) return;
     if (handledEntry.current === taskInstanceId) return;
     handledEntry.current = taskInstanceId;
-    setSubmitTarget(null);
+    setDraftTarget(null);
     const node = taskFlow.nodes.find((candidate) => candidate.taskInstanceId === taskInstanceId);
     const instance = instancesQuery.data.find((candidate) => candidate.id === taskInstanceId);
     if (!node || !instance) {
@@ -210,32 +208,17 @@ function ItemWorkflowInstance({
     }
   }
 
-  function openSubmit(instance: ItemTaskInstanceVO, node?: ItemTaskNodeVO): void {
+  function openTaskDraft(instance: ItemTaskInstanceVO, node?: ItemTaskNodeVO): void {
     const targetNode = node ?? findNodeByInstance(instance, taskFlow?.nodes ?? []);
     if (!targetNode) {
       $tip("任务提交表单尚未加载，请重新加载任务流", "error");
       return;
     }
-    if (!isNodeUnlocked(targetNode, taskFlow?.nodes ?? [])) {
-      $tip("请先完成前置阶段", "error");
-      return;
-    }
-    setSubmitTarget({
+
+    setDraftTarget({
       instance,
       node: targetNode,
     });
-  }
-
-  async function handleSubmit(submission: TaskSubmitDTO): Promise<boolean> {
-    if (!submitTarget) return false;
-
-    const succeeded = await runInstanceAction(
-      submitTarget.instance.id,
-      () => submitTask(submitTarget.instance.id, submission),
-      "任务已提交",
-    );
-    if (succeeded) setSubmitTarget(null);
-    return succeeded;
   }
 
   function openProxySubmit(instance: ItemTaskInstanceVO): void {
@@ -459,7 +442,7 @@ function ItemWorkflowInstance({
         onClaim={(instanceId) =>
           void runInstanceAction(instanceId, () => claimTask(instanceId), "任务已接取")
         }
-        onSubmit={(instance, node) => openSubmit(instance, node)}
+        onEditDraft={(instance, node) => openTaskDraft(instance, node)}
       />
 
       {selectedNode ? (
@@ -508,7 +491,7 @@ function ItemWorkflowInstance({
                           slotPosition(selectedNode, taskFlow.nodes),
                         ),
                       }),
-                    onSubmit: () => openSubmit(selectedInstance),
+                    onEditDraft: () => openTaskDraft(selectedInstance),
                     onProxySubmit: () => openProxySubmit(selectedInstance),
                     onAbandon: () => void handleAbandon(selectedInstance.id),
                     onReject: () => setRejectTarget(selectedInstance),
@@ -524,26 +507,15 @@ function ItemWorkflowInstance({
         </div>
       )}
 
-      {submitTarget && (
-        <TaskSubmitPanel
-          key={submitTarget.instance.id}
-          open
-          taskInstanceId={submitTarget.instance.id}
+      {draftTarget && (
+        <TaskDraftDialog
+          key={draftTarget.instance.id}
+          taskInstanceId={draftTarget.instance.id}
           taskName={formatTaskTitle(
             taskFlow.itemTitle,
-            slotPosition(submitTarget.node, taskFlow.nodes),
+            slotPosition(draftTarget.node, taskFlow.nodes),
           )}
-          submitFields={submitTarget.node.submitFields}
-          onOpenChange={(open) => {
-            if (!open) {
-              setSubmitTarget(null);
-            }
-          }}
-          submitting={
-            actionMutation.isPending &&
-            actionMutation.variables?.instanceId === submitTarget.instance.id
-          }
-          onSubmit={handleSubmit}
+          onClose={() => setDraftTarget(null)}
         />
       )}
 

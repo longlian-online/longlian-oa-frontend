@@ -21,6 +21,9 @@ interface FileUploadProps extends FileValidationOptions {
   fillHeight?: boolean;
   className?: string;
   invalid?: boolean;
+  disabled?: boolean;
+  onUploadingChange?: (uploading: boolean) => void;
+  onPreview?: () => void;
   onChange: (file: UploadedFileInfo | null) => void;
 }
 
@@ -41,6 +44,9 @@ export default function FileUpload({
   className,
   invalid = false,
   onChange,
+  disabled = false,
+  onUploadingChange,
+  onPreview,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const previewOwner = useRef(Symbol("task-submit-preview"));
@@ -51,7 +57,8 @@ export default function FileUpload({
   useEffect(() => () => closeAttachmentPreview(previewOwner.current), []);
 
   const handleUpload = async (file: File): Promise<void> => {
-    if (!file) return;
+    if (!file || disabled) return;
+    onUploadingChange?.(true);
 
     try {
       const uploadedFile = await uploadFile(file, {
@@ -64,6 +71,8 @@ export default function FileUpload({
       onChange(uploadedFile);
     } catch {
       // 失败提示由接口层或预签名上传逻辑显示。
+    } finally {
+      onUploadingChange?.(false);
     }
   };
 
@@ -89,7 +98,7 @@ export default function FileUpload({
   const handleDrop = async (event: React.DragEvent<HTMLButtonElement>): Promise<void> => {
     event.preventDefault();
     setIsDragging(false);
-    if (uploading) return;
+    if (uploading || disabled) return;
 
     const file = event.dataTransfer.files?.[0];
     if (!file) return;
@@ -146,7 +155,7 @@ export default function FileUpload({
       ) : (
         <button
           type="button"
-          disabled={uploading}
+          disabled={uploading || disabled}
           aria-invalid={invalid || undefined}
           onClick={() => inputRef.current?.click()}
           onDragOver={handleDragOver}
@@ -186,19 +195,24 @@ export default function FileUpload({
           >
             {value.fileName}
           </p>
-          {bizType === "task_submit" && localFile && (
+          {((bizType === "task_submit" && localFile) || onPreview) && (
             <Button
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label={`预览 ${localFile.name}`}
-              onClick={() =>
+              aria-label={`预览 ${value.fileName}`}
+              onClick={() => {
+                if (onPreview) {
+                  onPreview();
+                  return;
+                }
+                if (!localFile) return;
                 openAttachmentPreview({
                   owner: previewOwner.current,
                   fileName: localFile.name,
                   file: localFile,
-                })
-              }
+                });
+              }}
             >
               <Eye />
             </Button>

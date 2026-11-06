@@ -12,6 +12,8 @@ export interface MyTaskListDTO {
 }
 
 export interface MyTaskInstanceVO {
+  hasDraft?: boolean;
+  draftUpdatedAt?: string;
   instanceId: string;
   itemId: string;
   projectId: string;

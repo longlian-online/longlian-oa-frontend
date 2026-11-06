@@ -32,7 +32,7 @@ interface TaskFlowViewerProps {
   initialNodeId?: string;
   onSelectNode: (nodeId: string) => void;
   onClaim: (instanceId: string) => void;
-  onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
+  onEditDraft: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
 }
 
 interface NodeGroup {
@@ -134,7 +134,7 @@ type TaskFlowNode = Node<
     mutating: boolean;
     canSubmit: boolean;
     onClaim: TaskFlowViewerProps["onClaim"];
-    onSubmit: TaskFlowViewerProps["onSubmit"];
+    onEditDraft: TaskFlowViewerProps["onEditDraft"];
   },
   "task"
 >;
@@ -234,7 +234,7 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
                   .filter((candidate) => candidate.sort < node.sort)
                   .every((candidate) => candidate.taskStatus === "COMPLETED"),
                 onClaim: props.onClaim,
-                onSubmit: props.onSubmit,
+                onEditDraft: props.onEditDraft,
               },
             };
           }),
@@ -249,7 +249,7 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
       props.nodes,
       props.onSelectNode,
       props.onClaim,
-      props.onSubmit,
+      props.onEditDraft,
     ],
   );
   const [flowNodes, setFlowNodes] = useNodesState<TaskFlowNode>(initialNodes);

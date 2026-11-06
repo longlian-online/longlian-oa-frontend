@@ -97,6 +97,9 @@ export function MyTaskColumn({
               >
                 <span className="min-w-0 truncate text-sm font-medium text-foreground">
                   {titleText}
+                  {task.hasDraft && (
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">有草稿</span>
+                  )}
                 </span>
                 <span className="flex min-w-0 items-center justify-end gap-2 text-xs text-muted-foreground">
                   {!submittable && (

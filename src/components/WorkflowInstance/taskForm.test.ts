@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 
-import { validateRequiredFields } from "./TaskSubmitPanel";
+import { validateRequiredFields } from "./taskForm";
 import type { TaskFormField } from "@/types/task";
 
 describe("task submit validation", () => {

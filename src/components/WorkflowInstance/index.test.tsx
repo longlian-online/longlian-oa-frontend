@@ -27,6 +27,15 @@ const api = vi.hoisted(() => ({
   submitTask: vi.fn(),
 }));
 vi.mock("@/api/workflowInstance", () => api);
+const draftApi = vi.hoisted(() => ({
+  getTaskDraft: vi.fn(),
+  saveTaskDraft: vi.fn(),
+  submitTaskDraft: vi.fn(),
+}));
+vi.mock("@/api/taskDraft", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/api/taskDraft")>()),
+  ...draftApi,
+}));
 const members = vi.hoisted(() => ({ listMemberOptions: vi.fn() }));
 vi.mock("@/api/member", () => members);
 vi.mock("@/components/tip", () => ({ $tip: vi.fn() }));
@@ -101,6 +110,34 @@ beforeEach(() => {
     };
   });
   api.getTaskSubmissionVersions.mockResolvedValue([]);
+  draftApi.getTaskDraft.mockImplementation(async (id: string) => ({
+    task: {
+      instanceId: id,
+      itemId: "item",
+      revision: tasks.find((t) => t.id === id)!.revision,
+      status: "CLAIMED",
+    },
+    canSubmit: true,
+    submitFields: [],
+    draftRevision: "0",
+    draft: null,
+  }));
+  draftApi.saveTaskDraft.mockImplementation(async (id: string) => ({
+    task: {
+      instanceId: id,
+      itemId: "item",
+      revision: tasks.find((t) => t.id === id)!.revision,
+      status: "CLAIMED",
+    },
+    canSubmit: true,
+    submitFields: [],
+    draftRevision: "1",
+    draft: { id: "draft", revision: "1", updatedAt: "2026-11-05", values: {}, files: {} },
+  }));
+  draftApi.submitTaskDraft.mockImplementation(async (id: string) => {
+    tasks = tasks.map((entry) => (entry.id === id ? { ...entry, status: "COMPLETED" } : entry));
+    return { status: "COMPLETED" };
+  });
   api.abandonTask.mockResolvedValue(undefined);
   api.rejectTask.mockResolvedValue(undefined);
   members.listMemberOptions.mockResolvedValue([{ userId: "member", nickname: "小明" }]);
@@ -441,14 +478,19 @@ test("entry only selects the exact parallel slot; submission requires a separate
   await mountEntry("slot2");
   expect(document.querySelector("[role='dialog']")).toBeNull();
   expect(document.querySelector("h2")?.textContent).toBe("第一话 · 翻译 · 2/3");
-  await act(async () => findButton("提交")?.click());
+  await act(async () => findButton("编辑草稿")?.click());
   expect(document.querySelector("[role='dialog']")?.textContent).toContain("第一话 · 翻译 · 2/3");
+  await act(async () => dialogButton("暂存").click());
   const submit = [...document.querySelectorAll("[role='dialog'] button")].find(
-    (button) => button.textContent === "提交",
+    (button) => button.textContent === "正式提交",
   );
   await act(async () => (submit as HTMLButtonElement).click());
   await vi.waitFor(() => expect(document.querySelector("[role='dialog']")).toBeNull());
-  expect(api.submitTask).toHaveBeenCalledExactlyOnceWith("slot2", { values: {} });
+  expect(api.submitTask).not.toHaveBeenCalled();
+  expect(draftApi.submitTaskDraft).toHaveBeenCalledExactlyOnceWith("slot2", {
+    expectedTaskRevision: "9007199254740993",
+    expectedDraftRevision: "1",
+  });
   expect(tasks.map((entry) => entry.status)).toEqual(["CLAIMED", "COMPLETED", "CLAIMED"]);
   expect(document.querySelector("h2")?.textContent).toBe("第一话 · 翻译 · 2/3");
 });

@@ -47,7 +47,7 @@ vi.mock("@/components/WorkflowInstance/TaskFlowViewer", () => ({
           mutating={props.mutatingInstanceId === node.taskInstanceId}
           canSubmit={false}
           onClaim={props.onClaim}
-          onSubmit={props.onSubmit}
+          onEditDraft={props.onEditDraft}
         />
       ))}
     </div>

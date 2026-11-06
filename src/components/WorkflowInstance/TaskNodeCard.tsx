@@ -21,7 +21,7 @@ interface TaskNodeCardProps {
   mutating: boolean;
   canSubmit: boolean;
   onClaim: (instanceId: string) => void;
-  onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
+  onEditDraft: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
 }
 
 const STATUS_LABELS: Record<TaskInstanceStatus, string> = {
@@ -57,7 +57,7 @@ export default function TaskNodeCard({
   mutating,
   canSubmit,
   onClaim,
-  onSubmit,
+  onEditDraft,
 }: TaskNodeCardProps) {
   // taskStatus 为 null 明确表示后续节点尚未解锁，不能回退为任务实例状态。
   const status = node.taskStatus === undefined ? (instance?.status ?? null) : node.taskStatus;
@@ -134,7 +134,7 @@ export default function TaskNodeCard({
             size="xs"
             className="relative z-10 w-full"
             disabled={mutating}
-            onClick={() => onSubmit(instance, node)}
+            onClick={() => onEditDraft(instance, node)}
           >
             提交任务
           </Button>

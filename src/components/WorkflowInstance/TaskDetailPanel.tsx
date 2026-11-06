@@ -44,7 +44,7 @@ interface TaskDetailActions {
   onOwnerCancel: () => void;
   onClaim: () => void;
   onAssign: () => void;
-  onSubmit: () => void;
+  onEditDraft: () => void;
   onProxySubmit: () => void;
   onAbandon: () => void;
   onReject: () => void;
@@ -236,11 +236,9 @@ function TaskActions({
       )}
       {instance.status === "CLAIMED" && isMine && (
         <>
-          {actions.canSubmit && (
-            <Button size="sm" disabled={actions.mutating} onClick={actions.onSubmit}>
-              提交
-            </Button>
-          )}
+          <Button size="sm" disabled={actions.mutating} onClick={actions.onEditDraft}>
+            编辑草稿
+          </Button>
           <Button
             size="sm"
             variant="outline"

@@ -1,8 +1,7 @@
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-import FileUpload from "@/components/FileUpload";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,19 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 
 import type { UploadedFileInfo } from "@/types/file";
 import type { TaskFormField, TaskSubmitValue } from "@/types/task";
 import type { TaskSubmitDTO } from "@/types/workflowInstance";
+
+import TaskFormFields from "./TaskFormFields";
+import { validateRequiredFields } from "./taskForm";
 
 interface TaskSubmitPanelProps {
   open: boolean;
@@ -40,22 +33,6 @@ interface TaskSubmitPanelProps {
   extraValid?: boolean;
 }
 
-export function validateRequiredFields(
-  fields: TaskFormField[],
-  values: Record<string, TaskSubmitValue>,
-): string[] {
-  return fields.flatMap((field) => {
-    if (!field.required) return [];
-    const value = values[field.key];
-    const isEmpty =
-      value === null ||
-      value === undefined ||
-      (typeof value === "string" && value.trim() === "") ||
-      (typeof value === "object" && value.fileId.trim() === "");
-    return isEmpty ? [`请填写${field.label}`] : [];
-  });
-}
-
 export default function TaskSubmitPanel({
   open,
   taskInstanceId,
@@ -68,7 +45,7 @@ export default function TaskSubmitPanel({
   confirmLabel = "提交",
   extra,
   extraValid = true,
-}: TaskSubmitPanelProps) {
+}: TaskSubmitPanelProps): ReactElement {
   const [values, setValues] = useState<Record<string, TaskSubmitValue>>({});
   const [uploads, setUploads] = useState<Record<string, UploadedFileInfo | null>>({});
   const submittingLock = useRef(false);
@@ -109,82 +86,25 @@ export default function TaskSubmitPanel({
         {/* fieldset 默认 min-inline-size: min-content，超长文件名会把弹窗撑出边界 */}
         <fieldset disabled={submitting} className="min-w-0 max-h-[60vh] space-y-3 overflow-y-auto">
           {extra}
-          {submitFields.length === 0 ? (
-            <div className="rounded-xl bg-secondary/60 p-4 text-sm text-muted-foreground">
-              该任务没有额外提交字段，确认后会直接提交。
-            </div>
-          ) : (
-            submitFields.map((field) => {
-              const value = values[field.key];
-              const textValue = typeof value === "string" ? value : "";
-              return (
-                <div
-                  key={field.key}
-                  className="flex min-w-0 flex-col gap-2 text-sm text-foreground"
-                >
-                  <label htmlFor={`task-field-${field.key}`}>
-                    {field.label}
-                    {field.required && <span className="ml-1 text-destructive">*</span>}
-                  </label>
-                  {field.type === "textarea" ? (
-                    <Textarea
-                      id={`task-field-${field.key}`}
-                      value={textValue}
-                      className="min-h-24 resize-none"
-                      onChange={(event) =>
-                        setValues((current) => ({ ...current, [field.key]: event.target.value }))
-                      }
-                    />
-                  ) : field.type === "file" ? (
-                    <FileUpload
-                      bizType="task_submit"
-                      bizId={taskInstanceId}
-                      value={uploads[field.key] ?? null}
-                      title={`上传${field.label}`}
-                      description="图片、文档、视频和音频不超过 50MB，压缩包不超过 500MB"
-                      onChange={(file) => {
-                        if (submittingLock.current) return;
-                        setUploads((current) => ({ ...current, [field.key]: file }));
-                        setValues((current) => ({
-                          ...current,
-                          [field.key]: file ? { fileId: file.fileId } : null,
-                        }));
-                      }}
-                    />
-                  ) : field.type === "select" ? (
-                    <Select
-                      disabled={submitting}
-                      value={textValue}
-                      onValueChange={(nextValue: string | null) =>
-                        setValues((current) => ({ ...current, [field.key]: nextValue ?? "" }))
-                      }
-                    >
-                      <SelectTrigger id={`task-field-${field.key}`} className="w-full">
-                        <SelectValue placeholder={`选择${field.label}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {field.options.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input
-                      id={`task-field-${field.key}`}
-                      type={field.type === "number" ? "number" : "text"}
-                      step={field.type === "number" ? "any" : undefined}
-                      value={textValue}
-                      onChange={(event) =>
-                        setValues((current) => ({ ...current, [field.key]: event.target.value }))
-                      }
-                    />
-                  )}
-                </div>
-              );
-            })
-          )}
+          <TaskFormFields
+            taskInstanceId={taskInstanceId}
+            submitFields={submitFields}
+            values={values}
+            uploads={uploads}
+            disabled={submitting}
+            onValueChange={(fieldKey, value) => {
+              if (submittingLock.current) return;
+              setValues((current) => ({ ...current, [fieldKey]: value }));
+            }}
+            onFileChange={(fieldKey, file) => {
+              if (submittingLock.current) return;
+              setUploads((current) => ({ ...current, [fieldKey]: file }));
+              setValues((current) => ({
+                ...current,
+                [fieldKey]: file ? { fileId: file.fileId } : null,
+              }));
+            }}
+          />
         </fieldset>
 
         <DialogFooter>
