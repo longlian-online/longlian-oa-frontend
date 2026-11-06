@@ -593,6 +593,7 @@ function ItemWorkflowInstance({
           title="暂存任务"
           confirmLabel="暂存"
           skipRequired
+          restoreDraft
           onSecondary={handlePublishDraft}
           secondaryLabel="提交这份暂存"
           onOpenChange={(open) => {
