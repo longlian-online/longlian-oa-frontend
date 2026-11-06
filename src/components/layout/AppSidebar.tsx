@@ -35,6 +35,11 @@ const orgAdminItems: readonly SidebarItem[] = [
     activePrefixes: ["/dashboard/org-admin/projects"],
   },
   {
+    to: "/dashboard/org-admin/files",
+    label: "文件",
+    activePrefixes: ["/dashboard/org-admin/files"],
+  },
+  {
     to: "/dashboard/org-admin/project-types",
     label: "企划类型",
     activePrefixes: ["/dashboard/org-admin/project-types"],
