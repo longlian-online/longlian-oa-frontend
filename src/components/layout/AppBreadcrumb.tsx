@@ -59,6 +59,7 @@ function getBreadcrumbItems(
   if (segments[1] === "org-admin") {
     const items: BreadcrumbItem[] = [{ label: "组织管理", to: "/dashboard/org-admin" }];
     if (segments[2] === "projects") items.push({ label: "企划" });
+    if (segments[2] === "files") items.push({ label: "文件" });
     if (segments[2] === "project-types") items.push({ label: "企划类型" });
     if (segments[2] === "preset-tags") items.push({ label: "标签" });
     if (segments[2] === "preset-fields") items.push({ label: "表单字段" });
@@ -102,6 +103,7 @@ export default function AppBreadcrumb() {
     else {
       const labels: Record<string, string> = {
         projects: "企划",
+        files: "文件",
         "project-types": "企划类型",
         "preset-tags": "标签",
         "preset-fields": "表单字段",

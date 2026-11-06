@@ -6,6 +6,7 @@ import {
   getOrganizationBaseTaskList,
   getOrganizationInfo,
   getOrganizationMembers,
+  getOrganizationFiles,
   getOrganizationProjects,
   getOrganizationProjectTypes,
   getOrganizationPresetFields,
@@ -29,6 +30,7 @@ import type {
   OrganizationMemberVO,
   OrganizationPageResult,
   OrganizationProjectVO,
+  OrgFileEntriesVO,
   OrganizationTaskTemplateDetailVO,
   OrganizationTaskTemplateVO,
   OrganizationPresetFieldVO,
@@ -205,6 +207,19 @@ export function organizationTemplateQuery(
     key: ["templates", "detail", templateId],
     queryFn: () => getOrganizationTaskTemplate(templateId!),
     enabled: Boolean(templateId),
+  };
+}
+
+export const ORGANIZATION_FILE_PAGE_SIZE = 50;
+
+export function organizationFilesQuery(
+  projectId?: string,
+  itemId?: string,
+  page = 1,
+): ApiQueryOptions<OrgFileEntriesVO> {
+  return {
+    key: ["orgFiles", projectId ?? "", itemId ?? "", page],
+    queryFn: () => getOrganizationFiles(projectId, itemId, page),
   };
 }
 
