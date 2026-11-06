@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Download, Eye, FileText, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, Eye, FileText, Info, Loader2 } from "lucide-react";
 
 import { ApiError } from "@/api/apiError";
 import {
@@ -20,6 +20,7 @@ import {
 import RemoteImage from "@/components/RemoteImage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type {
   ItemTaskInstanceVO,
   ItemTaskNodeVO,
@@ -45,6 +46,7 @@ interface TaskDetailActions {
   onClaim: () => void;
   onAssign: () => void;
   onEditDraft: () => void;
+  onSubmit: () => void;
   onProxySubmit: () => void;
   onAbandon: () => void;
   onReject: () => void;
@@ -202,6 +204,27 @@ function VersionFields({
   );
 }
 
+export function DraftSaveHint(): React.ReactElement {
+  const [open, setOpen] = useState(false);
+  return (
+    <TooltipProvider>
+      <Tooltip open={open} onOpenChange={setOpen}>
+        <TooltipTrigger
+          closeOnClick={false}
+          onClick={(event) => {
+            event.stopPropagation();
+            setOpen(true);
+          }}
+          render={<span role="img" aria-label="暂存说明" className="inline-flex text-current" />}
+        >
+          <Info aria-hidden="true" className="size-3.5" />
+        </TooltipTrigger>
+        <TooltipContent>暂时保存，仅个人可见</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 function TaskActions({
   actions,
   instance,
@@ -236,9 +259,20 @@ function TaskActions({
       )}
       {instance.status === "CLAIMED" && isMine && (
         <>
-          <Button size="sm" disabled={actions.mutating} onClick={actions.onEditDraft}>
-            编辑草稿
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={actions.mutating}
+            onClick={actions.onEditDraft}
+          >
+            暂存
+            <DraftSaveHint />
           </Button>
+          {actions.canSubmit && (
+            <Button size="sm" disabled={actions.mutating} onClick={actions.onSubmit}>
+              提交任务
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"

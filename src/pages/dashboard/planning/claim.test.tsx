@@ -48,6 +48,7 @@ vi.mock("@/components/WorkflowInstance/TaskFlowViewer", () => ({
           canSubmit={false}
           onClaim={props.onClaim}
           onEditDraft={props.onEditDraft}
+          onSubmit={props.onSubmit}
         />
       ))}
     </div>

@@ -477,7 +477,7 @@ test("entry only selects the exact parallel slot; submission requires a separate
   await mountEntry("slot2");
   expect(document.querySelector("[role='dialog']")).toBeNull();
   expect(document.querySelector("h2")?.textContent).toBe("第一话 · 翻译 · 2/3");
-  await act(async () => findButton("编辑草稿")?.click());
+  await act(async () => findButton("暂存")?.click());
   expect(document.querySelector("[role='dialog']")?.textContent).toContain("第一话 · 翻译 · 2/3");
   await act(async () => dialogButton("暂存").click());
   const submit = [...document.querySelectorAll("[role='dialog'] button")].find(

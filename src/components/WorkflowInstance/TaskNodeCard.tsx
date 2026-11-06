@@ -1,5 +1,7 @@
 import { CheckCircle2, Circle, Clock, Lock, UserRound } from "lucide-react";
 
+import { DraftSaveHint } from "./TaskDetailPanel";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +24,7 @@ interface TaskNodeCardProps {
   canSubmit: boolean;
   onClaim: (instanceId: string) => void;
   onEditDraft: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
+  onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
 }
 
 const STATUS_LABELS: Record<TaskInstanceStatus, string> = {
@@ -58,6 +61,7 @@ export default function TaskNodeCard({
   canSubmit,
   onClaim,
   onEditDraft,
+  onSubmit,
 }: TaskNodeCardProps) {
   // taskStatus 为 null 明确表示后续节点尚未解锁，不能回退为任务实例状态。
   const status = node.taskStatus === undefined ? (instance?.status ?? null) : node.taskStatus;
@@ -129,15 +133,29 @@ export default function TaskNodeCard({
             接取任务
           </Button>
         )}
-        {status === "CLAIMED" && isAssignedToMe && instance && canSubmit && (
-          <Button
-            size="xs"
-            className="relative z-10 w-full"
-            disabled={mutating}
-            onClick={() => onEditDraft(instance, node)}
-          >
-            提交任务
-          </Button>
+        {status === "CLAIMED" && isAssignedToMe && instance && (
+          <div className="flex w-full items-center gap-1">
+            <Button
+              size="xs"
+              variant="outline"
+              className="relative z-10"
+              disabled={mutating}
+              onClick={() => onEditDraft(instance, node)}
+            >
+              暂存
+              <DraftSaveHint />
+            </Button>
+            {canSubmit && (
+              <Button
+                size="xs"
+                className="relative z-10 min-w-0 flex-1"
+                disabled={mutating}
+                onClick={() => onSubmit(instance, node)}
+              >
+                提交任务
+              </Button>
+            )}
+          </div>
         )}
         {status === "CLAIMED" && isAssignedToMe && !canSubmit && (
           <span className="text-xs text-muted-foreground">等待前置阶段完成</span>

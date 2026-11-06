@@ -9,6 +9,7 @@ import {
   proxySubmitTask,
   rejectTask,
   resetTask,
+  submitTask,
 } from "@/api/workflowInstance";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import AssignTaskDialog from "./AssignTaskDialog";
 import OwnerTaskActionDialog from "./OwnerTaskActionDialog";
 import TaskFlowViewer from "./TaskFlowViewer";
 import TaskDraftDialog from "./TaskDraftDialog";
+import TaskSubmitPanel from "./TaskSubmitPanel";
 import ProxySubmitDialog from "./ProxySubmitDialog";
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 
@@ -40,6 +42,7 @@ import type {
   ItemTaskNodeVO,
   TaskClaimResultVO,
   TaskProxySubmitDTO,
+  TaskSubmitDTO,
 } from "@/types/workflowInstance";
 
 interface WorkflowInstanceProps {
@@ -134,6 +137,10 @@ function ItemWorkflowInstance({
     instance: ItemTaskInstanceVO;
     node: ItemTaskNodeVO;
   } | null>(null);
+  const [submitTarget, setSubmitTarget] = useState<{
+    instance: ItemTaskInstanceVO;
+    node: ItemTaskNodeVO;
+  } | null>(null);
   const [assignTarget, setAssignTarget] = useState<{
     instance: ItemTaskInstanceVO;
     title: string;
@@ -168,6 +175,7 @@ function ItemWorkflowInstance({
     if (handledEntry.current === taskInstanceId) return;
     handledEntry.current = taskInstanceId;
     setDraftTarget(null);
+    setSubmitTarget(null);
     const node = taskFlow.nodes.find((candidate) => candidate.taskInstanceId === taskInstanceId);
     const instance = instancesQuery.data.find((candidate) => candidate.id === taskInstanceId);
     if (!node || !instance) {
@@ -206,6 +214,30 @@ function ItemWorkflowInstance({
     } finally {
       actionLock.current = false;
     }
+  }
+
+  function openSubmit(instance: ItemTaskInstanceVO, node?: ItemTaskNodeVO): void {
+    const targetNode = node ?? findNodeByInstance(instance, taskFlow?.nodes ?? []);
+    if (!targetNode) {
+      $tip("任务提交表单尚未加载，请重新加载任务流", "error");
+      return;
+    }
+    if (!isNodeUnlocked(targetNode, taskFlow?.nodes ?? [])) {
+      $tip("请先完成前置阶段", "error");
+      return;
+    }
+    setSubmitTarget({ instance, node: targetNode });
+  }
+
+  async function handleSubmit(submission: TaskSubmitDTO): Promise<boolean> {
+    if (!submitTarget) return false;
+    const succeeded = await runInstanceAction(
+      submitTarget.instance.id,
+      () => submitTask(submitTarget.instance.id, submission),
+      "任务已提交",
+    );
+    if (succeeded) setSubmitTarget(null);
+    return succeeded;
   }
 
   function openTaskDraft(instance: ItemTaskInstanceVO, node?: ItemTaskNodeVO): void {
@@ -443,6 +475,7 @@ function ItemWorkflowInstance({
           void runInstanceAction(instanceId, () => claimTask(instanceId), "任务已接取")
         }
         onEditDraft={(instance, node) => openTaskDraft(instance, node)}
+        onSubmit={(instance, node) => openSubmit(instance, node)}
       />
 
       {selectedNode ? (
@@ -492,6 +525,7 @@ function ItemWorkflowInstance({
                         ),
                       }),
                     onEditDraft: () => openTaskDraft(selectedInstance),
+                    onSubmit: () => openSubmit(selectedInstance),
                     onProxySubmit: () => openProxySubmit(selectedInstance),
                     onAbandon: () => void handleAbandon(selectedInstance.id),
                     onReject: () => setRejectTarget(selectedInstance),
@@ -505,6 +539,27 @@ function ItemWorkflowInstance({
         <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
           点击流程节点查看任务详情和操作。
         </div>
+      )}
+
+      {submitTarget && (
+        <TaskSubmitPanel
+          key={submitTarget.instance.id}
+          open
+          taskInstanceId={submitTarget.instance.id}
+          taskName={formatTaskTitle(
+            taskFlow.itemTitle,
+            slotPosition(submitTarget.node, taskFlow.nodes),
+          )}
+          submitFields={submitTarget.node.submitFields}
+          onOpenChange={(open) => {
+            if (!open) setSubmitTarget(null);
+          }}
+          submitting={
+            actionMutation.isPending &&
+            actionMutation.variables?.instanceId === submitTarget.instance.id
+          }
+          onSubmit={handleSubmit}
+        />
       )}
 
       {draftTarget && (
