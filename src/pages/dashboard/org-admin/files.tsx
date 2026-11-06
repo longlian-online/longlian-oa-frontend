@@ -183,23 +183,11 @@ function OrganizationFilesContent(): ReactElement {
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">文件</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            企划、项目，以及任务当前有效的提交文件。
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="destructive"
-          size="sm"
-          disabled={!canDiscard || discardMutation.isPending}
-          onClick={() => void discardSelected()}
-        >
-          {discardMutation.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
-          删除
-        </Button>
+      <div>
+        <h1 className="text-xl font-bold text-foreground">文件</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          企划、项目，以及任务当前有效的提交文件。
+        </p>
       </div>
       <section className="border-border bg-card flex h-[calc(100svh-13.5rem)] min-h-96 flex-col overflow-hidden rounded-xl border">
         <div className="border-border flex flex-wrap items-center gap-1 border-b px-2 py-2">
@@ -262,6 +250,16 @@ function OrganizationFilesContent(): ReactElement {
           >
             {openingId ? <Loader2 className="animate-spin" /> : <Download />}
             下载
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            disabled={!canDiscard || discardMutation.isPending}
+            onClick={() => void discardSelected()}
+          >
+            {discardMutation.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+            删除
           </Button>
           <Button
             type="button"
