@@ -42,6 +42,7 @@ import {
 } from "./fileLocation";
 
 type ExplorerView = "icons" | "details";
+const TREE_LABEL = { planning: "企划", type: "类型", item: "项目" } as const;
 
 function fileIcon(entry: OrgFileEntryVO): typeof File {
   if (entry.kind === "FOLDER") return Folder;
@@ -61,7 +62,7 @@ function OrganizationFilesContent(): ReactElement {
   const [params] = useSearchParams();
   const location = orgFileLocation(params);
   const [page, setPage] = usePageQuery();
-  const listQuery = useApiQuery(organizationFilesQuery(location.projectId, location.itemId, page));
+  const listQuery = useApiQuery(organizationFilesQuery(location, page));
   const entries = listQuery.data?.entries ?? [];
   const total = listQuery.data?.total ?? 0;
   const folderPaging = !location.itemId;
@@ -80,7 +81,7 @@ function OrganizationFilesContent(): ReactElement {
 
   useEffect(() => {
     setSelectedId(null);
-  }, [location.projectId, location.itemId, page]);
+  }, [location.tree, location.typeId, location.projectId, location.itemId, page]);
 
   useEffect(() => {
     if (!folderPaging || !listQuery.data) return;
@@ -97,11 +98,20 @@ function OrganizationFilesContent(): ReactElement {
 
   function openEntry(entry: OrgFileEntryVO): void {
     if (entry.kind === "FOLDER") {
-      if (!location.projectId) {
-        go({ projectId: entry.id });
+      if (location.tree === "item") {
+        if (!location.itemId) go({ tree: "item", itemId: entry.id });
         return;
       }
-      if (!location.itemId) go({ projectId: location.projectId, itemId: entry.id });
+      if (location.tree === "type") {
+        if (!location.typeId) go({ tree: "type", typeId: entry.id });
+        return;
+      }
+      if (!location.projectId) {
+        go({ tree: "planning", projectId: entry.id });
+        return;
+      }
+      if (!location.itemId)
+        go({ tree: "planning", projectId: location.projectId, itemId: entry.id });
       return;
     }
     if (entry.availability === "available") preview(entry);
@@ -178,9 +188,15 @@ function OrganizationFilesContent(): ReactElement {
   }
   const emptyText = location.itemId
     ? "这个项目还没有提交文件"
-    : location.projectId
-      ? "这个企划还没有项目"
-      : "这个组织还没有企划";
+    : location.tree === "item"
+      ? "这个组织还没有项目"
+      : location.projectId
+        ? "这个企划还没有项目"
+        : location.typeId
+          ? "这个类型还没有提交文件"
+          : location.tree === "type"
+            ? "这个组织还没有企划类型"
+            : "这个组织还没有企划";
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -204,17 +220,35 @@ function OrganizationFilesContent(): ReactElement {
             <button
               type="button"
               className="shrink-0 rounded px-1 hover:bg-secondary"
-              onClick={() => go({})}
+              onClick={() => go({ tree: location.tree })}
             >
               本组织
             </button>
-            {location.projectId && (
+            {location.tree === "type" && location.typeId && (
               <>
                 <span className="text-muted-foreground">/</span>
                 <button
                   type="button"
                   className="max-w-48 truncate rounded px-1 hover:bg-secondary"
-                  onClick={() => go({ projectId: location.projectId })}
+                  onClick={() => go({ tree: "type", typeId: location.typeId })}
+                >
+                  {listQuery.data?.typeName || "类型"}
+                </button>
+              </>
+            )}
+            {location.tree !== "item" && location.projectId && (
+              <>
+                <span className="text-muted-foreground">/</span>
+                <button
+                  type="button"
+                  className="max-w-48 truncate rounded px-1 hover:bg-secondary"
+                  onClick={() =>
+                    go({
+                      tree: location.tree,
+                      typeId: location.typeId,
+                      projectId: location.projectId,
+                    })
+                  }
                 >
                   {projectTitle}
                 </button>
@@ -227,6 +261,20 @@ function OrganizationFilesContent(): ReactElement {
               </>
             )}
           </nav>
+          {(Object.keys(TREE_LABEL) as (keyof typeof TREE_LABEL)[]).map((tree) => (
+            <Button
+              key={tree}
+              type="button"
+              variant={location.tree === tree ? "secondary" : "ghost"}
+              size="sm"
+              aria-pressed={location.tree === tree}
+              onClick={() => {
+                if (location.tree !== tree) go({ tree });
+              }}
+            >
+              {TREE_LABEL[tree]}
+            </Button>
+          ))}
           <Button
             type="button"
             variant="outline"
@@ -309,9 +357,13 @@ function OrganizationFilesContent(): ReactElement {
               description={
                 location.itemId
                   ? "任务提交文件后会出现在这里。"
-                  : location.projectId
+                  : location.projectId || location.tree === "item"
                     ? "创建项目后会出现在这里。"
-                    : "创建企划后会出现在这里。"
+                    : location.typeId
+                      ? "任务提交文件后会出现在这里。"
+                      : location.tree === "type"
+                        ? "添加企划类型后会出现在这里。"
+                        : "创建企划后会出现在这里。"
               }
             />
           ) : view === "icons" ? (
@@ -393,6 +445,11 @@ function IconEntry({
         )}
       />
       <span className="line-clamp-2 w-full break-all text-xs">{entry.name}</span>
+      {entry.subtitle && (
+        <span className="line-clamp-1 w-full text-[11px] text-muted-foreground">
+          {entry.subtitle}
+        </span>
+      )}
       {entry.kind === "FILE" && (
         <span className="line-clamp-1 w-full text-[11px] text-muted-foreground">
           {entry.taskName}
@@ -449,7 +506,9 @@ function DetailsTable({
                 </span>
               </td>
               <td className="text-muted-foreground max-w-40 truncate px-3 py-2">
-                {entry.kind === "FILE" ? entry.taskName : "文件夹"}
+                {entry.kind === "FILE"
+                  ? [entry.subtitle, entry.taskName].filter(Boolean).join(" · ")
+                  : (entry.subtitle ?? "文件夹")}
               </td>
               <td className="text-muted-foreground px-3 py-2">
                 {entry.kind === "FILE" ? submitterLabel(entry.submitterName) : "—"}
