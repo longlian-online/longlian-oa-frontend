@@ -26,6 +26,8 @@ import PaginationBar from "@/components/PaginationBar";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
+import FilterSelectContent from "@/components/FilterSelectContent";
+import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePageQuery } from "@/hooks/usePageQuery";
@@ -39,6 +41,7 @@ import {
   orgFileSearch,
   parentOrgFileLocation,
   type OrgFileLocation,
+  type OrgFileTree,
 } from "./fileLocation";
 
 type ExplorerView = "icons" | "details";
@@ -261,20 +264,24 @@ function OrganizationFilesContent(): ReactElement {
               </>
             )}
           </nav>
-          {(Object.keys(TREE_LABEL) as (keyof typeof TREE_LABEL)[]).map((tree) => (
-            <Button
-              key={tree}
-              type="button"
-              variant={location.tree === tree ? "secondary" : "ghost"}
-              size="sm"
-              aria-pressed={location.tree === tree}
-              onClick={() => {
-                if (location.tree !== tree) go({ tree });
-              }}
-            >
-              {TREE_LABEL[tree]}
-            </Button>
-          ))}
+          <Select
+            value={location.tree}
+            onValueChange={(value) => {
+              if (value !== "planning" && value !== "type" && value !== "item") return;
+              if (value !== location.tree) go({ tree: value });
+            }}
+          >
+            <SelectTrigger aria-label="目录" className="w-24">
+              <SelectValue>{TREE_LABEL[location.tree]}</SelectValue>
+            </SelectTrigger>
+            <FilterSelectContent>
+              {(Object.keys(TREE_LABEL) as OrgFileTree[]).map((tree) => (
+                <SelectItem key={tree} value={tree}>
+                  {TREE_LABEL[tree]}
+                </SelectItem>
+              ))}
+            </FilterSelectContent>
+          </Select>
           <Button
             type="button"
             variant="outline"

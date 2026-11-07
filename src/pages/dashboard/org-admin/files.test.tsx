@@ -63,20 +63,26 @@ async function mount(search: string): Promise<void> {
   });
 }
 
-function button(label: string): HTMLButtonElement {
-  const found = [...container.querySelectorAll("button")].find(
+async function chooseTree(label: string): Promise<void> {
+  const trigger = container.querySelector<HTMLButtonElement>('button[aria-label="目录"]');
+  if (!trigger) throw new Error("找不到目录");
+  await act(async () => {
+    trigger.click();
+  });
+  const option = [...document.querySelectorAll('[role="option"]')].find(
     (item) => item.textContent === label,
   );
-  if (!(found instanceof HTMLButtonElement)) throw new Error(`找不到${label}`);
-  return found;
+  if (!(option instanceof HTMLElement)) throw new Error(`找不到${label}`);
+  await act(async () => {
+    option.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch" }));
+    option.click();
+  });
 }
 
 test("非法视图回退企划分层，切换视图时清掉页码", async (): Promise<void> => {
   await mount("?view=nope&itemId=10&page=3");
   expect(seen.key).toEqual(["orgFiles", "planning", "", "", "", 3]);
-  await act(async () => {
-    button("类型").click();
-  });
+  await chooseTree("类型");
   expect(router.state.location.search).toBe("?view=type");
   expect(seen.key).toEqual(["orgFiles", "type", "", "", "", 1]);
 });
@@ -99,9 +105,7 @@ test("项目视图忽略企划层，切回企划时清掉项目", async (): Prom
   const nav = container.querySelector("nav")?.textContent ?? "";
   expect(nav).toContain("第一话");
   expect(nav).not.toContain("阿企划");
-  await act(async () => {
-    button("企划").click();
-  });
+  await chooseTree("企划");
   expect(router.state.location.search).toBe("");
   expect(seen.key).toEqual(["orgFiles", "planning", "", "", "", 1]);
 });
