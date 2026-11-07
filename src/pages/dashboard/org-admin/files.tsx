@@ -64,6 +64,7 @@ function OrganizationFilesContent(): ReactElement {
   const listQuery = useApiQuery(organizationFilesQuery(location.projectId, location.itemId, page));
   const entries = listQuery.data?.entries ?? [];
   const total = listQuery.data?.total ?? 0;
+  const folderPaging = !location.itemId;
   const [view, setView] = useState<ExplorerView>("icons");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openingId, setOpeningId] = useState<string | null>(null);
@@ -82,10 +83,10 @@ function OrganizationFilesContent(): ReactElement {
   }, [location.projectId, location.itemId, page]);
 
   useEffect(() => {
-    if (!listQuery.data) return;
+    if (!folderPaging || !listQuery.data) return;
     const lastPage = Math.max(1, Math.ceil(listQuery.data.total / ORGANIZATION_FILE_PAGE_SIZE));
     if (page > lastPage) setPage(lastPage);
-  }, [listQuery.data, page, setPage]);
+  }, [folderPaging, listQuery.data, page, setPage]);
 
   useEffect(() => () => closeAttachmentPreview(previewOwner.current), []);
 
@@ -334,7 +335,7 @@ function OrganizationFilesContent(): ReactElement {
             />
           )}
         </div>
-        {total > ORGANIZATION_FILE_PAGE_SIZE && (
+        {folderPaging && total > ORGANIZATION_FILE_PAGE_SIZE && (
           <div className="border-border border-t px-3 py-2">
             <PaginationBar
               page={page}
