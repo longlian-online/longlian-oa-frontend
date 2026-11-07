@@ -267,13 +267,19 @@ export async function deleteOrganizationPresetField(fieldId: string): Promise<vo
 }
 
 export async function getOrganizationFiles(
-  projectId?: string,
-  itemId?: string,
+  location: {
+    tree: "planning" | "type" | "item";
+    typeId?: string;
+    projectId?: string;
+    itemId?: string;
+  },
   page = 1,
 ): Promise<OrgFileEntriesVO> {
   const params = new URLSearchParams();
-  if (projectId) params.set("projectId", projectId);
-  if (projectId && itemId) params.set("itemId", itemId);
+  if (location.tree !== "planning") params.set("view", location.tree);
+  if (location.typeId) params.set("typeId", location.typeId);
+  if (location.projectId) params.set("projectId", location.projectId);
+  if (location.itemId) params.set("itemId", location.itemId);
   if (page > 1) params.set("pageNum", String(page));
   const search = params.toString();
   return orgAdminRequest(`/orgadmin/files${search ? `?${search}` : ""}`);
