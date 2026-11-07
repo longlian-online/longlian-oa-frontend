@@ -360,6 +360,7 @@ export interface OrgFileEntryVO {
   id: string;
   kind: OrgFileEntryKind;
   name: string;
+  subtitle?: string;
   taskInstanceId?: string;
   taskName?: string;
   fieldKey?: string;
@@ -373,6 +374,8 @@ export interface OrgFileEntryVO {
 }
 
 export interface OrgFileEntriesVO {
+  typeId?: string | null;
+  typeName?: string | null;
   projectId?: string | null;
   projectTitle?: string | null;
   itemId?: string | null;
