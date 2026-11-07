@@ -14,12 +14,7 @@ export function orgFileLocation(params: URLSearchParams): OrgFileLocation {
   const projectId = params.get("projectId")?.trim() ?? "";
   const itemId = params.get("itemId")?.trim() ?? "";
   if (tree === "item") return itemId ? { tree, itemId } : { tree };
-  if (tree === "type") {
-    if (!typeId) return { tree };
-    if (!projectId) return { tree, typeId };
-    if (!itemId) return { tree, typeId, projectId };
-    return { tree, typeId, projectId, itemId };
-  }
+  if (tree === "type") return typeId ? { tree, typeId } : { tree };
   if (!projectId) return { tree };
   if (!itemId) return { tree, projectId };
   return { tree, projectId, itemId };
@@ -38,14 +33,7 @@ export function orgFileSearch(location: OrgFileLocation): string {
 
 export function parentOrgFileLocation(location: OrgFileLocation): OrgFileLocation | null {
   if (location.tree === "item") return location.itemId ? { tree: "item" } : null;
-  if (location.tree === "type") {
-    if (location.itemId && location.projectId && location.typeId) {
-      return { tree: "type", typeId: location.typeId, projectId: location.projectId };
-    }
-    if (location.projectId && location.typeId) return { tree: "type", typeId: location.typeId };
-    if (location.typeId) return { tree: "type" };
-    return null;
-  }
+  if (location.tree === "type") return location.typeId ? { tree: "type" } : null;
   if (location.projectId && location.itemId)
     return { tree: "planning", projectId: location.projectId };
   if (location.projectId) return { tree: "planning" };

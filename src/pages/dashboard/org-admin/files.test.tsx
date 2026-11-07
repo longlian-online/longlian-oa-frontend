@@ -81,17 +81,16 @@ test("非法视图回退企划分层，切换视图时清掉页码", async (): P
   expect(seen.key).toEqual(["orgFiles", "type", "", "", "", 1]);
 });
 
-test("类型路径直达，打开文件夹时保留类型并回到第一页", async (): Promise<void> => {
-  await mount("?view=type&typeId=4&page=2");
-  expect(seen.key).toEqual(["orgFiles", "type", "4", "", "", 2]);
-  expect(container.querySelector("nav")?.textContent).toContain("漫画");
+test("打开类型后地址只有类型，不再进入项目", async (): Promise<void> => {
+  await mount("?view=type&page=2");
+  expect(seen.key).toEqual(["orgFiles", "type", "", "", "", 2]);
   await act(async () => {
     container
       .querySelector('[role="option"]')
       ?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
   });
-  expect(router.state.location.search).toBe("?view=type&typeId=4&projectId=9");
-  expect(seen.key).toEqual(["orgFiles", "type", "4", "9", "", 1]);
+  expect(router.state.location.search).toBe("?view=type&typeId=9");
+  expect(seen.key).toEqual(["orgFiles", "type", "9", "", "", 1]);
 });
 
 test("项目视图忽略企划层，切回企划时清掉项目", async (): Promise<void> => {

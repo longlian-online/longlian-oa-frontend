@@ -103,22 +103,7 @@ function OrganizationFilesContent(): ReactElement {
         return;
       }
       if (location.tree === "type") {
-        if (!location.typeId) {
-          go({ tree: "type", typeId: entry.id });
-          return;
-        }
-        if (!location.projectId) {
-          go({ tree: "type", typeId: location.typeId, projectId: entry.id });
-          return;
-        }
-        if (!location.itemId) {
-          go({
-            tree: "type",
-            typeId: location.typeId,
-            projectId: location.projectId,
-            itemId: entry.id,
-          });
-        }
+        if (!location.typeId) go({ tree: "type", typeId: entry.id });
         return;
       }
       if (!location.projectId) {
@@ -208,7 +193,7 @@ function OrganizationFilesContent(): ReactElement {
       : location.projectId
         ? "这个企划还没有项目"
         : location.typeId
-          ? "这个类型还没有企划"
+          ? "这个类型还没有提交文件"
           : location.tree === "type"
             ? "这个组织还没有企划类型"
             : "这个组织还没有企划";
@@ -375,7 +360,7 @@ function OrganizationFilesContent(): ReactElement {
                   : location.projectId || location.tree === "item"
                     ? "创建项目后会出现在这里。"
                     : location.typeId
-                      ? "创建企划后会出现在这里。"
+                      ? "任务提交文件后会出现在这里。"
                       : location.tree === "type"
                         ? "添加企划类型后会出现在这里。"
                         : "创建企划后会出现在这里。"
@@ -460,7 +445,7 @@ function IconEntry({
         )}
       />
       <span className="line-clamp-2 w-full break-all text-xs">{entry.name}</span>
-      {entry.kind === "FOLDER" && entry.subtitle && (
+      {entry.subtitle && (
         <span className="line-clamp-1 w-full text-[11px] text-muted-foreground">
           {entry.subtitle}
         </span>
@@ -521,7 +506,9 @@ function DetailsTable({
                 </span>
               </td>
               <td className="text-muted-foreground max-w-40 truncate px-3 py-2">
-                {entry.kind === "FILE" ? entry.taskName : (entry.subtitle ?? "文件夹")}
+                {entry.kind === "FILE"
+                  ? [entry.subtitle, entry.taskName].filter(Boolean).join(" · ")
+                  : (entry.subtitle ?? "文件夹")}
               </td>
               <td className="text-muted-foreground px-3 py-2">
                 {entry.kind === "FILE" ? submitterLabel(entry.submitterName) : "—"}

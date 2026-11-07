@@ -21,14 +21,9 @@ test("type view drops folders that skip a level and round-trips the path", () =>
   const location = orgFileLocation(
     new URLSearchParams("view=type&typeId=4&projectId=2&itemId=10&page=3"),
   );
-  expect(location).toEqual({ tree: "type", typeId: "4", projectId: "2", itemId: "10" });
-  expect(orgFileSearch(location)).toBe("view=type&typeId=4&projectId=2&itemId=10");
-  expect(parentOrgFileLocation(location)).toEqual({ tree: "type", typeId: "4", projectId: "2" });
-  expect(parentOrgFileLocation({ tree: "type", typeId: "4", projectId: "2" })).toEqual({
-    tree: "type",
-    typeId: "4",
-  });
-  expect(parentOrgFileLocation({ tree: "type", typeId: "4" })).toEqual({ tree: "type" });
+  expect(location).toEqual({ tree: "type", typeId: "4" });
+  expect(orgFileSearch(location)).toBe("view=type&typeId=4");
+  expect(parentOrgFileLocation(location)).toEqual({ tree: "type" });
   expect(parentOrgFileLocation({ tree: "type" })).toBeNull();
 });
 
