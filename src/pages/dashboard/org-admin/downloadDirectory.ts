@@ -3,7 +3,7 @@ import { fileKey, parseManifest, serializeManifest, type DownloadRecord } from "
 const DB_NAME = "longlian-oa-files";
 const STORE = "handles";
 const DIRECTORY_KEY = "download-directory";
-const MANIFEST_NAME = ".longlian-oa-downloads.json";
+const MANIFEST_NAME = ".downloads.json";
 const WRITE_CONCURRENCY = 3;
 
 export class DirectoryAccessError extends Error {
