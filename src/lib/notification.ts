@@ -75,6 +75,13 @@ export function notificationPresentation(notification: NotificationVO): Notifica
   }
 }
 
+/** 无头像时与成员列表相同，取显示名首字。入组申请的显示名优先是昵称。 */
+export function notificationAvatarMark(notification: NotificationVO): string | null {
+  if (notification.kind !== "JOIN_APPLICATION" || notification.source === null) return null;
+  const name = notification.source.applicantName.trim();
+  return name ? name.slice(0, 1) : null;
+}
+
 /** 站内信列表空间有限，打回意见在任务详情里完整展示，这里只截断展示开头。 */
 function truncateComment(comment: string | null | undefined): string {
   const trimmed = comment?.trim();
