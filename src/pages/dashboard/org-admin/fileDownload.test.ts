@@ -1,7 +1,8 @@
 import { expect, test } from "vite-plus/test";
 
 import {
-  archiveEntryNames,
+  archiveDirectories,
+  archiveEntryPaths,
   downloadTarget,
   isDownloaded,
   parseManifest,
@@ -90,15 +91,35 @@ test("本地文件名使用资源 ID，只保留安全扩展名", () => {
   expect(resourceFileName("303", "归档.tar.gz")).toBe("303.gz");
 });
 
-test("压缩包条目用原名，重名和设备名才加上资源 ID", () => {
+test("压缩包目录跟着当前视图，同一层重名才加上资源 ID", () => {
   expect(
-    archiveEntryNames([
+    archiveEntryPaths([
       { fileId: "101", name: "企划/成果.pdf" },
       { fileId: "202", name: "成果.PDF" },
       { fileId: "303", name: "CON.txt" },
       { fileId: "404", name: ".." },
     ]),
   ).toEqual(["成果.pdf", "成果_202.PDF", "CON_303.txt", "404"]);
+  expect(
+    archiveDirectories("planning", {
+      typeName: "漫画",
+      projectTitle: "阿企划",
+      itemTitle: "第一话",
+    }),
+  ).toEqual(["阿企划", "第一话"]);
+  expect(
+    archiveDirectories("type", { typeName: "漫画", projectTitle: "阿企划", itemTitle: "第一话" }),
+  ).toEqual(["漫画"]);
+  expect(archiveDirectories("item", { projectTitle: "阿企划", itemTitle: "第一话" })).toEqual([
+    "第一话",
+  ]);
+  expect(
+    archiveEntryPaths([
+      { fileId: "101", name: "成果.pdf", directories: ["阿企划", "第一话"] },
+      { fileId: "202", name: "成果.pdf", directories: ["阿企划", "第二话"] },
+      { fileId: "303", name: "成果.pdf", directories: ["阿企划", "第一话"] },
+    ]),
+  ).toEqual(["阿企划/第一话/成果.pdf", "阿企划/第二话/成果.pdf", "阿企划/第一话/成果_303.pdf"]);
 });
 
 test("下载记录只接受当前版本里完整的文件", () => {

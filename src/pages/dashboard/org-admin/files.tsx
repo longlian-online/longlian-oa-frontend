@@ -60,7 +60,13 @@ import {
   type DownloadDirectoryHandle,
 } from "./downloadDirectory";
 import { packDownloadedFiles, pickExportArchive, type ArchiveWritable } from "./exportArchive";
-import { downloadTarget, fileKey, isDownloaded, type DownloadRecord } from "./fileDownload";
+import {
+  archiveDirectories,
+  downloadTarget,
+  fileKey,
+  isDownloaded,
+  type DownloadRecord,
+} from "./fileDownload";
 
 type ExplorerView = "icons" | "details";
 const TREE_LABEL = { planning: "企划", type: "类型", item: "项目" } as const;
@@ -292,7 +298,15 @@ function OrganizationFilesContent(): ReactElement {
       const batch = await downloadOrganizationFiles(targets);
       const files = batch.files.flatMap((file) => {
         const record = existing.find((item) => fileKey(item) === fileKey(file));
-        return record ? [{ fileId: record.fileId, name: record.name }] : [];
+        return record
+          ? [
+              {
+                fileId: record.fileId,
+                name: record.name,
+                directories: archiveDirectories(location.tree, file),
+              },
+            ]
+          : [];
       });
       if (files.length === 0) {
         await destination.abort?.();

@@ -1,6 +1,6 @@
 import type { OrgFileDownloadTarget, OrgFileEntryVO } from "@/types/organizationAdmin";
 
-import type { OrgFileLocation } from "./fileLocation";
+import type { OrgFileLocation, OrgFileTree } from "./fileLocation";
 
 export interface DownloadRecord {
   taskInstanceId: string;
@@ -99,20 +99,43 @@ function withResourceId(name: string, fileId: string): string {
   return `${name}_${fileId}`;
 }
 
-export function archiveEntryNames(files: { fileId: string; name: string }[]): string[] {
+export function archiveDirectories(
+  view: OrgFileTree,
+  file: { typeName?: string | null; projectTitle?: string | null; itemTitle?: string | null },
+): string[] {
+  if (view === "type") return [file.typeName ?? ""];
+  if (view === "item") return [file.itemTitle ?? ""];
+  return [file.projectTitle ?? "", file.itemTitle ?? ""];
+}
+
+export function archiveEntryPaths(
+  files: { fileId: string; name: string; directories?: string[] }[],
+): string[] {
   const taken = new Set<string>();
   return files.map((file) => {
+    const folders = (file.directories ?? []).map(archiveFolderName);
     const base = archiveBaseName(file.name, file.fileId);
     let entry = WINDOWS_DEVICE.test(base) ? withResourceId(base, file.fileId) : base;
-    if (taken.has(entry.toLowerCase())) entry = withResourceId(base, file.fileId);
+    const pathKey = (): string => [...folders, entry].join("/").toLowerCase();
+    if (taken.has(pathKey())) entry = withResourceId(base, file.fileId);
     let sequence = 2;
-    while (taken.has(entry.toLowerCase())) {
+    while (taken.has(pathKey())) {
       entry = withResourceId(base, `${file.fileId}-${sequence}`);
       sequence += 1;
     }
-    taken.add(entry.toLowerCase());
-    return entry;
+    const path = [...folders, entry].join("/");
+    taken.add(path.toLowerCase());
+    return path;
   });
+}
+
+function archiveFolderName(name: string): string {
+  const cleaned = stripIllegal(name)
+    .replace(/[. ]+$/u, "")
+    .trim();
+  if (cleaned === "" || cleaned === "." || cleaned === "..") return "未命名";
+  if (WINDOWS_DEVICE.test(cleaned)) return `${cleaned}_`;
+  return cleaned;
 }
 
 export function serializeManifest(records: DownloadRecord[]): string {

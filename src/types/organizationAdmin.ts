@@ -396,6 +396,9 @@ export interface OrgFileBatchFileVO {
   fileId: string;
   fileName: string;
   fileSize: number;
+  typeName?: string | null;
+  projectTitle?: string | null;
+  itemTitle?: string | null;
 }
 
 export interface OrgFileBatchDownloadVO {
