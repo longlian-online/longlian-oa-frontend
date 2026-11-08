@@ -1,11 +1,10 @@
 import { expect, test } from "vite-plus/test";
 
 import {
-  assignFlatNames,
   downloadTarget,
   isDownloaded,
   parseManifest,
-  sanitizeFileName,
+  resourceFileName,
   serializeManifest,
   type DownloadRecord,
 } from "./fileDownload";
@@ -45,10 +44,7 @@ test("文件夹按当前分层展开，文件只认可用的提交", () => {
   });
   expect(
     downloadTarget({ id: "10", kind: "FOLDER" }, { tree: "planning", projectId: "2" }),
-  ).toEqual({
-    kind: "ITEM",
-    itemId: "10",
-  });
+  ).toEqual({ kind: "ITEM", itemId: "10" });
   expect(downloadTarget({ id: "3", kind: "FOLDER" }, { tree: "type" })).toEqual({
     kind: "TYPE",
     typeId: "3",
@@ -85,20 +81,12 @@ test("文件夹按当前分层展开，文件只认可用的提交", () => {
   ).toBeNull();
 });
 
-test("平铺文件名避开路径、设备名和同名冲突，已下载的沿用原名", () => {
-  expect(sanitizeFileName("企划/成果.pdf", "101")).toBe("成果.pdf");
-  expect(sanitizeFileName("..", "101")).toBe("file_101");
-  expect(sanitizeFileName("CON.txt", "101")).toBe("CON_101.txt");
-
-  const named = assignFlatNames(
-    [downloaded],
-    [
-      { taskInstanceId: "8", fieldKey: "script", fileId: "101", fileName: "别的.pdf" },
-      { taskInstanceId: "9", fieldKey: "script", fileId: "202", fileName: "成果.pdf" },
-      { taskInstanceId: "10", fieldKey: "script", fileId: "303", fileName: "成果.PDF" },
-    ],
-  );
-  expect(named.map((file) => file.localName)).toEqual(["成果.pdf", "成果_202.pdf", "成果_303.PDF"]);
+test("本地文件名使用资源 ID，只保留安全扩展名", () => {
+  expect(resourceFileName("101", "企划/成果.pdf")).toBe("101.pdf");
+  expect(resourceFileName("101", "..")).toBe("101");
+  expect(resourceFileName("101", "CON.txt")).toBe("101.txt");
+  expect(resourceFileName("202", "成果.PDF")).toBe("202.PDF");
+  expect(resourceFileName("303", "归档.tar.gz")).toBe("303.gz");
 });
 
 test("下载记录只接受当前版本里完整的文件", () => {

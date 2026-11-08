@@ -9,16 +9,6 @@ export interface DownloadRecord {
   name: string;
 }
 
-export interface DownloadNameSource {
-  taskInstanceId: string;
-  fieldKey: string;
-  fileId: string;
-  fileName: string;
-}
-
-const WINDOWS_DEVICE = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i;
-const MAX_NAME_LENGTH = 180;
-
 export function fileKey(file: {
   taskInstanceId: string;
   fieldKey: string;
@@ -72,22 +62,13 @@ export function downloadTarget(
   return { kind: "PROJECT", projectId: entry.id };
 }
 
-export function sanitizeFileName(name: string, fileId: string): string {
-  const base = name.replaceAll("\\", "/").split("/").pop() ?? "";
-  let cleaned = stripIllegal(base)
-    .replace(/[. ]+$/g, "")
-    .trim();
-  if (!cleaned || cleaned === "." || cleaned === "..") cleaned = `file_${fileId}`;
-  if (WINDOWS_DEVICE.test(cleaned)) {
-    const dot = cleaned.lastIndexOf(".");
-    const ext = dot > 0 ? cleaned.slice(dot) : "";
-    const stem = dot > 0 ? cleaned.slice(0, dot) : cleaned;
-    cleaned = `${stem}_${fileId}${ext}`;
-  }
-  if (cleaned.length <= MAX_NAME_LENGTH) return cleaned;
+export function resourceFileName(fileId: string, originalName: string): string {
+  const base = originalName.replaceAll("\\", "/").split("/").pop() ?? "";
+  const cleaned = stripIllegal(base);
   const dot = cleaned.lastIndexOf(".");
-  const ext = dot > 0 && cleaned.length - dot <= 16 ? cleaned.slice(dot) : "";
-  return `${cleaned.slice(0, MAX_NAME_LENGTH - ext.length)}${ext}`;
+  const extension = dot >= 0 ? cleaned.slice(dot + 1) : "";
+  if (/^[A-Za-z0-9]{1,16}$/.test(extension)) return `${fileId}.${extension}`;
+  return fileId;
 }
 
 function stripIllegal(name: string): string {
@@ -98,52 +79,6 @@ function stripIllegal(name: string): string {
     result += char;
   }
   return result;
-}
-
-export function allocateFlatName(
-  desired: string,
-  fileId: string,
-  reserved: ReadonlyMap<string, string>,
-  ownKey: string,
-): string {
-  const cleaned = sanitizeFileName(desired, fileId);
-  const owner = reserved.get(cleaned.toLowerCase());
-  if (!owner || owner === ownKey) return cleaned;
-  const dot = cleaned.lastIndexOf(".");
-  const stem = dot > 0 ? cleaned.slice(0, dot) : cleaned;
-  const ext = dot > 0 ? cleaned.slice(dot) : "";
-  let suffix = 0;
-  while (suffix < 1000) {
-    const candidate =
-      suffix === 0 ? `${stem}_${fileId}${ext}` : `${stem}_${fileId}_${suffix}${ext}`;
-    const takenBy = reserved.get(candidate.toLowerCase());
-    if (!takenBy || takenBy === ownKey) {
-      return candidate.length <= MAX_NAME_LENGTH ? candidate : `${fileId}${ext || ""}`;
-    }
-    suffix += 1;
-  }
-  return `${fileId}`;
-}
-
-export function assignFlatNames<T extends DownloadNameSource>(
-  existing: DownloadRecord[],
-  files: T[],
-): Array<T & { localName: string }> {
-  const reserved = new Map<string, string>();
-  const existingByKey = new Map<string, DownloadRecord>();
-  for (const record of existing) {
-    const key = fileKey(record);
-    existingByKey.set(key, record);
-    reserved.set(record.name.toLowerCase(), key);
-  }
-  return files.map((file) => {
-    const key = fileKey(file);
-    const previous = existingByKey.get(key);
-    if (previous) return { ...file, localName: previous.name };
-    const localName = allocateFlatName(file.fileName, file.fileId, reserved, key);
-    reserved.set(localName.toLowerCase(), key);
-    return { ...file, localName };
-  });
 }
 
 export function serializeManifest(records: DownloadRecord[]): string {

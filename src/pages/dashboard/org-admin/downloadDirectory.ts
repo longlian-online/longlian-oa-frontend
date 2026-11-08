@@ -1,4 +1,10 @@
-import { fileKey, parseManifest, serializeManifest, type DownloadRecord } from "./fileDownload";
+import {
+  fileKey,
+  parseManifest,
+  resourceFileName,
+  serializeManifest,
+  type DownloadRecord,
+} from "./fileDownload";
 
 const DB_NAME = "longlian-oa-files";
 const STORE = "handles";
@@ -55,9 +61,7 @@ export interface SavedDownloadFile {
   taskInstanceId: string;
   fieldKey: string;
   fileId: string;
-  localName: string;
-  readUrl: string;
-  expireAt: number;
+  fileName: string;
 }
 
 function isDirectoryHandle(value: unknown): value is DownloadDirectoryHandle {
@@ -191,7 +195,7 @@ export async function saveDownloadedFiles(
   directory: DownloadDirectoryHandle,
   existing: DownloadRecord[],
   files: SavedDownloadFile[],
-  resign: (file: SavedDownloadFile) => Promise<string>,
+  sign: (file: SavedDownloadFile) => Promise<string>,
   onUpdate: (records: DownloadRecord[], done: number, total: number) => void,
 ): Promise<number> {
   const records = [...existing];
@@ -209,22 +213,21 @@ export async function saveDownloadedFiles(
 
   async function one(file: SavedDownloadFile): Promise<void> {
     const key = fileKey(file);
+    const localName = resourceFileName(file.fileId, file.fileName);
     try {
-      let url = file.readUrl;
-      if (file.expireAt - Date.now() / 1000 < 60) url = await resign(file);
       let body: ReadableStream<Uint8Array>;
       try {
-        body = await fetchBody(url);
+        body = await fetchBody(await sign(file));
       } catch {
-        body = await fetchBody(await resign(file));
+        body = await fetchBody(await sign(file));
       }
-      await writeDownloadFile(directory, file.localName, body);
+      await writeDownloadFile(directory, localName, body);
       await enqueue(async () => {
         const next = {
           taskInstanceId: file.taskInstanceId,
           fieldKey: file.fieldKey,
           fileId: file.fileId,
-          name: file.localName,
+          name: file.fileName,
         };
         const index = records.findIndex((record) => fileKey(record) === key);
         if (index >= 0) records[index] = next;

@@ -58,7 +58,7 @@ import {
   saveDownloadedFiles,
   type DownloadDirectoryHandle,
 } from "./downloadDirectory";
-import { assignFlatNames, downloadTarget, isDownloaded, type DownloadRecord } from "./fileDownload";
+import { downloadTarget, isDownloaded, type DownloadRecord } from "./fileDownload";
 
 type ExplorerView = "icons" | "details";
 const TREE_LABEL = { planning: "企划", type: "类型", item: "项目" } as const;
@@ -245,7 +245,7 @@ function OrganizationFilesContent(): ReactElement {
       const failed = await saveDownloadedFiles(
         handle,
         existing,
-        assignFlatNames(existing, batch.files),
+        batch.files,
         async (file) => {
           try {
             const fresh = await getOrganizationFileDownload(file.taskInstanceId, file.fileId);

@@ -396,8 +396,6 @@ export interface OrgFileBatchFileVO {
   fileId: string;
   fileName: string;
   fileSize: number;
-  readUrl: string;
-  expireAt: number;
 }
 
 export interface OrgFileBatchDownloadVO {
