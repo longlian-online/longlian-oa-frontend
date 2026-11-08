@@ -6,7 +6,18 @@ import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
 import OrganizationFilesPage from "./files";
 
-const seen = vi.hoisted(() => ({ key: [] as unknown }));
+const seen = vi.hoisted(() => ({
+  key: [] as unknown,
+  entries: [{ id: "9", kind: "FOLDER", name: "漫画", subtitle: "阿企划" }] as Array<
+    Record<string, unknown>
+  >,
+  records: [] as Array<{
+    taskInstanceId: string;
+    fieldKey: string;
+    fileId: string;
+    name: string;
+  }>,
+}));
 
 vi.mock("@/components/OrganizationAdminGuard", () => ({
   default: ({ children }: { children: ReactNode }): ReactNode => children,
@@ -14,12 +25,21 @@ vi.mock("@/components/OrganizationAdminGuard", () => ({
 vi.mock("@/hooks/useConfirm", () => ({
   useConfirm: () => () => Promise.resolve(false),
 }));
+vi.mock("./downloadDirectory", () => ({
+  loadSavedDownloads: () =>
+    Promise.resolve(
+      seen.records.length === 0
+        ? null
+        : { handle: { name: "下载" }, name: "下载", records: seen.records },
+    ),
+  DirectoryAccessError: class DirectoryAccessError extends Error {},
+}));
 vi.mock("@/hooks/queries/useApiQuery", () => ({
   useApiQuery: (options: { key: unknown }) => {
     seen.key = options.key;
     return {
       data: {
-        entries: [{ id: "9", kind: "FOLDER", name: "漫画", subtitle: "阿企划" }],
+        entries: seen.entries,
         total: 120,
         typeName: "漫画",
         projectTitle: "阿企划",
@@ -39,6 +59,8 @@ let router = createMemoryRouter([
 ]);
 
 beforeEach((): void => {
+  seen.entries = [{ id: "9", kind: "FOLDER", name: "漫画", subtitle: "阿企划" }];
+  seen.records = [];
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   container = document.createElement("div");
   document.body.append(container);
@@ -60,6 +82,9 @@ async function mount(search: string): Promise<void> {
   );
   await act(async () => {
     root.render(<RouterProvider router={router} />);
+  });
+  await act(async () => {
+    await Promise.resolve();
   });
 }
 
@@ -108,4 +133,35 @@ test("项目视图忽略企划层，切回企划时清掉项目", async (): Prom
   await chooseTree("企划");
   expect(router.state.location.search).toBe("");
   expect(seen.key).toEqual(["orgFiles", "planning", "", "", "", 1]);
+});
+
+test("已下载标记跟着文件走，不跟着视图文件夹走", async (): Promise<void> => {
+  seen.entries = [
+    {
+      id: "8:script",
+      kind: "FILE",
+      name: "成果.pdf",
+      taskInstanceId: "8",
+      fieldKey: "script",
+      fileId: "101",
+      availability: "available",
+      taskName: "翻译",
+    },
+    {
+      id: "8:extra",
+      kind: "FILE",
+      name: "对照.pdf",
+      taskInstanceId: "8",
+      fieldKey: "extra",
+      fileId: "102",
+      availability: "available",
+      taskName: "翻译",
+    },
+  ];
+  seen.records = [{ taskInstanceId: "8", fieldKey: "script", fileId: "101", name: "成果.pdf" }];
+  await mount("");
+  const marks = [...container.querySelectorAll("span")].filter(
+    (node) => node.textContent === "已下载",
+  );
+  expect(marks).toHaveLength(1);
 });

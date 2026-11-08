@@ -383,3 +383,23 @@ export interface OrgFileEntriesVO {
   total: number;
   entries: OrgFileEntryVO[];
 }
+
+export type OrgFileDownloadTarget =
+  | { kind: "FILE"; taskInstanceId: string; fileId: string; fieldKey: string }
+  | { kind: "ITEM"; itemId: string }
+  | { kind: "PROJECT"; projectId: string }
+  | { kind: "TYPE"; typeId: string };
+
+export interface OrgFileBatchFileVO {
+  taskInstanceId: string;
+  fieldKey: string;
+  fileId: string;
+  fileName: string;
+  fileSize: number;
+  readUrl: string;
+  expireAt: number;
+}
+
+export interface OrgFileBatchDownloadVO {
+  files: OrgFileBatchFileVO[];
+}
