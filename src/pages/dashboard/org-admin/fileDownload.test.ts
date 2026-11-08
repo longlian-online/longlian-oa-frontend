@@ -1,0 +1,101 @@
+import { expect, test } from "vite-plus/test";
+
+import {
+  downloadTarget,
+  isDownloaded,
+  parseManifest,
+  resourceFileName,
+  serializeManifest,
+  type DownloadRecord,
+} from "./fileDownload";
+
+const downloaded: DownloadRecord = {
+  taskInstanceId: "8",
+  fieldKey: "script",
+  fileId: "101",
+  name: "成果.pdf",
+};
+
+test("同一份文件换视图仍然算已下载，换文件则不算", () => {
+  const records = [downloaded];
+  expect(
+    isDownloaded(records, {
+      kind: "FILE",
+      taskInstanceId: "8",
+      fieldKey: "script",
+      fileId: "101",
+    }),
+  ).toBe(true);
+  expect(
+    isDownloaded(records, {
+      kind: "FILE",
+      taskInstanceId: "8",
+      fieldKey: "script",
+      fileId: "202",
+    }),
+  ).toBe(false);
+  expect(isDownloaded(records, { kind: "FOLDER" })).toBe(false);
+});
+
+test("文件夹按当前分层展开，文件只认可用的提交", () => {
+  expect(downloadTarget({ id: "2", kind: "FOLDER" }, { tree: "planning" })).toEqual({
+    kind: "PROJECT",
+    projectId: "2",
+  });
+  expect(
+    downloadTarget({ id: "10", kind: "FOLDER" }, { tree: "planning", projectId: "2" }),
+  ).toEqual({ kind: "ITEM", itemId: "10" });
+  expect(downloadTarget({ id: "3", kind: "FOLDER" }, { tree: "type" })).toEqual({
+    kind: "TYPE",
+    typeId: "3",
+  });
+  expect(downloadTarget({ id: "10", kind: "FOLDER" }, { tree: "item" })).toEqual({
+    kind: "ITEM",
+    itemId: "10",
+  });
+  expect(
+    downloadTarget(
+      {
+        id: "8:script",
+        kind: "FILE",
+        taskInstanceId: "8",
+        fieldKey: "script",
+        fileId: "101",
+        availability: "available",
+      },
+      { tree: "type", typeId: "3" },
+    ),
+  ).toEqual({ kind: "FILE", taskInstanceId: "8", fieldKey: "script", fileId: "101" });
+  expect(
+    downloadTarget(
+      {
+        id: "8:script",
+        kind: "FILE",
+        taskInstanceId: "8",
+        fieldKey: "script",
+        fileId: "101",
+        availability: "unavailable",
+      },
+      { tree: "item", itemId: "10" },
+    ),
+  ).toBeNull();
+});
+
+test("本地文件名使用资源 ID，只保留安全扩展名", () => {
+  expect(resourceFileName("101", "企划/成果.pdf")).toBe("101.pdf");
+  expect(resourceFileName("101", "..")).toBe("101");
+  expect(resourceFileName("101", "CON.txt")).toBe("101.txt");
+  expect(resourceFileName("202", "成果.PDF")).toBe("202.PDF");
+  expect(resourceFileName("303", "归档.tar.gz")).toBe("303.gz");
+});
+
+test("下载记录只接受当前版本里完整的文件", () => {
+  const text = serializeManifest([downloaded, { ...downloaded, fileId: "202", name: "对照.pdf" }]);
+  expect(parseManifest(text)).toEqual([
+    downloaded,
+    { taskInstanceId: "8", fieldKey: "script", fileId: "202", name: "对照.pdf" },
+  ]);
+  expect(parseManifest('{"version":2,"files":[]}')).toEqual([]);
+  expect(parseManifest("not-json")).toEqual([]);
+  expect(parseManifest('{"version":1,"files":[{"taskInstanceId":"8"}]}')).toEqual([]);
+});

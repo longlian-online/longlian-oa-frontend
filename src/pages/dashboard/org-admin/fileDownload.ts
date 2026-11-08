@@ -1,0 +1,122 @@
+import type { OrgFileDownloadTarget, OrgFileEntryVO } from "@/types/organizationAdmin";
+
+import type { OrgFileLocation } from "./fileLocation";
+
+export interface DownloadRecord {
+  taskInstanceId: string;
+  fieldKey: string;
+  fileId: string;
+  name: string;
+}
+
+export function fileKey(file: {
+  taskInstanceId: string;
+  fieldKey: string;
+  fileId: string;
+}): string {
+  return `${file.taskInstanceId}\u001f${file.fieldKey}\u001f${file.fileId}`;
+}
+
+export function isDownloaded(
+  records: DownloadRecord[],
+  entry: Pick<OrgFileEntryVO, "kind" | "taskInstanceId" | "fieldKey" | "fileId">,
+): boolean {
+  if (entry.kind !== "FILE" || !entry.taskInstanceId || !entry.fieldKey || !entry.fileId)
+    return false;
+  const key = fileKey({
+    taskInstanceId: entry.taskInstanceId,
+    fieldKey: entry.fieldKey,
+    fileId: entry.fileId,
+  });
+  return records.some((record) => fileKey(record) === key);
+}
+
+export function downloadTarget(
+  entry: Pick<
+    OrgFileEntryVO,
+    "id" | "kind" | "taskInstanceId" | "fileId" | "fieldKey" | "availability"
+  >,
+  location: OrgFileLocation,
+): OrgFileDownloadTarget | null {
+  if (entry.kind === "FILE") {
+    if (
+      entry.availability !== "available" ||
+      !entry.taskInstanceId ||
+      !entry.fileId ||
+      !entry.fieldKey
+    ) {
+      return null;
+    }
+    return {
+      kind: "FILE",
+      taskInstanceId: entry.taskInstanceId,
+      fileId: entry.fileId,
+      fieldKey: entry.fieldKey,
+    };
+  }
+  if (location.itemId) return null;
+  if (location.tree === "type") {
+    return location.typeId ? null : { kind: "TYPE", typeId: entry.id };
+  }
+  if (location.tree === "item" || location.projectId) return { kind: "ITEM", itemId: entry.id };
+  return { kind: "PROJECT", projectId: entry.id };
+}
+
+export function resourceFileName(fileId: string, originalName: string): string {
+  const base = originalName.replaceAll("\\", "/").split("/").pop() ?? "";
+  const cleaned = stripIllegal(base);
+  const dot = cleaned.lastIndexOf(".");
+  const extension = dot >= 0 ? cleaned.slice(dot + 1) : "";
+  if (/^[A-Za-z0-9]{1,16}$/.test(extension)) return `${fileId}.${extension}`;
+  return fileId;
+}
+
+function stripIllegal(name: string): string {
+  let result = "";
+  for (const char of name) {
+    const code = char.codePointAt(0) ?? 0;
+    if (code < 32 || '<>:"/\\|?*'.includes(char)) continue;
+    result += char;
+  }
+  return result;
+}
+
+export function serializeManifest(records: DownloadRecord[]): string {
+  return JSON.stringify({ version: 1, files: records });
+}
+
+export function parseManifest(text: string): DownloadRecord[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return [];
+  }
+  if (!parsed || typeof parsed !== "object") return [];
+  const body = parsed as { version?: unknown; files?: unknown };
+  if (body.version !== 1 || !Array.isArray(body.files)) return [];
+  const records: DownloadRecord[] = [];
+  for (const item of body.files) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as Record<string, unknown>;
+    if (
+      typeof record.taskInstanceId !== "string" ||
+      typeof record.fieldKey !== "string" ||
+      typeof record.fileId !== "string" ||
+      typeof record.name !== "string" ||
+      !record.taskInstanceId ||
+      !record.fieldKey ||
+      !record.fileId ||
+      !record.name
+    ) {
+      continue;
+    }
+    records.push({
+      taskInstanceId: record.taskInstanceId,
+      fieldKey: record.fieldKey,
+      fileId: record.fileId,
+      name: record.name,
+    });
+  }
+  return records;
+}

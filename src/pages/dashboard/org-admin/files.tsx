@@ -1,21 +1,26 @@
-import { useEffect, useRef, useState, type ReactElement } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactElement } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   ArrowUp,
   Download,
   Eye,
   File,
-  Trash2,
   FileImage,
   FileText,
   Folder,
+  FolderOpen,
   LayoutGrid,
   List,
   Loader2,
+  Trash2,
 } from "lucide-react";
 
 import { ApiError } from "@/api/apiError";
-import { discardOrganizationFile, getOrganizationFileDownload } from "@/api/organizationAdmin";
+import {
+  discardOrganizationFile,
+  downloadOrganizationFiles,
+  getOrganizationFileDownload,
+} from "@/api/organizationAdmin";
 import {
   closeAttachmentPreview,
   openAttachmentPreview,
@@ -25,6 +30,7 @@ import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,6 +49,16 @@ import {
   type OrgFileLocation,
   type OrgFileTree,
 } from "./fileLocation";
+import {
+  DirectoryAccessError,
+  ensureWritePermission,
+  loadSavedDownloads,
+  pickDownloadDirectory,
+  readDownloadRecords,
+  saveDownloadedFiles,
+  type DownloadDirectoryHandle,
+} from "./downloadDirectory";
+import { downloadTarget, isDownloaded, type DownloadRecord } from "./fileDownload";
 
 type ExplorerView = "icons" | "details";
 const TREE_LABEL = { planning: "企划", type: "类型", item: "项目" } as const;
@@ -70,8 +86,15 @@ function OrganizationFilesContent(): ReactElement {
   const total = listQuery.data?.total ?? 0;
   const folderPaging = !location.itemId;
   const [view, setView] = useState<ExplorerView>("icons");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [openingId, setOpeningId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [directory, setDirectory] = useState<DownloadDirectoryHandle | null>(null);
+  const [directoryName, setDirectoryName] = useState<string | null>(null);
+  const [records, setRecords] = useState<DownloadRecord[]>([]);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<{ done: number; total: number } | null>(
+    null,
+  );
+  const anchorRef = useRef<string | null>(null);
   const previewOwner = useRef(Symbol("org-file-preview"));
   const confirm = useConfirm();
   const discardMutation = useApiMutation({
@@ -79,11 +102,13 @@ function OrganizationFilesContent(): ReactElement {
       discardOrganizationFile(entry.taskInstanceId!, entry.fileId!, entry.fieldKey!),
     invalidate: [["orgFiles"], ["taskDetail"], ["taskVersions"]],
   });
-  const selected = entries.find((entry) => entry.id === selectedId) ?? null;
+  const selectedEntries = entries.filter((entry) => selectedIds.includes(entry.id));
+  const selected = selectedEntries.length === 1 ? (selectedEntries[0] ?? null) : null;
   const parent = parentOrgFileLocation(location);
 
   useEffect(() => {
-    setSelectedId(null);
+    setSelectedIds([]);
+    anchorRef.current = null;
   }, [location.tree, location.typeId, location.projectId, location.itemId, page]);
 
   useEffect(() => {
@@ -94,9 +119,43 @@ function OrganizationFilesContent(): ReactElement {
 
   useEffect(() => () => closeAttachmentPreview(previewOwner.current), []);
 
+  useEffect(() => {
+    let cancelled = false;
+    void loadSavedDownloads().then((saved) => {
+      if (cancelled || !saved) return;
+      setDirectory(saved.handle);
+      setDirectoryName(saved.name);
+      setRecords(saved.records);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   function go(next: OrgFileLocation): void {
     const search = orgFileSearch(next);
     void navigate({ pathname: "/dashboard/org-admin/files", search: search ? `?${search}` : "" });
+  }
+
+  function selectEntry(id: string, event: MouseEvent): void {
+    const ids = entries.map((entry) => entry.id);
+    if (event.shiftKey && anchorRef.current) {
+      const start = ids.indexOf(anchorRef.current);
+      const end = ids.indexOf(id);
+      if (start >= 0 && end >= 0) {
+        const [from, to] = start < end ? [start, end] : [end, start];
+        setSelectedIds(ids.slice(from, to + 1));
+        return;
+      }
+    }
+    if (event.metaKey || event.ctrlKey) {
+      setSelectedIds((current) =>
+        current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+      );
+    } else {
+      setSelectedIds([id]);
+    }
+    anchorRef.current = id;
   }
 
   function openEntry(entry: OrgFileEntryVO): void {
@@ -133,44 +192,100 @@ function OrganizationFilesContent(): ReactElement {
     });
   }
 
-  async function download(entry: OrgFileEntryVO): Promise<void> {
-    if (!entry.taskInstanceId || !entry.fileId || entry.availability !== "available" || openingId)
-      return;
-    const tab = window.open("", "_blank");
-    if (!tab) {
-      $tip("浏览器阻止了附件窗口，请允许弹出窗口后重试", "error");
+  function reportDownloadError(error: unknown): void {
+    if (error instanceof DOMException && error.name === "AbortError") return;
+    if (error instanceof DirectoryAccessError) {
+      $tip(error.message, "error");
       return;
     }
-    tab.opener = null;
-    tab.document.title = "正在准备附件";
-    setOpeningId(entry.id);
+    if (error instanceof ApiError) {
+      error.silence();
+      $tip(error.message, "error");
+      return;
+    }
+    $tip("下载失败，请稍后重试", "error");
+  }
+
+  async function chooseDirectory(): Promise<void> {
+    if (downloading) return;
     try {
-      const { readUrl } = await getOrganizationFileDownload(entry.taskInstanceId, entry.fileId);
-      tab.location.replace(readUrl);
+      const handle = await pickDownloadDirectory();
+      const next = await readDownloadRecords(handle);
+      setDirectory(handle);
+      setDirectoryName(handle.name);
+      setRecords(next);
     } catch (error) {
-      tab.close();
-      if (error instanceof ApiError) {
-        error.silence();
-        $tip(error.message, "error");
-      } else {
-        $tip("附件打开失败，请稍后重试", "error");
+      reportDownloadError(error);
+    }
+  }
+
+  async function downloadSelected(): Promise<void> {
+    const targets = selectedEntries
+      .map((entry) => downloadTarget(entry, location))
+      .filter((target) => target !== null);
+    if (targets.length === 0 || downloading) return;
+    setDownloading(true);
+    setDownloadProgress(null);
+    try {
+      let handle = directory;
+      if (!handle) handle = await pickDownloadDirectory();
+      else if (!(await ensureWritePermission(handle))) {
+        $tip("需要允许写入所选文件夹", "error");
+        return;
       }
+      const existing = await readDownloadRecords(handle);
+      setDirectory(handle);
+      setDirectoryName(handle.name);
+      setRecords(existing);
+      const batch = await downloadOrganizationFiles(targets);
+      if (batch.files.length === 0) {
+        $tip("没有可下载的文件", "error");
+        return;
+      }
+      const failed = await saveDownloadedFiles(
+        handle,
+        existing,
+        batch.files,
+        async (file) => {
+          try {
+            const fresh = await getOrganizationFileDownload(file.taskInstanceId, file.fileId);
+            return fresh.readUrl;
+          } catch (error) {
+            if (error instanceof ApiError) error.silence();
+            throw error;
+          }
+        },
+        (next, done, total) => {
+          setRecords(next);
+          setDownloadProgress({ done, total });
+        },
+      );
+      if (failed > 0) $tip(`${failed} 个文件没有下载`, "error");
+      else $tip("下载完成", "success");
+    } catch (error) {
+      reportDownloadError(error);
     } finally {
-      setOpeningId(null);
+      setDownloading(false);
+      setDownloadProgress(null);
     }
   }
 
   function moveSelection(offset: number): void {
     if (entries.length === 0) return;
-    const index = entries.findIndex((entry) => entry.id === selectedId);
+    const current = selectedIds.length === 1 ? selectedIds[0] : selectedIds[selectedIds.length - 1];
+    const index = entries.findIndex((entry) => entry.id === current);
     const next = entries[(Math.max(index, 0) + offset + entries.length) % entries.length];
-    if (next) setSelectedId(next.id);
+    if (!next) return;
+    setSelectedIds([next.id]);
+    anchorRef.current = next.id;
   }
 
   const projectTitle = listQuery.data?.projectTitle || "企划";
   const itemTitle = listQuery.data?.itemTitle || "项目";
   const canOpenFile = selected?.kind === "FILE" && selected.availability === "available";
   const canDiscard = selected?.kind === "FILE" && Boolean(selected.fieldKey && selected.fileId);
+  const canDownload =
+    !downloading && selectedEntries.some((entry) => downloadTarget(entry, location) !== null);
 
   async function discardSelected(): Promise<void> {
     if (!selected || !canDiscard || discardMutation.isPending) return;
@@ -183,7 +298,8 @@ function OrganizationFilesContent(): ReactElement {
     if (!confirmed) return;
     try {
       await discardMutation.mutateAsync(selected);
-      setSelectedId(null);
+      setSelectedIds([]);
+      anchorRef.current = null;
       $tip("文件已删除", "success");
     } catch {
       /* QueryClient 统一显示最终错误。 */
@@ -296,11 +412,23 @@ function OrganizationFilesContent(): ReactElement {
             type="button"
             variant="outline"
             size="sm"
-            disabled={!canOpenFile || openingId !== null}
-            onClick={() => selected && void download(selected)}
+            className="max-w-40"
+            title={directoryName ?? undefined}
+            disabled={downloading}
+            onClick={() => void chooseDirectory()}
           >
-            {openingId ? <Loader2 className="animate-spin" /> : <Download />}
-            下载
+            <FolderOpen />
+            <span className="truncate">{directoryName ?? "下载位置"}</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!canDownload}
+            onClick={() => void downloadSelected()}
+          >
+            {downloading ? <Loader2 className="animate-spin" /> : <Download />}
+            {downloadProgress ? `${downloadProgress.done}/${downloadProgress.total}` : "下载"}
           </Button>
           <Button
             type="button"
@@ -379,8 +507,9 @@ function OrganizationFilesContent(): ReactElement {
                 <IconEntry
                   key={entry.id}
                   entry={entry}
-                  selected={entry.id === selectedId}
-                  onSelect={() => setSelectedId(entry.id)}
+                  selected={selectedIds.includes(entry.id)}
+                  downloaded={isDownloaded(records, entry)}
+                  onSelect={(event) => selectEntry(entry.id, event)}
                   onOpen={() => openEntry(entry)}
                 />
               ))}
@@ -388,9 +517,10 @@ function OrganizationFilesContent(): ReactElement {
           ) : (
             <DetailsTable
               entries={entries}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
+              selectedIds={selectedIds}
+              onSelect={selectEntry}
               onOpen={openEntry}
+              downloaded={(entry) => isDownloaded(records, entry)}
             />
           )}
         </div>
@@ -407,9 +537,11 @@ function OrganizationFilesContent(): ReactElement {
         <div className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-1.5 text-xs">
           <span>共 {total} 项</span>
           <span className="truncate">
-            {selected?.kind === "FILE"
-              ? `${selected.taskName ?? "任务"} · ${selected.fieldLabel ?? "文件"}`
-              : (selected?.name ?? "")}
+            {selectedEntries.length > 1
+              ? `已选 ${selectedEntries.length} 项`
+              : selected?.kind === "FILE"
+                ? `${selected.taskName ?? "任务"} · ${selected.fieldLabel ?? "文件"}`
+                : (selected?.name ?? "")}
           </span>
         </div>
       </section>
@@ -420,12 +552,14 @@ function OrganizationFilesContent(): ReactElement {
 function IconEntry({
   entry,
   selected,
+  downloaded,
   onSelect,
   onOpen,
 }: {
   entry: OrgFileEntryVO;
   selected: boolean;
-  onSelect: () => void;
+  downloaded: boolean;
+  onSelect: (event: MouseEvent) => void;
   onOpen: () => void;
 }): ReactElement {
   const Icon = fileIcon(entry);
@@ -452,6 +586,7 @@ function IconEntry({
         )}
       />
       <span className="line-clamp-2 w-full break-all text-xs">{entry.name}</span>
+      {downloaded && <Badge variant="outline">已下载</Badge>}
       {entry.subtitle && (
         <span className="line-clamp-1 w-full text-[11px] text-muted-foreground">
           {entry.subtitle}
@@ -468,13 +603,15 @@ function IconEntry({
 
 function DetailsTable({
   entries,
-  selectedId,
+  selectedIds,
+  downloaded,
   onSelect,
   onOpen,
 }: {
   entries: OrgFileEntryVO[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
+  selectedIds: string[];
+  downloaded: (entry: OrgFileEntryVO) => boolean;
+  onSelect: (id: string, event: MouseEvent) => void;
   onOpen: (entry: OrgFileEntryVO) => void;
 }): ReactElement {
   return (
@@ -491,7 +628,7 @@ function DetailsTable({
       <tbody>
         {entries.map((entry) => {
           const Icon = fileIcon(entry);
-          const selected = entry.id === selectedId;
+          const selected = selectedIds.includes(entry.id);
           return (
             <tr
               key={entry.id}
@@ -501,7 +638,7 @@ function DetailsTable({
                 "cursor-default",
                 selected ? "bg-foreground/15" : "hover:bg-foreground/10",
               )}
-              onClick={() => onSelect(entry.id)}
+              onClick={(event) => onSelect(entry.id, event)}
               onDoubleClick={() => onOpen(entry)}
             >
               <td className="max-w-64 px-3 py-2">
@@ -510,6 +647,7 @@ function DetailsTable({
                   <span className="truncate" title={entry.name}>
                     {entry.name}
                   </span>
+                  {downloaded(entry) && <Badge variant="outline">已下载</Badge>}
                 </span>
               </td>
               <td className="text-muted-foreground max-w-40 truncate px-3 py-2">
