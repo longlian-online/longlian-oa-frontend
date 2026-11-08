@@ -3,7 +3,8 @@
 #   GIT_PASSWORD       CNB 代码同步令牌，用户名固定为 cnb，需仓库读写权限。
 #   CNB_RELEASE_TOKEN  CNB Release 与附件令牌，需 repo-release:rw。
 # 仓库级 Variable：
-#   VITE_API_BASE_URL  构建时写入前端的后端接口地址。
+#   VITE_API_BASE_URL      构建时写入前端的后端接口地址。
+#   VITE_UMAMI_WEBSITE_ID  正式服 Umami 站点标识。与测试服不同；未配置则不注入统计脚本。
 name: Publish frontend package
 
 on:
@@ -57,6 +58,7 @@ jobs:
       - name: Build
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_UMAMI_WEBSITE_ID: ${{ vars.VITE_UMAMI_WEBSITE_ID }}
         run: |
           set -euo pipefail
           if [[ -z "$VITE_API_BASE_URL" ]]; then
