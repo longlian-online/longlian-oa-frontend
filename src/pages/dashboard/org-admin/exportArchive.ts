@@ -1,5 +1,5 @@
 import { DirectoryAccessError, type DownloadDirectoryHandle } from "./downloadDirectory";
-import { archiveEntryNames, resourceFileName } from "./fileDownload";
+import { archiveEntryPaths, resourceFileName } from "./fileDownload";
 
 export interface ArchiveWritable {
   write(data: Uint8Array): Promise<void>;
@@ -10,6 +10,7 @@ export interface ArchiveWritable {
 export interface ArchiveSource {
   fileId: string;
   name: string;
+  directories?: string[];
   open: () => Promise<ReadableStream<Uint8Array> | null>;
 }
 
@@ -37,7 +38,7 @@ interface SavePickerWindow {
 
 export async function packDownloadedFiles(
   directory: DownloadDirectoryHandle,
-  files: { fileId: string; name: string }[],
+  files: { fileId: string; name: string; directories?: string[] }[],
   destination: ArchiveWritable,
 ): Promise<{ packed: number; missing: number }> {
   return writeStoredZip(
@@ -45,6 +46,7 @@ export async function packDownloadedFiles(
     files.map((file) => ({
       fileId: file.fileId,
       name: file.name,
+      directories: file.directories,
       open: async () => {
         try {
           const handle = await directory.getFileHandle(resourceFileName(file.fileId, file.name));
@@ -62,7 +64,7 @@ export async function writeStoredZip(
   destination: ArchiveWritable,
   files: ArchiveSource[],
 ): Promise<{ packed: number; missing: number }> {
-  const names = archiveEntryNames(files);
+  const names = archiveEntryPaths(files);
   const stamp = dosStamp(new Date());
   const central: Uint8Array[] = [];
   let offset = 0;
