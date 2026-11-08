@@ -8,6 +8,7 @@ import { dirname, resolve } from "path";
 import type { Plugin, ProxyOptions } from "vite-plus";
 import { readFileSync } from "node:fs";
 import { releaseManifestAsset } from "./src/lib/frontendRelease.ts";
+import { injectUmamiScript } from "./src/lib/umami.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -25,6 +26,15 @@ export function frontendReleaseManifest(appVersion: string, appBuildTime: string
     apply: "build",
     generateBundle() {
       this.emitFile(releaseManifestAsset(appVersion, appBuildTime));
+    },
+  };
+}
+
+export function umamiAnalytics(): Plugin {
+  return {
+    name: "umami-analytics",
+    transformIndexHtml(html) {
+      return injectUmamiScript(html, process.env.VITE_UMAMI_WEBSITE_ID);
     },
   };
 }
@@ -74,6 +84,7 @@ export default defineConfig({
   },
   plugins: [
     frontendReleaseManifest(version, buildTime),
+    umamiAnalytics(),
     ignoreUnknownRequests(),
     fileRoutes(),
     react(),
