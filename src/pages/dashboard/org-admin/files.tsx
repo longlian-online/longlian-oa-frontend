@@ -1,4 +1,13 @@
-import { useEffect, useRef, useState, type MouseEvent, type ReactElement } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type MouseEvent,
+  type ReactElement,
+} from "react";
+import { Popover } from "@base-ui/react/popover";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   ArrowUp,
@@ -9,6 +18,7 @@ import {
   FileText,
   Folder,
   FolderOpen,
+  Info,
   Package,
   LayoutGrid,
   List,
@@ -57,16 +67,18 @@ import {
   pickDownloadDirectory,
   readDownloadRecords,
   saveDownloadedFiles,
-  type DownloadDirectoryHandle,
 } from "./downloadDirectory";
-import { packDownloadedFiles, pickExportArchive, type ArchiveWritable } from "./exportArchive";
 import {
-  archiveDirectories,
-  downloadTarget,
-  fileKey,
-  isDownloaded,
-  type DownloadRecord,
-} from "./fileDownload";
+  beginDownload,
+  finishDownload,
+  getDownloadSession,
+  noteDownloadDirectory,
+  noteDownloadProgress,
+  rememberDownloads,
+  subscribeDownloadSession,
+} from "./downloadSession";
+import { packDownloadedFiles, pickExportArchive, type ArchiveWritable } from "./exportArchive";
+import { archiveDirectories, downloadTarget, fileKey, isDownloaded } from "./fileDownload";
 
 type ExplorerView = "icons" | "details";
 const TREE_LABEL = { planning: "企划", type: "类型", item: "项目" } as const;
@@ -84,6 +96,41 @@ function submitterLabel(name?: string): string {
   return trimmed || "未设置昵称";
 }
 
+function ExportScopeHint(): ReactElement {
+  const [open, setOpen] = useState(false);
+  const triggerId = useId();
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen} triggerId={open ? triggerId : null}>
+      <Popover.Trigger
+        id={triggerId}
+        onFocus={(event) => {
+          if (event.currentTarget.matches(":focus-visible")) setOpen(true);
+        }}
+        openOnHover
+        delay={150}
+        closeDelay={100}
+        aria-label="导出说明"
+        render={
+          <Button type="button" variant="ghost" size="icon-xs" className="text-muted-foreground" />
+        }
+      >
+        <Info aria-hidden="true" />
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner side="bottom" sideOffset={6}>
+          <Popover.Popup
+            initialFocus={false}
+            className="max-w-[min(18rem,calc(100vw-2rem))] rounded-lg border bg-popover p-3 text-sm text-popover-foreground shadow-md outline-none"
+          >
+            <Popover.Title className="sr-only">导出说明</Popover.Title>
+            <Popover.Description>仅导出已下载的文件</Popover.Description>
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+
 function OrganizationFilesContent(): ReactElement {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -95,14 +142,17 @@ function OrganizationFilesContent(): ReactElement {
   const folderPaging = !location.itemId;
   const [view, setView] = useState<ExplorerView>("icons");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [directory, setDirectory] = useState<DownloadDirectoryHandle | null>(null);
-  const [directoryName, setDirectoryName] = useState<string | null>(null);
-  const [records, setRecords] = useState<DownloadRecord[]>([]);
-  const [downloading, setDownloading] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState<{ done: number; total: number } | null>(
-    null,
+  const downloadSession = useSyncExternalStore(
+    subscribeDownloadSession,
+    getDownloadSession,
+    getDownloadSession,
   );
+  const downloading = downloadSession.running;
+  const downloadProgress = downloadSession.progress;
+  const records = downloadSession.records;
+  const directory = downloadSession.directory;
+  const directoryName = downloadSession.directoryName;
   const anchorRef = useRef<string | null>(null);
   const previewOwner = useRef(Symbol("org-file-preview"));
   const confirm = useConfirm();
@@ -131,10 +181,8 @@ function OrganizationFilesContent(): ReactElement {
   useEffect(() => {
     let cancelled = false;
     void loadSavedDownloads().then((saved) => {
-      if (cancelled || !saved) return;
-      setDirectory(saved.handle);
-      setDirectoryName(saved.name);
-      setRecords(saved.records);
+      if (cancelled) return;
+      rememberDownloads(saved);
     });
     return () => {
       cancelled = true;
@@ -216,13 +264,11 @@ function OrganizationFilesContent(): ReactElement {
   }
 
   async function chooseDirectory(): Promise<void> {
-    if (downloading || exporting) return;
+    if (getDownloadSession().running || exporting) return;
     try {
       const handle = await pickDownloadDirectory();
       const next = await readDownloadRecords(handle);
-      setDirectory(handle);
-      setDirectoryName(handle.name);
-      setRecords(next);
+      rememberDownloads({ handle, name: handle.name, records: next });
     } catch (error) {
       reportDownloadError(error);
     }
@@ -232,20 +278,17 @@ function OrganizationFilesContent(): ReactElement {
     const targets = selectedEntries
       .map((entry) => downloadTarget(entry, location))
       .filter((target) => target !== null);
-    if (targets.length === 0 || downloading || exporting) return;
-    setDownloading(true);
-    setDownloadProgress(null);
+    if (targets.length === 0 || getDownloadSession().running || exporting) return;
+    beginDownload();
     try {
-      let handle = directory;
+      let handle = getDownloadSession().directory;
       if (!handle) handle = await pickDownloadDirectory();
       else if (!(await ensureWritePermission(handle))) {
         $tip("需要允许写入所选文件夹", "error");
         return;
       }
       const existing = await readDownloadRecords(handle);
-      setDirectory(handle);
-      setDirectoryName(handle.name);
-      setRecords(existing);
+      noteDownloadDirectory(handle, existing);
       const batch = await downloadOrganizationFiles(targets);
       if (batch.files.length === 0) {
         $tip("没有可下载的文件", "error");
@@ -265,8 +308,7 @@ function OrganizationFilesContent(): ReactElement {
           }
         },
         (next, done, total) => {
-          setRecords(next);
-          setDownloadProgress({ done, total });
+          noteDownloadProgress(next, done, total);
         },
       );
       if (failed > 0) $tip(`${failed} 个文件没有下载`, "error");
@@ -274,8 +316,7 @@ function OrganizationFilesContent(): ReactElement {
     } catch (error) {
       reportDownloadError(error);
     } finally {
-      setDownloading(false);
-      setDownloadProgress(null);
+      finishDownload();
     }
   }
 
@@ -294,7 +335,7 @@ function OrganizationFilesContent(): ReactElement {
         return;
       }
       const existing = await readDownloadRecords(directory);
-      setRecords(existing);
+      noteDownloadDirectory(directory, existing);
       const batch = await downloadOrganizationFiles(targets);
       const files = batch.files.flatMap((file) => {
         const record = existing.find((item) => fileKey(item) === fileKey(file));
@@ -494,16 +535,19 @@ function OrganizationFilesContent(): ReactElement {
             {downloading ? <Loader2 className="animate-spin" /> : <Download />}
             {downloadProgress ? `${downloadProgress.done}/${downloadProgress.total}` : "下载"}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={!canExport}
-            onClick={() => void exportSelected()}
-          >
-            {exporting ? <Loader2 className="animate-spin" /> : <Package />}
-            导出
-          </Button>
+          <span className="inline-flex items-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!canExport}
+              onClick={() => void exportSelected()}
+            >
+              {exporting ? <Loader2 className="animate-spin" /> : <Package />}
+              导出
+            </Button>
+            <ExportScopeHint />
+          </span>
           <Button
             type="button"
             variant="destructive"

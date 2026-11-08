@@ -2,6 +2,7 @@
 import { expect, test } from "vite-plus/test";
 import {
   compareNotifications,
+  notificationAvatarMark,
   notificationPresentation,
   notificationTarget,
 } from "@/lib/notification";
@@ -54,6 +55,31 @@ test("review notifications describe the request and open the administrator list"
     message: "「管理员」申请删除企划「作品」。",
     targetPath: "/dashboard/org-admin/deletion-requests",
   });
+});
+
+test("join application without an avatar uses the first character of the display name", (): void => {
+  const joined: NotificationVO = {
+    id: "4",
+    sourceId: "4",
+    createdAt: "2026-10-22 09:00:00",
+    readAt: null,
+    thumbnailUrl: null,
+    kind: "JOIN_APPLICATION",
+    source: { applicantName: "  新同学" },
+  };
+  const deletion: NotificationVO = {
+    id: "5",
+    sourceId: "5",
+    createdAt: "2026-10-22 09:00:00",
+    readAt: null,
+    thumbnailUrl: null,
+    kind: "DELETION_REQUEST",
+    source: { requesterName: "管理员", targetType: "PROJECT", targetTitle: "作品" },
+  };
+  expect(notificationAvatarMark(joined)).toBe("新");
+  expect(notificationAvatarMark({ ...joined, source: { applicantName: "   " } })).toBeNull();
+  expect(notificationAvatarMark({ ...joined, source: null })).toBeNull();
+  expect(notificationAvatarMark(deletion)).toBeNull();
 });
 
 test("rejected task notification names the slot, keeps the review comment and opens the task", (): void => {

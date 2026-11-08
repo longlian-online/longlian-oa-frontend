@@ -11,6 +11,7 @@ import { useNotificationInbox, useNotificationStatus } from "@/hooks/useNotifica
 import {
   compareNotifications,
   formatNotificationTime,
+  notificationAvatarMark,
   notificationPresentation,
   notificationTarget,
 } from "@/lib/notification";
@@ -188,6 +189,7 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
             <ul>
               {rows.map((row) => {
                 const presentation = notificationPresentation(row);
+                const mark = notificationAvatarMark(row);
                 return (
                   <li key={row.id}>
                     <button
@@ -198,14 +200,17 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
                     >
                       <span
                         aria-hidden
-                        className="size-12 shrink-0 overflow-hidden rounded-md bg-muted"
+                        className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-sm font-medium text-muted-foreground"
                       >
-                        {row.thumbnailUrl && (
+                        {row.thumbnailUrl ? (
                           <RemoteImage
                             src={row.thumbnailUrl}
                             alt=""
                             className="size-full bg-muted"
+                            fallback={mark ?? undefined}
                           />
+                        ) : (
+                          mark
                         )}
                       </span>
                       <span className="min-w-0 flex-1">
