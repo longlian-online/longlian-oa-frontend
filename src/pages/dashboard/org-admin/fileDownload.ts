@@ -81,6 +81,40 @@ function stripIllegal(name: string): string {
   return result;
 }
 
+const WINDOWS_DEVICE = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i;
+
+function archiveBaseName(originalName: string, fileId: string): string {
+  const base = originalName.replaceAll("\\", "/").split("/").pop() ?? "";
+  const cleaned = stripIllegal(base)
+    .replace(/[. ]+$/u, "")
+    .trim();
+  if (cleaned === "" || cleaned === "." || cleaned === "..") return fileId;
+  return cleaned;
+}
+
+function withResourceId(name: string, fileId: string): string {
+  const dot = name.lastIndexOf(".");
+  const extension = dot > 0 ? name.slice(dot + 1) : "";
+  if (/^[A-Za-z0-9]{1,16}$/.test(extension)) return `${name.slice(0, dot)}_${fileId}.${extension}`;
+  return `${name}_${fileId}`;
+}
+
+export function archiveEntryNames(files: { fileId: string; name: string }[]): string[] {
+  const taken = new Set<string>();
+  return files.map((file) => {
+    const base = archiveBaseName(file.name, file.fileId);
+    let entry = WINDOWS_DEVICE.test(base) ? withResourceId(base, file.fileId) : base;
+    if (taken.has(entry.toLowerCase())) entry = withResourceId(base, file.fileId);
+    let sequence = 2;
+    while (taken.has(entry.toLowerCase())) {
+      entry = withResourceId(base, `${file.fileId}-${sequence}`);
+      sequence += 1;
+    }
+    taken.add(entry.toLowerCase());
+    return entry;
+  });
+}
+
 export function serializeManifest(records: DownloadRecord[]): string {
   return JSON.stringify({ version: 1, files: records });
 }
