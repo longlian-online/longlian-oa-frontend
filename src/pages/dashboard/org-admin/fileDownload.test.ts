@@ -1,6 +1,7 @@
 import { expect, test } from "vite-plus/test";
 
 import {
+  archiveEntryNames,
   downloadTarget,
   isDownloaded,
   parseManifest,
@@ -87,6 +88,17 @@ test("本地文件名使用资源 ID，只保留安全扩展名", () => {
   expect(resourceFileName("101", "CON.txt")).toBe("101.txt");
   expect(resourceFileName("202", "成果.PDF")).toBe("202.PDF");
   expect(resourceFileName("303", "归档.tar.gz")).toBe("303.gz");
+});
+
+test("压缩包条目用原名，重名和设备名才加上资源 ID", () => {
+  expect(
+    archiveEntryNames([
+      { fileId: "101", name: "企划/成果.pdf" },
+      { fileId: "202", name: "成果.PDF" },
+      { fileId: "303", name: "CON.txt" },
+      { fileId: "404", name: ".." },
+    ]),
+  ).toEqual(["成果.pdf", "成果_202.PDF", "CON_303.txt", "404"]);
 });
 
 test("下载记录只接受当前版本里完整的文件", () => {
