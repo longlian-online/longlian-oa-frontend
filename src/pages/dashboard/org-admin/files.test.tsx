@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
 import OrganizationFilesPage from "./files";
+import { resetDownloadSession } from "./downloadSession";
 
 const seen = vi.hoisted(() => ({
   key: [] as unknown,
@@ -61,6 +62,7 @@ let router = createMemoryRouter([
 beforeEach((): void => {
   seen.entries = [{ id: "9", kind: "FOLDER", name: "漫画", subtitle: "阿企划" }];
   seen.records = [];
+  resetDownloadSession();
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   container = document.createElement("div");
   document.body.append(container);
@@ -164,4 +166,14 @@ test("已下载标记跟着文件走，不跟着视图文件夹走", async (): P
     (node) => node.textContent === "已下载",
   );
   expect(marks).toHaveLength(1);
+});
+
+test("导出按钮说明只导出已下载的文件", async (): Promise<void> => {
+  await mount("");
+  const hint = container.querySelector<HTMLButtonElement>('button[aria-label="导出说明"]');
+  if (!hint) throw new Error("找不到导出说明");
+  await act(async () => {
+    hint.click();
+  });
+  expect(document.body.textContent).toContain("仅导出已下载的文件");
 });

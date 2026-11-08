@@ -11,6 +11,31 @@ const STORE = "handles";
 const DIRECTORY_KEY = "download-directory";
 const MANIFEST_NAME = ".downloads.json";
 const WRITE_CONCURRENCY = 3;
+const MANIFEST_LOCK = "longlian-oa-download-manifest";
+
+interface ManifestLockManager {
+  request<T>(name: string, callback: () => Promise<T>): Promise<T>;
+}
+
+let manifestChain = Promise.resolve();
+
+function manifestLocks(): ManifestLockManager | null {
+  if (typeof navigator === "undefined") return null;
+  const locks = (navigator as Navigator & { locks?: ManifestLockManager }).locks;
+  if (!locks || typeof locks.request !== "function") return null;
+  return locks;
+}
+
+function withManifestLock<T>(task: () => Promise<T>): Promise<T> {
+  const locks = manifestLocks();
+  if (locks) return locks.request(MANIFEST_LOCK, task);
+  const run = manifestChain.then(task, task);
+  manifestChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
 
 export class DirectoryAccessError extends Error {
   constructor(message: string) {
@@ -198,21 +223,11 @@ export async function saveDownloadedFiles(
   sign: (file: SavedDownloadFile) => Promise<string>,
   onUpdate: (records: DownloadRecord[], done: number, total: number) => void,
 ): Promise<number> {
-  const records = [...existing];
   let failed = 0;
   let done = 0;
-  let chain = Promise.resolve();
-  const enqueue = (task: () => Promise<void>): Promise<void> => {
-    const run = chain.then(task, task);
-    chain = run.then(
-      () => undefined,
-      () => undefined,
-    );
-    return run;
-  };
+  let latest = [...existing];
 
   async function one(file: SavedDownloadFile): Promise<void> {
-    const key = fileKey(file);
     const localName = resourceFileName(file.fileId, file.fileName);
     try {
       let body: ReadableStream<Uint8Array>;
@@ -222,36 +237,31 @@ export async function saveDownloadedFiles(
         body = await fetchBody(await sign(file));
       }
       await writeDownloadFile(directory, localName, body);
-      await enqueue(async () => {
+      await withManifestLock(async () => {
+        const records = await readDownloadRecords(directory);
         const next = {
           taskInstanceId: file.taskInstanceId,
           fieldKey: file.fieldKey,
           fileId: file.fileId,
           name: file.fileName,
         };
+        const key = fileKey(next);
         const index = records.findIndex((record) => fileKey(record) === key);
         if (index >= 0) records[index] = next;
         else records.push(next);
         await writeDownloadRecords(directory, records);
-        onUpdate([...records], done, files.length);
+        latest = records;
+        onUpdate([...latest], done, files.length);
       });
     } catch {
       failed += 1;
-      await enqueue(async () => {
-        const index = records.findIndex((record) => fileKey(record) === key);
-        if (index < 0) return;
-        records.splice(index, 1);
-        await writeDownloadRecords(directory, records);
-        onUpdate([...records], done, files.length);
-      });
     } finally {
       done += 1;
-      onUpdate([...records], done, files.length);
+      onUpdate([...latest], done, files.length);
     }
   }
 
   await runPool(files, WRITE_CONCURRENCY, one);
-  await chain;
   return failed;
 }
 
