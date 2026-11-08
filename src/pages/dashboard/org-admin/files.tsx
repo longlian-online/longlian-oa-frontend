@@ -9,6 +9,7 @@ import {
   FileText,
   Folder,
   FolderOpen,
+  Package,
   LayoutGrid,
   List,
   Loader2,
@@ -58,7 +59,8 @@ import {
   saveDownloadedFiles,
   type DownloadDirectoryHandle,
 } from "./downloadDirectory";
-import { downloadTarget, isDownloaded, type DownloadRecord } from "./fileDownload";
+import { packDownloadedFiles, pickExportArchive, type ArchiveWritable } from "./exportArchive";
+import { downloadTarget, fileKey, isDownloaded, type DownloadRecord } from "./fileDownload";
 
 type ExplorerView = "icons" | "details";
 const TREE_LABEL = { planning: "企划", type: "类型", item: "项目" } as const;
@@ -91,6 +93,7 @@ function OrganizationFilesContent(): ReactElement {
   const [directoryName, setDirectoryName] = useState<string | null>(null);
   const [records, setRecords] = useState<DownloadRecord[]>([]);
   const [downloading, setDownloading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<{ done: number; total: number } | null>(
     null,
   );
@@ -207,7 +210,7 @@ function OrganizationFilesContent(): ReactElement {
   }
 
   async function chooseDirectory(): Promise<void> {
-    if (downloading) return;
+    if (downloading || exporting) return;
     try {
       const handle = await pickDownloadDirectory();
       const next = await readDownloadRecords(handle);
@@ -223,7 +226,7 @@ function OrganizationFilesContent(): ReactElement {
     const targets = selectedEntries
       .map((entry) => downloadTarget(entry, location))
       .filter((target) => target !== null);
-    if (targets.length === 0 || downloading) return;
+    if (targets.length === 0 || downloading || exporting) return;
     setDownloading(true);
     setDownloadProgress(null);
     try {
@@ -270,6 +273,51 @@ function OrganizationFilesContent(): ReactElement {
     }
   }
 
+  async function exportSelected(): Promise<void> {
+    const targets = selectedEntries
+      .map((entry) => downloadTarget(entry, location))
+      .filter((target) => target !== null);
+    if (targets.length === 0 || downloading || exporting || !directory) return;
+    setExporting(true);
+    let destination: ArchiveWritable | null = null;
+    try {
+      destination = await pickExportArchive();
+      if (!(await ensureWritePermission(directory))) {
+        await destination.abort?.();
+        $tip("需要允许读取所选文件夹", "error");
+        return;
+      }
+      const existing = await readDownloadRecords(directory);
+      setRecords(existing);
+      const batch = await downloadOrganizationFiles(targets);
+      const files = batch.files.flatMap((file) => {
+        const record = existing.find((item) => fileKey(item) === fileKey(file));
+        return record ? [{ fileId: record.fileId, name: record.name }] : [];
+      });
+      if (files.length === 0) {
+        await destination.abort?.();
+        $tip("所选文件还没下载", "error");
+        return;
+      }
+      const { packed, missing } = await packDownloadedFiles(directory, files, destination);
+      if (packed === 0) {
+        await destination.abort?.();
+        $tip("本地文件已经不在", "error");
+        return;
+      }
+      await destination.close();
+      destination = null;
+      const skipped = batch.files.length - files.length + missing;
+      if (skipped > 0) $tip(`${skipped} 个文件还没下载，没有放进压缩包`, "error");
+      else $tip("导出完成", "success");
+    } catch (error) {
+      await destination?.abort?.().catch(() => undefined);
+      reportDownloadError(error);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   function moveSelection(offset: number): void {
     if (entries.length === 0) return;
     const current = selectedIds.length === 1 ? selectedIds[0] : selectedIds[selectedIds.length - 1];
@@ -284,8 +332,10 @@ function OrganizationFilesContent(): ReactElement {
   const itemTitle = listQuery.data?.itemTitle || "项目";
   const canOpenFile = selected?.kind === "FILE" && selected.availability === "available";
   const canDiscard = selected?.kind === "FILE" && Boolean(selected.fieldKey && selected.fileId);
+  const busy = downloading || exporting;
   const canDownload =
-    !downloading && selectedEntries.some((entry) => downloadTarget(entry, location) !== null);
+    !busy && selectedEntries.some((entry) => downloadTarget(entry, location) !== null);
+  const canExport = canDownload && directory !== null;
 
   async function discardSelected(): Promise<void> {
     if (!selected || !canDiscard || discardMutation.isPending) return;
@@ -414,7 +464,7 @@ function OrganizationFilesContent(): ReactElement {
             size="sm"
             className="max-w-40"
             title={directoryName ?? undefined}
-            disabled={downloading}
+            disabled={busy}
             onClick={() => void chooseDirectory()}
           >
             <FolderOpen />
@@ -429,6 +479,16 @@ function OrganizationFilesContent(): ReactElement {
           >
             {downloading ? <Loader2 className="animate-spin" /> : <Download />}
             {downloadProgress ? `${downloadProgress.done}/${downloadProgress.total}` : "下载"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!canExport}
+            onClick={() => void exportSelected()}
+          >
+            {exporting ? <Loader2 className="animate-spin" /> : <Package />}
+            导出
           </Button>
           <Button
             type="button"
