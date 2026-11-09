@@ -196,11 +196,9 @@ function menuItem(menu: ParentNode, label: string): HTMLButtonElement {
   return item;
 }
 
-test("说明在标题栏，多选跟在视图后面", async (): Promise<void> => {
+test("多选跟在视图后面，操作不放在工具栏", async (): Promise<void> => {
   await mount("");
-  const title = container.querySelector("h1")?.parentElement;
-  expect(title?.textContent).toContain("文件");
-  expect(title?.textContent).toContain("说明");
+  expect(container.querySelector("h1")?.textContent).toBe("文件");
   const toolbar = container.querySelector("section div")?.textContent ?? "";
   expect(toolbar.indexOf("视图：")).toBeGreaterThanOrEqual(0);
   expect(toolbar.indexOf("多选")).toBeGreaterThan(toolbar.indexOf("视图："));
@@ -212,17 +210,8 @@ test("说明在标题栏，多选跟在视图后面", async (): Promise<void> =>
   expect(labels).not.toContain("预览");
   expect(labels).not.toContain("删除");
   expect(labels).not.toContain("下载位置");
-  const help = [...container.querySelectorAll("button")].find((button) =>
-    button.textContent?.includes("说明"),
-  );
-  if (!help) throw new Error("找不到说明");
-  await act(async () => {
-    help.click();
-  });
-  const dialog = document.body.querySelector('[role="dialog"]');
-  expect(dialog?.textContent).toContain("如果不知道如何使用，请不要使用该页面");
-  expect(dialog?.textContent).toContain("个人设置的存储设置");
-  expect(dialog?.textContent).toContain("直接放在所选文件夹里");
+  expect(labels).not.toContain("说明");
+  expect(document.body.querySelector('[role="dialog"]')).toBeNull();
   const menu = await openMenu();
   expect(menu.textContent).not.toContain("导出");
   expect(menuItem(menu, "预览").disabled).toBe(true);

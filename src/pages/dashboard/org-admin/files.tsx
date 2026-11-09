@@ -21,7 +21,6 @@ import {
   FileText,
   FileX,
   Folder,
-  Info,
   LayoutGrid,
   List,
   Trash2,
@@ -44,13 +43,6 @@ import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -98,13 +90,6 @@ interface RemoteFile {
   name: string;
 }
 
-const USAGE_NOTES = [
-  "如果不知道如何使用，请不要使用该页面。",
-  "按住 Shift/Ctrl/Command 点击多个文件或文件夹，可以一次多选。在文件区域按住并拖动可以框选。",
-  "下载前需在个人设置的存储设置里选择存放位置。存放文件夹下的文件不要单独操作。如果需要删除，可以直接删除整个文件夹，或在本页面执行「删除本地文件」。请不要单独在本地删除某个文件。",
-  "下载的文件直接放在所选文件夹里，文件名是企划名-项目名-任务名-提交项，后缀沿用原文件。",
-] as const;
-
 function directRemoteFiles(entries: OrgFileEntryVO[]): RemoteFile[] {
   return entries.flatMap((entry) => {
     if (entry.kind !== "FILE" || !entry.taskInstanceId || !entry.fileId || !entry.fieldKey) {
@@ -147,30 +132,6 @@ function fileIcon(entry: OrgFileEntryVO): typeof File {
 function submitterLabel(name?: string): string {
   const trimmed = name?.trim() ?? "";
   return trimmed || "未设置昵称";
-}
-
-function UsageHelpDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}): ReactElement {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>使用说明</DialogTitle>
-          <DialogDescription className="sr-only">文件页的使用限制。</DialogDescription>
-        </DialogHeader>
-        <ol className="list-decimal space-y-2 pl-5 text-sm">
-          {USAGE_NOTES.map((note) => (
-            <li key={note}>{note}</li>
-          ))}
-        </ol>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 function FileActionMenu({
@@ -278,7 +239,6 @@ function OrganizationFilesContent(): ReactElement {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [removingLocal, setRemovingLocal] = useState(false);
   const [multiSelect, setMultiSelect] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; entryId: string } | null>(null);
   const multiSelectId = useId();
   const orgId = useSessionSnapshot().orgId;
@@ -689,13 +649,7 @@ function OrganizationFilesContent(): ReactElement {
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <h1 className="text-xl font-bold text-foreground">文件</h1>
-        <Button type="button" variant="outline" size="sm" onClick={() => setHelpOpen(true)}>
-          <Info />
-          说明
-        </Button>
-      </div>
+      <h1 className="text-xl font-bold text-foreground">文件</h1>
       <section className="border-border bg-card flex h-[calc(100svh-13.5rem)] min-h-96 flex-col overflow-hidden rounded-xl border">
         <div className="border-border flex flex-wrap items-center gap-1 border-b px-2 py-2">
           <Button
@@ -943,7 +897,6 @@ function OrganizationFilesContent(): ReactElement {
           />
         </FileActionMenu>
       )}
-      <UsageHelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
       <div
         ref={marqueeRef}
         hidden
