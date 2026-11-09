@@ -31,8 +31,8 @@ test("并行下载重读清单，不覆盖别人刚记下的记录", async () =>
   const sign = async () => "https://example.test/file";
 
   await Promise.all([
-    saveDownloadedFiles(disk.directory, [], [file("202", "甲.pdf")], sign, onUpdate),
-    saveDownloadedFiles(disk.directory, [], [file("303", "乙.pdf")], sign, onUpdate),
+    saveDownloadedFiles(disk.directory, [], [file("202", "甲.pdf")], "planning", sign, onUpdate),
+    saveDownloadedFiles(disk.directory, [], [file("303", "乙.pdf")], "planning", sign, onUpdate),
   ]);
 
   expect(
@@ -50,8 +50,22 @@ test("没有 Web Locks 时同页写入仍然合并", async () => {
   const sign = async () => "https://example.test/file";
 
   await Promise.all([
-    saveDownloadedFiles(disk.directory, [], [file("202", "甲.pdf")], sign, () => undefined),
-    saveDownloadedFiles(disk.directory, [], [file("303", "乙.pdf")], sign, () => undefined),
+    saveDownloadedFiles(
+      disk.directory,
+      [],
+      [file("202", "甲.pdf")],
+      "planning",
+      sign,
+      () => undefined,
+    ),
+    saveDownloadedFiles(
+      disk.directory,
+      [],
+      [file("303", "乙.pdf")],
+      "planning",
+      sign,
+      () => undefined,
+    ),
   ]);
 
   expect(
@@ -69,6 +83,7 @@ test("签发失败不改已有下载记录", async () => {
     disk.directory,
     [KEPT],
     [file("202", "甲.pdf")],
+    "planning",
     async () => {
       throw new Error("签不了");
     },
@@ -123,6 +138,37 @@ test("删除中途失败时保留尚未删除的记录", async () => {
   expect(disk.has(resourceFileName(KEPT.fileId, KEPT.name))).toBe(false);
 });
 
+test("下载按所选视图写入子目录，并记下相对路径", async () => {
+  installLocks();
+  const disk = memoryDirectory([]);
+  vi.stubGlobal("fetch", async () => new Response(Uint8Array.from([1])));
+  await saveDownloadedFiles(
+    disk.directory,
+    [],
+    [
+      {
+        taskInstanceId: "8",
+        fieldKey: "script",
+        fileId: "101",
+        fileName: "成果.pdf",
+        projectTitle: "阿企划",
+        itemTitle: "第一话",
+        typeName: "漫画",
+      },
+    ],
+    "type",
+    async () => "https://example.test/file",
+    () => undefined,
+  );
+  expect(disk.records().map((record) => record.path)).toEqual(["漫画/成果.pdf"]);
+  expect(disk.hasPath("漫画/成果.pdf")).toBe(true);
+  await removeDownloadedFiles(disk.directory, [
+    { taskInstanceId: "8", fieldKey: "script", fileId: "101" },
+  ]);
+  expect(disk.records()).toEqual([]);
+  expect(disk.hasPath("漫画/成果.pdf")).toBe(false);
+});
+
 function file(fileId: string, fileName: string) {
   return { taskInstanceId: "8", fieldKey: "script", fileId, fileName };
 }
@@ -151,15 +197,56 @@ function memoryDirectory(
   records: () => DownloadRecord[];
   writes: () => number;
   has: (name: string) => boolean;
+  hasPath: (path: string) => boolean;
 } {
   let manifest = serializeManifest(initial);
   let writes = 0;
-  const present = new Set(files?.present ?? []);
   const fail = new Set(files?.fail ?? []);
-  const directory = {
-    name: "下载",
-    async getFileHandle(name: string, options?: { create?: boolean }) {
-      if (name !== ".downloads.json") {
+  const root: MemDir = { files: new Set(files?.present ?? []), dirs: new Map() };
+
+  function handleFor(dir: MemDir, name: string, isRoot: boolean): DownloadDirectoryHandle {
+    return {
+      name,
+      async getDirectoryHandle(child: string, options?: { create?: boolean }) {
+        let next = dir.dirs.get(child);
+        if (!next) {
+          if (!options?.create) throw new DOMException("missing", "NotFoundError");
+          next = { files: new Set(), dirs: new Map() };
+          dir.dirs.set(child, next);
+        }
+        return handleFor(next, child, false);
+      },
+      async getFileHandle(fileName: string, options?: { create?: boolean }) {
+        if (isRoot && fileName === ".downloads.json") {
+          if (!options?.create && manifest === "")
+            throw new DOMException("missing", "NotFoundError");
+          return {
+            async getFile() {
+              return {
+                async text() {
+                  return manifest;
+                },
+              };
+            },
+            async createWritable() {
+              let next = "";
+              return {
+                async write(data: string) {
+                  next = data;
+                },
+                async close() {
+                  manifest = next;
+                  writes += 1;
+                },
+                async abort() {},
+              };
+            },
+          };
+        }
+        if (!options?.create && !dir.files.has(fileName)) {
+          throw new DOMException("missing", "NotFoundError");
+        }
+        dir.files.add(fileName);
         return {
           async getFile() {
             throw new Error("不读文件正文");
@@ -168,46 +255,45 @@ function memoryDirectory(
             return new WritableStream<Uint8Array>();
           },
         };
-      }
-      if (!options?.create && manifest === "") {
+      },
+      async removeEntry(entry: string) {
+        if (isRoot && fail.has(entry)) throw new Error("磁盘忙");
+        if (dir.files.has(entry)) {
+          dir.files.delete(entry);
+          return;
+        }
+        if (dir.dirs.has(entry)) {
+          dir.dirs.delete(entry);
+          return;
+        }
         throw new DOMException("missing", "NotFoundError");
-      }
-      return {
-        async getFile() {
-          return {
-            async text() {
-              return manifest;
-            },
-          };
-        },
-        async createWritable() {
-          let next = "";
-          return {
-            async write(data: string) {
-              next = data;
-            },
-            async close() {
-              manifest = next;
-              writes += 1;
-            },
-            async abort() {},
-          };
-        },
-      };
-    },
-    async removeEntry(name: string) {
-      if (fail.has(name)) throw new Error("磁盘忙");
-      if (!present.has(name)) throw new DOMException("missing", "NotFoundError");
-      present.delete(name);
-    },
-    async queryPermission() {
-      return "granted" as PermissionState;
-    },
-  };
+      },
+      async queryPermission() {
+        return "granted" as PermissionState;
+      },
+    } as unknown as DownloadDirectoryHandle;
+  }
+
   return {
-    directory: directory as unknown as DownloadDirectoryHandle,
+    directory: handleFor(root, "下载", true),
     records: () => parseManifest(manifest),
     writes: () => writes,
-    has: (name: string) => present.has(name),
+    has: (name: string) => root.files.has(name),
+    hasPath: (path: string) => {
+      const parts = path.split("/");
+      const fileName = parts.pop() ?? "";
+      let dir = root;
+      for (const part of parts) {
+        const next = dir.dirs.get(part);
+        if (!next) return false;
+        dir = next;
+      }
+      return dir.files.has(fileName);
+    },
   };
+}
+
+interface MemDir {
+  files: Set<string>;
+  dirs: Map<string, MemDir>;
 }

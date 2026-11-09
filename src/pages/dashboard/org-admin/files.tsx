@@ -10,7 +10,6 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { Popover } from "@base-ui/react/popover";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   ArrowUp,
@@ -21,11 +20,9 @@ import {
   FileText,
   FileX,
   Folder,
-  FolderOpen,
   Info,
   LayoutGrid,
   List,
-  Package,
   Trash2,
 } from "lucide-react";
 
@@ -56,7 +53,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
+import { useApiMutation, useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { formatBytes, formatDate } from "@/lib/format";
@@ -74,8 +71,7 @@ import {
 import {
   DirectoryAccessError,
   ensureWritePermission,
-  loadSavedDownloads,
-  pickDownloadDirectory,
+  loadOrgDownloads,
   readDownloadRecords,
   removeDownloadedFiles,
   saveDownloadedFiles,
@@ -89,8 +85,7 @@ import {
   rememberDownloads,
   subscribeDownloadSession,
 } from "./downloadSession";
-import { packDownloadedFiles, pickExportArchive, type ArchiveWritable } from "./exportArchive";
-import { archiveDirectories, downloadTarget, fileKey, isDownloaded } from "./fileDownload";
+import { downloadTarget, fileKey, isDownloaded } from "./fileDownload";
 
 type ExplorerView = "icons" | "details";
 const TREE_LABEL = { planning: "企划", type: "类型", item: "项目" } as const;
@@ -105,8 +100,8 @@ interface RemoteFile {
 const USAGE_NOTES = [
   "如果不知道如何使用，请不要使用该页面。",
   "按住 Shift/Ctrl/Command 点击多个文件或文件夹，可以一次多选。",
-  "下载前需选择存放位置。存放文件夹下的文件不要单独操作。如果需要删除，可以直接删除整个文件夹，或在本页面执行「删除本地文件」。请不要单独在本地删除某个文件。",
-  "导出前需要先将文件下载。导出后的文件结构与当前选中视图保持一致。",
+  "下载前需在个人设置的组织设置里选择存放位置。存放文件夹下的文件不要单独操作。如果需要删除，可以直接删除整个文件夹，或在本页面执行「删除本地文件」。请不要单独在本地删除某个文件。",
+  "下载后的文件夹结构与该组织选择的存储视图一致。",
 ] as const;
 
 function directRemoteFiles(entries: OrgFileEntryVO[]): RemoteFile[] {
@@ -151,42 +146,6 @@ function fileIcon(entry: OrgFileEntryVO): typeof File {
 function submitterLabel(name?: string): string {
   const trimmed = name?.trim() ?? "";
   return trimmed || "未设置昵称";
-}
-
-function ExportScopeHint(): ReactElement {
-  const [open, setOpen] = useState(false);
-  const triggerId = useId();
-  return (
-    <Popover.Root open={open} onOpenChange={setOpen} triggerId={open ? triggerId : null}>
-      <Popover.Trigger
-        id={triggerId}
-        onFocus={(event) => {
-          if (event.currentTarget.matches(":focus-visible")) setOpen(true);
-        }}
-        openOnHover
-        delay={150}
-        closeDelay={100}
-        aria-label="导出说明"
-        render={
-          <Button type="button" variant="ghost" size="icon-xs" className="text-muted-foreground" />
-        }
-      >
-        <Info aria-hidden="true" />
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Positioner side="bottom" sideOffset={6}>
-          <Popover.Popup
-            data-export-hint=""
-            initialFocus={false}
-            className="max-w-[min(18rem,calc(100vw-2rem))] rounded-lg border bg-popover p-3 text-sm text-popover-foreground shadow-md outline-none"
-          >
-            <Popover.Title className="sr-only">导出说明</Popover.Title>
-            <Popover.Description>仅导出已下载的文件</Popover.Description>
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
-  );
 }
 
 function UsageHelpDialog({
@@ -316,12 +275,12 @@ function OrganizationFilesContent(): ReactElement {
   const folderPaging = !location.itemId;
   const [view, setView] = useState<ExplorerView>("icons");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [exporting, setExporting] = useState(false);
   const [removingLocal, setRemovingLocal] = useState(false);
   const [multiSelect, setMultiSelect] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; entryId: string } | null>(null);
   const multiSelectId = useId();
+  const orgId = useSessionSnapshot().orgId;
   const downloadSession = useSyncExternalStore(
     subscribeDownloadSession,
     getDownloadSession,
@@ -331,7 +290,6 @@ function OrganizationFilesContent(): ReactElement {
   const downloadProgress = downloadSession.progress;
   const records = downloadSession.records;
   const directory = downloadSession.directory;
-  const directoryName = downloadSession.directoryName;
   const anchorRef = useRef<string | null>(null);
   const selectionGuard = useRef(false);
   const previewOwner = useRef(Symbol("org-file-preview"));
@@ -372,15 +330,16 @@ function OrganizationFilesContent(): ReactElement {
   useEffect(() => () => closeAttachmentPreview(previewOwner.current), []);
 
   useEffect(() => {
+    if (!orgId) return;
     let cancelled = false;
-    void loadSavedDownloads().then((saved) => {
+    void loadOrgDownloads(orgId).then((saved) => {
       if (cancelled) return;
       rememberDownloads(saved);
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [orgId]);
 
   function go(next: OrgFileLocation): void {
     const search = orgFileSearch(next);
@@ -478,27 +437,20 @@ function OrganizationFilesContent(): ReactElement {
     $tip("下载失败，请稍后重试", "error");
   }
 
-  async function chooseDirectory(): Promise<void> {
-    if (getDownloadSession().running || exporting) return;
-    try {
-      const handle = await pickDownloadDirectory();
-      const next = await readDownloadRecords(handle);
-      rememberDownloads({ handle, name: handle.name, records: next });
-    } catch (error) {
-      reportDownloadError(error);
-    }
-  }
-
   async function downloadSelected(): Promise<void> {
     const targets = selectedEntries
       .map((entry) => downloadTarget(entry, location))
       .filter((target) => target !== null);
-    if (targets.length === 0 || getDownloadSession().running || exporting) return;
+    const handle = getDownloadSession().directory;
+    const storageView = getDownloadSession().view;
+    if (targets.length === 0 || getDownloadSession().running) return;
+    if (!handle) {
+      $tip("请先在个人设置中选择存放位置", "error");
+      return;
+    }
     beginDownload();
     try {
-      let handle = getDownloadSession().directory;
-      if (!handle) handle = await pickDownloadDirectory();
-      else if (!(await ensureWritePermission(handle))) {
+      if (!(await ensureWritePermission(handle))) {
         $tip("需要允许写入所选文件夹", "error");
         return;
       }
@@ -513,6 +465,7 @@ function OrganizationFilesContent(): ReactElement {
         handle,
         existing,
         batch.files,
+        storageView,
         async (file) => {
           try {
             const fresh = await getOrganizationFileDownload(file.taskInstanceId, file.fileId);
@@ -535,59 +488,6 @@ function OrganizationFilesContent(): ReactElement {
     }
   }
 
-  async function exportSelected(): Promise<void> {
-    const targets = selectedEntries
-      .map((entry) => downloadTarget(entry, location))
-      .filter((target) => target !== null);
-    if (targets.length === 0 || downloading || exporting || !directory) return;
-    setExporting(true);
-    let destination: ArchiveWritable | null = null;
-    try {
-      destination = await pickExportArchive();
-      if (!(await ensureWritePermission(directory))) {
-        await destination.abort?.();
-        $tip("需要允许读取所选文件夹", "error");
-        return;
-      }
-      const existing = await readDownloadRecords(directory);
-      noteDownloadDirectory(directory, existing);
-      const batch = await downloadOrganizationFiles(targets);
-      const files = batch.files.flatMap((file) => {
-        const record = existing.find((item) => fileKey(item) === fileKey(file));
-        return record
-          ? [
-              {
-                fileId: record.fileId,
-                name: record.name,
-                directories: archiveDirectories(location.tree, file),
-              },
-            ]
-          : [];
-      });
-      if (files.length === 0) {
-        await destination.abort?.();
-        $tip("所选文件还没下载", "error");
-        return;
-      }
-      const { packed, missing } = await packDownloadedFiles(directory, files, destination);
-      if (packed === 0) {
-        await destination.abort?.();
-        $tip("本地文件已经不在", "error");
-        return;
-      }
-      await destination.close();
-      destination = null;
-      const skipped = batch.files.length - files.length + missing;
-      if (skipped > 0) $tip(`${skipped} 个文件还没下载，没有放进压缩包`, "error");
-      else $tip("导出完成", "success");
-    } catch (error) {
-      await destination?.abort?.().catch(() => undefined);
-      reportDownloadError(error);
-    } finally {
-      setExporting(false);
-    }
-  }
-
   function moveSelection(offset: number): void {
     if (entries.length === 0) return;
     const current = selectedIds.length === 1 ? selectedIds[0] : selectedIds[selectedIds.length - 1];
@@ -601,10 +501,9 @@ function OrganizationFilesContent(): ReactElement {
   const hasTargets = selectedEntries.some((entry) => hasActionTarget(entry, location));
   const menuEntry = menu ? (entries.find((entry) => entry.id === menu.entryId) ?? null) : null;
   const canPreview = menuEntry?.kind === "FILE" && menuEntry.availability === "available";
-  const busy = downloading || exporting || removingLocal || discardMutation.isPending;
+  const busy = downloading || removingLocal || discardMutation.isPending;
   const canDownload =
     !busy && selectedEntries.some((entry) => downloadTarget(entry, location) !== null);
-  const canExport = canDownload && directory !== null;
   const canDiscardRemote = !busy && hasTargets;
   const canDeleteLocal = canDiscardRemote && directory !== null;
 
@@ -720,7 +619,13 @@ function OrganizationFilesContent(): ReactElement {
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <h1 className="text-xl font-bold text-foreground">文件</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="text-xl font-bold text-foreground">文件</h1>
+        <Button type="button" variant="outline" size="sm" onClick={() => setHelpOpen(true)}>
+          <Info />
+          说明
+        </Button>
+      </div>
       <section className="border-border bg-card flex h-[calc(100svh-13.5rem)] min-h-96 flex-col overflow-hidden rounded-xl border">
         <div className="border-border flex flex-wrap items-center gap-1 border-b px-2 py-2">
           <Button
@@ -800,22 +705,15 @@ function OrganizationFilesContent(): ReactElement {
               ))}
             </FilterSelectContent>
           </Select>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="max-w-40"
-            title={directoryName ?? undefined}
-            disabled={busy}
-            onClick={() => void chooseDirectory()}
-          >
-            <FolderOpen />
-            <span className="truncate">{directoryName ?? "下载位置"}</span>
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => setHelpOpen(true)}>
-            <Info />
-            说明
-          </Button>
+          <span className="inline-flex items-center gap-1.5 text-sm">
+            <span id={multiSelectId}>多选</span>
+            <Switch
+              size="sm"
+              checked={multiSelect}
+              onCheckedChange={setMultiSelect}
+              aria-labelledby={multiSelectId}
+            />
+          </span>
           <Button
             type="button"
             variant={view === "icons" ? "secondary" : "ghost"}
@@ -836,15 +734,6 @@ function OrganizationFilesContent(): ReactElement {
           >
             <List />
           </Button>
-          <span className="inline-flex items-center gap-1.5 text-sm">
-            <span id={multiSelectId}>多选</span>
-            <Switch
-              size="sm"
-              checked={multiSelect}
-              onCheckedChange={setMultiSelect}
-              aria-labelledby={multiSelectId}
-            />
-          </span>
         </div>
         <div
           className="min-h-0 flex-1 overflow-auto outline-none"
@@ -925,13 +814,11 @@ function OrganizationFilesContent(): ReactElement {
           <span>
             {downloading && downloadProgress
               ? `正在下载 ${downloadProgress.done}/${downloadProgress.total}`
-              : exporting
-                ? "正在导出"
-                : discardMutation.isPending
-                  ? "正在删除远程文件"
-                  : removingLocal
-                    ? "正在删除本地文件"
-                    : `共 ${total} 项`}
+              : discardMutation.isPending
+                ? "正在删除远程文件"
+                : removingLocal
+                  ? "正在删除本地文件"
+                  : `共 ${total} 项`}
           </span>
           <span className="truncate">
             {selectedEntries.length > 1
@@ -965,25 +852,6 @@ function OrganizationFilesContent(): ReactElement {
               void downloadSelected();
             }}
           />
-          <div className="relative flex items-center">
-            <button
-              type="button"
-              role="menuitem"
-              disabled={!canExport}
-              className="flex w-full items-center gap-2 rounded-md py-1.5 pr-8 pl-2 text-left hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
-              onClick={() => {
-                setMenu(null);
-                void exportSelected();
-              }}
-            >
-              <Package />
-              导出
-            </button>
-            <span className="absolute top-1/2 right-1 -translate-y-1/2">
-              <ExportScopeHint />
-            </span>
-          </div>
-          <div className="bg-border my-1 h-px" role="separator" />
           <MenuAction
             icon={Trash2}
             label="删除远程文件"

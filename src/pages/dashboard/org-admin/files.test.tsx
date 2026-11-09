@@ -27,11 +27,11 @@ vi.mock("@/hooks/useConfirm", () => ({
   useConfirm: () => () => Promise.resolve(false),
 }));
 vi.mock("./downloadDirectory", () => ({
-  loadSavedDownloads: () =>
+  loadOrgDownloads: () =>
     Promise.resolve(
       seen.records.length === 0
-        ? null
-        : { handle: { name: "下载" }, name: "下载", records: seen.records },
+        ? { handle: null, name: null, records: [], view: "planning" }
+        : { handle: { name: "下载" }, name: "下载", records: seen.records, view: "planning" },
     ),
   DirectoryAccessError: class DirectoryAccessError extends Error {},
 }));
@@ -51,6 +51,7 @@ vi.mock("@/hooks/queries/useApiQuery", () => ({
     };
   },
   useApiMutation: () => ({ isPending: false }),
+  useSessionSnapshot: () => ({ orgId: "1" }),
 }));
 
 let container: HTMLDivElement;
@@ -195,21 +196,14 @@ function menuItem(menu: ParentNode, label: string): HTMLButtonElement {
   return item;
 }
 
-test("导出说明在导出项内部，只导出已下载的文件", async (): Promise<void> => {
+test("说明在标题栏，多选跟在视图后面", async (): Promise<void> => {
   await mount("");
-  const menu = await openMenu();
-  const hint = menu.querySelector<HTMLButtonElement>('button[aria-label="导出说明"]');
-  if (!hint) throw new Error("找不到导出说明");
-  expect(menuItem(menu, "导出").parentElement?.contains(hint)).toBe(true);
-  await act(async () => {
-    hint.click();
-  });
-  expect(document.body.textContent).toContain("仅导出已下载的文件");
-});
-
-test("说明弹框写出使用限制，工具栏标明视图", async (): Promise<void> => {
-  await mount("");
-  expect(container.textContent).toContain("视图：");
+  const title = container.querySelector("h1")?.parentElement;
+  expect(title?.textContent).toContain("文件");
+  expect(title?.textContent).toContain("说明");
+  const toolbar = container.querySelector("section div")?.textContent ?? "";
+  expect(toolbar.indexOf("视图：")).toBeGreaterThanOrEqual(0);
+  expect(toolbar.indexOf("多选")).toBeGreaterThan(toolbar.indexOf("视图："));
   const labels = [...container.querySelectorAll("button")].map((button) =>
     button.textContent?.trim(),
   );
@@ -217,6 +211,7 @@ test("说明弹框写出使用限制，工具栏标明视图", async (): Promise
   expect(labels).not.toContain("导出");
   expect(labels).not.toContain("预览");
   expect(labels).not.toContain("删除");
+  expect(labels).not.toContain("下载位置");
   const help = [...container.querySelectorAll("button")].find((button) =>
     button.textContent?.includes("说明"),
   );
@@ -226,13 +221,12 @@ test("说明弹框写出使用限制，工具栏标明视图", async (): Promise
   });
   const dialog = document.body.querySelector('[role="dialog"]');
   expect(dialog?.textContent).toContain("如果不知道如何使用，请不要使用该页面");
-  expect(dialog?.textContent).toContain("按住 Shift/Ctrl/Command");
-  expect(dialog?.textContent).toContain("删除本地文件");
-  expect(dialog?.textContent).toContain("导出后的文件结构与当前选中视图保持一致");
+  expect(dialog?.textContent).toContain("个人设置的组织设置");
+  expect(dialog?.textContent).toContain("存储视图");
   const menu = await openMenu();
+  expect(menu.textContent).not.toContain("导出");
   expect(menuItem(menu, "预览").disabled).toBe(true);
   expect(menuItem(menu, "下载").disabled).toBe(false);
-  expect(menuItem(menu, "导出").disabled).toBe(true);
   expect(menuItem(menu, "删除远程文件").disabled).toBe(false);
   expect(menuItem(menu, "删除本地文件").disabled).toBe(true);
 });
@@ -277,7 +271,6 @@ test("多选打开后单击可加选，右键操作仍然可用", async (): Prom
   const menu = await openMenu(1);
   expect(menuItem(menu, "预览").disabled).toBe(false);
   expect(menuItem(menu, "下载").disabled).toBe(false);
-  expect(menuItem(menu, "导出").disabled).toBe(false);
   expect(menuItem(menu, "删除远程文件").disabled).toBe(false);
   expect(menuItem(menu, "删除本地文件").disabled).toBe(false);
 });

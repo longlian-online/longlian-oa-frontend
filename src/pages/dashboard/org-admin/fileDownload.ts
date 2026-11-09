@@ -7,6 +7,7 @@ export interface DownloadRecord {
   fieldKey: string;
   fileId: string;
   name: string;
+  path?: string;
 }
 
 export function fileKey(file: {
@@ -110,8 +111,9 @@ export function archiveDirectories(
 
 export function archiveEntryPaths(
   files: { fileId: string; name: string; directories?: string[] }[],
+  reserved: readonly string[] = [],
 ): string[] {
-  const taken = new Set<string>();
+  const taken = new Set(reserved.map((path) => path.toLowerCase()));
   return files.map((file) => {
     const folders = (file.directories ?? []).map(archiveFolderName);
     const base = archiveBaseName(file.name, file.fileId);
@@ -127,6 +129,36 @@ export function archiveEntryPaths(
     taken.add(path.toLowerCase());
     return path;
   });
+}
+
+export function downloadRelativePaths(
+  view: OrgFileTree,
+  files: {
+    fileId: string;
+    name: string;
+    typeName?: string | null;
+    projectTitle?: string | null;
+    itemTitle?: string | null;
+  }[],
+  reserved: readonly string[] = [],
+): string[] {
+  return archiveEntryPaths(
+    files.map((file) => ({
+      fileId: file.fileId,
+      name: file.name,
+      directories: archiveDirectories(view, file),
+    })),
+    reserved,
+  );
+}
+
+export function storedPath(value: unknown): string | undefined {
+  if (typeof value !== "string" || value === "" || value.startsWith("/") || value.includes("\\")) {
+    return undefined;
+  }
+  const parts = value.split("/");
+  if (parts.some((part) => part === "" || part === "." || part === "..")) return undefined;
+  return value;
 }
 
 function archiveFolderName(name: string): string {
@@ -168,11 +200,13 @@ export function parseManifest(text: string): DownloadRecord[] {
     ) {
       continue;
     }
+    const path = storedPath(record.path);
     records.push({
       taskInstanceId: record.taskInstanceId,
       fieldKey: record.fieldKey,
       fileId: record.fileId,
       name: record.name,
+      ...(path ? { path } : {}),
     });
   }
   return records;

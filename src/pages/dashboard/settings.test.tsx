@@ -10,29 +10,51 @@ import { createQueryClient } from "@/lib/queryClient";
 import { clearSession, saveSession } from "@/lib/session";
 import type { UserInfoVO } from "@/types/user";
 
-const { bindEmail, changePassword, getUserConfig, patchUserConfig, updateMyInfo, currentUser } =
-  vi.hoisted(() => ({
-    bindEmail: vi.fn(async () => undefined),
-    changePassword: vi.fn(async () => undefined),
-    getUserConfig: vi.fn(async () => ({ config: {} })),
-    patchUserConfig: vi.fn(async () => undefined),
-    updateMyInfo: vi.fn(async () => undefined),
-    currentUser: {
-      user: null as UserInfoVO | null,
-      isLoading: false,
-    },
-  }));
+const {
+  bindEmail,
+  changePassword,
+  getCurrentUser,
+  getUserConfig,
+  getUserOrganizations,
+  patchUserConfig,
+  updateMyInfo,
+  currentUser,
+} = vi.hoisted(() => ({
+  bindEmail: vi.fn(async () => undefined),
+  changePassword: vi.fn(async () => undefined),
+  getCurrentUser: vi.fn(async () => ({
+    id: "1",
+    username: "legacy",
+    nickname: "遗留用户",
+    email: null,
+  })),
+  getUserConfig: vi.fn(async () => ({ config: {} })),
+  getUserOrganizations: vi.fn(async (): Promise<{ id: string; name: string }[]> => []),
+  patchUserConfig: vi.fn(async () => undefined),
+  updateMyInfo: vi.fn(async () => undefined),
+  currentUser: {
+    user: null as UserInfoVO | null,
+    isLoading: false,
+  },
+}));
 
 vi.mock("@/api/user", () => ({
   bindEmail,
   changePassword,
+  getCurrentUser,
   getUserConfig,
+  getUserOrganizations,
   patchUserConfig,
   updateMyInfo,
 }));
 
 vi.mock("@/api/auth", () => ({
   sendVerificationCode: vi.fn(async () => undefined),
+}));
+
+vi.mock("@/pages/dashboard/org-admin/downloadDirectory", () => ({
+  loadOrgDownloads: async () => ({ handle: null, name: null, records: [], view: "planning" }),
+  DirectoryAccessError: class DirectoryAccessError extends Error {},
 }));
 
 vi.mock("@/hooks/useCurrentUser", () => ({
@@ -76,6 +98,8 @@ beforeEach((): void => {
   getUserConfig.mockResolvedValue({ config: {} });
   patchUserConfig.mockReset();
   patchUserConfig.mockResolvedValue(undefined);
+  getUserOrganizations.mockReset();
+  getUserOrganizations.mockResolvedValue([]);
   updateMyInfo.mockReset();
   updateMyInfo.mockResolvedValue(undefined);
   saveSession({ token: TOKEN, userId: "1" });
@@ -138,6 +162,7 @@ test("修改昵称时空白和超长停在字段旁", async (): Promise<void> =>
   expect(document.querySelector("#old-password")).toBeNull();
   expect(Array.from(document.querySelectorAll("h2"), (heading) => heading.textContent)).toEqual([
     "修改密码",
+    "组织设置",
     "通知",
   ]);
   expect(document.body.textContent).not.toContain("昵称 遗留用户");
@@ -261,4 +286,20 @@ test("关闭某一类型通知时只提交该类型", async (): Promise<void> =>
       config: { notificationKinds: { TASK_READY: false } },
     });
   });
+});
+
+test("组织设置按组织分栏，并提供存放位置和存储视图", async (): Promise<void> => {
+  getUserOrganizations.mockResolvedValue([
+    { id: "1", name: "甲组" },
+    { id: "2", name: "乙组" },
+  ]);
+  await mount();
+  await vi.waitFor(() => {
+    expect(document.body.textContent).toContain("甲组");
+  });
+  expect(document.body.textContent).toContain("组织设置");
+  expect(document.body.textContent).toContain("乙组");
+  expect(document.body.textContent).toContain("存放位置");
+  expect(document.body.textContent).toContain("存储视图");
+  expect(document.body.textContent).toContain("企划");
 });
