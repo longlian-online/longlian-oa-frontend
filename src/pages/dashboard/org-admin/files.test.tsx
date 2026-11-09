@@ -274,3 +274,41 @@ test("多选打开后单击可加选，右键操作仍然可用", async (): Prom
   expect(menuItem(menu, "删除远程文件").disabled).toBe(false);
   expect(menuItem(menu, "删除本地文件").disabled).toBe(false);
 });
+
+test("按住拖动框选相交的文件和文件夹", async (): Promise<void> => {
+  seen.entries = [
+    { id: "folder", kind: "FOLDER", name: "企划" },
+    {
+      id: "file",
+      kind: "FILE",
+      name: "成果.pdf",
+      taskInstanceId: "8",
+      fieldKey: "script",
+      fileId: "101",
+      availability: "available",
+    },
+    { id: "far", kind: "FOLDER", name: "远处" },
+  ];
+  await mount("");
+  const list = container.querySelector<HTMLElement>('[role="listbox"]');
+  if (!list) throw new Error("找不到文件列表");
+  const options = [...container.querySelectorAll<HTMLElement>('[role="option"]')];
+  const bounds = (left: number): DOMRect => new DOMRect(left, 0, 40, 40);
+  options[0]!.getBoundingClientRect = () => bounds(0);
+  options[1]!.getBoundingClientRect = () => bounds(50);
+  options[2]!.getBoundingClientRect = () => bounds(200);
+  const point = (type: string, x: number, y: number): PointerEvent =>
+    new PointerEvent(type, { bubbles: true, clientX: x, clientY: y, button: 0, pointerId: 1 });
+  await act(async () => {
+    list.dispatchEvent(point("pointerdown", 0, 0));
+    list.dispatchEvent(point("pointermove", 100, 40));
+  });
+  expect(options[0]?.getAttribute("aria-selected")).toBe("true");
+  expect(options[1]?.getAttribute("aria-selected")).toBe("true");
+  expect(options[2]?.getAttribute("aria-selected")).toBe("false");
+  await act(async () => {
+    list.dispatchEvent(point("pointerup", 100, 40));
+    options[2]?.click();
+  });
+  expect(options[2]?.getAttribute("aria-selected")).toBe("false");
+});
