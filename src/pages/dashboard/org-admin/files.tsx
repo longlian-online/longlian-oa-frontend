@@ -394,7 +394,14 @@ function OrganizationFilesContent(): ReactElement {
       const dx = ev.clientX - startX;
       const dy = ev.clientY - startY;
       if (!active && dx * dx + dy * dy < 16) return;
-      active = true;
+      if (!active) {
+        active = true;
+        try {
+          list.setPointerCapture(ev.pointerId);
+        } catch {
+          /* 拖出列表后再捕获；测试环境可能没有指针捕获。 */
+        }
+      }
       const box = {
         left: Math.min(startX, ev.clientX),
         top: Math.min(startY, ev.clientY),
@@ -428,9 +435,9 @@ function OrganizationFilesContent(): ReactElement {
       anchorRef.current = next[next.length - 1] ?? anchorRef.current;
     };
     const stop = (): void => {
-      list.removeEventListener("pointermove", move);
-      list.removeEventListener("pointerup", stop);
-      list.removeEventListener("pointercancel", stop);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
       if (marqueeRef.current) marqueeRef.current.hidden = true;
       if (!active) return;
       marqueeGuard.current = true;
@@ -438,14 +445,9 @@ function OrganizationFilesContent(): ReactElement {
         marqueeGuard.current = false;
       }, 0);
     };
-    try {
-      list.setPointerCapture(event.pointerId);
-    } catch {
-      /* 测试环境可能没有指针捕获。 */
-    }
-    list.addEventListener("pointermove", move);
-    list.addEventListener("pointerup", stop);
-    list.addEventListener("pointercancel", stop);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
   }
 
   function openContextMenu(entry: OrgFileEntryVO, event: MouseEvent): void {

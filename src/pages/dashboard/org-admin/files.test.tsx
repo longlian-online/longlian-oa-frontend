@@ -312,3 +312,23 @@ test("按住拖动框选相交的文件和文件夹", async (): Promise<void> =>
   });
   expect(options[2]?.getAttribute("aria-selected")).toBe("false");
 });
+
+test("按下后不拖动仍然可以单击选中", async (): Promise<void> => {
+  seen.entries = [
+    { id: "folder", kind: "FOLDER", name: "企划" },
+    { id: "file", kind: "FILE", name: "成果.pdf", availability: "available" },
+  ];
+  await mount("");
+  const options = [...container.querySelectorAll<HTMLElement>('[role="option"]')];
+  const target = options[0];
+  if (!target) throw new Error("找不到条目");
+  const point = (type: string): PointerEvent =>
+    new PointerEvent(type, { bubbles: true, clientX: 8, clientY: 8, button: 0, pointerId: 1 });
+  await act(async () => {
+    target.dispatchEvent(point("pointerdown"));
+    target.dispatchEvent(point("pointerup"));
+    target.click();
+  });
+  expect(target.getAttribute("aria-selected")).toBe("true");
+  expect(options[1]?.getAttribute("aria-selected")).toBe("false");
+});
