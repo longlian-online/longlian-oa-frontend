@@ -1,7 +1,16 @@
 import { afterEach, expect, test, vi } from "vite-plus/test";
 
-import { saveDownloadedFiles, type DownloadDirectoryHandle } from "./downloadDirectory";
-import { parseManifest, serializeManifest, type DownloadRecord } from "./fileDownload";
+import {
+  removeDownloadedFiles,
+  saveDownloadedFiles,
+  type DownloadDirectoryHandle,
+} from "./downloadDirectory";
+import {
+  parseManifest,
+  resourceFileName,
+  serializeManifest,
+  type DownloadRecord,
+} from "./fileDownload";
 
 const KEPT: DownloadRecord = {
   taskInstanceId: "1",
@@ -71,6 +80,49 @@ test("签发失败不改已有下载记录", async () => {
   expect(disk.records()).toEqual([KEPT]);
 });
 
+test("删除已下载文件时更新清单，缺失文件也去掉记录", async () => {
+  installLocks();
+  const other: DownloadRecord = {
+    taskInstanceId: "8",
+    fieldKey: "script",
+    fileId: "202",
+    name: "另一.pdf",
+  };
+  const kept: DownloadRecord = {
+    taskInstanceId: "3",
+    fieldKey: "extra",
+    fileId: "303",
+    name: "留着.txt",
+  };
+  const disk = memoryDirectory([KEPT, other, kept], {
+    present: [resourceFileName(KEPT.fileId, KEPT.name)],
+  });
+
+  const next = await removeDownloadedFiles(disk.directory, [KEPT, other]);
+
+  expect(next.map((record) => record.fileId)).toEqual(["303"]);
+  expect(disk.records().map((record) => record.fileId)).toEqual(["303"]);
+  expect(disk.has(resourceFileName(KEPT.fileId, KEPT.name))).toBe(false);
+});
+
+test("删除中途失败时保留尚未删除的记录", async () => {
+  installLocks();
+  const other: DownloadRecord = {
+    taskInstanceId: "8",
+    fieldKey: "script",
+    fileId: "202",
+    name: "另一.pdf",
+  };
+  const disk = memoryDirectory([KEPT, other], {
+    present: [resourceFileName(KEPT.fileId, KEPT.name), resourceFileName(other.fileId, other.name)],
+    fail: [resourceFileName(other.fileId, other.name)],
+  });
+
+  await expect(removeDownloadedFiles(disk.directory, [KEPT, other])).rejects.toThrow("磁盘忙");
+  expect(disk.records().map((record) => record.fileId)).toEqual(["202"]);
+  expect(disk.has(resourceFileName(KEPT.fileId, KEPT.name))).toBe(false);
+});
+
 function file(fileId: string, fileName: string) {
   return { taskInstanceId: "8", fieldKey: "script", fileId, fileName };
 }
@@ -91,13 +143,19 @@ function installLocks(): void {
   });
 }
 
-function memoryDirectory(initial: DownloadRecord[]): {
+function memoryDirectory(
+  initial: DownloadRecord[],
+  files?: { present?: string[]; fail?: string[] },
+): {
   directory: DownloadDirectoryHandle;
   records: () => DownloadRecord[];
   writes: () => number;
+  has: (name: string) => boolean;
 } {
   let manifest = serializeManifest(initial);
   let writes = 0;
+  const present = new Set(files?.present ?? []);
+  const fail = new Set(files?.fail ?? []);
   const directory = {
     name: "下载",
     async getFileHandle(name: string, options?: { create?: boolean }) {
@@ -137,6 +195,11 @@ function memoryDirectory(initial: DownloadRecord[]): {
         },
       };
     },
+    async removeEntry(name: string) {
+      if (fail.has(name)) throw new Error("磁盘忙");
+      if (!present.has(name)) throw new DOMException("missing", "NotFoundError");
+      present.delete(name);
+    },
     async queryPermission() {
       return "granted" as PermissionState;
     },
@@ -145,5 +208,6 @@ function memoryDirectory(initial: DownloadRecord[]): {
     directory: directory as unknown as DownloadDirectoryHandle,
     records: () => parseManifest(manifest),
     writes: () => writes,
+    has: (name: string) => present.has(name),
   };
 }

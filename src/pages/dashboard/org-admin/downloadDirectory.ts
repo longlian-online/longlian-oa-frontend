@@ -72,6 +72,7 @@ interface DownloadFileHandle {
 export interface DownloadDirectoryHandle {
   readonly name: string;
   getFileHandle(name: string, options?: { create?: boolean }): Promise<DownloadFileHandle>;
+  removeEntry?(name: string): Promise<void>;
   queryPermission?(descriptor: { mode: "readwrite" }): Promise<PermissionState>;
   requestPermission?(descriptor: { mode: "readwrite" }): Promise<PermissionState>;
 }
@@ -193,6 +194,39 @@ export async function writeDownloadRecords(
   const writable = await fileHandle.createWritable();
   await writable.write(serializeManifest(records));
   await writable.close();
+}
+
+export async function removeDownloadedFiles(
+  directory: DownloadDirectoryHandle,
+  files: Array<Pick<DownloadRecord, "taskInstanceId" | "fieldKey" | "fileId">>,
+): Promise<DownloadRecord[]> {
+  const removeEntry = directory.removeEntry?.bind(directory);
+  if (!removeEntry) throw new DirectoryAccessError("当前浏览器不能删除已下载的文件");
+  return withManifestLock(async () => {
+    const records = await readDownloadRecords(directory);
+    const keys = new Set(files.map((file) => fileKey(file)));
+    const removing = records.filter((record) => keys.has(fileKey(record)));
+    if (removing.length === 0) return records;
+    const removed = new Set<string>();
+    let failure: unknown;
+    for (const record of removing) {
+      try {
+        await removeEntry(resourceFileName(record.fileId, record.name));
+        removed.add(fileKey(record));
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "NotFoundError") {
+          removed.add(fileKey(record));
+          continue;
+        }
+        failure = error;
+        break;
+      }
+    }
+    const next = records.filter((record) => !removed.has(fileKey(record)));
+    if (removed.size > 0) await writeDownloadRecords(directory, next);
+    if (failure) throw failure;
+    return next;
+  });
 }
 
 async function writeDownloadFile(

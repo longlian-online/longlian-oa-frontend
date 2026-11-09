@@ -1,12 +1,15 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
   type MouseEvent,
   type ReactElement,
+  type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { Popover } from "@base-ui/react/popover";
 import { useNavigate, useSearchParams } from "react-router";
 import {
@@ -16,13 +19,13 @@ import {
   File,
   FileImage,
   FileText,
+  FileX,
   Folder,
   FolderOpen,
   Info,
-  Package,
   LayoutGrid,
   List,
-  Loader2,
+  Package,
   Trash2,
 } from "lucide-react";
 
@@ -43,6 +46,14 @@ import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
@@ -51,7 +62,7 @@ import { usePageQuery } from "@/hooks/usePageQuery";
 import { formatBytes, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { ORGANIZATION_FILE_PAGE_SIZE, organizationFilesQuery } from "@/queries/organizationAdmin";
-import type { OrgFileEntryVO } from "@/types/organizationAdmin";
+import type { OrgFileDownloadTarget, OrgFileEntryVO } from "@/types/organizationAdmin";
 
 import {
   orgFileLocation,
@@ -66,6 +77,7 @@ import {
   loadSavedDownloads,
   pickDownloadDirectory,
   readDownloadRecords,
+  removeDownloadedFiles,
   saveDownloadedFiles,
 } from "./downloadDirectory";
 import {
@@ -82,6 +94,51 @@ import { archiveDirectories, downloadTarget, fileKey, isDownloaded } from "./fil
 
 type ExplorerView = "icons" | "details";
 const TREE_LABEL = { planning: "企划", type: "类型", item: "项目" } as const;
+
+interface RemoteFile {
+  taskInstanceId: string;
+  fileId: string;
+  fieldKey: string;
+  name: string;
+}
+
+const USAGE_NOTES = [
+  "如果不知道如何使用，请不要使用该页面。",
+  "按住 Shift/Ctrl/Command 点击多个文件或文件夹，可以一次多选。",
+  "下载前需选择存放位置。存放文件夹下的文件不要单独操作。如果需要删除，可以直接删除整个文件夹，或在本页面执行「删除本地文件」。请不要单独在本地删除某个文件。",
+  "导出前需要先将文件下载。导出后的文件结构与当前选中视图保持一致。",
+] as const;
+
+function directRemoteFiles(entries: OrgFileEntryVO[]): RemoteFile[] {
+  return entries.flatMap((entry) => {
+    if (entry.kind !== "FILE" || !entry.taskInstanceId || !entry.fileId || !entry.fieldKey) {
+      return [];
+    }
+    return [
+      {
+        taskInstanceId: entry.taskInstanceId,
+        fileId: entry.fileId,
+        fieldKey: entry.fieldKey,
+        name: entry.name,
+      },
+    ];
+  });
+}
+
+function dedupeRemote(files: RemoteFile[]): RemoteFile[] {
+  const seen = new Set<string>();
+  return files.filter((file) => {
+    const key = fileKey(file);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function hasActionTarget(entry: OrgFileEntryVO, location: OrgFileLocation): boolean {
+  if (entry.kind === "FILE") return Boolean(entry.taskInstanceId && entry.fileId && entry.fieldKey);
+  return downloadTarget(entry, location) !== null;
+}
 
 function fileIcon(entry: OrgFileEntryVO): typeof File {
   if (entry.kind === "FOLDER") return Folder;
@@ -119,6 +176,7 @@ function ExportScopeHint(): ReactElement {
       <Popover.Portal>
         <Popover.Positioner side="bottom" sideOffset={6}>
           <Popover.Popup
+            data-export-hint=""
             initialFocus={false}
             className="max-w-[min(18rem,calc(100vw-2rem))] rounded-lg border bg-popover p-3 text-sm text-popover-foreground shadow-md outline-none"
           >
@@ -128,6 +186,122 @@ function ExportScopeHint(): ReactElement {
         </Popover.Positioner>
       </Popover.Portal>
     </Popover.Root>
+  );
+}
+
+function UsageHelpDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}): ReactElement {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>使用说明</DialogTitle>
+          <DialogDescription className="sr-only">文件页的使用限制。</DialogDescription>
+        </DialogHeader>
+        <ol className="list-decimal space-y-2 pl-5 text-sm">
+          {USAGE_NOTES.map((note) => (
+            <li key={note}>{note}</li>
+          ))}
+        </ol>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function FileActionMenu({
+  x,
+  y,
+  onClose,
+  children,
+}: {
+  x: number;
+  y: number;
+  onClose: () => void;
+  children: ReactNode;
+}): ReactElement {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  const [pos, setPos] = useState({ x, y });
+  useLayoutEffect(() => {
+    const node = panelRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    const margin = 8;
+    setPos({
+      x: Math.max(margin, Math.min(x, window.innerWidth - rect.width - margin)),
+      y: Math.max(margin, Math.min(y, window.innerHeight - rect.height - margin)),
+    });
+  }, [x, y]);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+  useEffect(() => {
+    function close(): void {
+      onCloseRef.current();
+    }
+    function onPointerDown(event: PointerEvent): void {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (panelRef.current?.contains(target)) return;
+      if (target instanceof Element && target.closest("[data-export-hint]")) return;
+      close();
+    }
+    function onKey(event: KeyboardEvent): void {
+      if (event.key === "Escape") close();
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", close);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, []);
+  return createPortal(
+    <div
+      ref={panelRef}
+      role="menu"
+      aria-label="文件操作"
+      className="fixed z-50 min-w-44 rounded-lg border bg-popover p-1 text-sm text-popover-foreground shadow-md [&_svg]:size-4"
+      style={{ left: pos.x, top: pos.y }}
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
+function MenuAction({
+  icon: Icon,
+  label,
+  disabled,
+  onClick,
+}: {
+  icon: typeof File;
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+}): ReactElement {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      disabled={disabled}
+      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+      onClick={onClick}
+    >
+      <Icon />
+      {label}
+    </button>
   );
 }
 
@@ -143,6 +317,11 @@ function OrganizationFilesContent(): ReactElement {
   const [view, setView] = useState<ExplorerView>("icons");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [removingLocal, setRemovingLocal] = useState(false);
+  const [multiSelect, setMultiSelect] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [menu, setMenu] = useState<{ x: number; y: number; entryId: string } | null>(null);
+  const multiSelectId = useId();
   const downloadSession = useSyncExternalStore(
     subscribeDownloadSession,
     getDownloadSession,
@@ -154,11 +333,24 @@ function OrganizationFilesContent(): ReactElement {
   const directory = downloadSession.directory;
   const directoryName = downloadSession.directoryName;
   const anchorRef = useRef<string | null>(null);
+  const selectionGuard = useRef(false);
   const previewOwner = useRef(Symbol("org-file-preview"));
   const confirm = useConfirm();
   const discardMutation = useApiMutation({
-    mutationFn: (entry: OrgFileEntryVO) =>
-      discardOrganizationFile(entry.taskInstanceId!, entry.fileId!, entry.fieldKey!),
+    mutationFn: async (files: RemoteFile[]) => {
+      let failed = 0;
+      let lastError: unknown;
+      for (const file of files) {
+        try {
+          await discardOrganizationFile(file.taskInstanceId, file.fileId, file.fieldKey);
+        } catch (error) {
+          failed += 1;
+          lastError = error;
+        }
+      }
+      if (failed === files.length && lastError) throw lastError;
+      return failed;
+    },
     invalidate: [["orgFiles"], ["taskDetail"], ["taskVersions"]],
   });
   const selectedEntries = entries.filter((entry) => selectedIds.includes(entry.id));
@@ -168,6 +360,7 @@ function OrganizationFilesContent(): ReactElement {
   useEffect(() => {
     setSelectedIds([]);
     anchorRef.current = null;
+    setMenu(null);
   }, [location.tree, location.typeId, location.projectId, location.itemId, page]);
 
   useEffect(() => {
@@ -194,7 +387,7 @@ function OrganizationFilesContent(): ReactElement {
     void navigate({ pathname: "/dashboard/org-admin/files", search: search ? `?${search}` : "" });
   }
 
-  function selectEntry(id: string, event: MouseEvent): void {
+  function applySelection(id: string, event: MouseEvent): void {
     const ids = entries.map((entry) => entry.id);
     if (event.shiftKey && anchorRef.current) {
       const start = ids.indexOf(anchorRef.current);
@@ -205,7 +398,7 @@ function OrganizationFilesContent(): ReactElement {
         return;
       }
     }
-    if (event.metaKey || event.ctrlKey) {
+    if (multiSelect || event.metaKey || event.ctrlKey) {
       setSelectedIds((current) =>
         current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
       );
@@ -213,6 +406,28 @@ function OrganizationFilesContent(): ReactElement {
       setSelectedIds([id]);
     }
     anchorRef.current = id;
+  }
+
+  function selectEntry(id: string, event: MouseEvent): void {
+    if ((event.ctrlKey || event.metaKey || event.shiftKey) && selectionGuard.current) return;
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+      selectionGuard.current = true;
+      queueMicrotask(() => {
+        selectionGuard.current = false;
+      });
+    }
+    applySelection(id, event);
+  }
+
+  function openContextMenu(entry: OrgFileEntryVO, event: MouseEvent): void {
+    event.preventDefault();
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+      selectEntry(entry.id, event);
+      return;
+    }
+    setSelectedIds((current) => (current.includes(entry.id) ? current : [entry.id]));
+    anchorRef.current = entry.id;
+    setMenu({ x: event.clientX, y: event.clientY, entryId: entry.id });
   }
 
   function openEntry(entry: OrgFileEntryVO): void {
@@ -383,33 +598,114 @@ function OrganizationFilesContent(): ReactElement {
     anchorRef.current = next.id;
   }
 
-  const projectTitle = listQuery.data?.projectTitle || "企划";
-  const itemTitle = listQuery.data?.itemTitle || "项目";
-  const canOpenFile = selected?.kind === "FILE" && selected.availability === "available";
-  const canDiscard = selected?.kind === "FILE" && Boolean(selected.fieldKey && selected.fileId);
-  const busy = downloading || exporting;
+  const hasTargets = selectedEntries.some((entry) => hasActionTarget(entry, location));
+  const menuEntry = menu ? (entries.find((entry) => entry.id === menu.entryId) ?? null) : null;
+  const canPreview = menuEntry?.kind === "FILE" && menuEntry.availability === "available";
+  const busy = downloading || exporting || removingLocal || discardMutation.isPending;
   const canDownload =
     !busy && selectedEntries.some((entry) => downloadTarget(entry, location) !== null);
   const canExport = canDownload && directory !== null;
+  const canDiscardRemote = !busy && hasTargets;
+  const canDeleteLocal = canDiscardRemote && directory !== null;
+
+  async function filesForSelection(): Promise<RemoteFile[]> {
+    const direct = directRemoteFiles(selectedEntries);
+    const folders = selectedEntries
+      .map((entry) => downloadTarget(entry, location))
+      .filter(
+        (target): target is Exclude<OrgFileDownloadTarget, { kind: "FILE" }> =>
+          target !== null && target.kind !== "FILE",
+      );
+    const expanded =
+      folders.length === 0
+        ? []
+        : (await downloadOrganizationFiles(folders)).files.map((file) => ({
+            taskInstanceId: file.taskInstanceId,
+            fileId: file.fileId,
+            fieldKey: file.fieldKey,
+            name: file.fileName,
+          }));
+    return dedupeRemote([...direct, ...expanded]);
+  }
 
   async function discardSelected(): Promise<void> {
-    if (!selected || !canDiscard || discardMutation.isPending) return;
+    if (!canDiscardRemote || discardMutation.isPending) return;
+    let files: RemoteFile[];
+    try {
+      files = await filesForSelection();
+    } catch (error) {
+      reportDownloadError(error);
+      return;
+    }
+    if (files.length === 0) {
+      $tip("没有可删除的文件", "error");
+      return;
+    }
+    const first = files[0];
+    if (!first) return;
     const confirmed = await confirm({
-      title: "删除这个文件？",
-      description: `「${selected.name}」会从文件页消失，并标记为弃置。任务详情、历史版本和暂存里如果还引用它，会变成不可用。`,
-      confirmText: "删除",
+      title: files.length === 1 ? "删除这个远程文件？" : `删除这 ${files.length} 个远程文件？`,
+      description:
+        files.length === 1
+          ? `「${first.name}」会从文件页消失，并标记为弃置。任务详情、历史版本和暂存里如果还引用它，会变成不可用。`
+          : "这些文件会从文件页消失，并标记为弃置。任务详情、历史版本和暂存里如果还引用它们，会变成不可用。",
+      confirmText: "删除远程文件",
       variant: "destructive",
     });
     if (!confirmed) return;
     try {
-      await discardMutation.mutateAsync(selected);
+      const failed = await discardMutation.mutateAsync(files);
       setSelectedIds([]);
       anchorRef.current = null;
-      $tip("文件已删除", "success");
+      setMenu(null);
+      if (failed > 0) $tip(`${failed} 个文件没有删除`, "error");
+      else $tip("远程文件已删除", "success");
     } catch {
       /* QueryClient 统一显示最终错误。 */
     }
   }
+
+  async function deleteLocalSelected(): Promise<void> {
+    if (!directory || busy) return;
+    const currentDirectory = directory;
+    try {
+      if (!(await ensureWritePermission(currentDirectory))) {
+        $tip("需要允许写入所选文件夹", "error");
+        return;
+      }
+      const files = await filesForSelection();
+      const existing = await readDownloadRecords(currentDirectory);
+      const keys = new Set(files.map((file) => fileKey(file)));
+      const matched = existing.filter((record) => keys.has(fileKey(record)));
+      if (matched.length === 0) {
+        $tip("所选文件还没下载", "error");
+        return;
+      }
+      const confirmed = await confirm({
+        title:
+          matched.length === 1 ? "删除这个本地文件？" : `删除这 ${matched.length} 个本地文件？`,
+        description: "只从已选择的下载文件夹里删除，并更新下载记录。远程文件不会变化。",
+        confirmText: "删除本地文件",
+        variant: "destructive",
+      });
+      if (!confirmed) return;
+      setRemovingLocal(true);
+      const next = await removeDownloadedFiles(currentDirectory, matched);
+      noteDownloadDirectory(currentDirectory, next);
+      $tip("本地文件已删除", "success");
+    } catch (error) {
+      try {
+        noteDownloadDirectory(currentDirectory, await readDownloadRecords(currentDirectory));
+      } catch {
+        /* 清单读不回来时保留当前标记。 */
+      }
+      reportDownloadError(error);
+    } finally {
+      setRemovingLocal(false);
+    }
+  }
+  const projectTitle = listQuery.data?.projectTitle || "企划";
+  const itemTitle = listQuery.data?.itemTitle || "项目";
   const emptyText = location.itemId
     ? "这个项目还没有提交文件"
     : location.tree === "item"
@@ -485,6 +781,7 @@ function OrganizationFilesContent(): ReactElement {
               </>
             )}
           </nav>
+          <span className="text-muted-foreground shrink-0 text-sm">视图：</span>
           <Select
             value={location.tree}
             onValueChange={(value) => {
@@ -507,16 +804,6 @@ function OrganizationFilesContent(): ReactElement {
             type="button"
             variant="outline"
             size="sm"
-            disabled={!canOpenFile}
-            onClick={() => selected && preview(selected)}
-          >
-            <Eye />
-            预览
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
             className="max-w-40"
             title={directoryName ?? undefined}
             disabled={busy}
@@ -525,38 +812,9 @@ function OrganizationFilesContent(): ReactElement {
             <FolderOpen />
             <span className="truncate">{directoryName ?? "下载位置"}</span>
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={!canDownload}
-            onClick={() => void downloadSelected()}
-          >
-            {downloading ? <Loader2 className="animate-spin" /> : <Download />}
-            {downloadProgress ? `${downloadProgress.done}/${downloadProgress.total}` : "下载"}
-          </Button>
-          <span className="inline-flex items-center">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!canExport}
-              onClick={() => void exportSelected()}
-            >
-              {exporting ? <Loader2 className="animate-spin" /> : <Package />}
-              导出
-            </Button>
-            <ExportScopeHint />
-          </span>
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            disabled={!canDiscard || discardMutation.isPending}
-            onClick={() => void discardSelected()}
-          >
-            {discardMutation.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
-            删除
+          <Button type="button" variant="outline" size="sm" onClick={() => setHelpOpen(true)}>
+            <Info />
+            说明
           </Button>
           <Button
             type="button"
@@ -578,6 +836,15 @@ function OrganizationFilesContent(): ReactElement {
           >
             <List />
           </Button>
+          <span className="inline-flex items-center gap-1.5 text-sm">
+            <span id={multiSelectId}>多选</span>
+            <Switch
+              size="sm"
+              checked={multiSelect}
+              onCheckedChange={setMultiSelect}
+              aria-labelledby={multiSelectId}
+            />
+          </span>
         </div>
         <div
           className="min-h-0 flex-1 overflow-auto outline-none"
@@ -629,6 +896,7 @@ function OrganizationFilesContent(): ReactElement {
                   downloaded={isDownloaded(records, entry)}
                   onSelect={(event) => selectEntry(entry.id, event)}
                   onOpen={() => openEntry(entry)}
+                  onContextMenu={(event) => openContextMenu(entry, event)}
                 />
               ))}
             </div>
@@ -638,6 +906,7 @@ function OrganizationFilesContent(): ReactElement {
               selectedIds={selectedIds}
               onSelect={selectEntry}
               onOpen={openEntry}
+              onContextMenu={openContextMenu}
               downloaded={(entry) => isDownloaded(records, entry)}
             />
           )}
@@ -653,7 +922,17 @@ function OrganizationFilesContent(): ReactElement {
           </div>
         )}
         <div className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-1.5 text-xs">
-          <span>共 {total} 项</span>
+          <span>
+            {downloading && downloadProgress
+              ? `正在下载 ${downloadProgress.done}/${downloadProgress.total}`
+              : exporting
+                ? "正在导出"
+                : discardMutation.isPending
+                  ? "正在删除远程文件"
+                  : removingLocal
+                    ? "正在删除本地文件"
+                    : `共 ${total} 项`}
+          </span>
           <span className="truncate">
             {selectedEntries.length > 1
               ? `已选 ${selectedEntries.length} 项`
@@ -663,6 +942,69 @@ function OrganizationFilesContent(): ReactElement {
           </span>
         </div>
       </section>
+      {menu && (
+        <FileActionMenu x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
+          <MenuAction
+            icon={Eye}
+            label="预览"
+            disabled={!canPreview}
+            onClick={() => {
+              if (!menuEntry || !canPreview) return;
+              setMenu(null);
+              preview(menuEntry);
+            }}
+          />
+          <MenuAction
+            icon={Download}
+            label={
+              downloadProgress ? `下载 ${downloadProgress.done}/${downloadProgress.total}` : "下载"
+            }
+            disabled={!canDownload}
+            onClick={() => {
+              setMenu(null);
+              void downloadSelected();
+            }}
+          />
+          <div className="relative flex items-center">
+            <button
+              type="button"
+              role="menuitem"
+              disabled={!canExport}
+              className="flex w-full items-center gap-2 rounded-md py-1.5 pr-8 pl-2 text-left hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+              onClick={() => {
+                setMenu(null);
+                void exportSelected();
+              }}
+            >
+              <Package />
+              导出
+            </button>
+            <span className="absolute top-1/2 right-1 -translate-y-1/2">
+              <ExportScopeHint />
+            </span>
+          </div>
+          <div className="bg-border my-1 h-px" role="separator" />
+          <MenuAction
+            icon={Trash2}
+            label="删除远程文件"
+            disabled={!canDiscardRemote}
+            onClick={() => {
+              setMenu(null);
+              void discardSelected();
+            }}
+          />
+          <MenuAction
+            icon={FileX}
+            label="删除本地文件"
+            disabled={!canDeleteLocal}
+            onClick={() => {
+              setMenu(null);
+              void deleteLocalSelected();
+            }}
+          />
+        </FileActionMenu>
+      )}
+      <UsageHelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   );
 }
@@ -673,12 +1015,14 @@ function IconEntry({
   downloaded,
   onSelect,
   onOpen,
+  onContextMenu,
 }: {
   entry: OrgFileEntryVO;
   selected: boolean;
   downloaded: boolean;
   onSelect: (event: MouseEvent) => void;
   onOpen: () => void;
+  onContextMenu: (event: MouseEvent) => void;
 }): ReactElement {
   const Icon = fileIcon(entry);
   return (
@@ -696,6 +1040,7 @@ function IconEntry({
       )}
       onClick={onSelect}
       onDoubleClick={onOpen}
+      onContextMenu={onContextMenu}
     >
       <Icon
         className={cn(
@@ -725,12 +1070,14 @@ function DetailsTable({
   downloaded,
   onSelect,
   onOpen,
+  onContextMenu,
 }: {
   entries: OrgFileEntryVO[];
   selectedIds: string[];
   downloaded: (entry: OrgFileEntryVO) => boolean;
   onSelect: (id: string, event: MouseEvent) => void;
   onOpen: (entry: OrgFileEntryVO) => void;
+  onContextMenu: (entry: OrgFileEntryVO, event: MouseEvent) => void;
 }): ReactElement {
   return (
     <table className="w-full min-w-[40rem] border-separate border-spacing-0 text-sm">
@@ -758,6 +1105,7 @@ function DetailsTable({
               )}
               onClick={(event) => onSelect(entry.id, event)}
               onDoubleClick={() => onOpen(entry)}
+              onContextMenu={(event) => onContextMenu(entry, event)}
             >
               <td className="max-w-64 px-3 py-2">
                 <span className="flex min-w-0 items-center gap-2">
