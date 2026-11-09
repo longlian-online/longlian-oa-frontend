@@ -1,4 +1,4 @@
-import type { OrgFileDownloadTarget, OrgFileEntryVO } from "@/types/organizationAdmin";
+import type { OrgFileExpansionTarget, OrgFileEntryVO } from "@/types/organizationAdmin";
 
 import type { OrgFileLocation, OrgFileTree } from "./fileLocation";
 
@@ -38,7 +38,7 @@ export function downloadTarget(
     "id" | "kind" | "taskInstanceId" | "fileId" | "fieldKey" | "availability"
   >,
   location: OrgFileLocation,
-): OrgFileDownloadTarget | null {
+): OrgFileExpansionTarget | null {
   if (entry.kind === "FILE") {
     if (
       entry.availability !== "available" ||

@@ -29,7 +29,7 @@ import {
 import { ApiError } from "@/api/apiError";
 import {
   discardOrganizationFile,
-  downloadOrganizationFiles,
+  expandOrganizationFiles,
   getOrganizationFileDownload,
 } from "@/api/organizationAdmin";
 import {
@@ -59,7 +59,7 @@ import { usePageQuery } from "@/hooks/usePageQuery";
 import { formatBytes, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { ORGANIZATION_FILE_PAGE_SIZE, organizationFilesQuery } from "@/queries/organizationAdmin";
-import type { OrgFileDownloadTarget, OrgFileEntryVO } from "@/types/organizationAdmin";
+import type { OrgFileExpansionTarget, OrgFileEntryVO } from "@/types/organizationAdmin";
 
 import {
   orgFileLocation,
@@ -456,7 +456,7 @@ function OrganizationFilesContent(): ReactElement {
       }
       const existing = await readDownloadRecords(handle);
       noteDownloadDirectory(handle, existing);
-      const batch = await downloadOrganizationFiles(targets);
+      const batch = await expandOrganizationFiles(targets);
       if (batch.files.length === 0) {
         $tip("没有可下载的文件", "error");
         return;
@@ -512,13 +512,13 @@ function OrganizationFilesContent(): ReactElement {
     const folders = selectedEntries
       .map((entry) => downloadTarget(entry, location))
       .filter(
-        (target): target is Exclude<OrgFileDownloadTarget, { kind: "FILE" }> =>
+        (target): target is Exclude<OrgFileExpansionTarget, { kind: "FILE" }> =>
           target !== null && target.kind !== "FILE",
       );
     const expanded =
       folders.length === 0
         ? []
-        : (await downloadOrganizationFiles(folders)).files.map((file) => ({
+        : (await expandOrganizationFiles(folders)).files.map((file) => ({
             taskInstanceId: file.taskInstanceId,
             fileId: file.fileId,
             fieldKey: file.fieldKey,
