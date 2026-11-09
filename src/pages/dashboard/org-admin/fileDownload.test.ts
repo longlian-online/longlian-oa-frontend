@@ -1,8 +1,8 @@
 import { expect, test } from "vite-plus/test";
 
 import {
-  archiveDirectories,
   archiveEntryPaths,
+  downloadRelativePaths,
   downloadTarget,
   isDownloaded,
   parseManifest,
@@ -101,25 +101,46 @@ test("压缩包目录跟着当前视图，同一层重名才加上资源 ID", ()
     ]),
   ).toEqual(["成果.pdf", "成果_202.PDF", "CON_303.txt", "404"]);
   expect(
-    archiveDirectories("planning", {
-      typeName: "漫画",
-      projectTitle: "阿企划",
-      itemTitle: "第一话",
-    }),
-  ).toEqual(["阿企划", "第一话"]);
-  expect(
-    archiveDirectories("type", { typeName: "漫画", projectTitle: "阿企划", itemTitle: "第一话" }),
-  ).toEqual(["漫画"]);
-  expect(archiveDirectories("item", { projectTitle: "阿企划", itemTitle: "第一话" })).toEqual([
-    "第一话",
-  ]);
-  expect(
     archiveEntryPaths([
       { fileId: "101", name: "成果.pdf", directories: ["阿企划", "第一话"] },
       { fileId: "202", name: "成果.pdf", directories: ["阿企划", "第二话"] },
       { fileId: "303", name: "成果.pdf", directories: ["阿企划", "第一话"] },
     ]),
   ).toEqual(["阿企划/第一话/成果.pdf", "阿企划/第二话/成果.pdf", "阿企划/第一话/成果_303.pdf"]);
+});
+
+test("下载文件名是企划、项目、任务和提交项，后缀沿用原文件", () => {
+  expect(
+    downloadRelativePaths([
+      {
+        fileId: "101",
+        name: "成果.pdf",
+        projectTitle: "阿企划",
+        itemTitle: "第一话",
+        taskName: "翻译",
+        fieldLabel: "译稿",
+      },
+      {
+        fileId: "202",
+        name: "对照.PDF",
+        projectTitle: "阿企划",
+        itemTitle: "第一话",
+        taskName: "翻译",
+        fieldLabel: "译稿",
+      },
+      {
+        fileId: "303",
+        name: "归档.tar.gz",
+        projectTitle: "阿/企划",
+        itemTitle: "",
+        taskName: "CON",
+      },
+    ]),
+  ).toEqual([
+    "阿企划-第一话-翻译-译稿.pdf",
+    "阿企划-第一话-翻译-译稿_202.PDF",
+    "阿企划-未命名-CON_-未命名.gz",
+  ]);
 });
 
 test("下载记录只接受当前版本里完整的文件", () => {

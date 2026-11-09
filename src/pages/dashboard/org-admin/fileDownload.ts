@@ -1,12 +1,13 @@
-import type { OrgFileDownloadTarget, OrgFileEntryVO } from "@/types/organizationAdmin";
+import type { OrgFileExpansionTarget, OrgFileEntryVO } from "@/types/organizationAdmin";
 
-import type { OrgFileLocation, OrgFileTree } from "./fileLocation";
+import type { OrgFileLocation } from "./fileLocation";
 
 export interface DownloadRecord {
   taskInstanceId: string;
   fieldKey: string;
   fileId: string;
   name: string;
+  path?: string;
 }
 
 export function fileKey(file: {
@@ -37,7 +38,7 @@ export function downloadTarget(
     "id" | "kind" | "taskInstanceId" | "fileId" | "fieldKey" | "availability"
   >,
   location: OrgFileLocation,
-): OrgFileDownloadTarget | null {
+): OrgFileExpansionTarget | null {
   if (entry.kind === "FILE") {
     if (
       entry.availability !== "available" ||
@@ -99,19 +100,11 @@ function withResourceId(name: string, fileId: string): string {
   return `${name}_${fileId}`;
 }
 
-export function archiveDirectories(
-  view: OrgFileTree,
-  file: { typeName?: string | null; projectTitle?: string | null; itemTitle?: string | null },
-): string[] {
-  if (view === "type") return [file.typeName ?? ""];
-  if (view === "item") return [file.itemTitle ?? ""];
-  return [file.projectTitle ?? "", file.itemTitle ?? ""];
-}
-
 export function archiveEntryPaths(
   files: { fileId: string; name: string; directories?: string[] }[],
+  reserved: readonly string[] = [],
 ): string[] {
-  const taken = new Set<string>();
+  const taken = new Set(reserved.map((path) => path.toLowerCase()));
   return files.map((file) => {
     const folders = (file.directories ?? []).map(archiveFolderName);
     const base = archiveBaseName(file.name, file.fileId);
@@ -127,6 +120,57 @@ export function archiveEntryPaths(
     taken.add(path.toLowerCase());
     return path;
   });
+}
+
+export function downloadRelativePaths(
+  files: {
+    fileId: string;
+    name: string;
+    projectTitle?: string | null;
+    itemTitle?: string | null;
+    taskName?: string | null;
+    fieldLabel?: string | null;
+  }[],
+  reserved: readonly string[] = [],
+): string[] {
+  return archiveEntryPaths(
+    files.map((file) => ({
+      fileId: file.fileId,
+      name: storedFileName(file),
+    })),
+    reserved,
+  );
+}
+
+function storedFileName(file: {
+  name: string;
+  projectTitle?: string | null;
+  itemTitle?: string | null;
+  taskName?: string | null;
+  fieldLabel?: string | null;
+}): string {
+  const base = [file.projectTitle, file.itemTitle, file.taskName, file.fieldLabel]
+    .map((part) => archiveFolderName(part ?? ""))
+    .join("-");
+  const extension = fileExtension(file.name);
+  return extension ? `${base}.${extension}` : base;
+}
+
+function fileExtension(originalName: string): string {
+  const base = originalName.replaceAll("\\", "/").split("/").pop() ?? "";
+  const cleaned = stripIllegal(base);
+  const dot = cleaned.lastIndexOf(".");
+  const extension = dot >= 0 ? cleaned.slice(dot + 1) : "";
+  return /^[A-Za-z0-9]{1,16}$/.test(extension) ? extension : "";
+}
+
+export function storedPath(value: unknown): string | undefined {
+  if (typeof value !== "string" || value === "" || value.startsWith("/") || value.includes("\\")) {
+    return undefined;
+  }
+  const parts = value.split("/");
+  if (parts.some((part) => part === "" || part === "." || part === "..")) return undefined;
+  return value;
 }
 
 function archiveFolderName(name: string): string {
@@ -168,11 +212,13 @@ export function parseManifest(text: string): DownloadRecord[] {
     ) {
       continue;
     }
+    const path = storedPath(record.path);
     records.push({
       taskInstanceId: record.taskInstanceId,
       fieldKey: record.fieldKey,
       fileId: record.fileId,
       name: record.name,
+      ...(path ? { path } : {}),
     });
   }
   return records;

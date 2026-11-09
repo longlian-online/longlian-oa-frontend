@@ -29,8 +29,8 @@ import type {
   OrganizationTaskTemplateVO,
   OrganizationUpdateDTO,
   OrgFileEntriesVO,
-  OrgFileBatchDownloadVO,
-  OrgFileDownloadTarget,
+  OrgFileExpansionVO,
+  OrgFileExpansionTarget,
   ProjectTypeCreateDTO,
   ProjectTypeListDTO,
   ProjectTypeUpdateDTO,
@@ -294,10 +294,10 @@ export async function getOrganizationFileDownload(
   return orgAdminRequest(`/orgadmin/files/tasks/${taskInstanceId}/attachments/${fileId}/download`);
 }
 
-export async function downloadOrganizationFiles(
-  targets: OrgFileDownloadTarget[],
-): Promise<OrgFileBatchDownloadVO> {
-  return orgAdminRequest("/orgadmin/files/downloads", {
+export async function expandOrganizationFiles(
+  targets: OrgFileExpansionTarget[],
+): Promise<OrgFileExpansionVO> {
+  return orgAdminRequest("/orgadmin/files/expansions", {
     method: "POST",
     body: JSON.stringify({ targets }),
   });
