@@ -399,6 +399,8 @@ export interface OrgFileBatchFileVO {
   typeName?: string | null;
   projectTitle?: string | null;
   itemTitle?: string | null;
+  taskName?: string | null;
+  fieldLabel?: string | null;
 }
 
 export interface OrgFileExpansionVO {

@@ -154,19 +154,21 @@ test("下载按所选视图写入子目录，并记下相对路径", async () =>
         projectTitle: "阿企划",
         itemTitle: "第一话",
         typeName: "漫画",
+        taskName: "翻译",
+        fieldLabel: "译稿",
       },
     ],
     "type",
     async () => "https://example.test/file",
     () => undefined,
   );
-  expect(disk.records().map((record) => record.path)).toEqual(["漫画/成果.pdf"]);
-  expect(disk.hasPath("漫画/成果.pdf")).toBe(true);
+  expect(disk.records().map((record) => record.path)).toEqual(["漫画/阿企划-第一话-翻译-译稿.pdf"]);
+  expect(disk.hasPath("漫画/阿企划-第一话-翻译-译稿.pdf")).toBe(true);
   await removeDownloadedFiles(disk.directory, [
     { taskInstanceId: "8", fieldKey: "script", fileId: "101" },
   ]);
   expect(disk.records()).toEqual([]);
-  expect(disk.hasPath("漫画/成果.pdf")).toBe(false);
+  expect(disk.hasPath("漫画/阿企划-第一话-翻译-译稿.pdf")).toBe(false);
 });
 
 function file(fileId: string, fileName: string) {

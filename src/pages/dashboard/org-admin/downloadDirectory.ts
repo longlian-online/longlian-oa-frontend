@@ -98,6 +98,8 @@ export interface SavedDownloadFile {
   typeName?: string | null;
   projectTitle?: string | null;
   itemTitle?: string | null;
+  taskName?: string | null;
+  fieldLabel?: string | null;
 }
 
 function isDirectoryHandle(value: unknown): value is DownloadDirectoryHandle {
@@ -403,6 +405,8 @@ export async function saveDownloadedFiles(
       typeName: file.typeName,
       projectTitle: file.projectTitle,
       itemTitle: file.itemTitle,
+      taskName: file.taskName,
+      fieldLabel: file.fieldLabel,
     })),
     reserved,
   );

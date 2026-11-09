@@ -139,17 +139,41 @@ export function downloadRelativePaths(
     typeName?: string | null;
     projectTitle?: string | null;
     itemTitle?: string | null;
+    taskName?: string | null;
+    fieldLabel?: string | null;
   }[],
   reserved: readonly string[] = [],
 ): string[] {
   return archiveEntryPaths(
     files.map((file) => ({
       fileId: file.fileId,
-      name: file.name,
+      name: storedFileName(file),
       directories: archiveDirectories(view, file),
     })),
     reserved,
   );
+}
+
+function storedFileName(file: {
+  name: string;
+  projectTitle?: string | null;
+  itemTitle?: string | null;
+  taskName?: string | null;
+  fieldLabel?: string | null;
+}): string {
+  const base = [file.projectTitle, file.itemTitle, file.taskName, file.fieldLabel]
+    .map((part) => archiveFolderName(part ?? ""))
+    .join("-");
+  const extension = fileExtension(file.name);
+  return extension ? `${base}.${extension}` : base;
+}
+
+function fileExtension(originalName: string): string {
+  const base = originalName.replaceAll("\\", "/").split("/").pop() ?? "";
+  const cleaned = stripIllegal(base);
+  const dot = cleaned.lastIndexOf(".");
+  const extension = dot >= 0 ? cleaned.slice(dot + 1) : "";
+  return /^[A-Za-z0-9]{1,16}$/.test(extension) ? extension : "";
 }
 
 export function storedPath(value: unknown): string | undefined {

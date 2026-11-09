@@ -3,6 +3,7 @@ import { expect, test } from "vite-plus/test";
 import {
   archiveDirectories,
   archiveEntryPaths,
+  downloadRelativePaths,
   downloadTarget,
   isDownloaded,
   parseManifest,
@@ -120,6 +121,42 @@ test("压缩包目录跟着当前视图，同一层重名才加上资源 ID", ()
       { fileId: "303", name: "成果.pdf", directories: ["阿企划", "第一话"] },
     ]),
   ).toEqual(["阿企划/第一话/成果.pdf", "阿企划/第二话/成果.pdf", "阿企划/第一话/成果_303.pdf"]);
+});
+
+test("下载文件名是企划、项目、任务和提交项，后缀沿用原文件", () => {
+  expect(
+    downloadRelativePaths("type", [
+      {
+        fileId: "101",
+        name: "成果.pdf",
+        typeName: "漫画",
+        projectTitle: "阿企划",
+        itemTitle: "第一话",
+        taskName: "翻译",
+        fieldLabel: "译稿",
+      },
+      {
+        fileId: "202",
+        name: "对照.PDF",
+        typeName: "漫画",
+        projectTitle: "阿企划",
+        itemTitle: "第一话",
+        taskName: "翻译",
+        fieldLabel: "译稿",
+      },
+      {
+        fileId: "303",
+        name: "归档.tar.gz",
+        projectTitle: "阿/企划",
+        itemTitle: "",
+        taskName: "CON",
+      },
+    ]),
+  ).toEqual([
+    "漫画/阿企划-第一话-翻译-译稿.pdf",
+    "漫画/阿企划-第一话-翻译-译稿_202.PDF",
+    "未命名/阿企划-未命名-CON_-未命名.gz",
+  ]);
 });
 
 test("下载记录只接受当前版本里完整的文件", () => {
