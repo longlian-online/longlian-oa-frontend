@@ -45,15 +45,13 @@ export default function OrganizationFileSettings(): ReactElement {
     };
   }, [active]);
 
-  if (orgsQuery.isLoading) {
-    return <p className="text-sm text-muted-foreground">正在读取组织</p>;
-  }
-  if (orgsQuery.isError) {
-    return <p className="text-sm text-muted-foreground">组织列表加载失败</p>;
-  }
-  if (orgs.length === 0) {
-    return <p className="text-sm text-muted-foreground">还没有加入组织</p>;
-  }
+  const status = orgsQuery.isLoading
+    ? "正在读取组织"
+    : orgsQuery.isError
+      ? "组织列表加载失败"
+      : orgs.length === 0
+        ? "还没有加入组织"
+        : null;
 
   const view = settings?.view ?? "planning";
 
@@ -86,50 +84,61 @@ export default function OrganizationFileSettings(): ReactElement {
   }
 
   return (
-    <Tabs value={active} onValueChange={setChosen}>
-      <TabsList className="max-w-full overflow-x-auto" aria-label="组织">
-        {orgs.map((org) => (
-          <TabsTrigger key={org.id} value={org.id}>
-            {org.name}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-      <div className="flex flex-col gap-4 pt-2">
-        <div className="flex flex-col gap-2">
-          <Label>存放位置</Label>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-fit max-w-full"
-            disabled={busy}
-            onClick={() => void chooseDirectory()}
-          >
-            <FolderOpen />
-            <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
-          </Button>
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label id={`${active}-storage-view`}>存储视图</Label>
-          <Select
-            value={view}
-            onValueChange={(value) => {
-              if (value !== "planning" && value !== "type" && value !== "item") return;
-              void changeView(value);
-            }}
-          >
-            <SelectTrigger aria-labelledby={`${active}-storage-view`} className="w-40">
-              <SelectValue>{VIEW_LABEL[view]}</SelectValue>
-            </SelectTrigger>
-            <FilterSelectContent>
-              {(Object.keys(VIEW_LABEL) as OrgFileTree[]).map((item) => (
-                <SelectItem key={item} value={item}>
-                  {VIEW_LABEL[item]}
-                </SelectItem>
-              ))}
-            </FilterSelectContent>
-          </Select>
-        </div>
-      </div>
-    </Tabs>
+    <div className="flex flex-col gap-4">
+      {status === null ? (
+        <Tabs value={active} onValueChange={setChosen}>
+          <TabsList className="max-w-full overflow-x-auto" aria-label="组织">
+            {orgs.map((org) => (
+              <TabsTrigger key={org.id} value={org.id}>
+                {org.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      ) : null}
+      <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+        <h2 className="font-heading text-base font-medium">存储设置</h2>
+        {status !== null ? (
+          <p className="text-sm text-muted-foreground">{status}</p>
+        ) : (
+          <>
+            <div className="flex flex-col gap-2">
+              <Label>存放位置</Label>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-fit max-w-full"
+                disabled={busy}
+                onClick={() => void chooseDirectory()}
+              >
+                <FolderOpen />
+                <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
+              </Button>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label id={`${active}-storage-view`}>存储视图</Label>
+              <Select
+                value={view}
+                onValueChange={(value) => {
+                  if (value !== "planning" && value !== "type" && value !== "item") return;
+                  void changeView(value);
+                }}
+              >
+                <SelectTrigger aria-labelledby={`${active}-storage-view`} className="w-40">
+                  <SelectValue>{VIEW_LABEL[view]}</SelectValue>
+                </SelectTrigger>
+                <FilterSelectContent>
+                  {(Object.keys(VIEW_LABEL) as OrgFileTree[]).map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {VIEW_LABEL[item]}
+                    </SelectItem>
+                  ))}
+                </FilterSelectContent>
+              </Select>
+            </div>
+          </>
+        )}
+      </section>
+    </div>
   );
 }

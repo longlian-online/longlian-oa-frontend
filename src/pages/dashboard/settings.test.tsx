@@ -162,7 +162,7 @@ test("修改昵称时空白和超长停在字段旁", async (): Promise<void> =>
   expect(document.querySelector("#old-password")).toBeNull();
   expect(Array.from(document.querySelectorAll("h2"), (heading) => heading.textContent)).toEqual([
     "修改密码",
-    "组织设置",
+    "存储设置",
     "通知",
   ]);
   expect(document.body.textContent).not.toContain("昵称 遗留用户");
@@ -288,7 +288,7 @@ test("关闭某一类型通知时只提交该类型", async (): Promise<void> =>
   });
 });
 
-test("组织设置按组织分栏，并提供存放位置和存储视图", async (): Promise<void> => {
+test("存储设置按组织分栏，标签在内容块上方", async (): Promise<void> => {
   getUserOrganizations.mockResolvedValue([
     { id: "1", name: "甲组" },
     { id: "2", name: "乙组" },
@@ -297,9 +297,22 @@ test("组织设置按组织分栏，并提供存放位置和存储视图", async
   await vi.waitFor(() => {
     expect(document.body.textContent).toContain("甲组");
   });
-  expect(document.body.textContent).toContain("组织设置");
-  expect(document.body.textContent).toContain("乙组");
-  expect(document.body.textContent).toContain("存放位置");
-  expect(document.body.textContent).toContain("存储视图");
-  expect(document.body.textContent).toContain("企划");
+  const heading = Array.from(document.querySelectorAll("h2")).find(
+    (item) => item.textContent === "存储设置",
+  );
+  const block = heading?.closest("section");
+  expect(document.body.textContent).not.toContain("组织设置");
+  expect(block?.textContent).toContain("存放位置");
+  expect(block?.textContent).toContain("存储视图");
+  expect(block?.textContent).toContain("企划");
+  expect(block?.querySelector("[role='tab']")).toBeNull();
+  const tabs = Array.from(document.querySelectorAll("[role='tab']"), (item) => item.textContent);
+  expect(tabs).toEqual(["甲组", "乙组"]);
+  const tab = document.querySelector("[role='tab']");
+  expect(
+    tab !== null &&
+      block !== null &&
+      block !== undefined &&
+      (tab.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
+  ).toBe(true);
 });

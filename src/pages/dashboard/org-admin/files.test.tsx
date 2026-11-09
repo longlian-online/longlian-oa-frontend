@@ -221,7 +221,7 @@ test("说明在标题栏，多选跟在视图后面", async (): Promise<void> =>
   });
   const dialog = document.body.querySelector('[role="dialog"]');
   expect(dialog?.textContent).toContain("如果不知道如何使用，请不要使用该页面");
-  expect(dialog?.textContent).toContain("个人设置的组织设置");
+  expect(dialog?.textContent).toContain("个人设置的存储设置");
   expect(dialog?.textContent).toContain("存储视图");
   const menu = await openMenu();
   expect(menu.textContent).not.toContain("导出");

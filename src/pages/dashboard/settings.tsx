@@ -417,10 +417,7 @@ export default function PersonalSettingsPage(): ReactElement {
         ) : null}
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
-        <h2 className="font-heading text-base font-medium">组织设置</h2>
-        <OrganizationFileSettings />
-      </section>
+      <OrganizationFileSettings />
 
       <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
         <h2 className="font-heading text-base font-medium">通知</h2>
