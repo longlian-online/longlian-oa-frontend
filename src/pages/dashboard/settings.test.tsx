@@ -10,29 +10,51 @@ import { createQueryClient } from "@/lib/queryClient";
 import { clearSession, saveSession } from "@/lib/session";
 import type { UserInfoVO } from "@/types/user";
 
-const { bindEmail, changePassword, getUserConfig, patchUserConfig, updateMyInfo, currentUser } =
-  vi.hoisted(() => ({
-    bindEmail: vi.fn(async () => undefined),
-    changePassword: vi.fn(async () => undefined),
-    getUserConfig: vi.fn(async () => ({ config: {} })),
-    patchUserConfig: vi.fn(async () => undefined),
-    updateMyInfo: vi.fn(async () => undefined),
-    currentUser: {
-      user: null as UserInfoVO | null,
-      isLoading: false,
-    },
-  }));
+const {
+  bindEmail,
+  changePassword,
+  getCurrentUser,
+  getUserConfig,
+  getUserOrganizations,
+  patchUserConfig,
+  updateMyInfo,
+  currentUser,
+} = vi.hoisted(() => ({
+  bindEmail: vi.fn(async () => undefined),
+  changePassword: vi.fn(async () => undefined),
+  getCurrentUser: vi.fn(async () => ({
+    id: "1",
+    username: "legacy",
+    nickname: "遗留用户",
+    email: null,
+  })),
+  getUserConfig: vi.fn(async () => ({ config: {} })),
+  getUserOrganizations: vi.fn(async (): Promise<{ id: string; name: string }[]> => []),
+  patchUserConfig: vi.fn(async () => undefined),
+  updateMyInfo: vi.fn(async () => undefined),
+  currentUser: {
+    user: null as UserInfoVO | null,
+    isLoading: false,
+  },
+}));
 
 vi.mock("@/api/user", () => ({
   bindEmail,
   changePassword,
+  getCurrentUser,
   getUserConfig,
+  getUserOrganizations,
   patchUserConfig,
   updateMyInfo,
 }));
 
 vi.mock("@/api/auth", () => ({
   sendVerificationCode: vi.fn(async () => undefined),
+}));
+
+vi.mock("@/pages/dashboard/org-admin/downloadDirectory", () => ({
+  loadOrgDownloads: async () => ({ handle: null, name: null, records: [], view: "planning" }),
+  DirectoryAccessError: class DirectoryAccessError extends Error {},
 }));
 
 vi.mock("@/hooks/useCurrentUser", () => ({
@@ -76,6 +98,8 @@ beforeEach((): void => {
   getUserConfig.mockResolvedValue({ config: {} });
   patchUserConfig.mockReset();
   patchUserConfig.mockResolvedValue(undefined);
+  getUserOrganizations.mockReset();
+  getUserOrganizations.mockResolvedValue([]);
   updateMyInfo.mockReset();
   updateMyInfo.mockResolvedValue(undefined);
   saveSession({ token: TOKEN, userId: "1" });
@@ -136,9 +160,14 @@ test("修改昵称时空白和超长停在字段旁", async (): Promise<void> =>
   await mount();
   expect(document.querySelector("#nickname")).toBeNull();
   expect(document.querySelector("#old-password")).toBeNull();
+  expect(Array.from(document.querySelectorAll("h1"), (heading) => heading.textContent)).toEqual([
+    "个人设置",
+    "组织设置",
+  ]);
   expect(Array.from(document.querySelectorAll("h2"), (heading) => heading.textContent)).toEqual([
     "修改密码",
     "通知",
+    "存储设置",
   ]);
   expect(document.body.textContent).not.toContain("昵称 遗留用户");
   expect(document.body.textContent).toContain("遗留用户");
@@ -261,4 +290,40 @@ test("关闭某一类型通知时只提交该类型", async (): Promise<void> =>
       config: { notificationKinds: { TASK_READY: false } },
     });
   });
+});
+
+test("存储设置按组织分栏，标签在内容块上方", async (): Promise<void> => {
+  getUserOrganizations.mockResolvedValue([
+    { id: "1", name: "甲组" },
+    { id: "2", name: "乙组" },
+  ]);
+  await mount();
+  await vi.waitFor(() => {
+    expect(document.body.textContent).toContain("甲组");
+  });
+  const titles = Array.from(document.querySelectorAll("h1"));
+  const orgTitle = titles.find((item) => item.textContent === "组织设置");
+  const heading = Array.from(document.querySelectorAll("h2")).find(
+    (item) => item.textContent === "存储设置",
+  );
+  const block = heading?.closest("section");
+  const notice = Array.from(document.querySelectorAll("h2")).find(
+    (item) => item.textContent === "通知",
+  );
+  expect(block?.textContent).toContain("存放位置");
+  expect(block?.textContent).not.toContain("存储视图");
+  expect(block?.querySelector("[role='tab']")).toBeNull();
+  const tabs = Array.from(document.querySelectorAll("[role='tab']"), (item) => item.textContent);
+  expect(tabs).toEqual(["甲组", "乙组"]);
+  const tab = document.querySelector("[role='tab']");
+  expect(
+    orgTitle !== undefined &&
+      notice !== undefined &&
+      tab !== null &&
+      block !== null &&
+      block !== undefined &&
+      (notice.compareDocumentPosition(orgTitle) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0 &&
+      (orgTitle.compareDocumentPosition(tab) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0 &&
+      (tab.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
+  ).toBe(true);
 });

@@ -1,4 +1,5 @@
 import {
+  downloadRelativePaths,
   fileKey,
   parseManifest,
   resourceFileName,
@@ -72,13 +73,18 @@ interface DownloadFileHandle {
 export interface DownloadDirectoryHandle {
   readonly name: string;
   getFileHandle(name: string, options?: { create?: boolean }): Promise<DownloadFileHandle>;
+  getDirectoryHandle?(
+    name: string,
+    options?: { create?: boolean },
+  ): Promise<DownloadDirectoryHandle>;
+  removeEntry?(name: string): Promise<void>;
   queryPermission?(descriptor: { mode: "readwrite" }): Promise<PermissionState>;
   requestPermission?(descriptor: { mode: "readwrite" }): Promise<PermissionState>;
 }
 
 export interface SavedDownloads {
-  handle: DownloadDirectoryHandle;
-  name: string;
+  handle: DownloadDirectoryHandle | null;
+  name: string | null;
   records: DownloadRecord[];
 }
 
@@ -87,6 +93,11 @@ export interface SavedDownloadFile {
   fieldKey: string;
   fileId: string;
   fileName: string;
+  typeName?: string | null;
+  projectTitle?: string | null;
+  itemTitle?: string | null;
+  taskName?: string | null;
+  fieldLabel?: string | null;
 }
 
 function isDirectoryHandle(value: unknown): value is DownloadDirectoryHandle {
@@ -121,12 +132,46 @@ async function readHandle(): Promise<DownloadDirectoryHandle | null> {
   }
 }
 
-async function writeHandle(handle: DownloadDirectoryHandle): Promise<void> {
+async function permission(handle: DownloadDirectoryHandle): Promise<PermissionState> {
+  if (typeof handle.queryPermission !== "function") return "prompt";
+  return handle.queryPermission({ mode: "readwrite" });
+}
+
+function orgStorageKey(orgId: string): string {
+  return `org:${orgId}`;
+}
+
+interface StoredOrgDownload {
+  handle: DownloadDirectoryHandle | null;
+}
+
+function isStoredOrgDownload(value: unknown): value is StoredOrgDownload {
+  if (!value || typeof value !== "object") return false;
+  const stored = value as { handle?: unknown };
+  if (!("handle" in stored)) return false;
+  if (stored.handle == null) return true;
+  return isDirectoryHandle(stored.handle);
+}
+
+async function readStored(key: string): Promise<unknown> {
+  const db = await openDb();
+  const { promise, resolve, reject } = deferred<unknown>();
+  const request = db.transaction(STORE, "readonly").objectStore(STORE).get(key);
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(request.error ?? new Error("无法读取下载设置"));
+  try {
+    return await promise;
+  } finally {
+    db.close();
+  }
+}
+
+async function writeStored(key: string, value: unknown): Promise<void> {
   const db = await openDb();
   const { promise, resolve, reject } = deferred<void>();
-  const request = db.transaction(STORE, "readwrite").objectStore(STORE).put(handle, DIRECTORY_KEY);
+  const request = db.transaction(STORE, "readwrite").objectStore(STORE).put(value, key);
   request.onsuccess = () => resolve();
-  request.onerror = () => reject(request.error ?? new Error("无法记住下载目录"));
+  request.onerror = () => reject(request.error ?? new Error("无法保存下载设置"));
   try {
     await promise;
   } finally {
@@ -134,22 +179,65 @@ async function writeHandle(handle: DownloadDirectoryHandle): Promise<void> {
   }
 }
 
-async function permission(handle: DownloadDirectoryHandle): Promise<PermissionState> {
-  if (typeof handle.queryPermission !== "function") return "prompt";
-  return handle.queryPermission({ mode: "readwrite" });
+async function deleteStored(key: string): Promise<void> {
+  const db = await openDb();
+  const { promise, resolve, reject } = deferred<void>();
+  const request = db.transaction(STORE, "readwrite").objectStore(STORE).delete(key);
+  request.onsuccess = () => resolve();
+  request.onerror = () => reject(request.error ?? new Error("无法删除下载设置"));
+  try {
+    await promise;
+  } finally {
+    db.close();
+  }
 }
 
-export async function loadSavedDownloads(): Promise<SavedDownloads | null> {
-  try {
-    const handle = await readHandle();
-    if (!handle) return null;
-    if ((await permission(handle)) !== "granted") {
-      return { handle, name: handle.name, records: [] };
-    }
-    return { handle, name: handle.name, records: await readDownloadRecords(handle) };
-  } catch {
-    return null;
+async function readOrgDownload(orgId: string): Promise<StoredOrgDownload | null> {
+  const stored = await readStored(orgStorageKey(orgId));
+  return isStoredOrgDownload(stored) ? stored : null;
+}
+
+function emptyDownloads(): SavedDownloads {
+  return { handle: null, name: null, records: [] };
+}
+
+async function downloadsFromStored(stored: StoredOrgDownload): Promise<SavedDownloads> {
+  if (!stored.handle) return emptyDownloads();
+  if ((await permission(stored.handle)) !== "granted") {
+    return { handle: stored.handle, name: stored.handle.name, records: [] };
   }
+  return {
+    handle: stored.handle,
+    name: stored.handle.name,
+    records: await readDownloadRecords(stored.handle),
+  };
+}
+
+export async function loadOrgDownloads(orgId: string): Promise<SavedDownloads> {
+  try {
+    let stored = await readOrgDownload(orgId);
+    if (!stored) {
+      const legacy = await readHandle();
+      if (legacy) {
+        stored = { handle: legacy };
+        await writeStored(orgStorageKey(orgId), stored);
+        await deleteStored(DIRECTORY_KEY);
+      }
+    }
+    if (!stored) return emptyDownloads();
+    return await downloadsFromStored(stored);
+  } catch {
+    return emptyDownloads();
+  }
+}
+
+export async function saveOrgDirectory(
+  orgId: string,
+  handle: DownloadDirectoryHandle,
+): Promise<SavedDownloads> {
+  const stored = { handle };
+  await writeStored(orgStorageKey(orgId), stored);
+  return downloadsFromStored(stored);
 }
 
 export async function pickDownloadDirectory(): Promise<DownloadDirectoryHandle> {
@@ -163,7 +251,6 @@ export async function pickDownloadDirectory(): Promise<DownloadDirectoryHandle> 
   if (!isDirectoryHandle(handle)) {
     throw new DirectoryAccessError("没有拿到可写入的文件夹");
   }
-  await writeHandle(handle);
   return handle;
 }
 
@@ -195,6 +282,72 @@ export async function writeDownloadRecords(
   await writable.close();
 }
 
+function splitRelative(path: string): { directories: string[]; name: string } {
+  const parts = path.split("/");
+  const name = parts.pop() ?? path;
+  return { directories: parts, name };
+}
+
+async function directoryAt(
+  root: DownloadDirectoryHandle,
+  directories: string[],
+  create: boolean,
+): Promise<DownloadDirectoryHandle> {
+  let current = root;
+  for (const name of directories) {
+    if (typeof current.getDirectoryHandle !== "function") {
+      throw new DirectoryAccessError("当前浏览器不能在下载文件夹里建立子目录");
+    }
+    current = await current.getDirectoryHandle(name, create ? { create: true } : undefined);
+  }
+  return current;
+}
+
+async function removeRelative(root: DownloadDirectoryHandle, path: string): Promise<void> {
+  const located = splitRelative(path);
+  const directory = await directoryAt(root, located.directories, false);
+  if (typeof directory.removeEntry !== "function") {
+    throw new DirectoryAccessError("当前浏览器不能删除已下载的文件");
+  }
+  await directory.removeEntry(located.name);
+}
+
+export async function removeDownloadedFiles(
+  directory: DownloadDirectoryHandle,
+  files: Array<Pick<DownloadRecord, "taskInstanceId" | "fieldKey" | "fileId">>,
+): Promise<DownloadRecord[]> {
+  return withManifestLock(async () => {
+    const records = await readDownloadRecords(directory);
+    const keys = new Set(files.map((file) => fileKey(file)));
+    const removing = records.filter((record) => keys.has(fileKey(record)));
+    if (removing.length === 0) return records;
+    const removed = new Set<string>();
+    let failure: unknown;
+    for (const record of removing) {
+      try {
+        if (record.path) await removeRelative(directory, record.path);
+        else if (typeof directory.removeEntry !== "function") {
+          throw new DirectoryAccessError("当前浏览器不能删除已下载的文件");
+        } else {
+          await directory.removeEntry(resourceFileName(record.fileId, record.name));
+        }
+        removed.add(fileKey(record));
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "NotFoundError") {
+          removed.add(fileKey(record));
+          continue;
+        }
+        failure = error;
+        break;
+      }
+    }
+    const next = records.filter((record) => !removed.has(fileKey(record)));
+    if (removed.size > 0) await writeDownloadRecords(directory, next);
+    if (failure) throw failure;
+    return next;
+  });
+}
+
 async function writeDownloadFile(
   directory: DownloadDirectoryHandle,
   name: string,
@@ -223,12 +376,28 @@ export async function saveDownloadedFiles(
   sign: (file: SavedDownloadFile) => Promise<string>,
   onUpdate: (records: DownloadRecord[], done: number, total: number) => void,
 ): Promise<number> {
+  const replacing = new Set(files.map((file) => fileKey(file)));
+  const reserved = existing.flatMap((record) =>
+    record.path && !replacing.has(fileKey(record)) ? [record.path] : [],
+  );
+  const paths = downloadRelativePaths(
+    files.map((file) => ({
+      fileId: file.fileId,
+      name: file.fileName,
+      projectTitle: file.projectTitle,
+      itemTitle: file.itemTitle,
+      taskName: file.taskName,
+      fieldLabel: file.fieldLabel,
+    })),
+    reserved,
+  );
+  const jobs = files.map((file, index) => ({ file, path: paths[index] ?? file.fileId }));
   let failed = 0;
   let done = 0;
   let latest = [...existing];
 
-  async function one(file: SavedDownloadFile): Promise<void> {
-    const localName = resourceFileName(file.fileId, file.fileName);
+  async function one(job: { file: SavedDownloadFile; path: string }): Promise<void> {
+    const { file, path } = job;
     try {
       let body: ReadableStream<Uint8Array>;
       try {
@@ -236,7 +405,9 @@ export async function saveDownloadedFiles(
       } catch {
         body = await fetchBody(await sign(file));
       }
-      await writeDownloadFile(directory, localName, body);
+      const located = splitRelative(path);
+      const folder = await directoryAt(directory, located.directories, true);
+      await writeDownloadFile(folder, located.name, body);
       await withManifestLock(async () => {
         const records = await readDownloadRecords(directory);
         const next = {
@@ -244,12 +415,21 @@ export async function saveDownloadedFiles(
           fieldKey: file.fieldKey,
           fileId: file.fileId,
           name: file.fileName,
+          path,
         };
         const key = fileKey(next);
         const index = records.findIndex((record) => fileKey(record) === key);
+        const previous = index >= 0 ? records[index] : undefined;
         if (index >= 0) records[index] = next;
         else records.push(next);
         await writeDownloadRecords(directory, records);
+        if (previous?.path && previous.path !== path) {
+          try {
+            await removeRelative(directory, previous.path);
+          } catch (error) {
+            if (!(error instanceof DOMException && error.name === "NotFoundError")) throw error;
+          }
+        }
         latest = records;
         onUpdate([...latest], done, files.length);
       });
@@ -261,7 +441,7 @@ export async function saveDownloadedFiles(
     }
   }
 
-  await runPool(files, WRITE_CONCURRENCY, one);
+  await runPool(jobs, WRITE_CONCURRENCY, one);
   return failed;
 }
 

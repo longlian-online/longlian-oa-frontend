@@ -384,7 +384,7 @@ export interface OrgFileEntriesVO {
   entries: OrgFileEntryVO[];
 }
 
-export type OrgFileDownloadTarget =
+export type OrgFileExpansionTarget =
   | { kind: "FILE"; taskInstanceId: string; fileId: string; fieldKey: string }
   | { kind: "ITEM"; itemId: string }
   | { kind: "PROJECT"; projectId: string }
@@ -399,8 +399,10 @@ export interface OrgFileBatchFileVO {
   typeName?: string | null;
   projectTitle?: string | null;
   itemTitle?: string | null;
+  taskName?: string | null;
+  fieldLabel?: string | null;
 }
 
-export interface OrgFileBatchDownloadVO {
+export interface OrgFileExpansionVO {
   files: OrgFileBatchFileVO[];
 }

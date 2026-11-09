@@ -27,11 +27,11 @@ vi.mock("@/hooks/useConfirm", () => ({
   useConfirm: () => () => Promise.resolve(false),
 }));
 vi.mock("./downloadDirectory", () => ({
-  loadSavedDownloads: () =>
+  loadOrgDownloads: () =>
     Promise.resolve(
       seen.records.length === 0
-        ? null
-        : { handle: { name: "下载" }, name: "下载", records: seen.records },
+        ? { handle: null, name: null, records: [], view: "planning" }
+        : { handle: { name: "下载" }, name: "下载", records: seen.records, view: "planning" },
     ),
   DirectoryAccessError: class DirectoryAccessError extends Error {},
 }));
@@ -51,6 +51,7 @@ vi.mock("@/hooks/queries/useApiQuery", () => ({
     };
   },
   useApiMutation: () => ({ isPending: false }),
+  useSessionSnapshot: () => ({ orgId: "1" }),
 }));
 
 let container: HTMLDivElement;
@@ -168,12 +169,155 @@ test("已下载标记跟着文件走，不跟着视图文件夹走", async (): P
   expect(marks).toHaveLength(1);
 });
 
-test("导出按钮说明只导出已下载的文件", async (): Promise<void> => {
-  await mount("");
-  const hint = container.querySelector<HTMLButtonElement>('button[aria-label="导出说明"]');
-  if (!hint) throw new Error("找不到导出说明");
+async function openMenu(index = 0): Promise<HTMLElement> {
+  const option = container.querySelectorAll<HTMLElement>('[role="option"]')[index];
+  if (!option) throw new Error("找不到条目");
   await act(async () => {
-    hint.click();
+    option.dispatchEvent(
+      new MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+        clientX: 32,
+        clientY: 48,
+      }),
+    );
   });
-  expect(document.body.textContent).toContain("仅导出已下载的文件");
+  const menu = document.body.querySelector<HTMLElement>('[role="menu"]');
+  if (!menu) throw new Error("找不到右键菜单");
+  return menu;
+}
+
+function menuItem(menu: ParentNode, label: string): HTMLButtonElement {
+  const item = [...menu.querySelectorAll("button")].find(
+    (button) =>
+      button.getAttribute("aria-label") !== "导出说明" && button.textContent?.includes(label),
+  );
+  if (!(item instanceof HTMLButtonElement)) throw new Error(`找不到${label}`);
+  return item;
+}
+
+test("多选跟在视图后面，操作不放在工具栏", async (): Promise<void> => {
+  await mount("");
+  expect(container.querySelector("h1")?.textContent).toBe("文件");
+  const toolbar = container.querySelector("section div")?.textContent ?? "";
+  expect(toolbar.indexOf("视图：")).toBeGreaterThanOrEqual(0);
+  expect(toolbar.indexOf("多选")).toBeGreaterThan(toolbar.indexOf("视图："));
+  const labels = [...container.querySelectorAll("button")].map((button) =>
+    button.textContent?.trim(),
+  );
+  expect(labels).not.toContain("下载");
+  expect(labels).not.toContain("导出");
+  expect(labels).not.toContain("预览");
+  expect(labels).not.toContain("删除");
+  expect(labels).not.toContain("下载位置");
+  expect(labels).not.toContain("说明");
+  expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+  const menu = await openMenu();
+  expect(menu.textContent).not.toContain("导出");
+  expect(menuItem(menu, "预览").disabled).toBe(true);
+  expect(menuItem(menu, "下载").disabled).toBe(false);
+  expect(menuItem(menu, "删除远程文件").disabled).toBe(false);
+  expect(menuItem(menu, "删除本地文件").disabled).toBe(true);
+});
+
+test("多选打开后单击可加选，右键操作仍然可用", async (): Promise<void> => {
+  seen.entries = [
+    {
+      id: "8:script",
+      kind: "FILE",
+      name: "成果.pdf",
+      taskInstanceId: "8",
+      fieldKey: "script",
+      fileId: "101",
+      availability: "available",
+      taskName: "翻译",
+    },
+    {
+      id: "8:extra",
+      kind: "FILE",
+      name: "对照.pdf",
+      taskInstanceId: "8",
+      fieldKey: "extra",
+      fileId: "102",
+      availability: "available",
+      taskName: "翻译",
+    },
+  ];
+  seen.records = [{ taskInstanceId: "8", fieldKey: "script", fileId: "101", name: "成果.pdf" }];
+  await mount("");
+  const toggle = container.querySelector<HTMLButtonElement>('[role="switch"]');
+  if (!toggle) throw new Error("找不到多选");
+  await act(async () => {
+    toggle.click();
+  });
+  const options = [...container.querySelectorAll<HTMLElement>('[role="option"]')];
+  await act(async () => {
+    options[0]?.click();
+    options[1]?.click();
+  });
+  expect(options[0]?.getAttribute("aria-selected")).toBe("true");
+  expect(options[1]?.getAttribute("aria-selected")).toBe("true");
+  const menu = await openMenu(1);
+  expect(menuItem(menu, "预览").disabled).toBe(false);
+  expect(menuItem(menu, "下载").disabled).toBe(false);
+  expect(menuItem(menu, "删除远程文件").disabled).toBe(false);
+  expect(menuItem(menu, "删除本地文件").disabled).toBe(false);
+});
+
+test("按住拖动框选相交的文件和文件夹", async (): Promise<void> => {
+  seen.entries = [
+    { id: "folder", kind: "FOLDER", name: "企划" },
+    {
+      id: "file",
+      kind: "FILE",
+      name: "成果.pdf",
+      taskInstanceId: "8",
+      fieldKey: "script",
+      fileId: "101",
+      availability: "available",
+    },
+    { id: "far", kind: "FOLDER", name: "远处" },
+  ];
+  await mount("");
+  const list = container.querySelector<HTMLElement>('[role="listbox"]');
+  if (!list) throw new Error("找不到文件列表");
+  const options = [...container.querySelectorAll<HTMLElement>('[role="option"]')];
+  const bounds = (left: number): DOMRect => new DOMRect(left, 0, 40, 40);
+  options[0]!.getBoundingClientRect = () => bounds(0);
+  options[1]!.getBoundingClientRect = () => bounds(50);
+  options[2]!.getBoundingClientRect = () => bounds(200);
+  const point = (type: string, x: number, y: number): PointerEvent =>
+    new PointerEvent(type, { bubbles: true, clientX: x, clientY: y, button: 0, pointerId: 1 });
+  await act(async () => {
+    list.dispatchEvent(point("pointerdown", 0, 0));
+    list.dispatchEvent(point("pointermove", 100, 40));
+  });
+  expect(options[0]?.getAttribute("aria-selected")).toBe("true");
+  expect(options[1]?.getAttribute("aria-selected")).toBe("true");
+  expect(options[2]?.getAttribute("aria-selected")).toBe("false");
+  await act(async () => {
+    list.dispatchEvent(point("pointerup", 100, 40));
+    options[2]?.click();
+  });
+  expect(options[2]?.getAttribute("aria-selected")).toBe("false");
+});
+
+test("按下后不拖动仍然可以单击选中", async (): Promise<void> => {
+  seen.entries = [
+    { id: "folder", kind: "FOLDER", name: "企划" },
+    { id: "file", kind: "FILE", name: "成果.pdf", availability: "available" },
+  ];
+  await mount("");
+  const options = [...container.querySelectorAll<HTMLElement>('[role="option"]')];
+  const target = options[0];
+  if (!target) throw new Error("找不到条目");
+  const point = (type: string): PointerEvent =>
+    new PointerEvent(type, { bubbles: true, clientX: 8, clientY: 8, button: 0, pointerId: 1 });
+  await act(async () => {
+    target.dispatchEvent(point("pointerdown"));
+    target.dispatchEvent(point("pointerup"));
+    target.click();
+  });
+  expect(target.getAttribute("aria-selected")).toBe("true");
+  expect(options[1]?.getAttribute("aria-selected")).toBe("false");
 });
