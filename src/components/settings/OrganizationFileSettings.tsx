@@ -87,7 +87,10 @@ export default function OrganizationFileSettings(): ReactElement {
     <div className="flex flex-col gap-4">
       {status === null ? (
         <Tabs value={active} onValueChange={setChosen}>
-          <TabsList className="max-w-full overflow-x-auto" aria-label="组织">
+          <TabsList
+            className="h-auto max-w-full justify-start overflow-x-auto overflow-y-hidden"
+            aria-label="组织"
+          >
             {orgs.map((org) => (
               <TabsTrigger key={org.id} value={org.id}>
                 {org.name}
