@@ -101,7 +101,7 @@ const USAGE_NOTES = [
   "如果不知道如何使用，请不要使用该页面。",
   "按住 Shift/Ctrl/Command 点击多个文件或文件夹，可以一次多选。",
   "下载前需在个人设置的存储设置里选择存放位置。存放文件夹下的文件不要单独操作。如果需要删除，可以直接删除整个文件夹，或在本页面执行「删除本地文件」。请不要单独在本地删除某个文件。",
-  "下载后的文件夹结构与该组织选择的存储视图一致。",
+  "下载的文件直接放在所选文件夹里，文件名是企划名-项目名-任务名-提交项，后缀沿用原文件。",
 ] as const;
 
 function directRemoteFiles(entries: OrgFileEntryVO[]): RemoteFile[] {
@@ -442,7 +442,6 @@ function OrganizationFilesContent(): ReactElement {
       .map((entry) => downloadTarget(entry, location))
       .filter((target) => target !== null);
     const handle = getDownloadSession().directory;
-    const storageView = getDownloadSession().view;
     if (targets.length === 0 || getDownloadSession().running) return;
     if (!handle) {
       $tip("请先在个人设置中选择存放位置", "error");
@@ -465,7 +464,6 @@ function OrganizationFilesContent(): ReactElement {
         handle,
         existing,
         batch.files,
-        storageView,
         async (file) => {
           try {
             const fresh = await getOrganizationFileDownload(file.taskInstanceId, file.fileId);

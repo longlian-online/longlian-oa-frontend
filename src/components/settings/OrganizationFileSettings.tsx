@@ -3,9 +3,7 @@ import { FolderOpen } from "lucide-react";
 
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
-import FilterSelectContent from "@/components/FilterSelectContent";
 import { Label } from "@/components/ui/label";
-import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import {
@@ -13,14 +11,10 @@ import {
   loadOrgDownloads,
   pickDownloadDirectory,
   saveOrgDirectory,
-  saveOrgView,
   type SavedDownloads,
 } from "@/pages/dashboard/org-admin/downloadDirectory";
 import { rememberDownloads } from "@/pages/dashboard/org-admin/downloadSession";
-import type { OrgFileTree } from "@/pages/dashboard/org-admin/fileLocation";
 import { organizationsQuery } from "@/queries/session";
-
-const VIEW_LABEL = { planning: "企划", type: "类型", item: "项目" } as const;
 
 export default function OrganizationFileSettings(): ReactElement {
   const orgsQuery = useApiQuery(organizationsQuery);
@@ -53,8 +47,6 @@ export default function OrganizationFileSettings(): ReactElement {
         ? "还没有加入组织"
         : null;
 
-  const view = settings?.view ?? "planning";
-
   async function chooseDirectory(): Promise<void> {
     if (!active || busy) return;
     setBusy(true);
@@ -69,17 +61,6 @@ export default function OrganizationFileSettings(): ReactElement {
       else $tip("无法选择存放位置", "error");
     } finally {
       setBusy(false);
-    }
-  }
-
-  async function changeView(next: OrgFileTree): Promise<void> {
-    if (!active || next === view) return;
-    try {
-      const saved = await saveOrgView(active, next);
-      setSettings(saved);
-      if (active === currentOrgId) rememberDownloads(saved);
-    } catch {
-      $tip("无法保存存储视图", "error");
     }
   }
 
@@ -104,42 +85,19 @@ export default function OrganizationFileSettings(): ReactElement {
         {status !== null ? (
           <p className="text-sm text-muted-foreground">{status}</p>
         ) : (
-          <>
-            <div className="flex flex-col gap-2">
-              <Label>存放位置</Label>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-fit max-w-full"
-                disabled={busy}
-                onClick={() => void chooseDirectory()}
-              >
-                <FolderOpen />
-                <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
-              </Button>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label id={`${active}-storage-view`}>存储视图</Label>
-              <Select
-                value={view}
-                onValueChange={(value) => {
-                  if (value !== "planning" && value !== "type" && value !== "item") return;
-                  void changeView(value);
-                }}
-              >
-                <SelectTrigger aria-labelledby={`${active}-storage-view`} className="w-40">
-                  <SelectValue>{VIEW_LABEL[view]}</SelectValue>
-                </SelectTrigger>
-                <FilterSelectContent>
-                  {(Object.keys(VIEW_LABEL) as OrgFileTree[]).map((item) => (
-                    <SelectItem key={item} value={item}>
-                      {VIEW_LABEL[item]}
-                    </SelectItem>
-                  ))}
-                </FilterSelectContent>
-              </Select>
-            </div>
-          </>
+          <div className="flex flex-col gap-2">
+            <Label>存放位置</Label>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-fit max-w-full"
+              disabled={busy}
+              onClick={() => void chooseDirectory()}
+            >
+              <FolderOpen />
+              <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
+            </Button>
+          </div>
         )}
       </section>
     </div>

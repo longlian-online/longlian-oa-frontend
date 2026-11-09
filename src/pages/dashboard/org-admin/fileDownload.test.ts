@@ -1,7 +1,6 @@
 import { expect, test } from "vite-plus/test";
 
 import {
-  archiveDirectories,
   archiveEntryPaths,
   downloadRelativePaths,
   downloadTarget,
@@ -102,19 +101,6 @@ test("压缩包目录跟着当前视图，同一层重名才加上资源 ID", ()
     ]),
   ).toEqual(["成果.pdf", "成果_202.PDF", "CON_303.txt", "404"]);
   expect(
-    archiveDirectories("planning", {
-      typeName: "漫画",
-      projectTitle: "阿企划",
-      itemTitle: "第一话",
-    }),
-  ).toEqual(["阿企划", "第一话"]);
-  expect(
-    archiveDirectories("type", { typeName: "漫画", projectTitle: "阿企划", itemTitle: "第一话" }),
-  ).toEqual(["漫画"]);
-  expect(archiveDirectories("item", { projectTitle: "阿企划", itemTitle: "第一话" })).toEqual([
-    "第一话",
-  ]);
-  expect(
     archiveEntryPaths([
       { fileId: "101", name: "成果.pdf", directories: ["阿企划", "第一话"] },
       { fileId: "202", name: "成果.pdf", directories: ["阿企划", "第二话"] },
@@ -125,11 +111,10 @@ test("压缩包目录跟着当前视图，同一层重名才加上资源 ID", ()
 
 test("下载文件名是企划、项目、任务和提交项，后缀沿用原文件", () => {
   expect(
-    downloadRelativePaths("type", [
+    downloadRelativePaths([
       {
         fileId: "101",
         name: "成果.pdf",
-        typeName: "漫画",
         projectTitle: "阿企划",
         itemTitle: "第一话",
         taskName: "翻译",
@@ -138,7 +123,6 @@ test("下载文件名是企划、项目、任务和提交项，后缀沿用原�
       {
         fileId: "202",
         name: "对照.PDF",
-        typeName: "漫画",
         projectTitle: "阿企划",
         itemTitle: "第一话",
         taskName: "翻译",
@@ -153,9 +137,9 @@ test("下载文件名是企划、项目、任务和提交项，后缀沿用原�
       },
     ]),
   ).toEqual([
-    "漫画/阿企划-第一话-翻译-译稿.pdf",
-    "漫画/阿企划-第一话-翻译-译稿_202.PDF",
-    "未命名/阿企划-未命名-CON_-未命名.gz",
+    "阿企划-第一话-翻译-译稿.pdf",
+    "阿企划-第一话-翻译-译稿_202.PDF",
+    "阿企划-未命名-CON_-未命名.gz",
   ]);
 });
 

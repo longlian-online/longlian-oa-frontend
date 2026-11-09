@@ -6,7 +6,6 @@ import {
   serializeManifest,
   type DownloadRecord,
 } from "./fileDownload";
-import type { OrgFileTree } from "./fileLocation";
 
 const DB_NAME = "longlian-oa-files";
 const STORE = "handles";
@@ -87,7 +86,6 @@ export interface SavedDownloads {
   handle: DownloadDirectoryHandle | null;
   name: string | null;
   records: DownloadRecord[];
-  view: OrgFileTree;
 }
 
 export interface SavedDownloadFile {
@@ -143,19 +141,14 @@ function orgStorageKey(orgId: string): string {
   return `org:${orgId}`;
 }
 
-function isOrgFileTree(value: unknown): value is OrgFileTree {
-  return value === "planning" || value === "type" || value === "item";
-}
-
 interface StoredOrgDownload {
   handle: DownloadDirectoryHandle | null;
-  view: OrgFileTree;
 }
 
 function isStoredOrgDownload(value: unknown): value is StoredOrgDownload {
   if (!value || typeof value !== "object") return false;
-  const stored = value as { handle?: unknown; view?: unknown };
-  if (!isOrgFileTree(stored.view)) return false;
+  const stored = value as { handle?: unknown };
+  if (!("handle" in stored)) return false;
   if (stored.handle == null) return true;
   return isDirectoryHandle(stored.handle);
 }
@@ -204,20 +197,19 @@ async function readOrgDownload(orgId: string): Promise<StoredOrgDownload | null>
   return isStoredOrgDownload(stored) ? stored : null;
 }
 
-function emptyDownloads(view: OrgFileTree = "planning"): SavedDownloads {
-  return { handle: null, name: null, records: [], view };
+function emptyDownloads(): SavedDownloads {
+  return { handle: null, name: null, records: [] };
 }
 
 async function downloadsFromStored(stored: StoredOrgDownload): Promise<SavedDownloads> {
-  if (!stored.handle) return emptyDownloads(stored.view);
+  if (!stored.handle) return emptyDownloads();
   if ((await permission(stored.handle)) !== "granted") {
-    return { handle: stored.handle, name: stored.handle.name, records: [], view: stored.view };
+    return { handle: stored.handle, name: stored.handle.name, records: [] };
   }
   return {
     handle: stored.handle,
     name: stored.handle.name,
     records: await readDownloadRecords(stored.handle),
-    view: stored.view,
   };
 }
 
@@ -227,7 +219,7 @@ export async function loadOrgDownloads(orgId: string): Promise<SavedDownloads> {
     if (!stored) {
       const legacy = await readHandle();
       if (legacy) {
-        stored = { handle: legacy, view: "planning" };
+        stored = { handle: legacy };
         await writeStored(orgStorageKey(orgId), stored);
         await deleteStored(DIRECTORY_KEY);
       }
@@ -243,15 +235,7 @@ export async function saveOrgDirectory(
   orgId: string,
   handle: DownloadDirectoryHandle,
 ): Promise<SavedDownloads> {
-  const current = await readOrgDownload(orgId);
-  const stored = { handle, view: current?.view ?? "planning" };
-  await writeStored(orgStorageKey(orgId), stored);
-  return downloadsFromStored(stored);
-}
-
-export async function saveOrgView(orgId: string, view: OrgFileTree): Promise<SavedDownloads> {
-  const current = await readOrgDownload(orgId);
-  const stored = { handle: current?.handle ?? null, view };
+  const stored = { handle };
   await writeStored(orgStorageKey(orgId), stored);
   return downloadsFromStored(stored);
 }
@@ -389,7 +373,6 @@ export async function saveDownloadedFiles(
   directory: DownloadDirectoryHandle,
   existing: DownloadRecord[],
   files: SavedDownloadFile[],
-  view: OrgFileTree,
   sign: (file: SavedDownloadFile) => Promise<string>,
   onUpdate: (records: DownloadRecord[], done: number, total: number) => void,
 ): Promise<number> {
@@ -398,11 +381,9 @@ export async function saveDownloadedFiles(
     record.path && !replacing.has(fileKey(record)) ? [record.path] : [],
   );
   const paths = downloadRelativePaths(
-    view,
     files.map((file) => ({
       fileId: file.fileId,
       name: file.fileName,
-      typeName: file.typeName,
       projectTitle: file.projectTitle,
       itemTitle: file.itemTitle,
       taskName: file.taskName,

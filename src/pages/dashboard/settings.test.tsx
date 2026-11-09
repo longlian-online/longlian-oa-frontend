@@ -311,8 +311,7 @@ test("存储设置按组织分栏，标签在内容块上方", async (): Promise
     (item) => item.textContent === "通知",
   );
   expect(block?.textContent).toContain("存放位置");
-  expect(block?.textContent).toContain("存储视图");
-  expect(block?.textContent).toContain("企划");
+  expect(block?.textContent).not.toContain("存储视图");
   expect(block?.querySelector("[role='tab']")).toBeNull();
   const tabs = Array.from(document.querySelectorAll("[role='tab']"), (item) => item.textContent);
   expect(tabs).toEqual(["甲组", "乙组"]);

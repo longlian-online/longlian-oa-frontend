@@ -31,8 +31,8 @@ test("并行下载重读清单，不覆盖别人刚记下的记录", async () =>
   const sign = async () => "https://example.test/file";
 
   await Promise.all([
-    saveDownloadedFiles(disk.directory, [], [file("202", "甲.pdf")], "planning", sign, onUpdate),
-    saveDownloadedFiles(disk.directory, [], [file("303", "乙.pdf")], "planning", sign, onUpdate),
+    saveDownloadedFiles(disk.directory, [], [file("202", "甲.pdf")], sign, onUpdate),
+    saveDownloadedFiles(disk.directory, [], [file("303", "乙.pdf")], sign, onUpdate),
   ]);
 
   expect(
@@ -54,7 +54,7 @@ test("没有 Web Locks 时同页写入仍然合并", async () => {
       disk.directory,
       [],
       [file("202", "甲.pdf")],
-      "planning",
+
       sign,
       () => undefined,
     ),
@@ -62,7 +62,7 @@ test("没有 Web Locks 时同页写入仍然合并", async () => {
       disk.directory,
       [],
       [file("303", "乙.pdf")],
-      "planning",
+
       sign,
       () => undefined,
     ),
@@ -83,7 +83,6 @@ test("签发失败不改已有下载记录", async () => {
     disk.directory,
     [KEPT],
     [file("202", "甲.pdf")],
-    "planning",
     async () => {
       throw new Error("签不了");
     },
@@ -138,7 +137,7 @@ test("删除中途失败时保留尚未删除的记录", async () => {
   expect(disk.has(resourceFileName(KEPT.fileId, KEPT.name))).toBe(false);
 });
 
-test("下载按所选视图写入子目录，并记下相对路径", async () => {
+test("下载文件直接写在所选文件夹里，并记下文件名", async (): Promise<void> => {
   installLocks();
   const disk = memoryDirectory([]);
   vi.stubGlobal("fetch", async () => new Response(Uint8Array.from([1])));
@@ -158,17 +157,16 @@ test("下载按所选视图写入子目录，并记下相对路径", async () =>
         fieldLabel: "译稿",
       },
     ],
-    "type",
     async () => "https://example.test/file",
     () => undefined,
   );
-  expect(disk.records().map((record) => record.path)).toEqual(["漫画/阿企划-第一话-翻译-译稿.pdf"]);
-  expect(disk.hasPath("漫画/阿企划-第一话-翻译-译稿.pdf")).toBe(true);
+  expect(disk.records().map((record) => record.path)).toEqual(["阿企划-第一话-翻译-译稿.pdf"]);
+  expect(disk.hasPath("阿企划-第一话-翻译-译稿.pdf")).toBe(true);
   await removeDownloadedFiles(disk.directory, [
     { taskInstanceId: "8", fieldKey: "script", fileId: "101" },
   ]);
   expect(disk.records()).toEqual([]);
-  expect(disk.hasPath("漫画/阿企划-第一话-翻译-译稿.pdf")).toBe(false);
+  expect(disk.hasPath("阿企划-第一话-翻译-译稿.pdf")).toBe(false);
 });
 
 function file(fileId: string, fileName: string) {

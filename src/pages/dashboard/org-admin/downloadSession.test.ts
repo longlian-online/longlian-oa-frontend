@@ -30,7 +30,6 @@ test("离开页面再回来时，进行中的下载进度还在", () => {
     handle: { name: "别的文件夹" } as DownloadDirectoryHandle,
     name: "别的文件夹",
     records: [],
-    view: "planning",
   });
 
   expect(getDownloadSession()).toMatchObject({

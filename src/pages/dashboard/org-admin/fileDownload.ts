@@ -1,6 +1,6 @@
 import type { OrgFileExpansionTarget, OrgFileEntryVO } from "@/types/organizationAdmin";
 
-import type { OrgFileLocation, OrgFileTree } from "./fileLocation";
+import type { OrgFileLocation } from "./fileLocation";
 
 export interface DownloadRecord {
   taskInstanceId: string;
@@ -100,15 +100,6 @@ function withResourceId(name: string, fileId: string): string {
   return `${name}_${fileId}`;
 }
 
-export function archiveDirectories(
-  view: OrgFileTree,
-  file: { typeName?: string | null; projectTitle?: string | null; itemTitle?: string | null },
-): string[] {
-  if (view === "type") return [file.typeName ?? ""];
-  if (view === "item") return [file.itemTitle ?? ""];
-  return [file.projectTitle ?? "", file.itemTitle ?? ""];
-}
-
 export function archiveEntryPaths(
   files: { fileId: string; name: string; directories?: string[] }[],
   reserved: readonly string[] = [],
@@ -132,11 +123,9 @@ export function archiveEntryPaths(
 }
 
 export function downloadRelativePaths(
-  view: OrgFileTree,
   files: {
     fileId: string;
     name: string;
-    typeName?: string | null;
     projectTitle?: string | null;
     itemTitle?: string | null;
     taskName?: string | null;
@@ -148,7 +137,6 @@ export function downloadRelativePaths(
     files.map((file) => ({
       fileId: file.fileId,
       name: storedFileName(file),
-      directories: archiveDirectories(view, file),
     })),
     reserved,
   );

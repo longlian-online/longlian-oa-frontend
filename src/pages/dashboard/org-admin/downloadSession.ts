@@ -1,6 +1,5 @@
 import type { DownloadDirectoryHandle, SavedDownloads } from "./downloadDirectory";
 import type { DownloadRecord } from "./fileDownload";
-import type { OrgFileTree } from "./fileLocation";
 
 export interface DownloadSession {
   running: boolean;
@@ -8,7 +7,6 @@ export interface DownloadSession {
   records: DownloadRecord[];
   directory: DownloadDirectoryHandle | null;
   directoryName: string | null;
-  view: OrgFileTree;
 }
 
 const EMPTY: DownloadSession = {
@@ -17,7 +15,6 @@ const EMPTY: DownloadSession = {
   records: [],
   directory: null,
   directoryName: null,
-  view: "planning",
 };
 
 let current: DownloadSession = EMPTY;
@@ -45,7 +42,6 @@ export function rememberDownloads(saved: SavedDownloads | null): void {
     records: saved.records,
     directory: saved.handle,
     directoryName: saved.name,
-    view: saved.view,
   });
 }
 
