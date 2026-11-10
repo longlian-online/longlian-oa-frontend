@@ -130,6 +130,7 @@ export function downloadRelativePaths(
     itemTitle?: string | null;
     taskName?: string | null;
     fieldLabel?: string | null;
+    versionNo?: number | null;
   }[],
   reserved: readonly string[] = [],
 ): string[] {
@@ -148,10 +149,13 @@ function storedFileName(file: {
   itemTitle?: string | null;
   taskName?: string | null;
   fieldLabel?: string | null;
+  versionNo?: number | null;
 }): string {
-  const base = [file.projectTitle, file.itemTitle, file.taskName, file.fieldLabel]
-    .map((part) => archiveFolderName(part ?? ""))
-    .join("-");
+  const parts = [file.projectTitle, file.itemTitle, file.taskName, file.fieldLabel].map((part) =>
+    archiveFolderName(part ?? ""),
+  );
+  if (file.versionNo != null) parts.push(String(file.versionNo));
+  const base = parts.join("-");
   const extension = fileExtension(file.name);
   return extension ? `${base}.${extension}` : base;
 }
