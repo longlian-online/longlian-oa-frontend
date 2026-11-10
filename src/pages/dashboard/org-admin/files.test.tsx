@@ -196,11 +196,9 @@ function menuItem(menu: ParentNode, label: string): HTMLButtonElement {
   return item;
 }
 
-test("说明在标题栏，多选跟在视图后面", async (): Promise<void> => {
+test("多选跟在视图后面，操作不放在工具栏", async (): Promise<void> => {
   await mount("");
-  const title = container.querySelector("h1")?.parentElement;
-  expect(title?.textContent).toContain("文件");
-  expect(title?.textContent).toContain("说明");
+  expect(container.querySelector("h1")?.textContent).toBe("文件");
   const toolbar = container.querySelector("section div")?.textContent ?? "";
   expect(toolbar.indexOf("视图：")).toBeGreaterThanOrEqual(0);
   expect(toolbar.indexOf("多选")).toBeGreaterThan(toolbar.indexOf("视图："));
@@ -212,17 +210,8 @@ test("说明在标题栏，多选跟在视图后面", async (): Promise<void> =>
   expect(labels).not.toContain("预览");
   expect(labels).not.toContain("删除");
   expect(labels).not.toContain("下载位置");
-  const help = [...container.querySelectorAll("button")].find((button) =>
-    button.textContent?.includes("说明"),
-  );
-  if (!help) throw new Error("找不到说明");
-  await act(async () => {
-    help.click();
-  });
-  const dialog = document.body.querySelector('[role="dialog"]');
-  expect(dialog?.textContent).toContain("如果不知道如何使用，请不要使用该页面");
-  expect(dialog?.textContent).toContain("个人设置的存储设置");
-  expect(dialog?.textContent).toContain("直接放在所选文件夹里");
+  expect(labels).not.toContain("说明");
+  expect(document.body.querySelector('[role="dialog"]')).toBeNull();
   const menu = await openMenu();
   expect(menu.textContent).not.toContain("导出");
   expect(menuItem(menu, "预览").disabled).toBe(true);
@@ -273,4 +262,62 @@ test("多选打开后单击可加选，右键操作仍然可用", async (): Prom
   expect(menuItem(menu, "下载").disabled).toBe(false);
   expect(menuItem(menu, "删除远程文件").disabled).toBe(false);
   expect(menuItem(menu, "删除本地文件").disabled).toBe(false);
+});
+
+test("按住拖动框选相交的文件和文件夹", async (): Promise<void> => {
+  seen.entries = [
+    { id: "folder", kind: "FOLDER", name: "企划" },
+    {
+      id: "file",
+      kind: "FILE",
+      name: "成果.pdf",
+      taskInstanceId: "8",
+      fieldKey: "script",
+      fileId: "101",
+      availability: "available",
+    },
+    { id: "far", kind: "FOLDER", name: "远处" },
+  ];
+  await mount("");
+  const list = container.querySelector<HTMLElement>('[role="listbox"]');
+  if (!list) throw new Error("找不到文件列表");
+  const options = [...container.querySelectorAll<HTMLElement>('[role="option"]')];
+  const bounds = (left: number): DOMRect => new DOMRect(left, 0, 40, 40);
+  options[0]!.getBoundingClientRect = () => bounds(0);
+  options[1]!.getBoundingClientRect = () => bounds(50);
+  options[2]!.getBoundingClientRect = () => bounds(200);
+  const point = (type: string, x: number, y: number): PointerEvent =>
+    new PointerEvent(type, { bubbles: true, clientX: x, clientY: y, button: 0, pointerId: 1 });
+  await act(async () => {
+    list.dispatchEvent(point("pointerdown", 0, 0));
+    list.dispatchEvent(point("pointermove", 100, 40));
+  });
+  expect(options[0]?.getAttribute("aria-selected")).toBe("true");
+  expect(options[1]?.getAttribute("aria-selected")).toBe("true");
+  expect(options[2]?.getAttribute("aria-selected")).toBe("false");
+  await act(async () => {
+    list.dispatchEvent(point("pointerup", 100, 40));
+    options[2]?.click();
+  });
+  expect(options[2]?.getAttribute("aria-selected")).toBe("false");
+});
+
+test("按下后不拖动仍然可以单击选中", async (): Promise<void> => {
+  seen.entries = [
+    { id: "folder", kind: "FOLDER", name: "企划" },
+    { id: "file", kind: "FILE", name: "成果.pdf", availability: "available" },
+  ];
+  await mount("");
+  const options = [...container.querySelectorAll<HTMLElement>('[role="option"]')];
+  const target = options[0];
+  if (!target) throw new Error("找不到条目");
+  const point = (type: string): PointerEvent =>
+    new PointerEvent(type, { bubbles: true, clientX: 8, clientY: 8, button: 0, pointerId: 1 });
+  await act(async () => {
+    target.dispatchEvent(point("pointerdown"));
+    target.dispatchEvent(point("pointerup"));
+    target.click();
+  });
+  expect(target.getAttribute("aria-selected")).toBe("true");
+  expect(options[1]?.getAttribute("aria-selected")).toBe("false");
 });
