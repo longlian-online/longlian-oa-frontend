@@ -58,8 +58,8 @@ import {
   orgFileLocation,
   orgFileSearch,
   parentOrgFileLocation,
+  type OrgFileLeafView,
   type OrgFileLocation,
-  type OrgFileTree,
 } from "./fileLocation";
 import {
   DirectoryAccessError,
@@ -81,7 +81,7 @@ import {
 import { downloadTarget, fileKey, isDownloaded } from "./fileDownload";
 
 type ExplorerView = "icons" | "details";
-const TREE_LABEL = { planning: "企划", type: "类型", item: "项目" } as const;
+const LEAF_LABEL: Record<OrgFileLeafView, string> = { task: "任务", item: "项目" };
 
 interface RemoteFile {
   taskInstanceId: string;
@@ -282,7 +282,7 @@ function OrganizationFilesContent(): ReactElement {
     setSelectedIds([]);
     anchorRef.current = null;
     setMenu(null);
-  }, [location.tree, location.typeId, location.projectId, location.itemId, page]);
+  }, [location.view, location.typeId, location.projectId, location.itemId, location.taskId, page]);
 
   useEffect(() => {
     if (!folderPaging || !listQuery.data) return;
@@ -423,20 +423,33 @@ function OrganizationFilesContent(): ReactElement {
 
   function openEntry(entry: OrgFileEntryVO): void {
     if (entry.kind === "FOLDER") {
-      if (location.tree === "item") {
-        if (!location.itemId) go({ tree: "item", itemId: entry.id });
-        return;
-      }
-      if (location.tree === "type") {
-        if (!location.typeId) go({ tree: "type", typeId: entry.id });
+      if (!location.typeId) {
+        go({ view: "item", typeId: entry.id });
         return;
       }
       if (!location.projectId) {
-        go({ tree: "planning", projectId: entry.id });
+        go({ view: "item", typeId: location.typeId, projectId: entry.id });
         return;
       }
-      if (!location.itemId)
-        go({ tree: "planning", projectId: location.projectId, itemId: entry.id });
+      if (location.view === "task") {
+        if (!location.taskId) {
+          go({
+            view: "task",
+            typeId: location.typeId,
+            projectId: location.projectId,
+            taskId: entry.id,
+          });
+        }
+        return;
+      }
+      if (!location.itemId) {
+        go({
+          view: "item",
+          typeId: location.typeId,
+          projectId: location.projectId,
+          itemId: entry.id,
+        });
+      }
       return;
     }
     if (entry.availability === "available") preview(entry);
@@ -635,17 +648,18 @@ function OrganizationFilesContent(): ReactElement {
   }
   const projectTitle = listQuery.data?.projectTitle || "企划";
   const itemTitle = listQuery.data?.itemTitle || "项目";
+  const taskTitle = listQuery.data?.taskName || "任务";
   const emptyText = location.itemId
     ? "这个项目还没有提交文件"
-    : location.tree === "item"
-      ? "这个组织还没有项目"
+    : location.taskId
+      ? "这个任务还没有提交文件"
       : location.projectId
-        ? "这个企划还没有项目"
+        ? location.view === "task"
+          ? "这个企划还没有任务"
+          : "这个企划还没有项目"
         : location.typeId
-          ? "这个类型还没有提交文件"
-          : location.tree === "type"
-            ? "这个组织还没有企划类型"
-            : "这个组织还没有企划";
+          ? "这个类型还没有企划"
+          : "这个组织还没有企划类型";
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -669,23 +683,23 @@ function OrganizationFilesContent(): ReactElement {
             <button
               type="button"
               className="shrink-0 rounded px-1 hover:bg-secondary"
-              onClick={() => go({ tree: location.tree })}
+              onClick={() => go({ view: "item" })}
             >
               本组织
             </button>
-            {location.tree === "type" && location.typeId && (
+            {location.typeId && (
               <>
                 <span className="text-muted-foreground">/</span>
                 <button
                   type="button"
                   className="max-w-48 truncate rounded px-1 hover:bg-secondary"
-                  onClick={() => go({ tree: "type", typeId: location.typeId })}
+                  onClick={() => go({ view: "item", typeId: location.typeId })}
                 >
                   {listQuery.data?.typeName || "类型"}
                 </button>
               </>
             )}
-            {location.tree !== "item" && location.projectId && (
+            {location.projectId && (
               <>
                 <span className="text-muted-foreground">/</span>
                 <button
@@ -693,7 +707,7 @@ function OrganizationFilesContent(): ReactElement {
                   className="max-w-48 truncate rounded px-1 hover:bg-secondary"
                   onClick={() =>
                     go({
-                      tree: location.tree,
+                      view: location.view,
                       typeId: location.typeId,
                       projectId: location.projectId,
                     })
@@ -703,32 +717,40 @@ function OrganizationFilesContent(): ReactElement {
                 </button>
               </>
             )}
-            {location.itemId && (
+            {(location.itemId || location.taskId) && (
               <>
                 <span className="text-muted-foreground">/</span>
-                <span className="max-w-48 truncate px-1 text-foreground">{itemTitle}</span>
+                <span className="max-w-48 truncate px-1 text-foreground">
+                  {location.taskId ? taskTitle : itemTitle}
+                </span>
               </>
             )}
           </nav>
-          <span className="text-muted-foreground shrink-0 text-sm">视图：</span>
-          <Select
-            value={location.tree}
-            onValueChange={(value) => {
-              if (value !== "planning" && value !== "type" && value !== "item") return;
-              if (value !== location.tree) go({ tree: value });
-            }}
-          >
-            <SelectTrigger aria-label="目录" className="w-24">
-              <SelectValue>{TREE_LABEL[location.tree]}</SelectValue>
-            </SelectTrigger>
-            <FilterSelectContent>
-              {(Object.keys(TREE_LABEL) as OrgFileTree[]).map((tree) => (
-                <SelectItem key={tree} value={tree}>
-                  {TREE_LABEL[tree]}
-                </SelectItem>
-              ))}
-            </FilterSelectContent>
-          </Select>
+          {location.projectId && (
+            <>
+              <span className="text-muted-foreground shrink-0 text-sm">视图：</span>
+              <Select
+                value={location.view}
+                onValueChange={(value) => {
+                  if (value !== "task" && value !== "item") return;
+                  if (value !== location.view) {
+                    go({ view: value, typeId: location.typeId, projectId: location.projectId });
+                  }
+                }}
+              >
+                <SelectTrigger aria-label="视图" className="w-24">
+                  <SelectValue>{LEAF_LABEL[location.view]}</SelectValue>
+                </SelectTrigger>
+                <FilterSelectContent>
+                  {(Object.keys(LEAF_LABEL) as OrgFileLeafView[]).map((leaf) => (
+                    <SelectItem key={leaf} value={leaf}>
+                      {LEAF_LABEL[leaf]}
+                    </SelectItem>
+                  ))}
+                </FilterSelectContent>
+              </Select>
+            </>
+          )}
           <span className="inline-flex items-center gap-1.5 text-sm">
             <span id={multiSelectId}>多选</span>
             <Switch
@@ -789,15 +811,15 @@ function OrganizationFilesContent(): ReactElement {
             <EmptyState
               title={emptyText}
               description={
-                location.itemId
+                location.itemId || location.taskId
                   ? "任务提交文件后会出现在这里。"
-                  : location.projectId || location.tree === "item"
-                    ? "创建项目后会出现在这里。"
+                  : location.projectId
+                    ? location.view === "task"
+                      ? "项目里有任务后会出现在这里。"
+                      : "创建项目后会出现在这里。"
                     : location.typeId
-                      ? "任务提交文件后会出现在这里。"
-                      : location.tree === "type"
-                        ? "添加企划类型后会出现在这里。"
-                        : "创建企划后会出现在这里。"
+                      ? "创建企划后会出现在这里。"
+                      : "添加企划类型后会出现在这里。"
               }
             />
           ) : view === "icons" ? (
