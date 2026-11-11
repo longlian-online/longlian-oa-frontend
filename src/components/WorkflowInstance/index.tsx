@@ -13,6 +13,7 @@ import {
   submitTask,
   submitTaskDraft,
 } from "@/api/workflowInstance";
+import { completeItem } from "@/api/projectItem";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
@@ -134,6 +135,13 @@ function ItemWorkflowInstance({
       ["plaza"],
     ],
   });
+  const completeMutation = useApiMutation({
+    mutationFn: async (): Promise<void> => {
+      if (!projectId) throw new Error("项目不存在");
+      return completeItem(projectId, itemId);
+    },
+    invalidate: [["flow"], ["items"]],
+  });
   const [submitTarget, setSubmitTarget] = useState<{
     instance: ItemTaskInstanceVO;
     node: ItemTaskNodeVO;
@@ -214,6 +222,17 @@ function ItemWorkflowInstance({
       return false;
     } finally {
       actionLock.current = false;
+    }
+  }
+
+  async function completeCurrentItem(): Promise<void> {
+    if (!projectId || !isCurrentLifecycle() || taskFlow?.status === "COMPLETED") return;
+    try {
+      await completeMutation.mutateAsync();
+      if (!isCurrentLifecycle()) return;
+      $tip("项目已完成", "success");
+    } catch {
+      // MutationCache reports the failure.
     }
   }
 
@@ -460,6 +479,15 @@ function ItemWorkflowInstance({
           )}
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          {projectId && canManage && taskFlow.status !== "COMPLETED" && (
+            <Button
+              size="sm"
+              disabled={completeMutation.isPending}
+              onClick={() => void completeCurrentItem()}
+            >
+              完成
+            </Button>
+          )}
           {projectId && canManage && (
             <Button
               variant="outline"

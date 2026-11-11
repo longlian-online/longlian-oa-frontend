@@ -8,6 +8,8 @@ export interface TaskClaimResultVO {
 
 export interface ItemTaskFlowVO {
   itemTitle: string;
+  status: "IN_PROGRESS" | "COMPLETED";
+  completedAt: string | null;
   name: string;
   description?: string;
   hasSubmissionRecord: boolean;
