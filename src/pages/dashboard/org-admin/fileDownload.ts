@@ -55,12 +55,13 @@ export function downloadTarget(
       fieldKey: entry.fieldKey,
     };
   }
-  if (location.itemId) return null;
-  if (location.tree === "type") {
-    return location.typeId ? null : { kind: "TYPE", typeId: entry.id };
+  if (location.itemId || location.taskId) return null;
+  if (!location.typeId) return { kind: "TYPE", typeId: entry.id };
+  if (!location.projectId) return { kind: "PROJECT", projectId: entry.id };
+  if (location.view === "task") {
+    return { kind: "TASK", projectId: location.projectId, taskId: entry.id };
   }
-  if (location.tree === "item" || location.projectId) return { kind: "ITEM", itemId: entry.id };
-  return { kind: "PROJECT", projectId: entry.id };
+  return { kind: "ITEM", itemId: entry.id };
 }
 
 export function resourceFileName(fileId: string, originalName: string): string {

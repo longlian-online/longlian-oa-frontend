@@ -2,38 +2,39 @@ import { expect, test } from "vite-plus/test";
 
 import { orgFileLocation, orgFileSearch, parentOrgFileLocation } from "./fileLocation";
 
-test("ignores a project file path that has no planning", () => {
-  expect(orgFileLocation(new URLSearchParams("itemId=10"))).toEqual({ tree: "planning" });
-  expect(orgFileLocation(new URLSearchParams("view=nope&itemId=10"))).toEqual({ tree: "planning" });
-});
-
-test("keeps planning and project in the address", () => {
-  const location = orgFileLocation(new URLSearchParams("projectId=2&itemId=10"));
-  expect(location).toEqual({ tree: "planning", projectId: "2", itemId: "10" });
-  expect(orgFileSearch(location)).toBe("projectId=2&itemId=10");
-  expect(parentOrgFileLocation(location)).toEqual({ tree: "planning", projectId: "2" });
-  expect(parentOrgFileLocation({ tree: "planning", projectId: "2" })).toEqual({ tree: "planning" });
-  expect(parentOrgFileLocation({ tree: "planning" })).toBeNull();
-});
-
-test("type view drops folders that skip a level and round-trips the path", () => {
-  expect(orgFileLocation(new URLSearchParams("view=type&projectId=2"))).toEqual({ tree: "type" });
-  const location = orgFileLocation(
-    new URLSearchParams("view=type&typeId=4&projectId=2&itemId=10&page=3"),
-  );
-  expect(location).toEqual({ tree: "type", typeId: "4" });
-  expect(orgFileSearch(location)).toBe("view=type&typeId=4");
-  expect(parentOrgFileLocation(location)).toEqual({ tree: "type" });
-  expect(parentOrgFileLocation({ tree: "type" })).toBeNull();
-});
-
-test("item view is only project then files", () => {
-  expect(orgFileLocation(new URLSearchParams("view=item&projectId=2&typeId=4"))).toEqual({
-    tree: "item",
+test("root is types, and a path that skips the type is dropped", () => {
+  expect(orgFileLocation(new URLSearchParams())).toEqual({ view: "item" });
+  expect(orgFileLocation(new URLSearchParams("view=nope&itemId=10&projectId=2"))).toEqual({
+    view: "item",
   });
-  const location = orgFileLocation(new URLSearchParams("view=item&itemId=10&projectId=2"));
-  expect(location).toEqual({ tree: "item", itemId: "10" });
-  expect(orgFileSearch(location)).toBe("view=item&itemId=10");
-  expect(parentOrgFileLocation(location)).toEqual({ tree: "item" });
-  expect(parentOrgFileLocation({ tree: "item" })).toBeNull();
+  expect(orgFileSearch({ view: "item" })).toBe("");
+  expect(parentOrgFileLocation({ view: "item" })).toBeNull();
+});
+
+test("type then planning then project files round-trip", () => {
+  const plannings = orgFileLocation(new URLSearchParams("typeId=4&view=task&itemId=10"));
+  expect(plannings).toEqual({ view: "item", typeId: "4" });
+  expect(orgFileSearch(plannings)).toBe("typeId=4");
+
+  const location = orgFileLocation(new URLSearchParams("typeId=4&projectId=2&itemId=10&page=3"));
+  expect(location).toEqual({ view: "item", typeId: "4", projectId: "2", itemId: "10" });
+  expect(orgFileSearch(location)).toBe("typeId=4&projectId=2&itemId=10");
+  expect(parentOrgFileLocation(location)).toEqual({ view: "item", typeId: "4", projectId: "2" });
+  expect(parentOrgFileLocation({ view: "item", typeId: "4", projectId: "2" })).toEqual({
+    view: "item",
+    typeId: "4",
+  });
+});
+
+test("task view keeps the task and ignores a project id", () => {
+  const folders = orgFileLocation(new URLSearchParams("typeId=4&projectId=2&view=task&itemId=10"));
+  expect(folders).toEqual({ view: "task", typeId: "4", projectId: "2" });
+  expect(orgFileSearch(folders)).toBe("typeId=4&projectId=2&view=task");
+
+  const files = orgFileLocation(
+    new URLSearchParams("typeId=4&projectId=2&view=task&taskId=5&itemId=10"),
+  );
+  expect(files).toEqual({ view: "task", typeId: "4", projectId: "2", taskId: "5" });
+  expect(orgFileSearch(files)).toBe("typeId=4&projectId=2&view=task&taskId=5");
+  expect(parentOrgFileLocation(files)).toEqual({ view: "task", typeId: "4", projectId: "2" });
 });

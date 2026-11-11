@@ -1,41 +1,56 @@
-export type OrgFileTree = "planning" | "type" | "item";
+export type OrgFileLeafView = "item" | "task";
 
 export interface OrgFileLocation {
-  tree: OrgFileTree;
   typeId?: string;
   projectId?: string;
+  view: OrgFileLeafView;
   itemId?: string;
+  taskId?: string;
+}
+
+function text(value: string | null): string {
+  return value?.trim() ?? "";
 }
 
 export function orgFileLocation(params: URLSearchParams): OrgFileLocation {
-  const view = params.get("view");
-  const tree: OrgFileTree = view === "type" || view === "item" ? view : "planning";
-  const typeId = params.get("typeId")?.trim() ?? "";
-  const projectId = params.get("projectId")?.trim() ?? "";
-  const itemId = params.get("itemId")?.trim() ?? "";
-  if (tree === "item") return itemId ? { tree, itemId } : { tree };
-  if (tree === "type") return typeId ? { tree, typeId } : { tree };
-  if (!projectId) return { tree };
-  if (!itemId) return { tree, projectId };
-  return { tree, projectId, itemId };
+  const typeId = text(params.get("typeId"));
+  const projectId = text(params.get("projectId"));
+  const itemId = text(params.get("itemId"));
+  const taskId = text(params.get("taskId"));
+  const taskView = params.get("view") === "task";
+  if (!typeId) return { view: "item" };
+  if (!projectId) return { view: "item", typeId };
+  if (taskView) {
+    return taskId
+      ? { view: "task", typeId, projectId, taskId }
+      : { view: "task", typeId, projectId };
+  }
+  return itemId ? { view: "item", typeId, projectId, itemId } : { view: "item", typeId, projectId };
 }
 
 export function orgFileSearch(location: OrgFileLocation): string {
   const params = new URLSearchParams();
-  if (location.tree !== "planning") params.set("view", location.tree);
-  if (location.tree === "type" && location.typeId) params.set("typeId", location.typeId);
-  if (location.tree !== "item" && location.projectId) params.set("projectId", location.projectId);
-  if (location.itemId && (location.tree === "item" || location.projectId)) {
-    params.set("itemId", location.itemId);
+  if (!location.typeId) return params.toString();
+  params.set("typeId", location.typeId);
+  if (!location.projectId) return params.toString();
+  params.set("projectId", location.projectId);
+  if (location.view === "task") {
+    params.set("view", "task");
+    if (location.taskId) params.set("taskId", location.taskId);
+    return params.toString();
   }
+  if (location.itemId) params.set("itemId", location.itemId);
   return params.toString();
 }
 
 export function parentOrgFileLocation(location: OrgFileLocation): OrgFileLocation | null {
-  if (location.tree === "item") return location.itemId ? { tree: "item" } : null;
-  if (location.tree === "type") return location.typeId ? { tree: "type" } : null;
-  if (location.projectId && location.itemId)
-    return { tree: "planning", projectId: location.projectId };
-  if (location.projectId) return { tree: "planning" };
-  return null;
+  if (!location.typeId) return null;
+  if (!location.projectId) return { view: "item" };
+  if (location.view === "task" && location.taskId) {
+    return { view: "task", typeId: location.typeId, projectId: location.projectId };
+  }
+  if (location.view === "item" && location.itemId) {
+    return { view: "item", typeId: location.typeId, projectId: location.projectId };
+  }
+  return { view: "item", typeId: location.typeId };
 }
