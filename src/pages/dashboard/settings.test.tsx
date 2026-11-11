@@ -29,7 +29,9 @@ const {
     email: null,
   })),
   getUserConfig: vi.fn(async () => ({ config: {} })),
-  getUserOrganizations: vi.fn(async (): Promise<{ id: string; name: string }[]> => []),
+  getUserOrganizations: vi.fn(
+    async (): Promise<{ id: string; name: string; role?: string }[]> => [],
+  ),
   patchUserConfig: vi.fn(async () => undefined),
   updateMyInfo: vi.fn(async () => undefined),
   currentUser: {
@@ -162,12 +164,10 @@ test("修改昵称时空白和超长停在字段旁", async (): Promise<void> =>
   expect(document.querySelector("#old-password")).toBeNull();
   expect(Array.from(document.querySelectorAll("h1"), (heading) => heading.textContent)).toEqual([
     "个人设置",
-    "组织设置",
   ]);
   expect(Array.from(document.querySelectorAll("h2"), (heading) => heading.textContent)).toEqual([
     "修改密码",
     "通知",
-    "存储设置",
   ]);
   expect(document.body.textContent).not.toContain("昵称 遗留用户");
   expect(document.body.textContent).toContain("遗留用户");
@@ -294,8 +294,9 @@ test("关闭某一类型通知时只提交该类型", async (): Promise<void> =>
 
 test("存储设置按组织分栏，标签在内容块上方", async (): Promise<void> => {
   getUserOrganizations.mockResolvedValue([
-    { id: "1", name: "甲组" },
-    { id: "2", name: "乙组" },
+    { id: "1", name: "甲组", role: "ORG_ADMIN" },
+    { id: "2", name: "乙组", role: "ORG_OWNER" },
+    { id: "3", name: "丙组", role: "ORG_USER" },
   ]);
   await mount();
   await vi.waitFor(() => {
@@ -326,4 +327,18 @@ test("存储设置按组织分栏，标签在内容块上方", async (): Promise
       (orgTitle.compareDocumentPosition(tab) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0 &&
       (tab.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
   ).toBe(true);
+});
+
+test("不是管理员的组织不出现，全都不是时不展示组织设置", async (): Promise<void> => {
+  getUserOrganizations.mockResolvedValue([
+    { id: "1", name: "甲组", role: "ORG_USER" },
+    { id: "2", name: "乙组", role: "ORG_USER" },
+  ]);
+  await mount();
+  await vi.waitFor(() => {
+    expect(getUserOrganizations).toHaveBeenCalled();
+  });
+  expect(document.body.textContent).not.toContain("组织设置");
+  expect(document.body.textContent).not.toContain("存储设置");
+  expect(document.body.textContent).not.toContain("甲组");
 });

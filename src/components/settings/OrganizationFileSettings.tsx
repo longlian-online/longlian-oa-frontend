@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
+import { isOrganizationManagerRole } from "@/lib/organizationRole";
 import {
   DirectoryAccessError,
   loadOrgDownloads,
@@ -16,9 +17,9 @@ import {
 import { rememberDownloads } from "@/pages/dashboard/org-admin/downloadSession";
 import { organizationsQuery } from "@/queries/session";
 
-export default function OrganizationFileSettings(): ReactElement {
+export default function OrganizationFileSettings(): ReactElement | null {
   const orgsQuery = useApiQuery(organizationsQuery);
-  const orgs = orgsQuery.data ?? [];
+  const orgs = (orgsQuery.data ?? []).filter((org) => isOrganizationManagerRole(org.role));
   const currentOrgId = useSessionSnapshot().orgId;
   const [chosen, setChosen] = useState<string | null>(null);
   const active =
@@ -39,13 +40,10 @@ export default function OrganizationFileSettings(): ReactElement {
     };
   }, [active]);
 
-  const status = orgsQuery.isLoading
-    ? "正在读取组织"
-    : orgsQuery.isError
-      ? "组织列表加载失败"
-      : orgs.length === 0
-        ? "还没有加入组织"
-        : null;
+  if (orgsQuery.isLoading && orgsQuery.data === undefined) return null;
+  if (!orgsQuery.isError && orgs.length === 0) return null;
+
+  const failed = orgsQuery.isError;
 
   async function chooseDirectory(): Promise<void> {
     if (!active || busy) return;
@@ -65,41 +63,44 @@ export default function OrganizationFileSettings(): ReactElement {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {status === null ? (
-        <Tabs value={active} onValueChange={setChosen}>
-          <TabsList
-            className="h-auto max-w-full justify-start overflow-x-auto overflow-y-hidden"
-            aria-label="组织"
-          >
-            {orgs.map((org) => (
-              <TabsTrigger key={org.id} value={org.id}>
-                {org.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      ) : null}
-      <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
-        <h2 className="font-heading text-base font-medium">存储设置</h2>
-        {status !== null ? (
-          <p className="text-sm text-muted-foreground">{status}</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <Label>存放位置</Label>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-fit max-w-full"
-              disabled={busy}
-              onClick={() => void chooseDirectory()}
+    <>
+      <h1 className="text-xl font-semibold text-foreground">组织设置</h1>
+      <div className="flex flex-col gap-4">
+        {failed || orgs.length === 0 ? null : (
+          <Tabs value={active} onValueChange={setChosen}>
+            <TabsList
+              className="h-auto max-w-full justify-start overflow-x-auto overflow-y-hidden"
+              aria-label="组织"
             >
-              <FolderOpen />
-              <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
-            </Button>
-          </div>
+              {orgs.map((org) => (
+                <TabsTrigger key={org.id} value={org.id}>
+                  {org.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         )}
-      </section>
-    </div>
+        <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+          <h2 className="font-heading text-base font-medium">存储设置</h2>
+          {failed ? (
+            <p className="text-sm text-muted-foreground">组织列表加载失败</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Label>存放位置</Label>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-fit max-w-full"
+                disabled={busy}
+                onClick={() => void chooseDirectory()}
+              >
+                <FolderOpen />
+                <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
+              </Button>
+            </div>
+          )}
+        </section>
+      </div>
+    </>
   );
 }
