@@ -33,17 +33,21 @@ const STATUS_LABELS: Record<TaskInstanceStatus, string> = {
 
 function getNodeStyle(status?: TaskInstanceStatus | null) {
   if (status === "COMPLETED") {
-    return { icon: CheckCircle2, className: "border-primary/35", badge: "secondary" as const };
+    return {
+      icon: CheckCircle2,
+      iconClassName: "text-[hsl(var(--shoka-success))]",
+      badge: "secondary" as const,
+    };
   }
   if (status === "CLAIMED") {
-    return { icon: Clock, className: "border-primary shadow-sm", badge: "default" as const };
+    return { icon: Clock, iconClassName: "text-foreground", badge: "default" as const };
   }
   if (status === "PENDING") {
-    return { icon: Circle, className: "border-primary/45", badge: "outline" as const };
+    return { icon: Circle, iconClassName: "text-muted-foreground", badge: "outline" as const };
   }
   return {
     icon: Lock,
-    className: "border-border bg-muted/30 opacity-75",
+    iconClassName: "text-muted-foreground",
     badge: "secondary" as const,
   };
 }
@@ -72,9 +76,9 @@ export default function TaskNodeCard({
   return (
     <article
       className={cn(
-        "relative w-60 rounded-xl border bg-card p-3.5 shadow-sm",
-        style.className,
-        selected && "ring-2 ring-primary",
+        "relative w-60 rounded-xl bg-card p-3.5 ring-1 ring-foreground/10",
+        !status && "bg-muted/40",
+        selected && "ring-2 ring-ring",
       )}
     >
       <button
@@ -86,17 +90,17 @@ export default function TaskNodeCard({
       />
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-muted-foreground">
-          <StatusIcon className="size-4" />
+          <StatusIcon className={cn("size-4", style.iconClassName)} />
           <span className="text-xs">阶段 {node.sort}</span>
         </div>
         <Badge variant={style.badge}>{status ? STATUS_LABELS[status] : "未解锁"}</Badge>
       </div>
 
       <div className="mt-3 flex min-w-0 items-center gap-2">
-        <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary/10 text-primary">
+        <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
           <TaskIcon className="size-3.5" />
         </div>
-        <h3 className="min-w-0 break-words text-sm font-semibold text-foreground">{label}</h3>
+        <h3 className="min-w-0 break-words text-sm font-medium text-foreground">{label}</h3>
       </div>
       <div className="mt-2 flex min-h-8 items-center gap-2">
         {instance?.assigneeNickname ? (

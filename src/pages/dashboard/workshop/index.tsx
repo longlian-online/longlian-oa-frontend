@@ -129,7 +129,7 @@ export default function WorkshopPage() {
             </FilterSelectContent>
           </Select>
         </div>
-        <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 items-start gap-3 md:grid-cols-2">
           <MyTaskColumn
             bucket="SUBMITTABLE"
             title="可提交"
@@ -273,8 +273,16 @@ export default function WorkshopPage() {
         ) : projects.length === 0 ? (
           <EmptyState
             icon={<Workflow className="h-5 w-5 text-muted-foreground" />}
-            title="暂无工坊企划"
-            description="在企划详情中加入企划后，这里会展示可浏览的企划。"
+            title={
+              keyword || selectedType !== "all" || isMyCreated
+                ? "没有符合筛选的企划"
+                : "还没有加入的企划"
+            }
+            description={
+              keyword || selectedType !== "all" || isMyCreated
+                ? "换个类型或关键词，或关掉「我创建的」。"
+                : "在企划详情里加入后，这里会列出可以浏览的企划。"
+            }
             action={
               <Button onClick={() => void navigate("/dashboard/planning")}>去企划列表</Button>
             }

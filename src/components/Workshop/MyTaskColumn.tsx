@@ -44,7 +44,7 @@ export function MyTaskColumn({
   const submittable = bucket === "SUBMITTABLE";
 
   return (
-    <section className="flex min-w-0 flex-col rounded-xl border bg-card p-3 shadow-sm">
+    <section className="flex min-w-0 flex-col rounded-xl bg-card p-3 ring-1 ring-foreground/10">
       <h3 className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-foreground">
         <span className={cn("size-1.5 rounded-full", dotClassName)} aria-hidden />
         {title}
@@ -59,10 +59,20 @@ export function MyTaskColumn({
         ) : loading ? (
           <p className="py-6 text-center text-xs text-muted-foreground">加载中...</p>
         ) : tasks.length === 0 ? (
-          <p className="py-6 text-center text-xs text-muted-foreground">暂无任务</p>
+          <p className="px-1.5 py-6 text-center text-xs leading-5 text-muted-foreground">
+            {submittable
+              ? "没有可提交的任务。前置阶段完成后，接取的任务会出现在这里。"
+              : "没有在等的任务。前置阶段还没完成时，会出现在这里。"}
+          </p>
         ) : (
           tasks.map((task) => {
             const action = submittable ? "去提交" : "看进度";
+            const slotLabel = formatSlotLabel({
+              name: task.nodeName,
+              slotIndex: task.slotIndex,
+              slotTotal: task.slotTotal,
+              serialStep: task.serialStep,
+            });
             const titleText = formatTaskTitle(task.itemTitle, {
               name: task.nodeName,
               slotIndex: task.slotIndex,
@@ -77,11 +87,12 @@ export function MyTaskColumn({
                   serialStep: task.waitingSerialStep,
                 })}`
               : "等待中";
+            const claimedAt = formatClaimedAt(task.claimedAt);
             return (
               <button
                 key={task.instanceId}
                 type="button"
-                className="group flex w-full min-w-0 flex-col gap-0.5 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-muted/70"
+                className="group grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-b border-border/80 px-1.5 py-2.5 text-left last:border-b-0 hover:bg-muted/70"
                 aria-label={`${titleText}，${task.projectName}，${action}`}
                 onClick={() => {
                   const params = new URLSearchParams({
@@ -96,17 +107,24 @@ export function MyTaskColumn({
                 }}
               >
                 <span className="min-w-0 truncate text-sm font-medium text-foreground">
-                  {titleText}
+                  {slotLabel}
                 </span>
-                <span className="flex min-w-0 items-center justify-end gap-2 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground group-hover:text-foreground">
+                  {action}
+                  <ChevronRight className="size-3.5 shrink-0" />
+                </span>
+                <span className="col-span-2 flex h-5 min-w-0 items-center gap-2 text-xs text-muted-foreground">
                   {!submittable && (
-                    <span className="mr-auto inline-block max-w-full truncate rounded-full bg-[#fcede1] px-2.5 py-0.5 font-medium text-[#c45628] dark:bg-[#3a241c] dark:text-[#f3b08a]">
+                    <span className="inline-flex h-5 max-w-[45%] shrink items-center truncate rounded-full bg-[#fcede1] px-2.5 font-medium leading-none text-[#c45628] dark:bg-[#3a241c] dark:text-[#f3b08a]">
                       {waitingText}
                     </span>
                   )}
-                  <span className="min-w-0 truncate">{task.projectName}</span>
-                  <span className="shrink-0 tabular-nums">{formatClaimedAt(task.claimedAt)}</span>
-                  <ChevronRight className="size-3.5 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                  <span className="min-w-0 truncate">
+                    {task.itemTitle}
+                    <span aria-hidden> · </span>
+                    {task.projectName}
+                    {claimedAt ? <span className="tabular-nums"> · {claimedAt}</span> : null}
+                  </span>
                 </span>
               </button>
             );

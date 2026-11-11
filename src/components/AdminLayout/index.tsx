@@ -105,7 +105,7 @@ export default function AdminLayout({ children, title, description }: AdminLayou
               <button
                 type="button"
                 aria-label="打开管理员菜单"
-                className="block rounded-full outline-none ring-offset-background transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="block rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <Avatar>
                   <AvatarFallback>

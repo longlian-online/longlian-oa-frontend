@@ -56,7 +56,7 @@ export default function AdminLoginPage() {
           <p className="mt-1 text-sm text-muted-foreground">进入平台管理端</p>
         </div>
 
-        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="rounded-2xl border bg-card p-6">
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="admin-username" className="text-xs text-muted-foreground">

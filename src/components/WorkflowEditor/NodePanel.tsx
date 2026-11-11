@@ -103,7 +103,7 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
                 title={
                   description ? `${task.name}：${description}` : "拖到下方流程区，或点击添加到末尾"
                 }
-                className="group inline-flex h-10 max-w-44 shrink-0 cursor-grab items-center gap-2 rounded-full border bg-background px-2.5 text-left transition-[border-color,box-shadow] hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm active:cursor-grabbing"
+                className="group inline-flex h-10 max-w-44 shrink-0 cursor-grab items-center gap-2 rounded-full border bg-background px-2.5 text-left transition-colors hover:border-primary/40 hover:bg-primary/5 active:cursor-grabbing"
                 onClick={() => onAddNode(String(task.id))}
                 onPointerEnter={(event) => handlePrepareDragImage(event.currentTarget)}
                 onPointerDown={(event) => handlePrepareDragImage(event.currentTarget)}

@@ -88,7 +88,7 @@ function OrganizationSettingsContent() {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <div className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div>
           <h1 className="text-xl font-bold text-foreground">组织设置</h1>
         </div>

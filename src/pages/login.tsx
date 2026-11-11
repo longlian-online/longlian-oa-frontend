@@ -69,7 +69,9 @@ export default function LoginPage() {
       const result = await passwordLogin.mutateAsync(data);
       saveSession(result);
       $tip("登录成功", "success");
-      void navigate(loginResumePath(searchParams.get("next")) ?? "/dashboard/planning", { replace: true });
+      void navigate(loginResumePath(searchParams.get("next")) ?? "/dashboard/planning", {
+        replace: true,
+      });
     } catch {
       /* 共享 Mutation 负责错误提示。 */
     }
@@ -80,7 +82,9 @@ export default function LoginPage() {
       const result = await codeLogin.mutateAsync(data);
       saveSession(result);
       $tip("登录成功", "success");
-      void navigate(loginResumePath(searchParams.get("next")) ?? "/dashboard/planning", { replace: true });
+      void navigate(loginResumePath(searchParams.get("next")) ?? "/dashboard/planning", {
+        replace: true,
+      });
     } catch {
       /* 共享 Mutation 负责错误提示。 */
     }
@@ -126,7 +130,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-card rounded-2xl border p-6 shadow-sm">
+        <div className="rounded-2xl border bg-card p-6">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="password">密码</TabsTrigger>

@@ -166,7 +166,9 @@ async function mount(isCreator = true): Promise<void> {
       </QueryClientProvider>,
     );
   });
-  await waitFor(() => expect(container.textContent).toContain(listed[0]?.title ?? "暂无项目"));
+  await waitFor(() =>
+    expect(container.textContent).toContain(listed[0]?.title ?? "进行中没有项目"),
+  );
 }
 
 test("创建项目进入创建页，而不是在列表里弹窗", async (): Promise<void> => {
@@ -184,7 +186,7 @@ test("没有提交记录时负责人确认后直接删除", async (): Promise<vo
   await act(async () => button("删除").click());
   await waitFor(() => {
     expect(calls).toContainEqual({ method: "DELETE", path: "/app/projects/21/items/31", body: "" });
-    expect(container.textContent).toContain("暂无项目");
+    expect(container.textContent).toContain("进行中没有项目");
   });
 });
 

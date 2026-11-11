@@ -322,7 +322,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <div className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           {isEditing ? "编辑企划" : "发布新企划"}
         </h1>
@@ -339,7 +339,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
 
       <div className="grid items-start justify-center gap-4 lg:grid-cols-[280px_minmax(0,720px)]">
         <aside>
-          <section className="flex w-full flex-col rounded-xl border bg-card p-4 shadow-sm">
+          <section className="flex w-full flex-col rounded-xl border bg-card p-4">
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-medium text-foreground">
@@ -427,7 +427,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
           </section>
         </aside>
 
-        <main className="rounded-xl border bg-card p-5 shadow-sm">
+        <main className="rounded-xl border bg-card p-5">
           <section className="border-b pb-4">
             <div className="mb-4 flex items-center gap-2">
               <Info className="h-4 w-4 text-muted-foreground" />
