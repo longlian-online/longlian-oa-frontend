@@ -45,6 +45,7 @@ vi.mock("@/hooks/queries/useApiQuery", () => ({
         typeName: "漫画",
         projectTitle: "阿企划",
         itemTitle: "第一话",
+        taskName: "翻译",
       },
       isLoading: false,
       isError: false,
@@ -91,9 +92,9 @@ async function mount(search: string): Promise<void> {
   });
 }
 
-async function chooseTree(label: string): Promise<void> {
-  const trigger = container.querySelector<HTMLButtonElement>('button[aria-label="目录"]');
-  if (!trigger) throw new Error("找不到目录");
+async function chooseView(label: string): Promise<void> {
+  const trigger = container.querySelector<HTMLButtonElement>('button[aria-label="视图"]');
+  if (!trigger) throw new Error("找不到视图");
   await act(async () => {
     trigger.click();
   });
@@ -107,35 +108,44 @@ async function chooseTree(label: string): Promise<void> {
   });
 }
 
-test("非法视图回退企划分层，切换视图时清掉页码", async (): Promise<void> => {
-  await mount("?view=nope&itemId=10&page=3");
-  expect(seen.key).toEqual(["orgFiles", "planning", "", "", "", 3]);
-  await chooseTree("类型");
-  expect(router.state.location.search).toBe("?view=type");
-  expect(seen.key).toEqual(["orgFiles", "type", "", "", "", 1]);
+test("非法视图回到项目，切换任务视图时清掉项目和页码", async (): Promise<void> => {
+  await mount("?view=nope&typeId=4&projectId=2&itemId=10&page=3");
+  expect(seen.key).toEqual(["orgFiles", "item", "4", "2", "10", "", 3]);
+  await chooseView("任务");
+  expect(router.state.location.search).toBe("?typeId=4&projectId=2&view=task");
+  expect(seen.key).toEqual(["orgFiles", "task", "4", "2", "", "", 1]);
 });
 
-test("打开类型后地址只有类型，不再进入项目", async (): Promise<void> => {
-  await mount("?view=type&page=2");
-  expect(seen.key).toEqual(["orgFiles", "type", "", "", "", 2]);
+test("根目录打开类型，再打开企划", async (): Promise<void> => {
+  await mount("?page=2");
+  expect(seen.key).toEqual(["orgFiles", "item", "", "", "", "", 2]);
+  expect(container.querySelector('button[aria-label="视图"]')).toBeNull();
   await act(async () => {
     container
       .querySelector('[role="option"]')
       ?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
   });
-  expect(router.state.location.search).toBe("?view=type&typeId=9");
-  expect(seen.key).toEqual(["orgFiles", "type", "9", "", "", 1]);
+  expect(router.state.location.search).toBe("?typeId=9");
+  expect(seen.key).toEqual(["orgFiles", "item", "9", "", "", "", 1]);
+  await act(async () => {
+    container
+      .querySelector('[role="option"]')
+      ?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+  });
+  expect(router.state.location.search).toBe("?typeId=9&projectId=9");
+  expect(seen.key).toEqual(["orgFiles", "item", "9", "9", "", "", 1]);
 });
 
-test("项目视图忽略企划层，切回企划时清掉项目", async (): Promise<void> => {
-  await mount("?view=item&itemId=10&projectId=2&page=2");
-  expect(seen.key).toEqual(["orgFiles", "item", "", "", "10", 2]);
+test("项目和任务都留在面包屑里，切换视图回到第三级", async (): Promise<void> => {
+  await mount("?typeId=4&projectId=2&itemId=10&page=2");
+  expect(seen.key).toEqual(["orgFiles", "item", "4", "2", "10", "", 2]);
   const nav = container.querySelector("nav")?.textContent ?? "";
+  expect(nav).toContain("漫画");
+  expect(nav).toContain("阿企划");
   expect(nav).toContain("第一话");
-  expect(nav).not.toContain("阿企划");
-  await chooseTree("企划");
-  expect(router.state.location.search).toBe("");
-  expect(seen.key).toEqual(["orgFiles", "planning", "", "", "", 1]);
+  await chooseView("任务");
+  expect(router.state.location.search).toBe("?typeId=4&projectId=2&view=task");
+  expect(seen.key).toEqual(["orgFiles", "task", "4", "2", "", "", 1]);
 });
 
 test("已下载标记跟着文件走，不跟着视图文件夹走", async (): Promise<void> => {
@@ -197,7 +207,7 @@ function menuItem(menu: ParentNode, label: string): HTMLButtonElement {
 }
 
 test("多选跟在视图后面，操作不放在工具栏", async (): Promise<void> => {
-  await mount("");
+  await mount("?typeId=4&projectId=2");
   expect(container.querySelector("h1")?.textContent).toBe("文件");
   const toolbar = container.querySelector("section div")?.textContent ?? "";
   expect(toolbar.indexOf("视图：")).toBeGreaterThanOrEqual(0);

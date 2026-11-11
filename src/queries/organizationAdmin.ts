@@ -214,20 +214,22 @@ export const ORGANIZATION_FILE_PAGE_SIZE = 50;
 
 export function organizationFilesQuery(
   location: {
-    tree: "planning" | "type" | "item";
+    view: "item" | "task";
     typeId?: string;
     projectId?: string;
     itemId?: string;
+    taskId?: string;
   },
   page = 1,
 ): ApiQueryOptions<OrgFileEntriesVO> {
   return {
     key: [
       "orgFiles",
-      location.tree,
+      location.view,
       location.typeId ?? "",
       location.projectId ?? "",
       location.itemId ?? "",
+      location.taskId ?? "",
       page,
     ],
     queryFn: () => getOrganizationFiles(location, page),

@@ -40,21 +40,20 @@ test("同一份文件换视图仍然算已下载，换文件则不算", () => {
 });
 
 test("文件夹按当前分层展开，文件只认可用的提交", () => {
-  expect(downloadTarget({ id: "2", kind: "FOLDER" }, { tree: "planning" })).toEqual({
+  expect(downloadTarget({ id: "3", kind: "FOLDER" }, { view: "item" })).toEqual({
+    kind: "TYPE",
+    typeId: "3",
+  });
+  expect(downloadTarget({ id: "2", kind: "FOLDER" }, { view: "item", typeId: "4" })).toEqual({
     kind: "PROJECT",
     projectId: "2",
   });
   expect(
-    downloadTarget({ id: "10", kind: "FOLDER" }, { tree: "planning", projectId: "2" }),
+    downloadTarget({ id: "10", kind: "FOLDER" }, { view: "item", typeId: "4", projectId: "2" }),
   ).toEqual({ kind: "ITEM", itemId: "10" });
-  expect(downloadTarget({ id: "3", kind: "FOLDER" }, { tree: "type" })).toEqual({
-    kind: "TYPE",
-    typeId: "3",
-  });
-  expect(downloadTarget({ id: "10", kind: "FOLDER" }, { tree: "item" })).toEqual({
-    kind: "ITEM",
-    itemId: "10",
-  });
+  expect(
+    downloadTarget({ id: "5", kind: "FOLDER" }, { view: "task", typeId: "4", projectId: "2" }),
+  ).toEqual({ kind: "TASK", projectId: "2", taskId: "5" });
   expect(
     downloadTarget(
       {
@@ -65,7 +64,7 @@ test("文件夹按当前分层展开，文件只认可用的提交", () => {
         fileId: "101",
         availability: "available",
       },
-      { tree: "type", typeId: "3" },
+      { view: "task", typeId: "4", projectId: "2", taskId: "5" },
     ),
   ).toEqual({ kind: "FILE", taskInstanceId: "8", fieldKey: "script", fileId: "101" });
   expect(
@@ -78,7 +77,13 @@ test("文件夹按当前分层展开，文件只认可用的提交", () => {
         fileId: "101",
         availability: "unavailable",
       },
-      { tree: "item", itemId: "10" },
+      { view: "item", typeId: "4", projectId: "2", itemId: "10" },
+    ),
+  ).toBeNull();
+  expect(
+    downloadTarget(
+      { id: "10", kind: "FOLDER" },
+      { view: "item", typeId: "4", projectId: "2", itemId: "10" },
     ),
   ).toBeNull();
 });
@@ -109,7 +114,7 @@ test("压缩包目录跟着当前视图，同一层重名才加上资源 ID", ()
   ).toEqual(["阿企划/第一话/成果.pdf", "阿企划/第二话/成果.pdf", "阿企划/第一话/成果_303.pdf"]);
 });
 
-test("下载文件名是企划、项目、任务和提交项，后缀沿用原文件", () => {
+test("下载文件名在提交项后带上版本号，后缀仍在最后", () => {
   expect(
     downloadRelativePaths([
       {
@@ -119,6 +124,7 @@ test("下载文件名是企划、项目、任务和提交项，后缀沿用原�
         itemTitle: "第一话",
         taskName: "翻译",
         fieldLabel: "译稿",
+        versionNo: 2,
       },
       {
         fileId: "202",
@@ -127,6 +133,7 @@ test("下载文件名是企划、项目、任务和提交项，后缀沿用原�
         itemTitle: "第一话",
         taskName: "翻译",
         fieldLabel: "译稿",
+        versionNo: 2,
       },
       {
         fileId: "303",
@@ -137,8 +144,8 @@ test("下载文件名是企划、项目、任务和提交项，后缀沿用原�
       },
     ]),
   ).toEqual([
-    "阿企划-第一话-翻译-译稿.pdf",
-    "阿企划-第一话-翻译-译稿_202.PDF",
+    "阿企划-第一话-翻译-译稿-2.pdf",
+    "阿企划-第一话-翻译-译稿-2_202.PDF",
     "阿企划-未命名-CON_-未命名.gz",
   ]);
 });
