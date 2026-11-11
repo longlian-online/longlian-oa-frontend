@@ -849,7 +849,13 @@ function OrganizationFilesContent(): ReactElement {
             {selectedEntries.length > 1
               ? `已选 ${selectedEntries.length} 项`
               : selected?.kind === "FILE"
-                ? `${selected.taskName ?? "任务"} · ${selected.fieldLabel ?? "文件"}`
+                ? [
+                    selected.taskName ?? "任务",
+                    selected.fieldLabel ?? "文件",
+                    versionText(selected.versionNo),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
                 : (selected?.name ?? "")}
           </span>
         </div>
@@ -906,6 +912,10 @@ function OrganizationFilesContent(): ReactElement {
   );
 }
 
+function versionText(versionNo?: number | null): string {
+  return versionNo == null ? "" : `版本 ${versionNo}`;
+}
+
 function IconEntry({
   entry,
   selected,
@@ -955,7 +965,7 @@ function IconEntry({
       )}
       {entry.kind === "FILE" && (
         <span className="line-clamp-1 w-full text-[11px] text-muted-foreground">
-          {entry.taskName}
+          {[entry.taskName, versionText(entry.versionNo)].filter(Boolean).join(" · ")}
         </span>
       )}
     </button>
@@ -983,6 +993,7 @@ function DetailsTable({
         <tr>
           <th className="border-border border-b px-3 py-2 font-medium">名称</th>
           <th className="border-border border-b px-3 py-2 font-medium">任务</th>
+          <th className="border-border border-b px-3 py-2 font-medium">版本</th>
           <th className="border-border border-b px-3 py-2 font-medium">提交人</th>
           <th className="border-border border-b px-3 py-2 font-medium">提交时间</th>
           <th className="border-border border-b px-3 py-2 font-medium">大小</th>
@@ -1019,6 +1030,9 @@ function DetailsTable({
                 {entry.kind === "FILE"
                   ? [entry.subtitle, entry.taskName].filter(Boolean).join(" · ")
                   : (entry.subtitle ?? "文件夹")}
+              </td>
+              <td className="text-muted-foreground px-3 py-2 whitespace-nowrap">
+                {entry.kind === "FILE" ? versionText(entry.versionNo) : "—"}
               </td>
               <td className="text-muted-foreground px-3 py-2">
                 {entry.kind === "FILE" ? submitterLabel(entry.submitterName) : "—"}

@@ -371,6 +371,7 @@ export interface OrgFileEntryVO {
   availability?: "available" | "unavailable";
   submitterName?: string;
   submittedAt?: string;
+  versionNo?: number | null;
 }
 
 export interface OrgFileEntriesVO {
@@ -401,6 +402,7 @@ export interface OrgFileBatchFileVO {
   itemTitle?: string | null;
   taskName?: string | null;
   fieldLabel?: string | null;
+  versionNo?: number | null;
 }
 
 export interface OrgFileExpansionVO {

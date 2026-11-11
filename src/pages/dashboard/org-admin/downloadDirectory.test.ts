@@ -155,18 +155,19 @@ test("下载文件直接写在所选文件夹里，并记下文件名", async ()
         typeName: "漫画",
         taskName: "翻译",
         fieldLabel: "译稿",
+        versionNo: 2,
       },
     ],
     async () => "https://example.test/file",
     () => undefined,
   );
-  expect(disk.records().map((record) => record.path)).toEqual(["阿企划-第一话-翻译-译稿.pdf"]);
-  expect(disk.hasPath("阿企划-第一话-翻译-译稿.pdf")).toBe(true);
+  expect(disk.records().map((record) => record.path)).toEqual(["阿企划-第一话-翻译-译稿-2.pdf"]);
+  expect(disk.hasPath("阿企划-第一话-翻译-译稿-2.pdf")).toBe(true);
   await removeDownloadedFiles(disk.directory, [
     { taskInstanceId: "8", fieldKey: "script", fileId: "101" },
   ]);
   expect(disk.records()).toEqual([]);
-  expect(disk.hasPath("阿企划-第一话-翻译-译稿.pdf")).toBe(false);
+  expect(disk.hasPath("阿企划-第一话-翻译-译稿-2.pdf")).toBe(false);
 });
 
 function file(fileId: string, fileName: string) {
