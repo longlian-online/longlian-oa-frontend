@@ -60,6 +60,12 @@ export async function deleteProjectItem(projectId: string, itemId: string): Prom
   });
 }
 
+export async function completeItem(projectId: string, itemId: string): Promise<void> {
+  return request(`/projects/${projectId}/items/${itemId}/complete`, {
+    method: "POST",
+  });
+}
+
 export async function createItemDeletionRequest(
   projectId: string,
   itemId: string,
