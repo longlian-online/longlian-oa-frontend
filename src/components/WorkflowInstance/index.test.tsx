@@ -27,6 +27,11 @@ const api = vi.hoisted(() => ({
   submitTask: vi.fn(),
 }));
 vi.mock("@/api/workflowInstance", () => api);
+const projectItems = vi.hoisted(() => ({ completeItem: vi.fn() }));
+vi.mock("@/api/projectItem", async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return { ...actual, completeItem: projectItems.completeItem };
+});
 const members = vi.hoisted(() => ({ listMemberOptions: vi.fn() }));
 vi.mock("@/api/member", () => members);
 vi.mock("@/components/tip", () => ({ $tip: vi.fn() }));
@@ -54,6 +59,7 @@ let container: HTMLDivElement | undefined;
 let client: QueryClient;
 let tasks: ItemTaskInstanceVO[];
 let submissionRecord: boolean;
+let itemStatus: "IN_PROGRESS" | "COMPLETED";
 
 function task(overrides: Partial<ItemTaskInstanceVO> = {}): ItemTaskInstanceVO {
   return {
@@ -77,8 +83,10 @@ beforeEach(() => {
   client = createQueryClient();
   tasks = [task()];
   submissionRecord = false;
+  itemStatus = "IN_PROGRESS";
   api.getItemTaskFlow.mockImplementation(async () => ({
     itemTitle: "第一话",
+    status: itemStatus,
     name: "流程",
     hasSubmissionRecord: submissionRecord,
     nodes: tasks.map((entry) => ({
@@ -705,4 +713,27 @@ test("任务流存在提交记录时即使任务不是已完成也走删除申�
   await act(async () => named("删除项目")?.click());
   expect(document.body.textContent).toContain("由于项目存在提交记录，删除需要管理员审核");
   expect(document.querySelector("textarea")).not.toBeNull();
+});
+
+test("负责人把进行中的项目标为已完成", async () => {
+  projectItems.completeItem.mockImplementation(async () => {
+    itemStatus = "COMPLETED";
+  });
+  await mount(true, "21");
+  expect(findButton("完成")).toBeDefined();
+  await act(async () => findButton("完成")?.click());
+  expect(projectItems.completeItem).toHaveBeenCalledWith("21", "item");
+  await vi.waitFor(() => expect(findButton("完成")).toBeUndefined());
+  expect($tip).toHaveBeenCalledWith("项目已完成", "success");
+});
+
+test("非负责人不显示完成", async () => {
+  await mount(false, "21");
+  expect(findButton("完成")).toBeUndefined();
+});
+
+test("已完成项目不显示完成", async () => {
+  itemStatus = "COMPLETED";
+  await mount(true, "21");
+  expect(findButton("完成")).toBeUndefined();
 });
