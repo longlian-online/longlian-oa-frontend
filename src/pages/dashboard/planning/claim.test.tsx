@@ -87,6 +87,7 @@ function flow(): ItemTaskFlowVO {
   return {
     itemTitle: "测试项目",
     status: "IN_PROGRESS",
+    completedAt: null,
     name: "接取测试工作流",
     hasSubmissionRecord: false,
     nodes: ["11", "12"].map((id, index) => ({
