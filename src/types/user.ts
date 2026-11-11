@@ -11,6 +11,7 @@ export interface OrganizationSimpleInfoVO {
   id: string;
   name: string;
   avatarUrl?: string;
+  role?: string;
 }
 
 export interface OrgIdDTO {

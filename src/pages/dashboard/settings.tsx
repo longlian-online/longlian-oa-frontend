@@ -422,7 +422,6 @@ export default function PersonalSettingsPage(): ReactElement {
         <NotificationPreferences />
       </section>
 
-      <h1 className="text-xl font-semibold text-foreground">组织设置</h1>
       <OrganizationFileSettings />
     </div>
   );
