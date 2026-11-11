@@ -4,8 +4,7 @@ import { FolderOpen } from "lucide-react";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
+import { useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import {
   DirectoryAccessError,
   loadOrgDownloads,
@@ -14,47 +13,37 @@ import {
   type SavedDownloads,
 } from "@/pages/dashboard/org-admin/downloadDirectory";
 import { rememberDownloads } from "@/pages/dashboard/org-admin/downloadSession";
-import { organizationsQuery } from "@/queries/session";
 
-export default function OrganizationFileSettings(): ReactElement {
-  const orgsQuery = useApiQuery(organizationsQuery);
-  const orgs = orgsQuery.data ?? [];
+interface OrganizationFileSettingsProps {
+  orgId: string;
+}
+
+export default function OrganizationFileSettings({
+  orgId,
+}: OrganizationFileSettingsProps): ReactElement {
   const currentOrgId = useSessionSnapshot().orgId;
-  const [chosen, setChosen] = useState<string | null>(null);
-  const active =
-    chosen && orgs.some((org) => org.id === chosen)
-      ? chosen
-      : (orgs.find((org) => org.id === currentOrgId)?.id ?? orgs[0]?.id ?? "");
   const [settings, setSettings] = useState<SavedDownloads | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!active) return;
+    if (!orgId) return;
     let cancelled = false;
-    void loadOrgDownloads(active).then((saved) => {
+    void loadOrgDownloads(orgId).then((saved) => {
       if (!cancelled) setSettings(saved);
     });
     return () => {
       cancelled = true;
     };
-  }, [active]);
-
-  const status = orgsQuery.isLoading
-    ? "正在读取组织"
-    : orgsQuery.isError
-      ? "组织列表加载失败"
-      : orgs.length === 0
-        ? "还没有加入组织"
-        : null;
+  }, [orgId]);
 
   async function chooseDirectory(): Promise<void> {
-    if (!active || busy) return;
+    if (!orgId || busy) return;
     setBusy(true);
     try {
       const handle = await pickDownloadDirectory();
-      const saved = await saveOrgDirectory(active, handle);
+      const saved = await saveOrgDirectory(orgId, handle);
       setSettings(saved);
-      if (active === currentOrgId) rememberDownloads(saved);
+      if (orgId === currentOrgId) rememberDownloads(saved);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       if (error instanceof DirectoryAccessError) $tip(error.message, "error");
@@ -65,41 +54,21 @@ export default function OrganizationFileSettings(): ReactElement {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {status === null ? (
-        <Tabs value={active} onValueChange={setChosen}>
-          <TabsList
-            className="h-auto max-w-full justify-start overflow-x-auto overflow-y-hidden"
-            aria-label="组织"
-          >
-            {orgs.map((org) => (
-              <TabsTrigger key={org.id} value={org.id}>
-                {org.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      ) : null}
-      <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
-        <h2 className="font-heading text-base font-medium">存储设置</h2>
-        {status !== null ? (
-          <p className="text-sm text-muted-foreground">{status}</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <Label>存放位置</Label>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-fit max-w-full"
-              disabled={busy}
-              onClick={() => void chooseDirectory()}
-            >
-              <FolderOpen />
-              <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
-            </Button>
-          </div>
-        )}
-      </section>
-    </div>
+    <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+      <h2 className="font-heading text-base font-medium">存储设置</h2>
+      <div className="flex flex-col gap-2">
+        <Label>存放位置</Label>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-fit max-w-full"
+          disabled={busy}
+          onClick={() => void chooseDirectory()}
+        >
+          <FolderOpen />
+          <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
+        </Button>
+      </div>
+    </section>
   );
 }

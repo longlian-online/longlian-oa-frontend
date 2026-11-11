@@ -6,6 +6,7 @@ import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
 import PersonalSettingsPage from "@/pages/dashboard/settings";
+import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import { createQueryClient } from "@/lib/queryClient";
 import { clearSession, saveSession } from "@/lib/session";
 import type { UserInfoVO } from "@/types/user";
@@ -16,6 +17,8 @@ const {
   getCurrentUser,
   getUserConfig,
   getUserOrganizations,
+  getMcpApiKey,
+  loadOrgDownloads,
   patchUserConfig,
   updateMyInfo,
   currentUser,
@@ -30,6 +33,18 @@ const {
   })),
   getUserConfig: vi.fn(async () => ({ config: {} })),
   getUserOrganizations: vi.fn(async (): Promise<{ id: string; name: string }[]> => []),
+  getMcpApiKey: vi.fn(async (orgId: string) => ({
+    orgId,
+    state: "NOT_CREATED",
+    canGenerate: true,
+    canRevoke: false,
+  })),
+  loadOrgDownloads: vi.fn(async (orgId: string) => ({
+    handle: null,
+    name: `目录${orgId}`,
+    records: [],
+    view: "planning",
+  })),
   patchUserConfig: vi.fn(async () => undefined),
   updateMyInfo: vi.fn(async () => undefined),
   currentUser: {
@@ -52,8 +67,15 @@ vi.mock("@/api/auth", () => ({
   sendVerificationCode: vi.fn(async () => undefined),
 }));
 
+vi.mock("@/api/mcpApiKey", () => ({
+  getMcpOrganizations: getUserOrganizations,
+  getMcpApiKey,
+  generateMcpApiKey: vi.fn(),
+  revokeMcpApiKey: vi.fn(),
+}));
+
 vi.mock("@/pages/dashboard/org-admin/downloadDirectory", () => ({
-  loadOrgDownloads: async () => ({ handle: null, name: null, records: [], view: "planning" }),
+  loadOrgDownloads,
   DirectoryAccessError: class DirectoryAccessError extends Error {},
 }));
 
@@ -100,6 +122,8 @@ beforeEach((): void => {
   patchUserConfig.mockResolvedValue(undefined);
   getUserOrganizations.mockReset();
   getUserOrganizations.mockResolvedValue([]);
+  getMcpApiKey.mockClear();
+  loadOrgDownloads.mockClear();
   updateMyInfo.mockReset();
   updateMyInfo.mockResolvedValue(undefined);
   saveSession({ token: TOKEN, userId: "1" });
@@ -122,7 +146,9 @@ async function mount(): Promise<void> {
     root.render(
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={["/dashboard/settings"]}>
-          <PersonalSettingsPage />
+          <ConfirmDialogProvider>
+            <PersonalSettingsPage />
+          </ConfirmDialogProvider>
           <LocationProbe />
         </MemoryRouter>
       </QueryClientProvider>,
@@ -292,7 +318,7 @@ test("关闭某一类型通知时只提交该类型", async (): Promise<void> =>
   });
 });
 
-test("存储设置按组织分栏，标签在内容块上方", async (): Promise<void> => {
+test("组织标签在两个设置区上方，切换时同步加载文件和 MCP 设置", async (): Promise<void> => {
   getUserOrganizations.mockResolvedValue([
     { id: "1", name: "甲组" },
     { id: "2", name: "乙组" },
@@ -307,12 +333,21 @@ test("存储设置按组织分栏，标签在内容块上方", async (): Promise
     (item) => item.textContent === "存储设置",
   );
   const block = heading?.closest("section");
+  const mcpBlock = Array.from(document.querySelectorAll("h2"))
+    .find((item) => item.textContent === "MCP 访问")
+    ?.closest("section");
   const notice = Array.from(document.querySelectorAll("h2")).find(
     (item) => item.textContent === "通知",
   );
   expect(block?.textContent).toContain("存放位置");
   expect(block?.textContent).not.toContain("存储视图");
   expect(block?.querySelector("[role='tab']")).toBeNull();
+  expect(mcpBlock?.parentElement).toBe(block?.parentElement);
+  expect(block?.nextElementSibling).toBe(mcpBlock);
+  await vi.waitFor(() => {
+    expect(block?.textContent).toContain("目录1");
+    expect(getMcpApiKey).toHaveBeenCalledWith("1");
+  });
   const tabs = Array.from(document.querySelectorAll("[role='tab']"), (item) => item.textContent);
   expect(tabs).toEqual(["甲组", "乙组"]);
   const tab = document.querySelector("[role='tab']");
@@ -326,4 +361,16 @@ test("存储设置按组织分栏，标签在内容块上方", async (): Promise
       (orgTitle.compareDocumentPosition(tab) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0 &&
       (tab.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
   ).toBe(true);
+
+  const otherTab = document.querySelectorAll("[role='tab']")[1];
+  await act(async () => {
+    (otherTab as HTMLButtonElement).click();
+  });
+  await vi.waitFor(() => {
+    expect(otherTab?.getAttribute("aria-selected")).toBe("true");
+    expect(container.textContent).toContain("目录2");
+    expect(container.textContent).not.toContain("目录1");
+    expect(loadOrgDownloads).toHaveBeenLastCalledWith("2");
+    expect(getMcpApiKey).toHaveBeenLastCalledWith("2");
+  });
 });
