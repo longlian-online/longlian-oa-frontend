@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactElement } from "react";
 import { z } from "zod";
 import { useNavigate } from "react-router";
-import { Pencil, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 
 import { sendVerificationCode } from "@/api/auth";
 import { bindEmail, changePassword, updateMyInfo } from "@/api/user";
@@ -211,7 +211,7 @@ export default function PersonalSettingsPage(): ReactElement {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <h1 className="text-xl font-semibold text-foreground">个人设置</h1>
 
-      <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
         <div className="flex items-start gap-4">
           <input
             ref={avatarInputRef}
@@ -220,24 +220,12 @@ export default function PersonalSettingsPage(): ReactElement {
             accept=".jpg,.jpeg,.png,.gif,.avif"
             onChange={handleAvatarChange}
           />
-          <div className="relative shrink-0">
-            <Avatar size="lg" className="size-14">
-              <AvatarImage src={user.avatarUrl} alt="" />
-              <AvatarFallback>
-                <UserRound className="size-6" />
-              </AvatarFallback>
-            </Avatar>
-            <button
-              type="button"
-              aria-label="更换头像"
-              title="更换头像"
-              disabled={isUploadingAvatar || updateProfile.isPending}
-              className="absolute right-0 bottom-0 z-10 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground ring-2 ring-card disabled:cursor-not-allowed disabled:opacity-60"
-              onClick={() => avatarInputRef.current?.click()}
-            >
-              <Pencil className="size-2.5" />
-            </button>
-          </div>
+          <Avatar size="lg" className="size-14">
+            <AvatarImage src={user.avatarUrl} alt="" />
+            <AvatarFallback>
+              <UserRound className="size-6" />
+            </AvatarFallback>
+          </Avatar>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             {editingNickname ? (
               <div className="flex flex-col gap-3">
@@ -301,6 +289,16 @@ export default function PersonalSettingsPage(): ReactElement {
                 </Button>
               )}
             </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="w-fit"
+              disabled={isUploadingAvatar || updateProfile.isPending}
+              onClick={() => avatarInputRef.current?.click()}
+            >
+              更换头像
+            </Button>
           </div>
         </div>
         {!emailBound && bindingEmail ? (
@@ -364,9 +362,9 @@ export default function PersonalSettingsPage(): ReactElement {
         ) : null}
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-heading text-base font-medium">修改密码</h2>
+          <h2 className="text-base font-medium">修改密码</h2>
           {editingPassword ? null : (
             <Button variant="outline" onClick={() => setEditingPassword(true)}>
               修改
@@ -417,8 +415,8 @@ export default function PersonalSettingsPage(): ReactElement {
         ) : null}
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
-        <h2 className="font-heading text-base font-medium">通知</h2>
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+        <h2 className="text-base font-medium">通知</h2>
         <NotificationPreferences />
       </section>
 

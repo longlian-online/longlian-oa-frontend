@@ -126,14 +126,13 @@ function FieldRow({
   }
 
   return (
-    <li className="grid min-w-0 grid-cols-1 gap-2 rounded-lg border bg-muted/20 p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto] sm:items-center">
+    <li className="grid min-w-0 grid-cols-1 gap-2 border-0 border-b bg-transparent px-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto] sm:items-center">
       <div ref={presetFieldRef} className="relative min-w-0">
         <Input
           value={field.name}
           readOnly={locked}
           disabled={disabled}
           aria-label={`字段 ${index + 1} 名称`}
-          placeholder="字段名，例如作者"
           aria-autocomplete="list"
           aria-expanded={presetMenuOpen}
           aria-controls={`${inputId}-presets`}
@@ -164,7 +163,7 @@ function FieldRow({
             id={`${inputId}-presets`}
             role="listbox"
             aria-label="组织预置表单字段"
-            className="absolute top-full right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10"
+            className="absolute top-full right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground ring-1 ring-foreground/10"
           >
             {visiblePresets.length === 0 ? (
               <div className="px-2 py-1.5 text-sm text-muted-foreground">{emptyPresetMessage}</div>
@@ -191,7 +190,7 @@ function FieldRow({
         aria-label={`字段 ${index + 1} 值`}
         aria-invalid={invalid}
         aria-required={locked}
-        placeholder={locked ? "必填" : "字段值"}
+        placeholder={locked ? "必填" : undefined}
         onChange={(event) => onChange({ ...field, value: event.target.value })}
       />
       {locked ? (

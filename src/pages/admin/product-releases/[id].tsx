@@ -127,16 +127,13 @@ export default function EditProductReleasePage(): ReactElement {
   }
 
   return (
-    <AdminLayout
-      title="产品版本"
-      description="发布用户可见的更新说明，并绑定这次的前端与后端版本。"
-    >
+    <AdminLayout title="产品版本">
       {query.isError && !detail ? (
         <Button variant="outline" onClick={() => void query.refetch()}>
           加载失败，重试
         </Button>
       ) : !detail || !values ? (
-        <div className="flex min-h-48 items-center text-sm text-muted-foreground">
+        <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
           <Loader2 className="mr-2 size-4 animate-spin" />
           加载中…
         </div>

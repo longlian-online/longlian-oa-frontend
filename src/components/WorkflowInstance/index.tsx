@@ -466,10 +466,9 @@ function ItemWorkflowInstance({
   }
 
   return (
-    <div className="space-y-4">
-      <header className="flex min-h-12 items-center gap-3 px-1">
+    <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <header className="flex min-h-12 items-center gap-3 px-1 xl:col-span-2">
         <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">项目任务流</p>
           <h1 className="break-words text-lg font-semibold text-foreground">
             {taskFlow.itemTitle}
           </h1>
@@ -524,89 +523,99 @@ function ItemWorkflowInstance({
       </header>
 
       {entryError && (
-        <p role="alert" className="rounded-lg border px-4 py-3 text-sm text-muted-foreground">
+        <p
+          role="alert"
+          className="rounded-lg border px-4 py-3 text-sm text-muted-foreground xl:col-span-2"
+        >
           {entryError}
         </p>
       )}
 
-      <TaskFlowViewer
-        selectedNodeId={selectedNodeId}
-        initialNodeId={taskFlow.nodes.find((node) => node.taskInstanceId === taskInstanceId)?.id}
-        onSelectNode={selectNode}
-        nodes={taskFlow.nodes}
-        instances={sortedInstances}
-        currentUserId={currentUserId}
-        mutatingInstanceId={mutatingInstanceId}
-        onClaim={(instanceId) =>
-          void runInstanceAction(instanceId, () => claimTask(instanceId), "任务已接取")
-        }
-        onSubmit={(instance, node) => openSubmit(instance, node)}
-        onSaveDraft={(instance, node) => openDraft(instance, node)}
-      />
+      <div className="min-w-0 xl:row-span-2">
+        <TaskFlowViewer
+          selectedNodeId={selectedNodeId}
+          initialNodeId={taskFlow.nodes.find((node) => node.taskInstanceId === taskInstanceId)?.id}
+          onSelectNode={selectNode}
+          nodes={taskFlow.nodes}
+          instances={sortedInstances}
+          currentUserId={currentUserId}
+          mutatingInstanceId={mutatingInstanceId}
+          onClaim={(instanceId) =>
+            void runInstanceAction(instanceId, () => claimTask(instanceId), "任务已接取")
+          }
+          onSubmit={(instance, node) => openSubmit(instance, node)}
+          onSaveDraft={(instance, node) => openDraft(instance, node)}
+        />
+      </div>
 
-      {selectedNode ? (
-        <div>
-          <TaskDetailPanel
-            key={`${itemId}:${selectedNode.id}`}
-            title={formatTaskTitle(taskFlow.itemTitle, slotPosition(selectedNode, taskFlow.nodes))}
-            node={selectedNode}
-            instance={selectedInstance}
-            actions={
-              selectedInstance && selectedNode.taskStatus !== null
-                ? {
-                    currentUserId,
-                    mutating: mutatingInstanceId === selectedInstance.id,
-                    canSubmit: isNodeUnlocked(selectedNode, taskFlow.nodes),
-                    canReset: canReset(selectedInstance, currentUserId),
-                    canReject: canReject(
-                      selectedInstance,
-                      taskFlow.nodes,
-                      instances,
+      <div className="min-w-0 xl:sticky xl:top-0">
+        {selectedNode ? (
+          <div>
+            <TaskDetailPanel
+              key={`${itemId}:${selectedNode.id}`}
+              title={formatTaskTitle(
+                taskFlow.itemTitle,
+                slotPosition(selectedNode, taskFlow.nodes),
+              )}
+              node={selectedNode}
+              instance={selectedInstance}
+              actions={
+                selectedInstance && selectedNode.taskStatus !== null
+                  ? {
                       currentUserId,
-                      canManage,
-                    ),
-                    canOwnerCancel: canOwnerCancel(selectedInstance, instances, canManage),
-                    canAssign: canAssign(selectedInstance, canManage),
-                    canProxySubmit: canProxySubmit(selectedInstance, taskFlow.nodes, canManage),
-                    onOwnerCancel: () =>
-                      setOwnerTarget({
-                        instance: selectedInstance,
-                        title: formatTaskTitle(
-                          taskFlow.itemTitle,
-                          slotPosition(selectedNode, taskFlow.nodes),
-                        ),
-                      }),
-                    onClaim: () =>
-                      void runInstanceAction(
-                        selectedInstance.id,
-                        () => claimTask(selectedInstance.id),
-                        "任务已接取",
+                      mutating: mutatingInstanceId === selectedInstance.id,
+                      canSubmit: isNodeUnlocked(selectedNode, taskFlow.nodes),
+                      canReset: canReset(selectedInstance, currentUserId),
+                      canReject: canReject(
+                        selectedInstance,
+                        taskFlow.nodes,
+                        instances,
+                        currentUserId,
+                        canManage,
                       ),
-                    onAssign: () =>
-                      setAssignTarget({
-                        instance: selectedInstance,
-                        title: formatTaskTitle(
-                          taskFlow.itemTitle,
-                          slotPosition(selectedNode, taskFlow.nodes),
+                      canOwnerCancel: canOwnerCancel(selectedInstance, instances, canManage),
+                      canAssign: canAssign(selectedInstance, canManage),
+                      canProxySubmit: canProxySubmit(selectedInstance, taskFlow.nodes, canManage),
+                      onOwnerCancel: () =>
+                        setOwnerTarget({
+                          instance: selectedInstance,
+                          title: formatTaskTitle(
+                            taskFlow.itemTitle,
+                            slotPosition(selectedNode, taskFlow.nodes),
+                          ),
+                        }),
+                      onClaim: () =>
+                        void runInstanceAction(
+                          selectedInstance.id,
+                          () => claimTask(selectedInstance.id),
+                          "任务已接取",
                         ),
-                      }),
-                    onSubmit: () => openSubmit(selectedInstance),
-                    onSaveDraft: () => openDraft(selectedInstance),
-                    hasExtraFields: selectedNode.submitFields.length > 0,
-                    onProxySubmit: () => openProxySubmit(selectedInstance),
-                    onAbandon: () => void handleAbandon(selectedInstance.id),
-                    onReject: () => setRejectTarget(selectedInstance),
-                    onReset: () => void handleReset(selectedInstance.id),
-                  }
-                : undefined
-            }
-          />
-        </div>
-      ) : (
-        <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
-          点击流程节点查看任务详情和操作。
-        </div>
-      )}
+                      onAssign: () =>
+                        setAssignTarget({
+                          instance: selectedInstance,
+                          title: formatTaskTitle(
+                            taskFlow.itemTitle,
+                            slotPosition(selectedNode, taskFlow.nodes),
+                          ),
+                        }),
+                      onSubmit: () => openSubmit(selectedInstance),
+                      onSaveDraft: () => openDraft(selectedInstance),
+                      hasExtraFields: selectedNode.submitFields.length > 0,
+                      onProxySubmit: () => openProxySubmit(selectedInstance),
+                      onAbandon: () => void handleAbandon(selectedInstance.id),
+                      onReject: () => setRejectTarget(selectedInstance),
+                      onReset: () => void handleReset(selectedInstance.id),
+                    }
+                  : undefined
+              }
+            />
+          </div>
+        ) : (
+          <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
+            点击流程节点查看任务详情和操作。
+          </div>
+        )}
+      </div>
 
       {draftTarget && (
         <TaskSubmitPanel
@@ -703,7 +712,8 @@ function ItemWorkflowInstance({
           </DialogHeader>
           <Textarea
             value={rejectComment}
-            placeholder="请输入打回意见"
+            aria-label="打回意见"
+            maxLength={500}
             className="min-h-28 resize-none"
             onChange={(event) => setRejectComment(event.target.value)}
           />

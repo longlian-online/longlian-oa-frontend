@@ -63,44 +63,41 @@ export default function OrganizationFileSettings(): ReactElement | null {
   }
 
   return (
-    <>
-      <h1 className="text-xl font-semibold text-foreground">组织设置</h1>
-      <div className="flex flex-col gap-4">
-        {failed || orgs.length === 0 ? null : (
-          <Tabs value={active} onValueChange={setChosen}>
-            <TabsList
-              className="h-auto max-w-full justify-start overflow-x-auto overflow-y-hidden"
-              aria-label="组织"
+    <div className="flex flex-col gap-4">
+      {failed || orgs.length === 0 ? null : (
+        <Tabs value={active} onValueChange={setChosen}>
+          <TabsList
+            className="h-auto max-w-full justify-start overflow-x-auto overflow-y-hidden"
+            aria-label="组织"
+          >
+            {orgs.map((org) => (
+              <TabsTrigger key={org.id} value={org.id}>
+                {org.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      )}
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+        <h2 className="text-base font-medium">存储设置</h2>
+        {failed ? (
+          <p className="text-sm text-muted-foreground">组织列表加载失败</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <Label>存放位置</Label>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-fit max-w-full"
+              disabled={busy}
+              onClick={() => void chooseDirectory()}
             >
-              {orgs.map((org) => (
-                <TabsTrigger key={org.id} value={org.id}>
-                  {org.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+              <FolderOpen />
+              <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
+            </Button>
+          </div>
         )}
-        <section className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10">
-          <h2 className="font-heading text-base font-medium">存储设置</h2>
-          {failed ? (
-            <p className="text-sm text-muted-foreground">组织列表加载失败</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Label>存放位置</Label>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-fit max-w-full"
-                disabled={busy}
-                onClick={() => void chooseDirectory()}
-              >
-                <FolderOpen />
-                <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
-              </Button>
-            </div>
-          )}
-        </section>
-      </div>
-    </>
+      </section>
+    </div>
   );
 }

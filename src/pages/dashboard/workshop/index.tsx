@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
-import { ArrowDownUp, ChevronRight, Search, Workflow } from "lucide-react";
+import { ArrowDownUp, Search, Workflow } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { WORKSHOP_PAGE_SIZE as PAGE_SIZE, workshopListQuery } from "@/queries/workshop";
@@ -37,7 +37,6 @@ export default function WorkshopPage() {
   const { keyword, selectedType, isMyCreated, taskSort, sortBy, page, submitPage, waitingPage } =
     readWorkshopView(searchParams);
   const [searchText, setSearchText] = useState(keyword);
-  const [scrollState, setScrollState] = useState({ atStart: true, atEnd: false });
   const rootRef = useWorkshopPosition();
 
   function updateView(values: Record<string, string | number | null>): void {
@@ -67,24 +66,6 @@ export default function WorkshopPage() {
   const projects = listQuery.data?.list ?? [];
   const total = listQuery.data?.total ?? 0;
   const loading = listQuery.isLoading;
-  useEffect(() => {
-    const group = document.querySelector<HTMLDivElement>('[aria-label="企划类型筛选"]');
-    if (!group) return;
-    const update = (): void => {
-      setScrollState({
-        atStart: group.scrollLeft <= 1,
-        atEnd: group.scrollLeft + group.clientWidth >= group.scrollWidth - 1,
-      });
-    };
-    update();
-    group.addEventListener("scroll", update, { passive: true });
-    const observer = new ResizeObserver(update);
-    observer.observe(group);
-    return () => {
-      group.removeEventListener("scroll", update);
-      observer.disconnect();
-    };
-  }, [projectTypes]);
 
   function handleSearch(): void {
     updateView({ keyword: searchText.trim(), page: 1 });
@@ -104,7 +85,7 @@ export default function WorkshopPage() {
 
   return (
     <div ref={rootRef} className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
-      <h1 className="text-xl font-bold text-foreground">工坊</h1>
+      <h1 className="text-xl font-semibold text-foreground">工坊</h1>
 
       <section className="flex min-w-0 flex-col gap-3">
         <div className="flex min-w-0 items-center justify-between gap-2">
@@ -178,7 +159,7 @@ export default function WorkshopPage() {
           </Select>
         </div>
         <div className="flex min-w-0 items-center gap-2">
-          <div className="relative min-w-0 flex-1">
+          <div className="min-w-0 flex-1">
             <div
               role="group"
               aria-label="企划类型筛选"
@@ -212,24 +193,6 @@ export default function WorkshopPage() {
                 </Button>
               ))}
             </div>
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-background via-background/80 to-transparent transition-opacity duration-200"
-              style={{ opacity: scrollState.atEnd ? 0 : 1 }}
-            />
-            <button
-              type="button"
-              aria-label="向右滚动类型"
-              className="absolute right-0 top-1/2 z-20 flex size-6 -translate-y-1/2 items-center justify-center text-muted-foreground transition-opacity duration-200 hover:text-foreground focus-visible:outline-2 focus-visible:outline-accent disabled:pointer-events-none"
-              disabled={scrollState.atEnd}
-              style={{ opacity: scrollState.atEnd ? 0 : 1 }}
-              onClick={() => {
-                const group = document.querySelector<HTMLDivElement>('[aria-label="企划类型筛选"]');
-                group?.scrollBy({ left: 160, behavior: "smooth" });
-              }}
-            >
-              <ChevronRight className="size-4" />
-            </button>
           </div>
           <Button
             type="button"

@@ -251,7 +251,7 @@ export default function ProjectItemSection({
             {items.map((item) => (
               <article
                 key={item.id}
-                className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_auto] lg:items-center"
+                className="grid gap-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_auto] lg:items-center"
               >
                 <div className="min-w-0">
                   <h3 className="break-words text-base font-semibold text-foreground">
@@ -264,7 +264,7 @@ export default function ProjectItemSection({
                     </span>
                   </p>
                 </div>
-                <div className="flex min-w-0 flex-col gap-3 sm:col-span-2 sm:row-start-2 lg:col-span-1 lg:row-start-auto">
+                <div className="flex min-w-0 flex-col gap-2 sm:col-span-2 sm:row-start-2 lg:col-span-1 lg:row-start-auto">
                   <ProjectItemNodeList nodes={item.nodes} />
                   <div className="flex items-center gap-3">
                     <Progress
@@ -339,7 +339,7 @@ export default function ProjectItemSection({
             <Textarea
               value={reason}
               maxLength={500}
-              placeholder="填写删除原因"
+              aria-label="删除原因"
               onChange={(event) => setReason(event.target.value)}
             />
             <DialogFooter>

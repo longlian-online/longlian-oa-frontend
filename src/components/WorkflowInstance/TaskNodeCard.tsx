@@ -40,7 +40,7 @@ function getNodeStyle(status?: TaskInstanceStatus | null) {
     };
   }
   if (status === "CLAIMED") {
-    return { icon: Clock, iconClassName: "text-foreground", badge: "default" as const };
+    return { icon: Clock, iconClassName: "text-foreground", badge: "outline" as const };
   }
   if (status === "PENDING") {
     return { icon: Circle, iconClassName: "text-muted-foreground", badge: "outline" as const };

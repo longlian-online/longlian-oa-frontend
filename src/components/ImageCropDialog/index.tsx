@@ -90,7 +90,7 @@ export default function ImageCropDialog({
         </DialogHeader>
         <div
           className={cn(
-            "relative mx-auto w-fit max-w-full overflow-hidden rounded-lg",
+            "relative h-[min(50vh,360px)] w-full overflow-hidden rounded-lg bg-muted",
             processing && "pointer-events-none",
           )}
         >
@@ -99,41 +99,32 @@ export default function ImageCropDialog({
               图片无法预览，请重新选择或上传原图。
             </p>
           ) : url ? (
-            <>
-              <img
-                src={url}
-                alt=""
-                aria-hidden
-                className="invisible block max-h-[min(50vh,360px)] max-w-full"
-                onError={() => setFailed(true)}
-              />
-              <Cropper
-                image={url}
-                crop={crop}
-                zoom={Math.max(zoom, minZoom)}
-                maxZoom={Math.max(3, minZoom)}
-                aspect={aspect ?? imageAspect}
-                cropShape={shape ?? (aspect === 1 ? "round" : "rect")}
-                objectFit="contain"
-                minZoom={minZoom}
-                restrictPosition
-                onCropSizeChange={setCropSize}
-                onMediaLoaded={(media) => {
-                  setMediaSize(media);
-                  setImageAspect(media.naturalWidth / media.naturalHeight);
-                }}
-                showGrid={false}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropAreaChange={(_, pixels) => setArea(pixels)}
-                setImageRef={(ref) => {
-                  imageRef.current = ref.current;
-                }}
-                mediaProps={{ onError: () => setFailed(true) }}
-                onTouchRequest={() => !processing}
-                onWheelRequest={() => !processing}
-              />
-            </>
+            <Cropper
+              image={url}
+              crop={crop}
+              zoom={Math.max(zoom, minZoom)}
+              maxZoom={Math.max(3, minZoom)}
+              aspect={aspect ?? imageAspect}
+              cropShape={shape ?? (aspect === 1 ? "round" : "rect")}
+              objectFit="contain"
+              minZoom={minZoom}
+              restrictPosition
+              onCropSizeChange={setCropSize}
+              onMediaLoaded={(media) => {
+                setMediaSize(media);
+                setImageAspect(media.naturalWidth / media.naturalHeight);
+              }}
+              showGrid={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropAreaChange={(_, pixels) => setArea(pixels)}
+              setImageRef={(ref) => {
+                imageRef.current = ref.current;
+              }}
+              mediaProps={{ onError: () => setFailed(true) }}
+              onTouchRequest={() => !processing}
+              onWheelRequest={() => !processing}
+            />
           ) : (
             <p className="p-4 text-muted-foreground">正在加载图片…</p>
           )}

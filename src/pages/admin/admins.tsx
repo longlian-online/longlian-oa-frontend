@@ -12,11 +12,10 @@ import { $tip } from "@/components/tip";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -89,104 +88,107 @@ export default function AdminsPage() {
   }
 
   return (
-    <AdminLayout title="管理员管理" description="维护系统管理员账号与登录权限。">
-      <Card>
-        <CardContent className="p-4 sm:p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="text-sm text-muted-foreground">共 {total} 位管理员</div>
-            <Button type="button" onClick={() => setDialogOpen(true)}>
-              <Plus className="size-4" />
-              新增管理员
-            </Button>
-          </div>
-          {listQuery.isError && !listQuery.data ? (
-            <Button variant="outline" onClick={() => void listQuery.refetch()}>
-              加载失败，重试
-            </Button>
-          ) : loading ? (
-            <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
-              <Loader2 className="mr-2 size-4 animate-spin" />
-              加载中...
-            </div>
-          ) : admins.length === 0 ? (
-            <EmptyState
-              icon={<UserRound className="size-5 text-muted-foreground" />}
-              title="暂无管理员"
-              description="创建一个系统管理员开始使用管理端。"
-            />
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>账号</TableHead>
-                    <TableHead>角色</TableHead>
-                    <TableHead>创建时间</TableHead>
-                    <TableHead>最后登录</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
+    <AdminLayout title="管理员管理">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="text-sm text-muted-foreground">共 {total} 位管理员</div>
+        <Button type="button" onClick={() => setDialogOpen(true)}>
+          <Plus className="size-4" />
+          新增管理员
+        </Button>
+      </div>
+      {listQuery.isError && !listQuery.data ? (
+        <Button variant="outline" onClick={() => void listQuery.refetch()}>
+          加载失败，重试
+        </Button>
+      ) : loading ? (
+        <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
+          <Loader2 className="mr-2 size-4 animate-spin" />
+          加载中...
+        </div>
+      ) : admins.length === 0 ? (
+        <EmptyState
+          icon={<UserRound className="size-5 text-muted-foreground" />}
+          title="暂无管理员"
+          description="创建一个系统管理员开始使用管理端。"
+        />
+      ) : (
+        <>
+          <div className="overflow-x-auto rounded-xl border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>账号</TableHead>
+                  <TableHead>角色</TableHead>
+                  <TableHead>创建时间</TableHead>
+                  <TableHead>最后登录</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {admins.map((admin) => (
+                  <TableRow key={admin.id}>
+                    <TableCell className="font-medium">{admin.username}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">管理员</Badge>
+                    </TableCell>
+                    <TableCell>{formatDate(admin.createdAt)}</TableCell>
+                    <TableCell>{formatDate(admin.lastLoginAt)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => void handleDelete(admin)}
+                      >
+                        <Trash2 className="size-4 text-destructive" />
+                        删除
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {admins.map((admin) => (
-                    <TableRow key={admin.id}>
-                      <TableCell className="font-medium">{admin.username}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{admin.role}</Badge>
-                      </TableCell>
-                      <TableCell>{formatDate(admin.createdAt)}</TableCell>
-                      <TableCell>{formatDate(admin.lastLoginAt)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => void handleDelete(admin)}
-                        >
-                          <Trash2 className="size-4 text-destructive" />
-                          删除
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <PaginationBar
-                page={page}
-                pageSize={PAGE_SIZE}
-                total={total}
-                disabled={loading}
-                onPageChange={setPage}
-                className="mt-4"
-              />
-            </>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <PaginationBar
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={total}
+            disabled={loading}
+            onPageChange={setPage}
+            className="mt-4"
+          />
+        </>
+      )}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>新增管理员</DialogTitle>
-            <DialogDescription>创建后即可使用账号密码登录系统管理端。</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <Input
-              value={form.username}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, username: event.target.value }))
-              }
-              placeholder="管理员账号"
-              maxLength={32}
-            />
-            <Input
-              type="password"
-              value={form.password}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, password: event.target.value }))
-              }
-              placeholder="密码（至少 6 位）"
-              maxLength={64}
-            />
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="admin-account">账号</Label>
+              <Input
+                id="admin-account"
+                value={form.username}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, username: event.target.value }))
+                }
+                maxLength={32}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="admin-password">密码</Label>
+              <Input
+                id="admin-password"
+                type="password"
+                value={form.password}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, password: event.target.value }))
+                }
+                maxLength={64}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>

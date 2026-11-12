@@ -115,7 +115,7 @@ export function MyTaskColumn({
                 </span>
                 <span className="col-span-2 flex h-5 min-w-0 items-center gap-2 text-xs text-muted-foreground">
                   {!submittable && (
-                    <span className="inline-flex h-5 max-w-[45%] shrink items-center truncate rounded-full bg-[#fcede1] px-2.5 font-medium leading-none text-[#c45628] dark:bg-[#3a241c] dark:text-[#f3b08a]">
+                    <span className="inline-flex h-5 max-w-[45%] shrink items-center truncate font-medium leading-none text-amber-700 dark:text-amber-300">
                       {waitingText}
                     </span>
                   )}

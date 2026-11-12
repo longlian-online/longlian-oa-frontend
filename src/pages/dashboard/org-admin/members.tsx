@@ -12,7 +12,6 @@ import {
   ChevronRight,
   ClipboardList,
   Loader2,
-  Search,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -29,6 +28,7 @@ import {
   type OrgMemberRole,
 } from "@/api/organizationAdmin";
 import DateTimeField from "@/components/DateTimeField";
+import KeywordSearch from "@/components/KeywordSearch";
 import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
@@ -45,7 +45,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -214,48 +214,31 @@ function OrganizationMembersContent() {
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">成员管理</h1>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold text-foreground">成员管理</h1>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative w-56 max-w-full">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={filters.keyword}
-              placeholder="搜索成员"
-              className="pl-9"
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, keyword: event.target.value }))
-              }
-            />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Label htmlFor="member-start-joined" className="shrink-0 text-xs text-muted-foreground">
-              开始
-            </Label>
-            <DateTimeField
-              id="member-start-joined"
-              mode="date"
-              ariaLabel="入组开始日期"
-              value={filters.startJoinedTime}
-              className="w-36"
-              onChange={(next) => setFilters((current) => ({ ...current, startJoinedTime: next }))}
-            />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Label htmlFor="member-end-joined" className="shrink-0 text-xs text-muted-foreground">
-              结束
-            </Label>
-            <DateTimeField
-              id="member-end-joined"
-              mode="date"
-              ariaLabel="入组结束日期"
-              value={filters.endJoinedTime}
-              className="w-36"
-              onChange={(next) => setFilters((current) => ({ ...current, endJoinedTime: next }))}
-            />
-          </div>
+          <KeywordSearch
+            value={filters.keyword}
+            placeholder="搜索成员"
+            onChange={(value) => setFilters((current) => ({ ...current, keyword: value }))}
+            onSearch={() => setFilters((current) => ({ ...current }))}
+          />
+          <DateTimeField
+            id="member-start-joined"
+            mode="date"
+            ariaLabel="入组开始日期"
+            value={filters.startJoinedTime}
+            className="w-36"
+            onChange={(next) => setFilters((current) => ({ ...current, startJoinedTime: next }))}
+          />
+          <DateTimeField
+            id="member-end-joined"
+            mode="date"
+            ariaLabel="入组结束日期"
+            value={filters.endJoinedTime}
+            className="w-36"
+            onChange={(next) => setFilters((current) => ({ ...current, endJoinedTime: next }))}
+          />
           <Select
             value={filters.orderDir}
             onValueChange={(value) => {
@@ -291,7 +274,7 @@ function OrganizationMembersContent() {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border bg-card">
+          <div className="overflow-x-auto rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -302,7 +285,7 @@ function OrganizationMembersContent() {
                   <TableHead>任务提交数</TableHead>
                   <TableHead>接取任务</TableHead>
                   <TableHead>状态</TableHead>
-                  <TableHead className="w-56 text-right">操作</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -316,7 +299,7 @@ function OrganizationMembersContent() {
                             <RemoteImage
                               src={member.avatarUrl}
                               alt=""
-                              className="size-9 rounded-full"
+                              className="size-6 rounded-full"
                               fallback={
                                 <span className="text-sm font-medium">
                                   {memberName(member).slice(0, 1)}
@@ -324,7 +307,7 @@ function OrganizationMembersContent() {
                               }
                             />
                           ) : (
-                            <div className="flex size-9 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
+                            <div className="flex size-6 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
                               {memberName(member).slice(0, 1)}
                             </div>
                           )}
@@ -434,12 +417,11 @@ function OrganizationMembersContent() {
       )}
 
       <Dialog open={detailMember !== null} onOpenChange={(open) => !open && setDetailMember(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {detailMember ? `${memberName(detailMember)}的提交统计` : "提交统计"}
             </DialogTitle>
-            <DialogDescription>查看该成员按任务定义汇总的提交次数。</DialogDescription>
           </DialogHeader>
           {detailQuery.isError && !detailQuery.data ? (
             <Button onClick={() => void detailQuery.refetch()}>加载失败，重试</Button>
@@ -451,16 +433,13 @@ function OrganizationMembersContent() {
           ) : submitCounts.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">暂无提交记录</p>
           ) : (
-            <div className="max-h-80 space-y-2 overflow-y-auto">
+            <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
               {submitCounts.map((item) => (
-                <div
-                  key={item.baseTaskId}
-                  className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
-                >
+                <div key={item.baseTaskId} className="grid grid-cols-2 items-center gap-3 text-sm">
                   <span className="truncate text-foreground">
                     {item.baseTaskName || item.baseTaskId}
                   </span>
-                  <span className="shrink-0 font-medium text-muted-foreground">
+                  <span className="text-right tabular-nums text-muted-foreground">
                     {item.submitCount} 次
                   </span>
                 </div>
@@ -520,11 +499,11 @@ function OrganizationMembersContent() {
                               key={task.instanceId}
                               to={claimedTaskPath(task)}
                               state={{ listReturnTo: location.pathname + location.search }}
-                              className="group flex min-w-0 items-center gap-3 rounded-lg border px-3 py-2 transition-colors hover:border-primary/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              className="flex min-w-0 items-center gap-3 rounded-lg border px-3 py-2 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               aria-label={`查看任务：${claimedTaskTitle(task)}，${task.projectName ?? ""}`}
                             >
                               <div className="min-w-0 flex-1">
-                                <div className="truncate text-sm font-medium text-foreground underline-offset-4 group-hover:underline group-focus-visible:underline">
+                                <div className="truncate text-sm font-medium text-foreground">
                                   {claimedTaskTitle(task)}
                                 </div>
                                 <div className="truncate text-xs text-muted-foreground">
@@ -533,9 +512,9 @@ function OrganizationMembersContent() {
                               </div>
                               <div className="flex shrink-0 flex-col items-end gap-1">
                                 {waitingLabel ? (
-                                  <span className="inline-block max-w-full truncate rounded-full bg-[#fcede1] px-2.5 py-0.5 text-xs font-medium text-[#c45628] dark:bg-[#3a241c] dark:text-[#f3b08a]">
+                                  <Badge variant="secondary" className="max-w-full truncate">
                                     {waitingLabel}
-                                  </span>
+                                  </Badge>
                                 ) : null}
                                 <span className="text-xs text-muted-foreground tabular-nums">
                                   接取于 {formatDate(task.claimedAt)}
@@ -559,14 +538,14 @@ function OrganizationMembersContent() {
       </Dialog>
 
       <Dialog open={roleMember !== null} onOpenChange={(open) => !open && setRoleMember(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>调整成员角色</DialogTitle>
             <DialogDescription>
               {roleMember ? `为「${memberName(roleMember)}」设置当前组织内的角色。` : ""}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
+          <div className="grid gap-4">
             <Label htmlFor="member-role">组织角色</Label>
             <Select
               value={selectedRole}

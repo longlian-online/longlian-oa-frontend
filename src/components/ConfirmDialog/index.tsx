@@ -1,6 +1,5 @@
 import { createContext, useCallback, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -72,9 +71,6 @@ export function ConfirmDialogProvider({ children }: ConfirmDialogProviderProps) 
       <Dialog open={!!currentRequest} onOpenChange={(open) => !open && handleClose(false)}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
-            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
-              <AlertTriangle className="h-5 w-5 text-muted-foreground" />
-            </div>
             <DialogTitle>{currentRequest?.title}</DialogTitle>
             <DialogDescription>{currentRequest?.description}</DialogDescription>
           </DialogHeader>

@@ -54,9 +54,15 @@ export default function ProductReleaseNotice(): ReactElement | null {
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{formatProductVersion(release.version)}</DialogTitle>
-          <DialogDescription>{release.summary}</DialogDescription>
+          <DialogDescription className="sr-only">
+            {formatProductVersion(release.version)}
+          </DialogDescription>
         </DialogHeader>
-        <ReleaseBody content={release.content} olderCount={query.data?.olderCount ?? 0} />
+        <ReleaseBody
+          summary={release.summary}
+          content={release.content}
+          olderCount={query.data?.olderCount ?? 0}
+        />
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => void dismiss(true)}>
             以往更新
@@ -71,14 +77,17 @@ export default function ProductReleaseNotice(): ReactElement | null {
 }
 
 function ReleaseBody({
+  summary,
   content,
   olderCount,
 }: {
+  summary: string;
   content: string;
   olderCount: number;
 }): ReactElement {
   return (
     <div className="flex max-h-96 flex-col gap-4 overflow-y-auto">
+      {summary ? <p className="text-sm text-foreground">{summary}</p> : null}
       <ReleaseMarkdown text={content} />
       {olderCount > 0 ? (
         <p className="text-sm text-muted-foreground">另有 {olderCount} 条更早的更新</p>

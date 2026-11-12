@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -163,7 +162,7 @@ function OrganizationPresetTagsContent() {
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold text-foreground">标签</h1>
+        <h1 className="text-xl font-semibold text-foreground">标签</h1>
         <div className="flex flex-wrap gap-2">
           <KeywordSearch
             value={searchText}
@@ -199,13 +198,13 @@ function OrganizationPresetTagsContent() {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border bg-card">
+          <div className="overflow-x-auto rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>标签名</TableHead>
                   <TableHead>优先级</TableHead>
-                  <TableHead className="w-40 text-right">操作</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -273,12 +272,9 @@ function OrganizationPresetTagsContent() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingTag ? "编辑标签" : "新增标签"}</DialogTitle>
-            <DialogDescription>
-              {editingTag ? "修改标签名、颜色与优先级。" : "新增一个组织成员可选用的标签。"}
-            </DialogDescription>
           </DialogHeader>
           <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
             标签名
@@ -286,14 +282,13 @@ function OrganizationPresetTagsContent() {
               value={name}
               maxLength={50}
               autoFocus
-              placeholder="例如：加急、作者"
               onChange={(event) => setName(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") void handleSave();
               }}
             />
           </label>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 text-sm font-medium text-foreground">
               颜色
               <Select
@@ -322,24 +317,22 @@ function OrganizationPresetTagsContent() {
             {previewName ? (
               <ProjectMetadataTag tag={{ key: previewName, value: "", color }} />
             ) : null}
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+              优先级
+              <Input
+                type="number"
+                step={1}
+                min={-2147483648}
+                max={2147483647}
+                value={priority}
+                className="w-28"
+                onChange={(event) => setPriority(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void handleSave();
+                }}
+              />
+            </label>
           </div>
-          <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
-            优先级
-            <Input
-              type="number"
-              step={1}
-              min={-2147483648}
-              max={2147483647}
-              value={priority}
-              onChange={(event) => setPriority(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void handleSave();
-              }}
-            />
-            <span className="text-xs font-normal text-muted-foreground">
-              只影响用户端下拉顺序，数值越大越靠前，默认 0。
-            </span>
-          </label>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
               取消

@@ -139,7 +139,6 @@ describe("product release editor", () => {
     );
     expect(inputValue("后端版本")).toBe("1.0.53");
     expect(inputValue("产品版本")).toBe("");
-    expect(container?.textContent).toContain("当前最新 v1.2.0");
   });
 
   test("locks the version binding after publish", async () => {

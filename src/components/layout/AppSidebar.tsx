@@ -130,7 +130,7 @@ export default function AppSidebar() {
               className={cn(
                 "flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
                 isActive
-                  ? "bg-primary text-primary-foreground font-medium"
+                  ? "bg-secondary font-medium text-foreground"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground",
               )}
             >

@@ -68,8 +68,8 @@ function NodeInspectorOverlay({
   return (
     <div
       className={cn(
-        "absolute inset-y-0 right-0 z-20 w-full transition-[opacity,transform] duration-200 ease-out sm:w-72",
-        visible ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-4 opacity-0",
+        "absolute inset-y-0 right-0 z-20 w-full transition-opacity duration-200 ease-out sm:w-72",
+        visible ? "opacity-100" : "pointer-events-none opacity-0",
       )}
     >
       <NodeInspector
