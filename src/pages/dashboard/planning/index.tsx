@@ -1,7 +1,7 @@
 import { Popover } from "@base-ui/react/popover";
 import { useEffect, useId, useState, type ReactElement } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
-import { Clock, Filter, FolderOpen, Plus, UserRound } from "lucide-react";
+import { ArrowRight, Clock, Filter, FolderOpen, Plus, UserRound } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
@@ -340,17 +340,20 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               </Popover.Positioner>
             </Popover.Portal>
           </Popover.Root>
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            className="ml-auto"
-            render={
-              <Link to={detailTo} state={detailState} aria-label={`查看企划：${project.title}`} />
-            }
+          <Link
+            to={detailTo}
+            state={detailState}
+            aria-label={`查看企划：${project.title}`}
+            className="group/cta ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-full border border-primary bg-primary py-1 pl-2.5 pr-1 text-xs font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-primary/30 dark:bg-primary/12 dark:text-primary dark:hover:border-primary/50 dark:hover:bg-primary/20 dark:hover:opacity-100 in-[[data-color-theme=pink]]:border-rose-300/45 in-[[data-color-theme=pink]]:bg-rose-100/70 in-[[data-color-theme=pink]]:text-rose-950 in-[[data-color-theme=pink]]:hover:border-rose-300/70 in-[[data-color-theme=pink]]:hover:bg-rose-100 in-[[data-color-theme=pink]]:hover:opacity-100 dark:in-[[data-color-theme=pink]]:border-rose-300/25 dark:in-[[data-color-theme=pink]]:bg-rose-300/10 dark:in-[[data-color-theme=pink]]:text-rose-100 dark:in-[[data-color-theme=pink]]:hover:border-rose-300/45 dark:in-[[data-color-theme=pink]]:hover:bg-rose-300/16"
           >
             查看企划
-          </Button>
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15 dark:bg-primary/18 in-[[data-color-theme=pink]]:bg-rose-950/8 dark:in-[[data-color-theme=pink]]:bg-rose-100/12">
+              <ArrowRight
+                aria-hidden="true"
+                className="size-3.5 motion-safe:transition-transform motion-safe:duration-150 motion-safe:group-hover/cta:translate-x-0.5"
+              />
+            </span>
+          </Link>
         </div>
       </div>
     </article>
