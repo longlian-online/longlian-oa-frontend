@@ -196,10 +196,8 @@ export default function TaskPlaza() {
 
       <div>
         <h1 className="text-lg font-semibold text-foreground">任务大厅</h1>
-        {!loading && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            {total > 0 ? `共 ${total} 个企划有待接取任务` : "暂无待接取任务"}
-          </p>
+        {!loading && total > 0 && (
+          <p className="mt-1 text-sm text-muted-foreground">共 {total} 个企划有待接取任务</p>
         )}
       </div>
 
@@ -555,7 +553,7 @@ function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
   });
 
   return (
-    <div className="rounded-lg border bg-card p-3 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm">
+    <div className="rounded-lg border bg-card p-3 transition-colors hover:border-foreground/20">
       <span className="block truncate text-sm font-medium text-foreground" title={slotLabel}>
         {slotLabel}
       </span>

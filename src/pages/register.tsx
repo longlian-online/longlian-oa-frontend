@@ -189,7 +189,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Register Card */}
-        <div className="bg-card rounded-2xl border p-6 shadow-sm">
+        <div className="rounded-2xl border bg-card p-6">
           {isJoinSubmitted ? (
             <div role="status" className="space-y-3 text-center">
               <h2 className="text-lg font-semibold text-foreground">申请已提交，等待审核</h2>

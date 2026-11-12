@@ -162,7 +162,7 @@ export default function FileUpload({
             isDragging && "border-primary/60 bg-primary/[0.04]",
           )}
         >
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border transition-transform group-hover:scale-105">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-background ring-1 ring-border">
             {uploading ? (
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             ) : imagePreview ? (

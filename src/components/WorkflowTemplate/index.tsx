@@ -175,7 +175,7 @@ export function WorkflowTemplateCard({
   const handleStatusChange = onStatusChange ?? onDisable;
 
   return (
-    <article className="flex min-h-[190px] min-w-0 flex-col rounded-xl border bg-card px-4 py-4 shadow-sm transition-colors hover:border-foreground/20">
+    <article className="flex min-h-[190px] min-w-0 flex-col rounded-xl border bg-card px-4 py-4 transition-colors hover:border-foreground/20">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="truncate text-base font-bold leading-6 text-foreground">
@@ -241,7 +241,7 @@ export function CreateWorkflowTemplateCard({ onClick }: CreateWorkflowTemplateCa
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-h-[190px] min-w-0 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed bg-card text-center shadow-sm transition-colors",
+        "flex min-h-[190px] min-w-0 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed bg-card text-center transition-colors",
         "hover:border-foreground/30 hover:bg-secondary/40",
       )}
     >

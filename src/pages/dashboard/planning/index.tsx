@@ -244,7 +244,7 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
   return (
     <article
       aria-label={project.title}
-      className="flex aspect-[5/3] min-h-48 overflow-hidden rounded-lg border bg-card shadow-sm"
+      className="flex aspect-[5/3] min-h-48 overflow-hidden rounded-lg border bg-card"
     >
       <Link
         to={detailTo}

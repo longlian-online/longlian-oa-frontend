@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
           <p className="mt-1 text-sm text-muted-foreground">验证邮箱后设置新的登录密码</p>
         </div>
 
-        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="rounded-2xl border bg-card p-6">
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs text-muted-foreground">
