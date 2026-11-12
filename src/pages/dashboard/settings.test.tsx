@@ -302,8 +302,6 @@ test("存储设置按组织分栏，标签在内容块上方", async (): Promise
   await vi.waitFor(() => {
     expect(document.body.textContent).toContain("甲组");
   });
-  const titles = Array.from(document.querySelectorAll("h1"));
-  const orgTitle = titles.find((item) => item.textContent === "组织设置");
   const heading = Array.from(document.querySelectorAll("h2")).find(
     (item) => item.textContent === "存储设置",
   );
@@ -318,13 +316,11 @@ test("存储设置按组织分栏，标签在内容块上方", async (): Promise
   expect(tabs).toEqual(["甲组", "乙组"]);
   const tab = document.querySelector("[role='tab']");
   expect(
-    orgTitle !== undefined &&
-      notice !== undefined &&
+    notice !== undefined &&
       tab !== null &&
       block !== null &&
       block !== undefined &&
-      (notice.compareDocumentPosition(orgTitle) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0 &&
-      (orgTitle.compareDocumentPosition(tab) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0 &&
+      (notice.compareDocumentPosition(tab) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0 &&
       (tab.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
   ).toBe(true);
 });

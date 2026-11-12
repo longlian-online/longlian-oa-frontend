@@ -165,7 +165,7 @@ export default function TaskSubmitPanel({
         onOpenChange(nextOpen);
       }}
     >
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{title ?? `提交任务：${taskName}`}</DialogTitle>
         </DialogHeader>
@@ -178,9 +178,9 @@ export default function TaskSubmitPanel({
           {restoring && <p className="text-sm text-muted-foreground">正在读取暂存</p>}
           {extra}
           {submitFields.length === 0 ? (
-            <div className="rounded-xl bg-secondary/60 p-4 text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               该任务没有额外提交字段，确认后会直接提交。
-            </div>
+            </p>
           ) : (
             submitFields.map((field) => {
               const value = values[field.key];

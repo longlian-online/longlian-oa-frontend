@@ -4,7 +4,6 @@ import { useEffect, useId, useRef, useState, type ReactElement } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import {
   ArrowUpDown,
-  ArrowRight,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -93,7 +92,7 @@ function StageScopeHelp({ label, children }: StageScopeHelpProps): ReactElement 
         <Popover.Positioner side="bottom" sideOffset={6}>
           <Popover.Popup
             initialFocus={false}
-            className="max-w-[min(18rem,calc(100vw-2rem))] rounded-lg border bg-popover p-3 text-sm text-popover-foreground shadow-md outline-none"
+            className="max-w-[min(18rem,calc(100vw-2rem))] rounded-lg border bg-popover p-3 text-sm text-popover-foreground outline-none"
           >
             <Popover.Title className="sr-only">{label}说明</Popover.Title>
             <Popover.Description>{children}</Popover.Description>
@@ -187,7 +186,7 @@ export default function TaskPlaza() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4">
       {listQuery.isFetching && listQuery.data && (
         <p role="status" className="text-sm text-muted-foreground">
           正在刷新...
@@ -195,11 +194,9 @@ export default function TaskPlaza() {
       )}
 
       <div>
-        <h1 className="text-lg font-semibold text-foreground">任务大厅</h1>
-        {!loading && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            {total > 0 ? `共 ${total} 个企划有待接取任务` : "暂无待接取任务"}
-          </p>
+        <h1 className="text-xl font-semibold text-foreground">任务大厅</h1>
+        {!loading && total > 0 && (
+          <p className="mt-1 text-sm text-muted-foreground">共 {total} 个企划有待接取任务</p>
         )}
       </div>
 
@@ -447,19 +444,19 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
             {group.pendingCount}
           </span>
         </button>
-        <Link
-          to={`/dashboard/planning/${group.projectId}`}
-          state={{ ...location.state, listReturnTo: location.pathname + location.search }}
-          className="group/cta ml-auto inline-flex h-8 w-28 shrink-0 items-center justify-between gap-2 rounded-full border border-primary bg-primary py-1 pl-2.5 pr-1 text-xs font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-primary/30 dark:bg-primary/12 dark:text-primary dark:hover:border-primary/50 dark:hover:bg-primary/20 dark:hover:opacity-100 in-[[data-color-theme=pink]]:border-rose-300/45 in-[[data-color-theme=pink]]:bg-rose-100/70 in-[[data-color-theme=pink]]:text-rose-950 in-[[data-color-theme=pink]]:hover:border-rose-300/70 in-[[data-color-theme=pink]]:hover:bg-rose-100 in-[[data-color-theme=pink]]:hover:opacity-100 dark:in-[[data-color-theme=pink]]:border-rose-300/25 dark:in-[[data-color-theme=pink]]:bg-rose-300/10 dark:in-[[data-color-theme=pink]]:text-rose-100 dark:in-[[data-color-theme=pink]]:hover:border-rose-300/45 dark:in-[[data-color-theme=pink]]:hover:bg-rose-300/16"
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto h-7 shrink-0 px-2 text-xs"
+          render={
+            <Link
+              to={`/dashboard/planning/${group.projectId}`}
+              state={{ ...location.state, listReturnTo: location.pathname + location.search }}
+            />
+          }
         >
           作品详细
-          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15 dark:bg-primary/18 in-[[data-color-theme=pink]]:bg-rose-950/8 dark:in-[[data-color-theme=pink]]:bg-rose-100/12">
-            <ArrowRight
-              aria-hidden="true"
-              className="size-3.5 motion-safe:transition-transform motion-safe:duration-150 motion-safe:group-hover/cta:translate-x-0.5"
-            />
-          </span>
-        </Link>
+        </Button>
       </div>
 
       {expanded && (
@@ -555,7 +552,7 @@ function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
   });
 
   return (
-    <div className="rounded-lg border bg-card p-3 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm">
+    <div className="rounded-lg border bg-card p-3 transition-colors hover:border-foreground/20">
       <span className="block truncate text-sm font-medium text-foreground" title={slotLabel}>
         {slotLabel}
       </span>

@@ -30,8 +30,8 @@ export default function ProductReleaseHistoryPage(): ReactElement {
   }, [latestId]);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-      <h1 className="text-lg font-semibold">更新记录</h1>
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+      <h1 className="text-xl font-semibold">更新记录</h1>
       {query.isError && !query.data ? (
         <Button variant="outline" className="self-start" onClick={() => void query.refetch()}>
           加载失败，重试
@@ -64,7 +64,7 @@ export default function ProductReleaseHistoryPage(): ReactElement {
 
 function ReleaseCard({ release }: { release: ProductReleaseNotice }): ReactElement {
   return (
-    <article className="flex flex-col gap-3 rounded-xl border p-4">
+    <article className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-baseline gap-3">
         <h2 className="text-base font-semibold">{formatProductVersion(release.version)}</h2>
         <time className="text-xs text-muted-foreground">

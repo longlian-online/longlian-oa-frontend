@@ -3,7 +3,6 @@ import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { ArrowLeft, Layers, Mail } from "lucide-react";
 
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { resetPassword, sendVerificationCode } from "@/api/auth";
@@ -79,29 +78,23 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-[380px]">
         <div className="mb-8 flex flex-col items-center">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <Layers className="h-6 w-6 text-primary-foreground" />
-          </div>
+          <img
+            src="/logo-full.webp"
+            alt="白箱"
+            width={48}
+            height={48}
+            className="mb-4 h-12 w-12 object-contain"
+          />
           <h1 className="text-xl font-semibold text-foreground">找回密码</h1>
-          <p className="mt-1 text-sm text-muted-foreground">验证邮箱后设置新的登录密码</p>
         </div>
 
-        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+        <div className="rounded-xl border bg-card p-6">
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs text-muted-foreground">
                 邮箱
               </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="请输入邮箱"
-                  className="h-11 pl-10"
-                  {...form.register("email")}
-                />
-              </div>
+              <Input id="email" type="email" placeholder="请输入邮箱" {...form.register("email")} />
               {form.formState.errors.email && (
                 <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
               )}
@@ -127,7 +120,6 @@ export default function ForgotPasswordPage() {
                 id="code"
                 placeholder="请输入 6 位大写字母或数字验证码"
                 maxLength={6}
-                className="h-11"
                 {...form.register("code")}
                 onChange={(event) => {
                   event.target.value = event.target.value.toUpperCase();
@@ -148,7 +140,6 @@ export default function ForgotPasswordPage() {
                 type="password"
                 autoComplete="new-password"
                 placeholder="6-20位，含大写、小写和数字"
-                className="h-11"
                 {...form.register("password")}
               />
               <p className="text-xs text-muted-foreground">{NEW_PASSWORD_HINT}</p>
@@ -166,7 +157,6 @@ export default function ForgotPasswordPage() {
                 type="password"
                 autoComplete="new-password"
                 placeholder="再次输入新密码"
-                className="h-11"
                 {...form.register("confirmPassword")}
               />
               {form.formState.errors.confirmPassword && (
@@ -176,26 +166,20 @@ export default function ForgotPasswordPage() {
               )}
             </div>
 
-            {hasSent && (
-              <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-muted-foreground">
-                验证码已发送至邮箱，请在有效期内完成重置。
-              </div>
-            )}
-
             <Button type="submit" className="h-11 w-full" disabled={isResetting}>
               {isResetting ? "重置中..." : "确认重置密码"}
             </Button>
           </form>
 
-          <Button
-            type="button"
-            variant="ghost"
-            className="mt-4 h-9 w-full"
-            onClick={() => void navigate("/login")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            返回登录
-          </Button>
+          <div className="mt-6 border-t pt-4 text-center text-sm text-muted-foreground">
+            <button
+              type="button"
+              onClick={() => void navigate("/login")}
+              className="cursor-pointer text-primary hover:underline"
+            >
+              返回登录
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -22,6 +22,7 @@ import {
   removeProjectFromWorkshop,
 } from "@/api/planning";
 import { projectDetailQuery } from "@/queries/planning";
+import PageLoading from "@/components/PageLoading";
 import ProjectItemSection from "@/components/ProjectItem";
 import ProjectMembers from "@/components/ProjectMembers";
 import ProjectAttachments from "@/components/ProjectAttachments";
@@ -174,7 +175,7 @@ export default function ProjectDetail() {
   }
 
   if (loading) {
-    return <div className="py-8 text-center text-muted-foreground">加载中...</div>;
+    return <PageLoading />;
   }
 
   if (!project) {
@@ -199,7 +200,7 @@ export default function ProjectDetail() {
             <header id="project-overview" className="flex scroll-mt-6 flex-col gap-5 border-b pb-6">
               <div className="flex flex-wrap items-start justify-between gap-5">
                 <div className="flex min-w-0 flex-1 items-center gap-4">
-                  <div className="flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
+                  <div className="flex aspect-[2/3] h-20 w-auto shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
                     {project.coverUrl ? (
                       <RemoteImage
                         src={project.coverUrl}
@@ -215,7 +216,7 @@ export default function ProjectDetail() {
                     <div className="flex flex-wrap items-center gap-2">
                       <h1
                         tabIndex={-1}
-                        className="break-words rounded-sm text-xl font-semibold tracking-tight text-foreground outline-none data-[locate-highlight]:ring-2 data-[locate-highlight]:ring-ring data-[locate-highlight]:ring-offset-4 sm:text-2xl"
+                        className="break-words rounded-sm text-xl font-semibold tracking-tight text-foreground outline-none data-[locate-highlight]:ring-2 data-[locate-highlight]:ring-ring data-[locate-highlight]:ring-offset-4"
                       >
                         {project.title}
                       </h1>
@@ -263,7 +264,7 @@ export default function ProjectDetail() {
                     </Menu.Trigger>
                     <Menu.Portal>
                       <Menu.Positioner align="end" sideOffset={6}>
-                        <Menu.Popup className="min-w-40 rounded-lg border bg-popover p-1 text-sm text-popover-foreground shadow-md outline-none">
+                        <Menu.Popup className="min-w-40 rounded-lg border bg-popover p-1 text-sm text-popover-foreground outline-none">
                           <Menu.Group>
                             <Menu.Item
                               className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none data-highlighted:bg-muted"
@@ -353,7 +354,7 @@ export default function ProjectDetail() {
             <Textarea
               value={reason}
               maxLength={500}
-              placeholder="填写删除原因"
+              aria-label="删除原因"
               onChange={(event) => setReason(event.target.value)}
             />
             <DialogFooter>

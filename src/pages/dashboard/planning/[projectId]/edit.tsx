@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
 
+import PageLoading from "@/components/PageLoading";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { projectDetailQuery } from "@/queries/planning";
 import CreateProject from "@/pages/dashboard/planning/create";
@@ -19,7 +20,7 @@ export default function EditProjectPage() {
   }
 
   if (loading) {
-    return <div className="py-8 text-center text-sm text-muted-foreground">加载中...</div>;
+    return <PageLoading />;
   }
 
   if (!project) {

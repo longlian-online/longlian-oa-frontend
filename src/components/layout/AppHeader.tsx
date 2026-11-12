@@ -14,12 +14,12 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { usePendingPathname } from "@/hooks/usePendingPathname";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useTheme } from "@/hooks/useTheme";
@@ -176,7 +176,7 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
           <button
             type="button"
             aria-label="打开个人菜单"
-            className="block rounded-full outline-none ring-offset-background transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="block rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <Avatar>
               <AvatarImage src={user?.avatarUrl} alt="" />
@@ -186,12 +186,12 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
             </Avatar>
           </button>
 
-          <div className="pointer-events-none absolute right-0 top-full z-50 w-56 translate-y-2 rounded-xl border border-border bg-popover p-2 opacity-0 shadow-lg transition-[opacity,transform] duration-200 group-hover:pointer-events-auto group-hover:translate-y-1 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-1 group-focus-within:opacity-100">
+          <div className="pointer-events-none absolute right-0 top-full z-50 w-56 rounded-xl border border-border bg-popover p-2 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
             <div className="flex items-center gap-3 px-2 py-2.5">
-              <Avatar size="lg">
+              <Avatar>
                 <AvatarImage src={user?.avatarUrl} alt="" />
                 <AvatarFallback>
-                  <UserRound className="h-5 w-5" />
+                  <UserRound className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
@@ -254,20 +254,21 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
       </div>
 
       <Dialog open={isJoinOpen} onOpenChange={setIsJoinOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>加入组织</DialogTitle>
-            <DialogDescription>输入管理员提供的邀请码，加入新的协作组织。</DialogDescription>
           </DialogHeader>
-          <Input
-            value={inviteCode}
-            placeholder="请输入邀请码"
-            className="h-10"
-            onChange={(event) => {
-              setInviteCode(event.target.value);
-              setQueriedInvite("");
-            }}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="invite-code">邀请码</Label>
+            <Input
+              id="invite-code"
+              value={inviteCode}
+              onChange={(event) => {
+                setInviteCode(event.target.value);
+                setQueriedInvite("");
+              }}
+            />
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsJoinOpen(false)}>
               取消
@@ -289,20 +290,15 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
         <DialogContent>
           <DialogHeader>
             <DialogTitle>确认加入组织</DialogTitle>
-            <DialogDescription>请确认邀请码对应的组织信息。</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 rounded-xl border bg-muted/30 p-4">
-            <div>
-              <p className="text-xs text-muted-foreground">组织名称</p>
-              <p className="mt-1 text-base font-semibold text-foreground">
-                {inviteInfo?.orgName ?? "—"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">组织 ID</p>
-              <p className="mt-1 break-all text-sm text-foreground">{inviteInfo?.orgId ?? "—"}</p>
-            </div>
-          </div>
+          <p className="flex items-baseline gap-3">
+            <span className="text-base font-medium text-foreground">
+              {inviteInfo?.orgName ?? "—"}
+            </span>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {inviteInfo?.orgId ?? "—"}
+            </span>
+          </p>
           <DialogFooter>
             <Button
               variant="outline"

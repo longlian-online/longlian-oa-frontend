@@ -157,12 +157,9 @@ export default function ProjectAttachments({
       ) : attachments.length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">暂无附件</p>
       ) : (
-        <ul className="mt-4 flex flex-col gap-3">
+        <ul className="mt-4 divide-y border-y">
           {attachments.map((attachment) => (
-            <li
-              key={attachment.id}
-              className="flex min-w-0 items-center gap-3 rounded-xl border bg-background p-3"
-            >
+            <li key={attachment.id} className="flex min-w-0 items-center gap-3 py-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <FileText className="size-5" />
               </span>

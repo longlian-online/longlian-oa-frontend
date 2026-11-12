@@ -30,6 +30,28 @@ import ProjectItemOrderDialog from "./ProjectItemOrderDialog";
 
 import type { ProjectItemListFilter, ProjectItemListVO } from "@/types/projectItem";
 
+function projectListEmpty(status: ProjectItemListFilter | ""): {
+  title: string;
+  description: string;
+} {
+  if (status === "COMPLETED") {
+    return {
+      title: "已完成没有项目",
+      description: "标记完成的项目会出现在这里。还在做的在「进行中」。",
+    };
+  }
+  if (status === "") {
+    return {
+      title: "还没有项目",
+      description: "创建项目后，成员就可以围绕流程节点推进任务。",
+    };
+  }
+  return {
+    title: "进行中没有项目",
+    description: "这里只列出还没标记完成的项目。做完的在「已完成」。",
+  };
+}
+
 interface ProjectItemSectionProps {
   projectId: string;
   isCreator?: boolean;
@@ -193,16 +215,35 @@ export default function ProjectItemSection({
         ) : items.length === 0 ? (
           <EmptyState
             icon={<Workflow className="h-5 w-5 text-muted-foreground" />}
-            title="暂无项目"
-            description="创建项目后，成员就可以围绕流程节点推进任务。"
+            {...projectListEmpty(status)}
             className="min-h-44"
             action={
-              isCreator ? (
-                <Button size="sm" onClick={openCreate}>
-                  <Plus className="h-4 w-4" />
-                  创建项目
-                </Button>
-              ) : null
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {status === "COMPLETED" ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => updateQuery({ status: "IN_PROGRESS" })}
+                  >
+                    查看进行中
+                  </Button>
+                ) : null}
+                {status === "IN_PROGRESS" ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => updateQuery({ status: "COMPLETED" })}
+                  >
+                    查看已完成
+                  </Button>
+                ) : null}
+                {isCreator && status !== "COMPLETED" ? (
+                  <Button size="sm" onClick={openCreate}>
+                    <Plus className="h-4 w-4" />
+                    创建项目
+                  </Button>
+                ) : null}
+              </div>
             }
           />
         ) : (
@@ -210,17 +251,20 @@ export default function ProjectItemSection({
             {items.map((item) => (
               <article
                 key={item.id}
-                className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_auto] lg:items-center"
+                className="grid gap-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)_auto] lg:items-center"
               >
                 <div className="min-w-0">
                   <h3 className="break-words text-base font-semibold text-foreground">
                     {item.title}
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    当前阶段：{item.currentNodeName || "尚未开始"}
+                    当前阶段
+                    <span className="ml-1.5 font-medium text-foreground">
+                      {item.currentNodeName || "尚未开始"}
+                    </span>
                   </p>
                 </div>
-                <div className="flex min-w-0 flex-col gap-3 sm:col-span-2 sm:row-start-2 lg:col-span-1 lg:row-start-auto">
+                <div className="flex min-w-0 flex-col gap-2 sm:col-span-2 sm:row-start-2 lg:col-span-1 lg:row-start-auto">
                   <ProjectItemNodeList nodes={item.nodes} />
                   <div className="flex items-center gap-3">
                     <Progress
@@ -295,7 +339,7 @@ export default function ProjectItemSection({
             <Textarea
               value={reason}
               maxLength={500}
-              placeholder="填写删除原因"
+              aria-label="删除原因"
               onChange={(event) => setReason(event.target.value)}
             />
             <DialogFooter>

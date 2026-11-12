@@ -31,11 +31,10 @@ function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
   return (
     <div
       className={cn(
-        "group relative w-56 rounded-xl border bg-card p-3 text-left shadow-sm transition-[border-color,box-shadow,transform]",
-        "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md",
-        data.preview &&
-          "border-2 border-dashed border-primary bg-primary/10 ring-2 ring-primary/15",
-        data.selected && "border-primary ring-2 ring-primary/15",
+        "group relative w-56 rounded-xl border bg-card p-3 text-left transition-colors",
+        "hover:border-foreground/30",
+        data.preview && "border-2 border-dashed border-foreground/40",
+        data.selected && "ring-2 ring-ring",
       )}
     >
       <Handle
@@ -50,7 +49,7 @@ function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
         onClick={() => data.onSelect(id)}
       >
         <div className="flex items-start gap-3 pr-6">
-          <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
+          <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-foreground">
             <Icon className="size-4" />
           </div>
           <div className="min-w-0 flex-1">

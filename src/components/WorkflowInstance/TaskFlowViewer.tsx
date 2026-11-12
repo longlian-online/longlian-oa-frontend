@@ -81,7 +81,7 @@ function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
           return (
             <li
               key={group.sort}
-              className="relative flex w-28 shrink-0 flex-col items-center text-center"
+              className="relative flex w-auto min-w-28 shrink-0 flex-col items-center text-center"
             >
               {index > 0 && (
                 <span
@@ -106,7 +106,7 @@ function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
               </span>
               <span
                 className={cn(
-                  "mt-2 line-clamp-1 max-w-full px-2 text-xs font-medium",
+                  "mt-2 line-clamp-2 max-w-full px-2 text-xs font-medium",
                   isCurrent || isCompleted ? "text-foreground" : "text-muted-foreground",
                 )}
                 title={stageName}
@@ -114,7 +114,8 @@ function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
                 {stageName}
               </span>
               <span className="mt-0.5 text-[11px] text-muted-foreground">
-                {completed}/{group.nodes.length} 完成
+                {completed}/{group.nodes.length}
+                {group.nodes.length > 1 ? " · 并行" : ""}
               </span>
             </li>
           );
@@ -283,9 +284,9 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
             type: "smoothstep",
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              color: completed ? "var(--primary)" : "var(--muted-foreground)",
+              color: completed ? "var(--foreground)" : "var(--muted-foreground)",
             },
-            style: { stroke: completed ? "var(--primary)" : "var(--border)" },
+            style: { stroke: completed ? "var(--foreground)" : "var(--border)" },
           })),
         );
       }),
@@ -294,8 +295,11 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
 
   if (groups.length === 0) {
     return (
-      <div className="flex min-h-52 items-center justify-center rounded-2xl border bg-card text-sm text-muted-foreground">
-        暂无任务节点
+      <div className="flex min-h-52 flex-col items-center justify-center gap-1 rounded-xl border border-dashed bg-muted/20 px-6 text-center">
+        <p className="text-sm font-medium text-foreground">还没有任务节点</p>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          阶段和槽位会按流程排在这里。当前还没有可推进的节点。
+        </p>
       </div>
     );
   }

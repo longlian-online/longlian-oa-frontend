@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Mail, User, Lock, Eye, EyeOff, Building2, Sparkles } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
 import { Button } from "@/components/ui/button";
@@ -78,7 +78,6 @@ export default function RegisterPage() {
   // react-hook-form 只在首次渲染捕获 resolver，校验时通过 ref 判断当前模式。
   const modeRef = useRef(mode);
   modeRef.current = mode;
-  const [modeDirection, setModeDirection] = useState<"left" | "right">("right");
   const [queriedInvite, setQueriedInvite] = useState("");
   const inviteQuery = useApiQuery({
     scope: "public",
@@ -111,18 +110,13 @@ export default function RegisterPage() {
 
   const handleModeChange = (value: string): void => {
     const nextMode = value as RegisterMode;
-    setModeDirection(nextMode === "create" ? "right" : "left");
     setMode(nextMode);
     setQueriedInvite("");
     form.clearErrors("inviteCode");
   };
 
-  const modePanelClassName = cn(
-    "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 motion-safe:ease-out motion-reduce:animate-none",
-    modeDirection === "right"
-      ? "motion-safe:slide-in-from-right-4"
-      : "motion-safe:slide-in-from-left-4",
-  );
+  const modePanelClassName =
+    "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 motion-safe:ease-out motion-reduce:animate-none";
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
@@ -185,11 +179,13 @@ export default function RegisterPage() {
             height={48}
             className="mb-4 h-12 w-12 object-contain"
           />
-          <h1 className="text-xl font-semibold text-foreground">注册</h1>
+          {!isJoinSubmitted ? (
+            <h1 className="text-xl font-semibold text-foreground">注册</h1>
+          ) : null}
         </div>
 
         {/* Register Card */}
-        <div className="bg-card rounded-2xl border p-6 shadow-sm">
+        <div className="rounded-xl border bg-card p-6">
           {isJoinSubmitted ? (
             <div role="status" className="space-y-3 text-center">
               <h2 className="text-lg font-semibold text-foreground">申请已提交，等待审核</h2>
@@ -214,17 +210,13 @@ export default function RegisterPage() {
                     {INVITE_CODE_LABELS[mode]}
                   </Label>
                   <div className="flex gap-2">
-                    <div className="relative min-w-0 flex-1">
-                      <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="inviteCode"
-                        placeholder={`请输入${INVITE_CODE_LABELS[mode]}`}
-                        className="h-11 pl-10"
-                        {...form.register("inviteCode", {
-                          onChange: () => setQueriedInvite(""),
-                        })}
-                      />
-                    </div>
+                    <Input
+                      id="inviteCode"
+                      placeholder={`请输入${INVITE_CODE_LABELS[mode]}`}
+                      {...form.register("inviteCode", {
+                        onChange: () => setQueriedInvite(""),
+                      })}
+                    />
                     {mode === "join" && (
                       <Button
                         type="button"
@@ -253,15 +245,11 @@ export default function RegisterPage() {
                     <Label htmlFor="orgName" className="text-xs text-muted-foreground">
                       组织
                     </Label>
-                    <div className="relative">
-                      <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="orgName"
-                        placeholder="请输入组织名称"
-                        className="h-11 pl-10"
-                        {...form.register("orgName")}
-                      />
-                    </div>
+                    <Input
+                      id="orgName"
+                      placeholder="请输入组织名称"
+                      {...form.register("orgName")}
+                    />
                   </div>
                 )}
 
@@ -270,15 +258,7 @@ export default function RegisterPage() {
                   <Label htmlFor="nickname" className="text-xs text-muted-foreground">
                     昵称
                   </Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="nickname"
-                      placeholder="请输入昵称"
-                      className="pl-10 h-11"
-                      {...form.register("nickname")}
-                    />
-                  </div>
+                  <Input id="nickname" placeholder="请输入昵称" {...form.register("nickname")} />
                   {form.formState.errors.nickname && (
                     <p className="text-xs text-destructive">
                       {form.formState.errors.nickname.message}
@@ -291,15 +271,11 @@ export default function RegisterPage() {
                   <Label htmlFor="username" className="text-xs text-muted-foreground">
                     用户名
                   </Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="username"
-                      placeholder="4-20位英文字母、数字或下划线"
-                      className="pl-10 h-11"
-                      {...form.register("username")}
-                    />
-                  </div>
+                  <Input
+                    id="username"
+                    placeholder="4-20位英文字母、数字或下划线"
+                    {...form.register("username")}
+                  />
                   {form.formState.errors.username && (
                     <p className="text-xs text-destructive">
                       {form.formState.errors.username.message}
@@ -312,16 +288,12 @@ export default function RegisterPage() {
                   <Label htmlFor="email" className="text-xs text-muted-foreground">
                     邮箱
                   </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="请输入邮箱"
-                      className="pl-10 h-11"
-                      {...form.register("email")}
-                    />
-                  </div>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="请输入邮箱"
+                    {...form.register("email")}
+                  />
                   {form.formState.errors.email && (
                     <p className="text-xs text-destructive">
                       {form.formState.errors.email.message}
@@ -338,7 +310,6 @@ export default function RegisterPage() {
                     <Input
                       id="code"
                       placeholder="请输入 6 位大写字母或数字验证码"
-                      className="h-11"
                       maxLength={6}
                       {...form.register("code")}
                       onChange={(event) => {
@@ -367,12 +338,11 @@ export default function RegisterPage() {
                     密码
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="6-20位，含大写、小写和数字"
-                      className="pl-10 pr-10 h-11"
+                      className="pr-10"
                       {...form.register("password")}
                     />
                     <button
@@ -397,12 +367,11 @@ export default function RegisterPage() {
                     确认密码
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="请再次输入密码"
-                      className="pl-10 pr-10 h-11"
+                      className="pr-10"
                       {...form.register("confirmPassword")}
                     />
                     <button
@@ -428,7 +397,7 @@ export default function RegisterPage() {
                   {isLoading ? "注册中..." : "注册"}
                 </Button>
 
-                <div className="text-center text-sm text-muted-foreground mt-4">
+                <div className="mt-6 border-t pt-4 text-center text-sm text-muted-foreground">
                   已有账号？{" "}
                   <button
                     type="button"

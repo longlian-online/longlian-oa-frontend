@@ -285,7 +285,7 @@ export default function ProjectMetadataEditor({
                     id={`${inputId}-presets`}
                     role="listbox"
                     aria-label="组织预制标签"
-                    className="absolute top-full right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10"
+                    className="absolute top-full right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground ring-1 ring-foreground/10"
                   >
                     {visiblePresets.length === 0 ? (
                       <div className="px-2 py-1.5 text-sm text-muted-foreground">

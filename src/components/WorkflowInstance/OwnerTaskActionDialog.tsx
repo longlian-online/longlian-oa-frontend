@@ -56,8 +56,6 @@ export default function OwnerTaskActionDialog({
           <DialogTitle>取消接取：{taskTitle}</DialogTitle>
           <DialogDescription>
             当前执行人：{instance.assigneeNickname || instance.assigneeId || "未知成员"}。
-            任务将回到待接取并清除当前执行人，成员仍保留在企划中。
-            成果历史与操作记录保留；不会回滚其他任务，后续仅接取的任务保持不变。
           </DialogDescription>
         </DialogHeader>
         {failed && (

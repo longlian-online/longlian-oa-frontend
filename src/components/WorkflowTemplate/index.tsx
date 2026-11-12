@@ -175,10 +175,10 @@ export function WorkflowTemplateCard({
   const handleStatusChange = onStatusChange ?? onDisable;
 
   return (
-    <article className="flex min-h-[190px] min-w-0 flex-col rounded-xl border bg-card px-4 py-4 shadow-sm transition-colors hover:border-foreground/20">
+    <article className="flex min-h-[190px] min-w-0 flex-col rounded-xl border bg-card px-4 py-4 transition-colors hover:border-foreground/20">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="truncate text-base font-bold leading-6 text-foreground">
+          <h2 className="truncate text-base font-medium leading-6 text-foreground">
             {template.name}
           </h2>
           {template.description && (
@@ -241,7 +241,7 @@ export function CreateWorkflowTemplateCard({ onClick }: CreateWorkflowTemplateCa
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-h-[190px] min-w-0 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed bg-card text-center shadow-sm transition-colors",
+        "flex min-h-[190px] min-w-0 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed bg-card text-center transition-colors",
         "hover:border-foreground/30 hover:bg-secondary/40",
       )}
     >
@@ -249,9 +249,6 @@ export function CreateWorkflowTemplateCard({ onClick }: CreateWorkflowTemplateCa
         <Plus className="size-5" />
       </div>
       <div className="mt-3 text-sm font-medium leading-5 text-foreground">创建新流程</div>
-      <div className="mt-1 text-xs leading-[18px] text-muted-foreground">
-        用任务组合一个流程模板
-      </div>
     </button>
   );
 }

@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -97,7 +96,7 @@ function OrganizationApplicationsContent() {
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">入组申请</h1>
+          <h1 className="text-xl font-semibold text-foreground">入组申请</h1>
         </div>
         <div className="flex gap-2">
           <KeywordSearch
@@ -123,14 +122,14 @@ function OrganizationApplicationsContent() {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border bg-card">
+          <div className="overflow-x-auto rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>申请人</TableHead>
                   <TableHead>申请时间</TableHead>
                   <TableHead>状态</TableHead>
-                  <TableHead className="w-44 text-right">操作</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -142,11 +141,11 @@ function OrganizationApplicationsContent() {
                           <RemoteImage
                             src={application.avatarUrl}
                             alt=""
-                            className="size-9 rounded-full"
+                            className="size-6 rounded-full"
                             fallback={<UserRound className="size-4" />}
                           />
                         ) : (
-                          <div className="flex size-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                          <div className="flex size-6 items-center justify-center rounded-full bg-muted text-muted-foreground">
                             <UserRound className="size-4" />
                           </div>
                         )}
@@ -171,6 +170,7 @@ function OrganizationApplicationsContent() {
                         <Button
                           type="button"
                           size="sm"
+                          variant="ghost"
                           onClick={() => openReview(application, "APPROVED")}
                         >
                           <Check className="size-4" />
@@ -179,7 +179,7 @@ function OrganizationApplicationsContent() {
                         <Button
                           type="button"
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           className="text-destructive hover:text-destructive"
                           onClick={() => openReview(application, "REJECTED")}
                         >
@@ -204,20 +204,16 @@ function OrganizationApplicationsContent() {
       )}
 
       <Dialog open={reviewing !== null} onOpenChange={(open) => !open && setReviewing(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {reviewAction === "APPROVED" ? "通过入组申请" : "拒绝入组申请"}
             </DialogTitle>
-            <DialogDescription>
-              {reviewing
-                ? `正在处理「${applicationName(reviewing)}」的入组申请。`
-                : "请确认审核结果。"}
-            </DialogDescription>
           </DialogHeader>
           <Textarea
             value={reviewRemark}
-            placeholder="审核备注（可选）"
+            aria-label="审核备注"
+            className="min-h-24"
             maxLength={200}
             onChange={(event) => setReviewRemark(event.target.value)}
           />

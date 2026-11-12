@@ -47,9 +47,7 @@ export default function AssignTaskDialog({ taskTitle, onClose, onConfirm }: Assi
       <DialogContent>
         <DialogHeader>
           <DialogTitle>分配任务</DialogTitle>
-          <DialogDescription>
-            将「{taskTitle}」直接分配给组员。分配后任务归该组员，无需再手动领取。
-          </DialogDescription>
+          <DialogDescription>将「{taskTitle}」分配给组员，无需再领取。</DialogDescription>
         </DialogHeader>
         <MemberOptionField
           id="assign-member"

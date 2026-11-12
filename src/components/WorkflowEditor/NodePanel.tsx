@@ -103,18 +103,18 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
                 title={
                   description ? `${task.name}：${description}` : "拖到下方流程区，或点击添加到末尾"
                 }
-                className="group inline-flex h-10 max-w-44 shrink-0 cursor-grab items-center gap-2 rounded-full border bg-background px-2.5 text-left transition-[border-color,box-shadow] hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm active:cursor-grabbing"
+                className="group inline-flex h-10 max-w-44 shrink-0 cursor-grab items-center gap-2 rounded-full border bg-background px-2.5 text-left transition-colors hover:border-foreground/30 active:cursor-grabbing"
                 onClick={() => onAddNode(String(task.id))}
                 onPointerEnter={(event) => handlePrepareDragImage(event.currentTarget)}
                 onPointerDown={(event) => handlePrepareDragImage(event.currentTarget)}
                 onDragEnd={handleDragEnd}
                 onDragStart={(event) => handleDragStart(event, String(task.id))}
               >
-                <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
+                <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full text-foreground">
                   <Icon className="size-3.5" />
                 </div>
                 <span className="truncate text-sm font-medium text-foreground">{task.name}</span>
-                <Plus className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+                <Plus className="size-4 shrink-0 text-muted-foreground" />
               </button>
             );
           })

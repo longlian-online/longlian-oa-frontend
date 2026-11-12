@@ -191,7 +191,7 @@ function FileActionMenu({
       ref={panelRef}
       role="menu"
       aria-label="文件操作"
-      className="fixed z-50 min-w-44 rounded-lg border bg-popover p-1 text-sm text-popover-foreground shadow-md [&_svg]:size-4"
+      className="fixed z-50 min-w-44 rounded-lg border bg-popover p-1 text-sm text-popover-foreground ring-1 ring-foreground/10 [&_svg]:size-4"
       style={{ left: pos.x, top: pos.y }}
       onContextMenu={(event) => event.preventDefault()}
     >
@@ -663,7 +663,7 @@ function OrganizationFilesContent(): ReactElement {
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <h1 className="text-xl font-bold text-foreground">文件</h1>
+      <h1 className="text-xl font-semibold text-foreground">文件</h1>
       <section className="border-border bg-card flex h-[calc(100svh-13.5rem)] min-h-96 flex-col overflow-hidden rounded-xl border">
         <div className="border-border flex flex-wrap items-center gap-1 border-b px-2 py-2">
           <Button
@@ -962,7 +962,7 @@ function IconEntry({
       aria-selected={selected}
       title={entry.name}
       className={cn(
-        "flex min-w-0 flex-col items-center gap-2 rounded-lg px-2 py-3 text-center",
+        "flex min-w-0 flex-col items-center gap-2 rounded-lg px-2 py-2 text-center",
         selected
           ? "bg-foreground/15 text-foreground ring-1 ring-foreground/30 ring-inset"
           : "hover:bg-foreground/10",
@@ -974,7 +974,7 @@ function IconEntry({
     >
       <Icon
         className={cn(
-          "size-10",
+          "size-8",
           entry.kind === "FOLDER" ? "text-foreground" : "text-muted-foreground",
         )}
       />

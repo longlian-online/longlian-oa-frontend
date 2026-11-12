@@ -52,7 +52,7 @@ export default function OrganizationIdentity({
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Positioner side="bottom" align="start" sideOffset={8}>
-          <Popover.Popup className="border-border bg-popover text-popover-foreground w-64 max-w-[calc(100vw-2rem)] rounded-xl border shadow-lg outline-none">
+          <Popover.Popup className="border-border bg-popover text-popover-foreground w-64 max-w-[calc(100vw-2rem)] rounded-xl border outline-none">
             <div className="p-2">
               <Popover.Title className="text-muted-foreground px-2 py-2 text-xs font-medium">
                 最近切换

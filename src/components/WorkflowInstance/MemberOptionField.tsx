@@ -55,7 +55,7 @@ function FloatingMemberList({
       id={listId}
       role="listbox"
       aria-label="组员"
-      className="fixed z-[80] max-h-60 overflow-y-auto overscroll-contain rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10"
+      className="fixed z-[80] max-h-60 overflow-y-auto overscroll-contain rounded-lg bg-popover p-1 text-popover-foreground ring-1 ring-foreground/10"
     >
       {children}
     </div>,

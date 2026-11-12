@@ -1,7 +1,7 @@
 import { Popover } from "@base-ui/react/popover";
 import { useEffect, useId, useState, type ReactElement } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
-import { ArrowRight, Clock, Filter, FolderOpen, Plus, UserRound } from "lucide-react";
+import { Clock, Filter, FolderOpen, Plus, UserRound } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
@@ -210,16 +210,13 @@ function CreateProjectCard() {
     <Link
       to="/dashboard/planning/create"
       state={{ ...location.state, planningListReturnTo: `${location.pathname}${location.search}` }}
-      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-4 transition-colors hover:border-primary hover:bg-primary/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40 transition-colors group-hover:border-primary/40 group-hover:bg-primary/5">
-        <Plus className="text-muted-foreground transition-colors group-hover:text-primary" />
+      <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40">
+        <Plus className="text-muted-foreground" />
       </div>
       <div className="text-center">
-        <p className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">
-          创建新企划
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground/70">一同播下百合的种子</p>
+        <p className="text-muted-foreground text-sm font-medium">创建新企划</p>
       </div>
     </Link>
   );
@@ -244,7 +241,7 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
   return (
     <article
       aria-label={project.title}
-      className="flex aspect-[5/3] min-h-48 overflow-hidden rounded-lg border bg-card shadow-sm"
+      className="flex aspect-[5/3] min-h-48 overflow-hidden rounded-lg border bg-card"
     >
       <Link
         to={detailTo}
@@ -313,13 +310,13 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               <Popover.Positioner side="bottom" align="start" sideOffset={8}>
                 <Popover.Popup
                   initialFocus={false}
-                  className="w-60 max-w-[calc(100vw-2rem)] rounded-xl border bg-popover p-4 text-popover-foreground shadow-lg outline-none duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none"
+                  className="w-60 max-w-[calc(100vw-2rem)] rounded-xl border bg-popover p-4 text-popover-foreground outline-none duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none"
                 >
                   <div className="flex items-start gap-3">
-                    <Avatar size="lg" className="shrink-0">
+                    <Avatar className="size-9 shrink-0">
                       <AvatarImage src={project.creatorAvatarUrl} alt="" />
                       <AvatarFallback>
-                        <UserRound className="size-5" />
+                        <UserRound className="size-4" />
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1 space-y-3">
@@ -343,20 +340,17 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               </Popover.Positioner>
             </Popover.Portal>
           </Popover.Root>
-          <Link
-            to={detailTo}
-            state={detailState}
-            aria-label={`查看企划：${project.title}`}
-            className="group/cta ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-full border border-primary bg-primary py-1 pl-2.5 pr-1 text-xs font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-primary/30 dark:bg-primary/12 dark:text-primary dark:hover:border-primary/50 dark:hover:bg-primary/20 dark:hover:opacity-100 in-[[data-color-theme=pink]]:border-rose-300/45 in-[[data-color-theme=pink]]:bg-rose-100/70 in-[[data-color-theme=pink]]:text-rose-950 in-[[data-color-theme=pink]]:hover:border-rose-300/70 in-[[data-color-theme=pink]]:hover:bg-rose-100 in-[[data-color-theme=pink]]:hover:opacity-100 dark:in-[[data-color-theme=pink]]:border-rose-300/25 dark:in-[[data-color-theme=pink]]:bg-rose-300/10 dark:in-[[data-color-theme=pink]]:text-rose-100 dark:in-[[data-color-theme=pink]]:hover:border-rose-300/45 dark:in-[[data-color-theme=pink]]:hover:bg-rose-300/16"
+          <Button
+            variant="outline"
+            size="sm"
+            nativeButton={false}
+            className="ml-auto"
+            render={
+              <Link to={detailTo} state={detailState} aria-label={`查看企划：${project.title}`} />
+            }
           >
             查看企划
-            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15 dark:bg-primary/18 in-[[data-color-theme=pink]]:bg-rose-950/8 dark:in-[[data-color-theme=pink]]:bg-rose-100/12">
-              <ArrowRight
-                aria-hidden="true"
-                className="size-3.5 motion-safe:transition-transform motion-safe:duration-150 motion-safe:group-hover/cta:translate-x-0.5"
-              />
-            </span>
-          </Link>
+          </Button>
         </div>
       </div>
     </article>

@@ -137,7 +137,7 @@ export default function FileUpload({
             type="button"
             variant="secondary"
             size="icon-sm"
-            className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
+            className="absolute right-2 top-2"
             onClick={() => onChange(null)}
           >
             <X className="h-4 w-4" />
@@ -153,7 +153,7 @@ export default function FileUpload({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            "group flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-input bg-muted/30 p-5 text-center transition-colors hover:border-primary/50 hover:bg-primary/[0.03] disabled:pointer-events-none disabled:opacity-60 aria-invalid:border-destructive",
+            "group flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-input bg-muted/30 p-5 text-center transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-60 aria-invalid:border-destructive",
             fillHeight
               ? "min-h-[340px] flex-1"
               : imagePreview
@@ -162,13 +162,13 @@ export default function FileUpload({
             isDragging && "border-primary/60 bg-primary/[0.04]",
           )}
         >
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-border transition-transform group-hover:scale-105">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-background ring-1 ring-border">
             {uploading ? (
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             ) : imagePreview ? (
-              <ImagePlus className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+              <ImagePlus className="h-5 w-5 text-muted-foreground" />
             ) : (
-              <FileUp className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+              <FileUp className="h-5 w-5 text-muted-foreground" />
             )}
           </div>
           <div className="space-y-1">

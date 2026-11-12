@@ -105,8 +105,8 @@ export default function AttachmentPreviewHost(): ReactElement {
         }
       }}
     >
-      <DialogContent className="flex h-[min(40rem,calc(100vh-2rem))] w-[min(64rem,calc(100%-2rem))] max-w-none flex-col gap-3 overflow-hidden motion-reduce:animate-none motion-reduce:duration-0 sm:max-w-none">
-        <DialogHeader className="pr-8">
+      <DialogContent className="flex h-[min(40rem,calc(100vh-2rem))] w-[min(64rem,calc(100%-2rem))] max-w-none flex-col gap-0 overflow-hidden motion-reduce:animate-none motion-reduce:duration-0 sm:max-w-none">
+        <DialogHeader className="border-b pr-8">
           <DialogTitle className="truncate">{session?.fileName ?? "预览"}</DialogTitle>
           <DialogDescription className="sr-only">只读预览，不提供打印和导出。</DialogDescription>
         </DialogHeader>

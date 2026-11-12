@@ -148,7 +148,7 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
       role="dialog"
       aria-busy={initialLoading}
       aria-labelledby={`${panelId}-title`}
-      className="fixed right-4 top-14 z-50 w-[min(22.5rem,calc(100vw-2rem))] rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg sm:absolute sm:right-0 sm:top-full sm:mt-2"
+      className="fixed right-4 top-14 z-50 w-[min(22.5rem,calc(100vw-2rem))] rounded-xl border border-border bg-popover p-2 text-popover-foreground sm:absolute sm:right-0 sm:top-full sm:mt-2"
     >
       <div className="flex items-center justify-between gap-3 px-2 py-1.5">
         <h2 id={`${panelId}-title`} className="text-sm font-medium text-foreground">
@@ -215,6 +215,9 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2">
+                          {row.readAt === null && (
+                            <span className="size-1.5 shrink-0 rounded-full bg-destructive" />
+                          )}
                           <span className="text-xs font-medium text-foreground">
                             {presentation.label}
                           </span>
@@ -224,9 +227,6 @@ function NotificationPanel({ panelId, onClose }: NotificationPanelProps): ReactE
                           >
                             {formatNotificationTime(row.createdAt, now)}
                           </time>
-                          {row.readAt === null && (
-                            <span className="size-1.5 shrink-0 rounded-full bg-destructive" />
-                          )}
                         </span>
                         <span
                           className={cn(

@@ -59,26 +59,28 @@ export default function ProxySubmitDialog({
           <p className="text-sm text-muted-foreground">
             记录归所选组员，提交时间使用这里设定的时间，而不是当前时间。
           </p>
-          <MemberOptionField
-            id="proxy-submit-member"
-            listId="proxy-submit-member-list"
-            value={assigneeId}
-            onChange={setAssigneeId}
-          />
-          <div className="flex flex-col gap-2 text-sm text-foreground">
-            <label htmlFor="proxy-submit-time">提交时间</label>
-            <DateTimeField
-              id="proxy-submit-time"
-              mode="datetime"
-              max={toDateTimeLocalValue(new Date())}
-              value={submittedAt}
-              onChange={setSubmittedAt}
+          <div className="grid grid-cols-2 gap-3">
+            <MemberOptionField
+              id="proxy-submit-member"
+              listId="proxy-submit-member-list"
+              value={assigneeId}
+              onChange={setAssigneeId}
             />
-            {submittedAt && !timestamp && (
-              <p role="alert" className="text-destructive">
-                提交时间不能晚于当前时间
-              </p>
-            )}
+            <div className="flex flex-col gap-2 text-sm text-foreground">
+              <label htmlFor="proxy-submit-time">提交时间</label>
+              <DateTimeField
+                id="proxy-submit-time"
+                mode="datetime"
+                max={toDateTimeLocalValue(new Date())}
+                value={submittedAt}
+                onChange={setSubmittedAt}
+              />
+              {submittedAt && !timestamp && (
+                <p role="alert" className="text-destructive">
+                  提交时间不能晚于当前时间
+                </p>
+              )}
+            </div>
           </div>
         </>
       }
