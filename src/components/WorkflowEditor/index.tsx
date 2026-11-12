@@ -63,7 +63,9 @@ function NodeInspectorOverlay({
     return () => window.clearTimeout(timeoutId);
   }, [node]);
 
-  if (!renderedNode) return null;
+  // 缓存仅用于退场动画，编辑时必须同步使用最新节点，避免打断输入法组词。
+  const inspectorNode = node ?? renderedNode;
+  if (!inspectorNode) return null;
 
   return (
     <div
@@ -73,7 +75,7 @@ function NodeInspectorOverlay({
       )}
     >
       <NodeInspector
-        node={renderedNode}
+        node={inspectorNode}
         baseTasks={baseTasks}
         onRename={onRename}
         onRemove={onRemove}
