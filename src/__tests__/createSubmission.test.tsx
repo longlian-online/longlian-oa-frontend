@@ -95,7 +95,7 @@ const entries: Entry[] = [
     destination: "/dashboard/planning",
     createPath: "/app/projects",
     titlePlaceholder: "企划名",
-    descriptionPlaceholder: "介绍作品来源、当前进度、协作注意事项等",
+    descriptionPlaceholder: "简介",
     saveLabel: "创建企划",
     element: <CreateProject />,
   },

@@ -6,6 +6,7 @@ import { Loader2, ScrollText } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { formatProductVersion, formatReleaseTime, statusLabel } from "@/lib/productRelease";
@@ -36,10 +37,7 @@ export default function ProductReleaseListPage(): ReactElement {
   const query = useApiQuery(adminProductReleasesQuery(page, status));
 
   return (
-    <AdminLayout
-      title="产品版本"
-      description="发布用户可见的更新说明，并绑定这次的前端与后端版本。"
-    >
+    <AdminLayout title="产品版本">
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-1">
@@ -90,13 +88,13 @@ export default function ProductReleaseListPage(): ReactElement {
                 key={release.id}
                 to={`/admin/product-releases/${release.id}`}
                 state={returnState}
-                className="flex flex-col gap-1 rounded-xl border p-4 transition-colors hover:bg-muted/40"
+                className="flex flex-col gap-1 rounded-xl border p-4 transition-colors hover:bg-muted"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">{formatProductVersion(release.version)}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <Badge variant={release.status === "PUBLISHED" ? "outline" : "secondary"}>
                     {statusLabel(release.status)}
-                  </span>
+                  </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   前端 {release.frontendVersion} · 后端 {release.backendVersion}

@@ -81,7 +81,7 @@ function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
           return (
             <li
               key={group.sort}
-              className="relative flex w-28 shrink-0 flex-col items-center text-center"
+              className="relative flex w-auto min-w-28 shrink-0 flex-col items-center text-center"
             >
               {index > 0 && (
                 <span
@@ -106,7 +106,7 @@ function StageTimeline({ groups, currentStageSort }: StageTimelineProps) {
               </span>
               <span
                 className={cn(
-                  "mt-2 line-clamp-1 max-w-full px-2 text-xs font-medium",
+                  "mt-2 line-clamp-2 max-w-full px-2 text-xs font-medium",
                   isCurrent || isCompleted ? "text-foreground" : "text-muted-foreground",
                 )}
                 title={stageName}
@@ -284,9 +284,9 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
             type: "smoothstep",
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              color: completed ? "var(--primary)" : "var(--muted-foreground)",
+              color: completed ? "var(--foreground)" : "var(--muted-foreground)",
             },
-            style: { stroke: completed ? "var(--primary)" : "var(--border)" },
+            style: { stroke: completed ? "var(--foreground)" : "var(--border)" },
           })),
         );
       }),

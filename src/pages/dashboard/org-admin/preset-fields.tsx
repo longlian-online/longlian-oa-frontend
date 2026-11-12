@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -131,7 +130,7 @@ function OrganizationPresetFieldsContent() {
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold text-foreground">表单字段</h1>
+        <h1 className="text-xl font-semibold text-foreground">表单字段</h1>
         <div className="flex flex-wrap gap-2">
           <KeywordSearch
             value={searchText}
@@ -167,14 +166,14 @@ function OrganizationPresetFieldsContent() {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border bg-card">
+          <div className="overflow-x-auto rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>字段名</TableHead>
                   <TableHead>创建时间</TableHead>
                   <TableHead>创建人</TableHead>
-                  <TableHead className="w-40 text-right">操作</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -239,14 +238,9 @@ function OrganizationPresetFieldsContent() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingField ? "编辑字段" : "新增字段"}</DialogTitle>
-            <DialogDescription>
-              {editingField
-                ? "修改后，之后选用该字段时会填入新的字段名。"
-                : "新增一个组织成员可选用的表单字段。选择后只填入字段名，值由填写人补充。"}
-            </DialogDescription>
           </DialogHeader>
           <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
             字段名
@@ -254,7 +248,6 @@ function OrganizationPresetFieldsContent() {
               value={name}
               maxLength={50}
               autoFocus
-              placeholder="例如：作者、状态"
               onChange={(event) => setName(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") void handleSave();

@@ -210,16 +210,13 @@ function CreateProjectCard() {
     <Link
       to="/dashboard/planning/create"
       state={{ ...location.state, planningListReturnTo: `${location.pathname}${location.search}` }}
-      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-4 transition-colors hover:border-primary hover:bg-primary/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40 transition-colors group-hover:border-primary/40 group-hover:bg-primary/5">
-        <Plus className="text-muted-foreground transition-colors group-hover:text-primary" />
+      <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40">
+        <Plus className="text-muted-foreground" />
       </div>
       <div className="text-center">
-        <p className="text-muted-foreground text-sm font-medium transition-colors group-hover:text-foreground">
-          创建新企划
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground/70">一同播下百合的种子</p>
+        <p className="text-muted-foreground text-sm font-medium">创建新企划</p>
       </div>
     </Link>
   );
@@ -313,13 +310,13 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               <Popover.Positioner side="bottom" align="start" sideOffset={8}>
                 <Popover.Popup
                   initialFocus={false}
-                  className="w-60 max-w-[calc(100vw-2rem)] rounded-xl border bg-popover p-4 text-popover-foreground shadow-lg outline-none duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none"
+                  className="w-60 max-w-[calc(100vw-2rem)] rounded-xl border bg-popover p-4 text-popover-foreground outline-none duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none"
                 >
                   <div className="flex items-start gap-3">
-                    <Avatar size="lg" className="shrink-0">
+                    <Avatar className="size-9 shrink-0">
                       <AvatarImage src={project.creatorAvatarUrl} alt="" />
                       <AvatarFallback>
-                        <UserRound className="size-5" />
+                        <UserRound className="size-4" />
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1 space-y-3">

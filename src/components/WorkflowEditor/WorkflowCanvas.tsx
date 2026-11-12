@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import {
+  Controls,
   MarkerType,
   ReactFlow,
   useEdgesState,
@@ -9,10 +10,9 @@ import {
   type OnNodeDrag,
   type ReactFlowInstance,
 } from "@xyflow/react";
-import { Layers2, LocateFixed } from "lucide-react";
+import { Layers2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import WorkflowViewportControls from "@/components/WorkflowViewportControls";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
 import { buildDragPreviewScene } from "./dragPreview";
 import WorkflowNode, { type WorkflowFlowNode } from "./WorkflowNode";
@@ -97,9 +97,8 @@ function buildEdges(nodes: WorkflowEditorNode[]): Edge[] {
         source: source.localId,
         target: target.localId,
         type: "smoothstep",
-        animated: true,
         markerEnd: { type: MarkerType.ArrowClosed },
-        style: { strokeWidth: 1.5, strokeDasharray: "6 6" },
+        style: { strokeWidth: 1.5 },
       })),
     );
   });
@@ -251,17 +250,11 @@ export default function WorkflowCanvas({
           <Badge variant="outline">0 个节点</Badge>
         </div>
         <div
-          className="flex flex-1 flex-col items-center justify-center gap-3 text-center"
+          className="flex flex-1 items-center justify-center text-center"
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <LocateFixed className="size-6" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">从上方任务库拖入第一个节点</p>
-            <p className="mt-1 text-xs text-muted-foreground">也可以点击节点卡追加到流程末尾</p>
-          </div>
+          <p className="text-sm font-medium text-foreground">从上方任务库拖入第一个节点</p>
         </div>
       </section>
     );
@@ -312,7 +305,11 @@ export default function WorkflowCanvas({
         onDrop={handleDrop}
         className="bg-muted/20 pt-12"
       >
-        <WorkflowViewportControls />
+        <Controls
+          showInteractive={false}
+          aria-label="画布导航"
+          className="overflow-hidden rounded-lg border border-border [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-foreground [&>button>svg]:!fill-current"
+        />
       </ReactFlow>
     </section>
   );

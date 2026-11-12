@@ -9,6 +9,14 @@ import PaginationBar from "@/components/PaginationBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { formatBytes, formatStorageUsage } from "@/lib/format";
 import { ADMIN_PAGE_SIZE as PAGE_SIZE, storageStatsQuery } from "@/queries/admin";
@@ -42,7 +50,7 @@ function byteTitle(bytes: number): string {
 
 function OrganizationStorage({ organization }: { organization: StorageStatsVO }) {
   return (
-    <section className="border-border border-b py-5 last:border-b-0">
+    <section className="border-border border-b py-3 last:border-b-0">
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-medium">{organization.name}</h2>
@@ -65,38 +73,36 @@ function OrganizationStorage({ organization }: { organization: StorageStatsVO })
           </div>
         </dl>
       </div>
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[36rem] text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted-foreground">
-              <th className="w-24 py-1 pr-3 font-normal">类别</th>
+      <div className="mt-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-24">类别</TableHead>
               {STATES.map((state) => (
-                <th key={state.key} className="py-1 pr-3 font-normal">
-                  {state.label}
-                </th>
+                <TableHead key={state.key}>{state.label}</TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {CATEGORIES.map((category) => (
-              <tr key={category.key} className="border-border/70 border-t">
-                <th className="py-2 pr-3 text-left font-medium">{category.label}</th>
+              <TableRow key={category.key}>
+                <TableHead>{category.label}</TableHead>
                 {STATES.map((state) => {
                   const value = readState(organization[category.key], state.key);
                   return (
-                    <td
+                    <TableCell
                       key={state.key}
-                      className="py-2 pr-3 tabular-nums"
                       title={byteTitle(value.bytes)}
+                      className="tabular-nums"
                     >
                       {formatStorageUsage(value.count, value.bytes)}
-                    </td>
+                    </TableCell>
                   );
                 })}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </section>
   );
@@ -115,10 +121,7 @@ export default function StorageStatsPage() {
   }
 
   return (
-    <AdminLayout
-      title="存储占用"
-      description="封面、缩略图和任务附件的占用。保留期内的废弃文件仍算占用，物理删除后算已回收。不含头像，数字只供参考。"
-    >
+    <AdminLayout title="存储占用">
       <Card>
         <CardContent className="p-4 sm:p-6">
           <div className="mb-2 flex gap-2">

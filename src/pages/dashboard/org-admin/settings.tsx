@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Building2, ImagePlus, Loader2, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { updateOrganizationInfo } from "@/api/organizationAdmin";
@@ -9,7 +9,7 @@ import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import FileUpload from "@/components/FileUpload";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getCurrentOrgId } from "@/lib/session";
@@ -90,7 +90,7 @@ function OrganizationSettingsContent() {
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
       <div className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div>
-          <h1 className="text-xl font-bold text-foreground">组织设置</h1>
+          <h1 className="text-xl font-semibold text-foreground">组织设置</h1>
         </div>
         <Button type="button" disabled={saving || !organization} onClick={() => void handleSave()}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
@@ -98,14 +98,8 @@ function OrganizationSettingsContent() {
         </Button>
       </div>
 
-      <div className="grid items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
         <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <ImagePlus className="size-4 text-muted-foreground" />
-              <CardTitle>组织头像</CardTitle>
-            </div>
-          </CardHeader>
           <CardContent>
             <FileUpload
               bizType="avatar"
@@ -116,19 +110,13 @@ function OrganizationSettingsContent() {
               imagePreview
               accept={["jpg", "jpeg", "png", "gif", "avif"]}
               maxSize={5 * 1024 * 1024}
-              className="[&>button]:min-h-56"
+              className="[&>button]:aspect-square [&>button]:h-auto [&>button]:min-h-0"
               onChange={setAvatarFile}
             />
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Building2 className="size-4 text-muted-foreground" />
-              <CardTitle>基础信息</CardTitle>
-            </div>
-          </CardHeader>
           <CardContent className="space-y-5">
             <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
               组织名称

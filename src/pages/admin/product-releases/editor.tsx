@@ -107,7 +107,6 @@ export default function ProductReleaseEditor({
           onChange={(event) => patch({ content: event.target.value })}
         />
       </Field>
-      <p className="-mt-2 text-xs text-muted-foreground">Markdown，最多 4000 字。</p>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex flex-wrap justify-end gap-2">
         <Button

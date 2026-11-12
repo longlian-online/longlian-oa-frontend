@@ -90,7 +90,7 @@ function OrganizationAdminProjectsContent() {
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">企划管理</h1>
+          <h1 className="text-xl font-semibold text-foreground">企划管理</h1>
         </div>
         <div className="flex gap-2">
           <KeywordSearch
@@ -116,7 +116,7 @@ function OrganizationAdminProjectsContent() {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border bg-card">
+          <div className="overflow-x-auto rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -125,7 +125,7 @@ function OrganizationAdminProjectsContent() {
                   <TableHead>创建人</TableHead>
                   <TableHead>创建时间</TableHead>
                   <TableHead>状态</TableHead>
-                  <TableHead className="w-24 text-right">操作</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -136,16 +136,14 @@ function OrganizationAdminProjectsContent() {
                       <TableCell>
                         <button
                           type="button"
-                          className="min-w-52 text-left"
+                          className="block max-w-full truncate text-left font-medium"
                           onClick={() =>
                             void navigate(`/dashboard/planning/${project.id}`, {
                               state: { listReturnTo: location.pathname + location.search },
                             })
                           }
                         >
-                          <span className="truncate font-medium text-foreground">
-                            {project.title ?? "未命名企划"}
-                          </span>
+                          {project.title ?? "未命名企划"}
                         </button>
                       </TableCell>
                       <TableCell className="text-muted-foreground">

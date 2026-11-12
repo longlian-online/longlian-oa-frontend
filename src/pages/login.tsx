@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Mail, User, Lock, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import { loginByPassword, loginByCode, sendVerificationCode } from "@/api/auth";
 import { $tip } from "@/components/tip";
 import { saveSession } from "@/lib/session";
 import { loginResumePath } from "@/lib/externalEntry";
-import { cn } from "@/lib/utils";
 
 const passwordSchema = z.object({
   username: z.string().min(1, "请输入用户名"),
@@ -39,7 +38,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [activeTab, setActiveTab] = useState<"password" | "code">("password");
-  const [tabDirection, setTabDirection] = useState<"left" | "right">("right");
 
   const passwordForm = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
@@ -52,17 +50,11 @@ export default function LoginPage() {
   });
 
   const handleTabChange = (value: string): void => {
-    const nextTab = value as "password" | "code";
-    setTabDirection(nextTab === "code" ? "right" : "left");
-    setActiveTab(nextTab);
+    setActiveTab(value as "password" | "code");
   };
 
-  const tabPanelClassName = cn(
-    "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 motion-safe:ease-out motion-reduce:animate-none",
-    tabDirection === "right"
-      ? "motion-safe:slide-in-from-right-4"
-      : "motion-safe:slide-in-from-left-4",
-  );
+  const tabPanelClassName =
+    "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 motion-safe:ease-out motion-reduce:animate-none";
 
   const onPasswordSubmit = async (data: PasswordFormData) => {
     try {
@@ -126,11 +118,10 @@ export default function LoginPage() {
             className="mb-4 h-12 w-12 object-contain"
           />
           <h1 className="text-xl font-semibold text-foreground">欢迎回来</h1>
-          <p className="text-sm text-muted-foreground mt-1">请输入您的账号密码</p>
         </div>
 
         {/* Login Card */}
-        <div className="rounded-2xl border bg-card p-6">
+        <div className="rounded-xl border bg-card p-6">
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="password">密码</TabsTrigger>
@@ -147,15 +138,11 @@ export default function LoginPage() {
                   <Label htmlFor="username" className="text-xs text-muted-foreground">
                     用户名
                   </Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="username"
-                      placeholder="请输入用户名"
-                      className="pl-10 h-11"
-                      {...passwordForm.register("username")}
-                    />
-                  </div>
+                  <Input
+                    id="username"
+                    placeholder="请输入用户名"
+                    {...passwordForm.register("username")}
+                  />
                   {passwordForm.formState.errors.username && (
                     <p className="text-xs text-destructive">
                       {passwordForm.formState.errors.username.message}
@@ -168,12 +155,11 @@ export default function LoginPage() {
                     密码
                   </Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="请输入密码"
-                      className="pl-10 pr-10 h-11"
+                      className="pr-10"
                       {...passwordForm.register("password")}
                     />
                     <button
@@ -214,16 +200,12 @@ export default function LoginPage() {
                   <Label htmlFor="email" className="text-xs text-muted-foreground">
                     邮箱
                   </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="请输入邮箱"
-                      className="pl-10 h-11"
-                      {...codeForm.register("email")}
-                    />
-                  </div>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="请输入邮箱"
+                    {...codeForm.register("email")}
+                  />
                   {codeForm.formState.errors.email && (
                     <p className="text-xs text-destructive">
                       {codeForm.formState.errors.email.message}
@@ -239,7 +221,6 @@ export default function LoginPage() {
                     <Input
                       id="code"
                       placeholder="请输入 6 位大写字母或数字验证码"
-                      className="h-11"
                       maxLength={6}
                       {...codeForm.register("code")}
                       onChange={(event) => {

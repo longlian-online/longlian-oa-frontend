@@ -176,9 +176,9 @@ function VersionFields({
     return <p className="text-sm text-muted-foreground">该版本未填写其他提交内容。</p>;
   }
   return (
-    <dl className="space-y-4">
+    <dl>
       {fields.map((field) => (
-        <div key={field.key} className="min-w-0 rounded-xl bg-muted/30 p-3 sm:p-4">
+        <div key={field.key} className="min-w-0 border-b py-3 last:border-b-0">
           <dt className="break-words text-xs font-medium text-muted-foreground">{field.label}</dt>
           <dd className="mt-2">
             {field.type === "file" ? (
@@ -214,7 +214,7 @@ function TaskActions({
   if (!instance) return null;
   const isMine = Boolean(instance.assigneeId && instance.assigneeId === actions.currentUserId);
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className="flex flex-wrap items-center justify-start gap-2">
       {instance.status === "PENDING" && (
         <Button size="sm" disabled={actions.mutating} onClick={actions.onClaim}>
           {actions.mutating && <Loader2 className="size-4 animate-spin" />}
@@ -432,15 +432,17 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
                 <span className="break-words">{assigneeName || "暂无执行人"}</span>
               </div>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              {actions && <TaskActions actions={actions} instance={instance} />}
-              {status && (
-                <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium">
-                  {STATUS_LABELS[status]}
-                </span>
-              )}
-            </div>
+            {status && (
+              <span className="shrink-0 rounded-full bg-secondary px-3 py-1 text-xs font-medium">
+                {STATUS_LABELS[status]}
+              </span>
+            )}
           </header>
+          {actions && (
+            <div className="mt-3 flex justify-start">
+              <TaskActions actions={actions} instance={instance} />
+            </div>
+          )}
           <div className="mt-4 border-t pt-4">
             {error ? (
               <div className="flex flex-wrap items-center gap-3">
@@ -466,7 +468,7 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
             ) : (
               <>
                 {detail.draft && (
-                  <section className="mb-4 rounded-xl border" aria-label="暂存">
+                  <section className="border-b py-3" aria-label="暂存">
                     <div className="flex flex-wrap items-center gap-2 p-3">
                       <h3 className="text-sm font-semibold">暂存</h3>
                       <Badge variant="outline">仅自己可见</Badge>
@@ -533,14 +535,7 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
                           ? version.versionNo === current?.versionNo
                           : expandedVersion === version.versionNo;
                       return (
-                        <li
-                          key={version.versionNo}
-                          className={
-                            version.versionNo === current?.versionNo
-                              ? "rounded-xl border bg-muted/40"
-                              : "rounded-xl border"
-                          }
-                        >
+                        <li key={version.versionNo} className="border-b py-3 last:border-b-0">
                           <button
                             type="button"
                             className="flex w-full flex-wrap items-center gap-2 p-3 text-left"

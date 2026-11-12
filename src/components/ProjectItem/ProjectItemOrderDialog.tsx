@@ -339,10 +339,10 @@ export default function ProjectItemOrderDialog({
                       : "hover:bg-muted/40",
                     dropTarget?.id === item.id &&
                       dropTarget.edge === "before" &&
-                      "border-t-2 border-t-primary",
+                      "border-t-2 border-t-foreground",
                     dropTarget?.id === item.id &&
                       dropTarget.edge === "after" &&
-                      "border-b-2 border-b-primary",
+                      "border-b-2 border-b-foreground",
                   )}
                   onDragOver={(event) => dragOver(event, item.id)}
                   onDrop={(event) => drop(event, item.id)}
@@ -397,9 +397,6 @@ export default function ProjectItemOrderDialog({
                 </li>
               ))}
             </ol>
-            <p className="text-xs text-muted-foreground">
-              共 {draft.length} 个项目 · 拖动手柄或使用上下按钮调整，保存后生效。
-            </p>
           </>
         )}
         {saveFailed && (

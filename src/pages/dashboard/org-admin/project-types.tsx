@@ -23,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -212,7 +211,7 @@ function OrganizationProjectTypesContent() {
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">企划类型</h1>
+          <h1 className="text-xl font-semibold text-foreground">企划类型</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           <KeywordSearch
@@ -249,7 +248,7 @@ function OrganizationProjectTypesContent() {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border bg-card">
+          <div className="overflow-x-auto rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -258,7 +257,7 @@ function OrganizationProjectTypesContent() {
                   <TableHead>创建人</TableHead>
                   <TableHead>创建时间</TableHead>
                   <TableHead>状态</TableHead>
-                  <TableHead className="w-40 text-right">操作</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -359,42 +358,35 @@ function OrganizationProjectTypesContent() {
         <DialogContent className="max-h-[min(40rem,calc(100%-2rem))] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingType ? "编辑企划类型" : "新增企划类型"}</DialogTitle>
-            <DialogDescription>
-              {editingType
-                ? "修改类型名称、优先级和默认自定义表单。"
-                : "新增一个组织可用的企划类型。"}
-            </DialogDescription>
           </DialogHeader>
-          <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
-            类型名称
-            <Input
-              value={name}
-              maxLength={50}
-              autoFocus
-              placeholder="例如：漫画、小说、视频"
-              onChange={(event) => setName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void handleSaveType();
-              }}
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
-            优先级
-            <Input
-              type="number"
-              step={1}
-              min={-2147483648}
-              max={2147483647}
-              value={priority}
-              onChange={(event) => setPriority(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void handleSaveType();
-              }}
-            />
-            <span className="text-xs font-normal text-muted-foreground">
-              仅影响用户端企划类型的展示顺序，数值越大越靠前，默认 0。
-            </span>
-          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+              类型名称
+              <Input
+                value={name}
+                maxLength={50}
+                autoFocus
+                onChange={(event) => setName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void handleSaveType();
+                }}
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
+              优先级
+              <Input
+                type="number"
+                step={1}
+                min={-2147483648}
+                max={2147483647}
+                value={priority}
+                onChange={(event) => setPriority(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void handleSaveType();
+                }}
+              />
+            </label>
+          </div>
           <ProjectTypeCustomFormEditor
             value={customFields}
             presets={(presetFieldQuery.data ?? []).map((field) => ({

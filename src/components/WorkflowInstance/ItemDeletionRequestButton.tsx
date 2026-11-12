@@ -111,7 +111,6 @@ export default function ItemDeletionRequestButton({
             value={reason}
             maxLength={500}
             aria-label={`删除${itemTitle}的原因`}
-            placeholder="填写删除原因"
             onChange={(event) => setReason(event.target.value)}
           />
           <DialogFooter>

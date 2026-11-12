@@ -152,8 +152,8 @@ function OrganizationAdminCreateWorkflowContent() {
       {baseQuery.isError && !baseQuery.data && (
         <Button onClick={() => void baseQuery.refetch()}>任务库加载失败，重试</Button>
       )}
-      <div className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-4">
-        <h1 className="text-lg font-bold leading-6 text-foreground">
+      <div className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
+        <h1 className="text-base font-semibold leading-6 text-foreground">
           {isEditing ? "编辑工作流程" : "创建工作流程"}
         </h1>
         <div className="flex-1" />
@@ -163,7 +163,7 @@ function OrganizationAdminCreateWorkflowContent() {
         </Button>
       </div>
 
-      <div className="grid gap-3 border-b bg-card px-4 py-3 md:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid gap-3 border-b px-4 py-3 md:grid-cols-[280px_minmax(0,1fr)]">
         <label className="flex flex-col gap-1.5 text-sm text-foreground">
           流程名
           <Input

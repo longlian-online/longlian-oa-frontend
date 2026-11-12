@@ -1,18 +1,19 @@
 import { useLocation, useNavigate } from "react-router";
 import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
-import { Search, Workflow } from "lucide-react";
+import { Workflow } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { changeTaskTemplateStatus } from "@/api/organizationAdmin";
 import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
+import KeywordSearch from "@/components/KeywordSearch";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import { WorkflowTemplateCard } from "@/components/WorkflowTemplate";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { useConfirm } from "@/hooks/useConfirm";
 import { toOrganizationWorkflowCard } from "@/lib/workflowTemplate";
 import {
@@ -79,25 +80,16 @@ function OrganizationAdminWorkflowsContent() {
     <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
       <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">工作流</h1>
+          <h1 className="text-xl font-semibold text-foreground">工作流</h1>
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <div className="relative w-64 max-w-full">
-            <Search className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleSearch();
-              }}
-              placeholder="搜索流程"
-              className="h-8 rounded-lg bg-secondary pl-9 text-sm"
-            />
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={handleSearch}>
-            搜索
-          </Button>
+          <KeywordSearch
+            value={searchText}
+            placeholder="搜索流程"
+            onChange={setSearchText}
+            onSearch={handleSearch}
+          />
           <Button
             type="button"
             size="sm"
@@ -125,7 +117,7 @@ function OrganizationAdminWorkflowsContent() {
         />
       ) : (
         <>
-          <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
+          <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
             {templates.map((template) => (
               <WorkflowTemplateCard
                 key={template.id}

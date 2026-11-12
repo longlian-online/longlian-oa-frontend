@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -144,45 +143,38 @@ function OrganizationInvitesContent(): React.JSX.Element {
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">邀请码</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          管理加入当前组织的邀请码。不限次数的邀请码在到期前可以重复使用。
-        </p>
-      </div>
-
-      <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
-        <Button onClick={() => handleCreateOpenChange(true)}>
-          <Ticket className="size-4" />
-          生成邀请码
-        </Button>
-        <Select
-          value={status || "ALL"}
-          onValueChange={(value) => {
-            if (value !== "ALL" && value !== "PENDING" && value !== "USED") return;
-            update({ status: value === "ALL" ? "" : value });
-          }}
-        >
-          <SelectTrigger aria-label="状态" className="ml-auto w-36">
-            <SelectValue>
-              {status === "PENDING" ? "待使用" : status === "USED" ? "已用尽" : "全部状态"}
-            </SelectValue>
-          </SelectTrigger>
-          <FilterSelectContent>
-            <SelectItem value="ALL">全部状态</SelectItem>
-            <SelectItem value="PENDING">待使用</SelectItem>
-            <SelectItem value="USED">已用尽</SelectItem>
-          </FilterSelectContent>
-        </Select>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold text-foreground">邀请码</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={() => handleCreateOpenChange(true)}>
+            <Ticket className="size-4" />
+            生成邀请码
+          </Button>
+          <Select
+            value={status || "ALL"}
+            onValueChange={(value) => {
+              if (value !== "ALL" && value !== "PENDING" && value !== "USED") return;
+              update({ status: value === "ALL" ? "" : value });
+            }}
+          >
+            <SelectTrigger aria-label="状态" className="w-36">
+              <SelectValue>
+                {status === "PENDING" ? "待使用" : status === "USED" ? "已用尽" : "全部状态"}
+              </SelectValue>
+            </SelectTrigger>
+            <FilterSelectContent>
+              <SelectItem value="ALL">全部状态</SelectItem>
+              <SelectItem value="PENDING">待使用</SelectItem>
+              <SelectItem value="USED">已用尽</SelectItem>
+            </FilterSelectContent>
+          </Select>
+        </div>
       </div>
 
       <Dialog open={createOpen} onOpenChange={handleCreateOpenChange}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>生成邀请码</DialogTitle>
-            <DialogDescription>
-              设置使用规则和到期时间，生成加入当前组织的邀请码。
-            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-1.5">
@@ -252,7 +244,7 @@ function OrganizationInvitesContent(): React.JSX.Element {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border bg-card">
+          <div className="overflow-x-auto rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -261,7 +253,7 @@ function OrganizationInvitesContent(): React.JSX.Element {
                   <TableHead>到期时间</TableHead>
                   <TableHead>状态</TableHead>
                   <TableHead>创建时间</TableHead>
-                  <TableHead className="w-40 text-right">操作</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

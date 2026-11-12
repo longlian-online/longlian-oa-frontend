@@ -33,7 +33,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -292,7 +291,7 @@ function BaseTaskManagementContent() {
 
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">任务</h1>
+          <h1 className="text-xl font-semibold text-foreground">任务</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <KeywordSearch
@@ -333,7 +332,7 @@ function BaseTaskManagementContent() {
                 <article key={task.id} className="flex flex-col rounded-lg border bg-card p-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-3">
-                      <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
+                      <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg text-muted-foreground">
                         <Icon className="size-4" />
                       </div>
                       <div className="min-w-0">
@@ -355,7 +354,7 @@ function BaseTaskManagementContent() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         disabled={mutatingId === task.id}
                         onClick={() => openEdit(task)}
@@ -421,14 +420,9 @@ function BaseTaskManagementContent() {
           if (!saving) setFormOpen(open);
         }}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingTask ? "编辑任务" : "创建任务"}</DialogTitle>
-            <DialogDescription>
-              {editingTask
-                ? "修改会影响所有引用模板及后续新建工作流；已有工作流保留名称和提交字段，图标同步更新。"
-                : "定义任务名称、图标和提交字段，创建后可继续编辑。"}
-            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <label className="flex flex-col gap-2 text-sm font-medium text-foreground">
@@ -475,7 +469,7 @@ function BaseTaskManagementContent() {
                   className="flex h-10 w-full items-center gap-2 rounded-lg border bg-background px-3 text-sm transition-colors hover:border-primary/45"
                   onClick={() => void handleIconPickerToggle()}
                 >
-                  <span className="flex size-5 shrink-0 items-center justify-center text-primary">
+                  <span className="flex size-5 shrink-0 items-center justify-center text-muted-foreground">
                     {SelectedIcon ? (
                       <SelectedIcon className="size-4" />
                     ) : (
@@ -493,7 +487,7 @@ function BaseTaskManagementContent() {
                   />
                 </button>
                 {iconPickerOpen && (
-                  <div className="absolute inset-x-0 z-50 mt-2 rounded-xl border bg-popover p-3 shadow-lg">
+                  <div className="absolute inset-x-0 z-50 mt-2 rounded-xl border bg-popover p-3 ring-1 ring-foreground/10">
                     <div className="relative">
                       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -523,8 +517,8 @@ function BaseTaskManagementContent() {
                                   aria-selected={selected}
                                   title={name}
                                   className={cn(
-                                    "flex size-9 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:border-primary/45 hover:bg-primary/5 hover:text-primary",
-                                    selected && "border-primary bg-primary/10 text-primary",
+                                    "flex size-9 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground",
+                                    selected && "border-foreground text-foreground",
                                   )}
                                   onClick={() => {
                                     setForm({ ...form, icon: name });

@@ -91,7 +91,7 @@ test("cancellation needs no input and failure keeps the dialog open", async () =
   );
   expect(document.body.textContent).toContain("第一话 · 翻译");
   expect(document.body.textContent).toContain("小明");
-  expect(document.body.textContent).toContain("任务将回到待接取");
+  expect(document.body.textContent).toContain("当前执行人：小明");
   expect(document.querySelector("textarea")).toBeNull();
   expect(document.querySelector("label")).toBeNull();
   expect(document.querySelector("#owner-task-reason-help")).toBeNull();

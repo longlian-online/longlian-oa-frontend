@@ -358,7 +358,6 @@ export default function CreateProject({ project }: CreateProjectProps) {
               imagePreview
               accept={["jpg", "jpeg", "png", "gif", "webp", "avif"]}
               maxSize={PROJECT_IMAGE_MAX_BYTES}
-              fillHeight
               invalid={showInvalid && coverMissing}
               onChange={(file) => void handleCoverChange(file)}
             />
@@ -453,7 +452,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">别名</label>
                 <Input
-                  placeholder="选填，默认同企划名"
+                  aria-label="别名"
                   value={formData.alias}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, alias: e.target.value })
@@ -548,7 +547,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">简介</label>
               <Textarea
-                placeholder="介绍作品来源、当前进度、协作注意事项等"
+                aria-label="简介"
                 value={formData.description}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setFormData({ ...formData, description: e.target.value })

@@ -61,7 +61,7 @@ function DeletionRequestsContent() {
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div>
-        <h1 className="text-xl font-bold text-foreground">删除请求</h1>
+        <h1 className="text-xl font-semibold text-foreground">删除请求</h1>
       </div>
       {listQuery.isError && !listQuery.data ? (
         <Button variant="outline" onClick={() => void listQuery.refetch()}>
@@ -77,7 +77,7 @@ function DeletionRequestsContent() {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border bg-card">
+          <div className="overflow-x-auto rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -86,7 +86,7 @@ function DeletionRequestsContent() {
                   <TableHead>原因</TableHead>
                   <TableHead>申请人</TableHead>
                   <TableHead>申请时间</TableHead>
-                  <TableHead className="w-56 text-right">操作</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -125,6 +125,7 @@ function DeletionRequestsContent() {
                         </Button>
                         <Button
                           size="sm"
+                          variant="ghost"
                           disabled={reviewMutation.isPending}
                           onClick={() => void review(request, "APPROVED")}
                         >
@@ -133,7 +134,8 @@ function DeletionRequestsContent() {
                         </Button>
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
+                          className="text-destructive"
                           disabled={reviewMutation.isPending}
                           onClick={() => void review(request, "REJECTED")}
                         >
