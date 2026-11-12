@@ -5,6 +5,7 @@ import RemoteImage from "@/components/RemoteImage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
+import { formatDate } from "@/lib/format";
 import { PROJECT_MEMBERS_PAGE_SIZE, projectMembersQuery } from "@/queries/planning";
 
 interface ProjectMembersProps {
@@ -73,9 +74,14 @@ function MemberList({ projectId }: ProjectMembersProps): ReactElement {
                     {member.nickname.slice(0, 1)}
                   </span>
                 )}
-                <span className="min-w-0 flex-1 break-words text-sm font-medium">
-                  {member.nickname}
-                </span>
+                <div className="min-w-0 flex-1">
+                  <span className="break-words text-sm font-medium">{member.nickname}</span>
+                  <p className="text-xs text-muted-foreground">
+                    {member.lastSubmittedAt
+                      ? `完成 ${member.completedCount} · 上一次提交 ${formatDate(member.lastSubmittedAt)}`
+                      : "-"}
+                  </p>
+                </div>
                 {member.isCreator && <Badge variant="outline">负责人</Badge>}
               </li>
             ))}
