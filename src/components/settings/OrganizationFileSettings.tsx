@@ -9,12 +9,12 @@ import { useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { isOrganizationManagerRole } from "@/lib/organizationRole";
 import {
   DirectoryAccessError,
-  loadOrgDownloads,
+  loadOrgDirectory,
   pickDownloadDirectory,
   saveOrgDirectory,
-  type SavedDownloads,
+  type SavedDownloadDirectory,
 } from "@/pages/dashboard/org-admin/downloadDirectory";
-import { rememberDownloads } from "@/pages/dashboard/org-admin/downloadSession";
+import { rememberDownloadDirectory } from "@/pages/dashboard/org-admin/downloadSession";
 import { organizationsQuery } from "@/queries/session";
 
 export default function OrganizationFileSettings(): ReactElement | null {
@@ -26,13 +26,13 @@ export default function OrganizationFileSettings(): ReactElement | null {
     chosen && orgs.some((org) => org.id === chosen)
       ? chosen
       : (orgs.find((org) => org.id === currentOrgId)?.id ?? orgs[0]?.id ?? "");
-  const [settings, setSettings] = useState<SavedDownloads | null>(null);
+  const [settings, setSettings] = useState<SavedDownloadDirectory | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
-    void loadOrgDownloads(active).then((saved) => {
+    void loadOrgDirectory(active).then((saved) => {
       if (!cancelled) setSettings(saved);
     });
     return () => {
@@ -52,7 +52,7 @@ export default function OrganizationFileSettings(): ReactElement | null {
       const handle = await pickDownloadDirectory();
       const saved = await saveOrgDirectory(active, handle);
       setSettings(saved);
-      if (active === currentOrgId) rememberDownloads(saved);
+      if (active === currentOrgId) rememberDownloadDirectory(saved);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       if (error instanceof DirectoryAccessError) $tip(error.message, "error");

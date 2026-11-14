@@ -19,7 +19,6 @@ import {
   File,
   FileImage,
   FileText,
-  FileX,
   Folder,
   LayoutGrid,
   List,
@@ -41,8 +40,15 @@ import EmptyState from "@/components/EmptyState";
 import PaginationBar from "@/components/PaginationBar";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import { $tip } from "@/components/tip";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -64,21 +70,18 @@ import {
 import {
   DirectoryAccessError,
   ensureWritePermission,
-  loadOrgDownloads,
-  readDownloadRecords,
-  removeDownloadedFiles,
+  loadOrgDirectory,
   saveDownloadedFiles,
 } from "./downloadDirectory";
 import {
   beginDownload,
   finishDownload,
   getDownloadSession,
-  noteDownloadDirectory,
   noteDownloadProgress,
-  rememberDownloads,
+  rememberDownloadDirectory,
   subscribeDownloadSession,
 } from "./downloadSession";
-import { downloadTarget, fileKey, isDownloaded } from "./fileDownload";
+import { downloadTarget, fileKey } from "./fileDownload";
 
 type ExplorerView = "icons" | "details";
 const LEAF_LABEL: Record<OrgFileLeafView, string> = { task: "任务", item: "项目" };
@@ -169,7 +172,6 @@ function FileActionMenu({
       const target = event.target;
       if (!(target instanceof Node)) return;
       if (panelRef.current?.contains(target)) return;
-      if (target instanceof Element && target.closest("[data-export-hint]")) return;
       close();
     }
     function onKey(event: KeyboardEvent): void {
@@ -237,7 +239,11 @@ function OrganizationFilesContent(): ReactElement {
   const folderPaging = !location.itemId;
   const [view, setView] = useState<ExplorerView>("icons");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [removingLocal, setRemovingLocal] = useState(false);
+  const [downloadRequest, setDownloadRequest] = useState<{
+    targets: OrgFileExpansionTarget[];
+    location: OrgFileLocation;
+  } | null>(null);
+  const [downloadView, setDownloadView] = useState<OrgFileLeafView>("item");
   const [multiSelect, setMultiSelect] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; entryId: string } | null>(null);
   const multiSelectId = useId();
@@ -249,8 +255,6 @@ function OrganizationFilesContent(): ReactElement {
   );
   const downloading = downloadSession.running;
   const downloadProgress = downloadSession.progress;
-  const records = downloadSession.records;
-  const directory = downloadSession.directory;
   const anchorRef = useRef<string | null>(null);
   const selectionGuard = useRef(false);
   const marqueeGuard = useRef(false);
@@ -295,9 +299,9 @@ function OrganizationFilesContent(): ReactElement {
   useEffect(() => {
     if (!orgId) return;
     let cancelled = false;
-    void loadOrgDownloads(orgId).then((saved) => {
+    void loadOrgDirectory(orgId).then((saved) => {
       if (cancelled) return;
-      rememberDownloads(saved);
+      rememberDownloadDirectory(saved);
     });
     return () => {
       cancelled = true;
@@ -482,33 +486,44 @@ function OrganizationFilesContent(): ReactElement {
     $tip("下载失败，请稍后重试", "error");
   }
 
-  async function downloadSelected(): Promise<void> {
+  function chooseDownloadView(): void {
     const targets = selectedEntries
       .map((entry) => downloadTarget(entry, location))
       .filter((target) => target !== null);
-    const handle = getDownloadSession().directory;
+    if (!getDownloadSession().directory) {
+      $tip("请先在个人设置中选择存放位置", "error");
+      return;
+    }
     if (targets.length === 0 || getDownloadSession().running) return;
+    setDownloadView(location.view);
+    setDownloadRequest({ targets, location });
+  }
+
+  async function downloadSelected(): Promise<void> {
+    const request = downloadRequest;
+    const handle = getDownloadSession().directory;
+    if (!request || getDownloadSession().running) return;
     if (!handle) {
       $tip("请先在个人设置中选择存放位置", "error");
       return;
     }
+    setDownloadRequest(null);
     beginDownload();
     try {
       if (!(await ensureWritePermission(handle))) {
         $tip("需要允许写入所选文件夹", "error");
         return;
       }
-      const existing = await readDownloadRecords(handle);
-      noteDownloadDirectory(handle, existing);
-      const batch = await expandOrganizationFiles(targets);
+      const batch = await expandOrganizationFiles(request.targets);
       if (batch.files.length === 0) {
         $tip("没有可下载的文件", "error");
         return;
       }
       const failed = await saveDownloadedFiles(
         handle,
-        existing,
         batch.files,
+        request.location,
+        downloadView,
         async (file) => {
           try {
             const fresh = await getOrganizationFileDownload(file.taskInstanceId, file.fileId);
@@ -518,9 +533,7 @@ function OrganizationFilesContent(): ReactElement {
             throw error;
           }
         },
-        (next, done, total) => {
-          noteDownloadProgress(next, done, total);
-        },
+        noteDownloadProgress,
       );
       if (failed > 0) $tip(`${failed} 个文件没有下载`, "error");
       else $tip("下载完成", "success");
@@ -544,11 +557,10 @@ function OrganizationFilesContent(): ReactElement {
   const hasTargets = selectedEntries.some((entry) => hasActionTarget(entry, location));
   const menuEntry = menu ? (entries.find((entry) => entry.id === menu.entryId) ?? null) : null;
   const canPreview = menuEntry?.kind === "FILE" && menuEntry.availability === "available";
-  const busy = downloading || removingLocal || discardMutation.isPending;
+  const busy = downloading || discardMutation.isPending;
   const canDownload =
     !busy && selectedEntries.some((entry) => downloadTarget(entry, location) !== null);
   const canDiscardRemote = !busy && hasTargets;
-  const canDeleteLocal = canDiscardRemote && directory !== null;
 
   async function filesForSelection(): Promise<RemoteFile[]> {
     const direct = directRemoteFiles(selectedEntries);
@@ -607,45 +619,6 @@ function OrganizationFilesContent(): ReactElement {
     }
   }
 
-  async function deleteLocalSelected(): Promise<void> {
-    if (!directory || busy) return;
-    const currentDirectory = directory;
-    try {
-      if (!(await ensureWritePermission(currentDirectory))) {
-        $tip("需要允许写入所选文件夹", "error");
-        return;
-      }
-      const files = await filesForSelection();
-      const existing = await readDownloadRecords(currentDirectory);
-      const keys = new Set(files.map((file) => fileKey(file)));
-      const matched = existing.filter((record) => keys.has(fileKey(record)));
-      if (matched.length === 0) {
-        $tip("所选文件还没下载", "error");
-        return;
-      }
-      const confirmed = await confirm({
-        title:
-          matched.length === 1 ? "删除这个本地文件？" : `删除这 ${matched.length} 个本地文件？`,
-        description: "只从已选择的下载文件夹里删除，并更新下载记录。远程文件不会变化。",
-        confirmText: "删除本地文件",
-        variant: "destructive",
-      });
-      if (!confirmed) return;
-      setRemovingLocal(true);
-      const next = await removeDownloadedFiles(currentDirectory, matched);
-      noteDownloadDirectory(currentDirectory, next);
-      $tip("本地文件已删除", "success");
-    } catch (error) {
-      try {
-        noteDownloadDirectory(currentDirectory, await readDownloadRecords(currentDirectory));
-      } catch {
-        /* 清单读不回来时保留当前标记。 */
-      }
-      reportDownloadError(error);
-    } finally {
-      setRemovingLocal(false);
-    }
-  }
   const projectTitle = listQuery.data?.projectTitle || "企划";
   const itemTitle = listQuery.data?.itemTitle || "项目";
   const taskTitle = listQuery.data?.taskName || "任务";
@@ -829,7 +802,6 @@ function OrganizationFilesContent(): ReactElement {
                   key={entry.id}
                   entry={entry}
                   selected={selectedIds.includes(entry.id)}
-                  downloaded={isDownloaded(records, entry)}
                   onSelect={(event) => selectEntry(entry.id, event)}
                   onOpen={() => openEntry(entry)}
                   onContextMenu={(event) => openContextMenu(entry, event)}
@@ -843,7 +815,6 @@ function OrganizationFilesContent(): ReactElement {
               onSelect={selectEntry}
               onOpen={openEntry}
               onContextMenu={openContextMenu}
-              downloaded={(entry) => isDownloaded(records, entry)}
             />
           )}
         </div>
@@ -863,9 +834,7 @@ function OrganizationFilesContent(): ReactElement {
               ? `正在下载 ${downloadProgress.done}/${downloadProgress.total}`
               : discardMutation.isPending
                 ? "正在删除远程文件"
-                : removingLocal
-                  ? "正在删除本地文件"
-                  : `共 ${total} 项`}
+                : `共 ${total} 项`}
           </span>
           <span className="truncate">
             {selectedEntries.length > 1
@@ -902,7 +871,7 @@ function OrganizationFilesContent(): ReactElement {
             disabled={!canDownload}
             onClick={() => {
               setMenu(null);
-              void downloadSelected();
+              chooseDownloadView();
             }}
           />
           <MenuAction
@@ -914,17 +883,38 @@ function OrganizationFilesContent(): ReactElement {
               void discardSelected();
             }}
           />
-          <MenuAction
-            icon={FileX}
-            label="删除本地文件"
-            disabled={!canDeleteLocal}
-            onClick={() => {
-              setMenu(null);
-              void deleteLocalSelected();
-            }}
-          />
         </FileActionMenu>
       )}
+      <Dialog
+        open={downloadRequest !== null}
+        onOpenChange={(open) => {
+          if (!open) setDownloadRequest(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>选择下载视图</DialogTitle>
+          </DialogHeader>
+          <Select
+            value={downloadView}
+            onValueChange={(value) => {
+              if (value === "item" || value === "task") setDownloadView(value);
+            }}
+          >
+            <SelectTrigger aria-label="下载视图" className="w-full">
+              <SelectValue>{LEAF_LABEL[downloadView]}视图</SelectValue>
+            </SelectTrigger>
+            <FilterSelectContent>
+              <SelectItem value="item">项目视图</SelectItem>
+              <SelectItem value="task">任务视图</SelectItem>
+            </FilterSelectContent>
+          </Select>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>取消</DialogClose>
+            <Button onClick={() => void downloadSelected()}>开始下载</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div
         ref={marqueeRef}
         hidden
@@ -941,14 +931,12 @@ function versionText(versionNo?: number | null): string {
 function IconEntry({
   entry,
   selected,
-  downloaded,
   onSelect,
   onOpen,
   onContextMenu,
 }: {
   entry: OrgFileEntryVO;
   selected: boolean;
-  downloaded: boolean;
   onSelect: (event: MouseEvent) => void;
   onOpen: () => void;
   onContextMenu: (event: MouseEvent) => void;
@@ -979,7 +967,6 @@ function IconEntry({
         )}
       />
       <span className="line-clamp-2 w-full break-all text-xs">{entry.name}</span>
-      {downloaded && <Badge variant="outline">已下载</Badge>}
       {entry.subtitle && (
         <span className="line-clamp-1 w-full text-[11px] text-muted-foreground">
           {entry.subtitle}
@@ -997,14 +984,12 @@ function IconEntry({
 function DetailsTable({
   entries,
   selectedIds,
-  downloaded,
   onSelect,
   onOpen,
   onContextMenu,
 }: {
   entries: OrgFileEntryVO[];
   selectedIds: string[];
-  downloaded: (entry: OrgFileEntryVO) => boolean;
   onSelect: (id: string, event: MouseEvent) => void;
   onOpen: (entry: OrgFileEntryVO) => void;
   onContextMenu: (entry: OrgFileEntryVO, event: MouseEvent) => void;
@@ -1045,7 +1030,6 @@ function DetailsTable({
                   <span className="truncate" title={entry.name}>
                     {entry.name}
                   </span>
-                  {downloaded(entry) && <Badge variant="outline">已下载</Badge>}
                 </span>
               </td>
               <td className="text-muted-foreground max-w-40 truncate px-3 py-2">
