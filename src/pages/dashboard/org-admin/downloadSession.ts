@@ -1,20 +1,15 @@
-import type { DownloadDirectoryHandle, SavedDownloads } from "./downloadDirectory";
-import type { DownloadRecord } from "./fileDownload";
+import type { DownloadDirectoryHandle, SavedDownloadDirectory } from "./downloadDirectory";
 
 export interface DownloadSession {
   running: boolean;
   progress: { done: number; total: number } | null;
-  records: DownloadRecord[];
   directory: DownloadDirectoryHandle | null;
-  directoryName: string | null;
 }
 
 const EMPTY: DownloadSession = {
   running: false,
   progress: null,
-  records: [],
   directory: null,
-  directoryName: null,
 };
 
 let current: DownloadSession = EMPTY;
@@ -34,14 +29,12 @@ export function getDownloadSession(): DownloadSession {
   return current;
 }
 
-export function rememberDownloads(saved: SavedDownloads | null): void {
+export function rememberDownloadDirectory(saved: SavedDownloadDirectory | null): void {
   if (current.running || !saved) return;
   publish({
     running: false,
     progress: null,
-    records: saved.records,
     directory: saved.handle,
-    directoryName: saved.name,
   });
 }
 
@@ -49,20 +42,8 @@ export function beginDownload(): void {
   publish({ ...current, running: true, progress: null });
 }
 
-export function noteDownloadDirectory(
-  directory: DownloadDirectoryHandle,
-  records: DownloadRecord[],
-): void {
-  publish({
-    ...current,
-    directory,
-    directoryName: directory.name,
-    records,
-  });
-}
-
-export function noteDownloadProgress(records: DownloadRecord[], done: number, total: number): void {
-  publish({ ...current, records, progress: { done, total } });
+export function noteDownloadProgress(done: number, total: number): void {
+  publish({ ...current, progress: { done, total } });
 }
 
 export function finishDownload(): void {
@@ -70,5 +51,5 @@ export function finishDownload(): void {
 }
 
 export function resetDownloadSession(): void {
-  publish({ ...EMPTY, records: [] });
+  publish(EMPTY);
 }
