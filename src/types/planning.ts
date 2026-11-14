@@ -68,6 +68,10 @@ export interface ProjectMemberVO {
   nickname: string;
   avatarUrl?: string | null;
   isCreator: boolean;
+  /** 当前仍有效的提交里最晚的时间。没有有效提交时为空。 */
+  lastSubmittedAt?: string | null;
+  /** 当前仍有效的提交所对应的任务数，同一任务只计一次。 */
+  completedCount?: number;
 }
 
 export interface ProjectListDTO {

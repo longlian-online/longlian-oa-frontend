@@ -5,6 +5,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
 import ProjectMembers from "@/components/ProjectMembers";
+import { formatDate } from "@/lib/format";
 import { clearSession, saveCurrentOrganization, saveSession } from "@/lib/session";
 import type { ProjectMemberVO } from "@/types/planning";
 
@@ -19,8 +20,13 @@ function json(data: unknown): Response {
   return new Response(JSON.stringify({ code: 0, data }));
 }
 
-function member(userId: string, isCreator = false): ProjectMemberVO {
-  return { userId, nickname: `成员${userId}`, isCreator };
+function member(
+  userId: string,
+  isCreator = false,
+  completedCount = 0,
+  lastSubmittedAt?: string,
+): ProjectMemberVO {
+  return { userId, nickname: `成员${userId}`, isCreator, completedCount, lastSubmittedAt };
 }
 
 beforeEach((): void => {
@@ -94,6 +100,24 @@ test("使用用户端接口展示当前成员、人数和负责人，不增加�
   expect(container.querySelectorAll("li")).toHaveLength(2);
   for (const label of ["已退出", "已加入", "状态", "邀请", "移除"])
     expect(container.textContent).not.toContain(label);
+});
+
+test("有效提交显示完成数和上一次提交时间，没有则显示横线", async (): Promise<void> => {
+  const submittedAt = "2026-03-03 10:00:00";
+  vi.stubGlobal("fetch", async (input: string, init?: RequestInit): Promise<Response> => {
+    const url = new URL(input, "http://localhost");
+    calls.push({ url, orgId: new Headers(init?.headers).get("X-Org-Id") });
+    return json({
+      list: [member("1", true, 2, submittedAt), member("2")],
+      total: 2,
+    });
+  });
+  await mount();
+  await waitFor(() => expect(container.textContent).toContain("成员1"));
+  const rows = [...container.querySelectorAll("li")];
+  expect(rows[0]?.textContent).toContain(`完成 2 · 上一次提交 ${formatDate(submittedAt)}`);
+  expect(rows[1]?.textContent).toContain("-");
+  expect(rows[1]?.textContent).not.toContain("完成");
 });
 
 test("分页只更新成员区，切换企划或组织回到第一页", async (): Promise<void> => {
