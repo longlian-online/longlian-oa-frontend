@@ -12,12 +12,13 @@ const seen = vi.hoisted(() => ({
   entries: [{ id: "9", kind: "FOLDER", name: "漫画", subtitle: "阿企划" }] as Array<
     Record<string, unknown>
   >,
-  records: [] as Array<{
-    taskInstanceId: string;
-    fieldKey: string;
-    fileId: string;
-    name: string;
-  }>,
+  hasDirectory: false,
+  save: vi.fn(async (..._args: unknown[]): Promise<number> => 0),
+  expand: vi.fn(async (..._args: unknown[]) => ({
+    files: [
+      { taskInstanceId: "8", fieldKey: "script", fileId: "101", fileName: "成果.pdf", fileSize: 3 },
+    ],
+  })),
 }));
 
 vi.mock("@/components/OrganizationAdminGuard", () => ({
@@ -27,13 +28,14 @@ vi.mock("@/hooks/useConfirm", () => ({
   useConfirm: () => () => Promise.resolve(false),
 }));
 vi.mock("./downloadDirectory", () => ({
-  loadOrgDownloads: () =>
-    Promise.resolve(
-      seen.records.length === 0
-        ? { handle: null, name: null, records: [], view: "planning" }
-        : { handle: { name: "下载" }, name: "下载", records: seen.records, view: "planning" },
-    ),
+  loadOrgDirectory: async () =>
+    seen.hasDirectory ? { handle: { name: "下载" }, name: "下载" } : { handle: null, name: null },
+  ensureWritePermission: async () => true,
+  saveDownloadedFiles: (...args: unknown[]) => seen.save(...args),
   DirectoryAccessError: class DirectoryAccessError extends Error {},
+}));
+vi.mock("@/api/organizationAdmin", () => ({
+  expandOrganizationFiles: (...args: unknown[]) => seen.expand(...args),
 }));
 vi.mock("@/hooks/queries/useApiQuery", () => ({
   useApiQuery: (options: { key: unknown }) => {
@@ -63,7 +65,9 @@ let router = createMemoryRouter([
 
 beforeEach((): void => {
   seen.entries = [{ id: "9", kind: "FOLDER", name: "漫画", subtitle: "阿企划" }];
-  seen.records = [];
+  seen.hasDirectory = false;
+  seen.save.mockClear();
+  seen.expand.mockClear();
   resetDownloadSession();
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   container = document.createElement("div");
@@ -148,37 +152,6 @@ test("项目和任务都留在面包屑里，切换视图回到第三级", async
   expect(seen.key).toEqual(["orgFiles", "task", "4", "2", "", "", 1]);
 });
 
-test("已下载标记跟着文件走，不跟着视图文件夹走", async (): Promise<void> => {
-  seen.entries = [
-    {
-      id: "8:script",
-      kind: "FILE",
-      name: "成果.pdf",
-      taskInstanceId: "8",
-      fieldKey: "script",
-      fileId: "101",
-      availability: "available",
-      taskName: "翻译",
-    },
-    {
-      id: "8:extra",
-      kind: "FILE",
-      name: "对照.pdf",
-      taskInstanceId: "8",
-      fieldKey: "extra",
-      fileId: "102",
-      availability: "available",
-      taskName: "翻译",
-    },
-  ];
-  seen.records = [{ taskInstanceId: "8", fieldKey: "script", fileId: "101", name: "成果.pdf" }];
-  await mount("");
-  const marks = [...container.querySelectorAll("span")].filter(
-    (node) => node.textContent === "已下载",
-  );
-  expect(marks).toHaveLength(1);
-});
-
 async function openMenu(index = 0): Promise<HTMLElement> {
   const option = container.querySelectorAll<HTMLElement>('[role="option"]')[index];
   if (!option) throw new Error("找不到条目");
@@ -227,7 +200,7 @@ test("多选跟在视图后面，操作不放在工具栏", async (): Promise<vo
   expect(menuItem(menu, "预览").disabled).toBe(true);
   expect(menuItem(menu, "下载").disabled).toBe(false);
   expect(menuItem(menu, "删除远程文件").disabled).toBe(false);
-  expect(menuItem(menu, "删除本地文件").disabled).toBe(true);
+  expect(menu.textContent).not.toContain("删除本地文件");
 });
 
 test("多选打开后单击可加选，右键操作仍然可用", async (): Promise<void> => {
@@ -253,7 +226,6 @@ test("多选打开后单击可加选，右键操作仍然可用", async (): Prom
       taskName: "翻译",
     },
   ];
-  seen.records = [{ taskInstanceId: "8", fieldKey: "script", fileId: "101", name: "成果.pdf" }];
   await mount("");
   const toggle = container.querySelector<HTMLButtonElement>('[role="switch"]');
   if (!toggle) throw new Error("找不到多选");
@@ -271,7 +243,7 @@ test("多选打开后单击可加选，右键操作仍然可用", async (): Prom
   expect(menuItem(menu, "预览").disabled).toBe(false);
   expect(menuItem(menu, "下载").disabled).toBe(false);
   expect(menuItem(menu, "删除远程文件").disabled).toBe(false);
-  expect(menuItem(menu, "删除本地文件").disabled).toBe(false);
+  expect(menu.textContent).not.toContain("删除本地文件");
 });
 
 test("按住拖动框选相交的文件和文件夹", async (): Promise<void> => {
@@ -330,4 +302,21 @@ test("按下后不拖动仍然可以单击选中", async (): Promise<void> => {
   });
   expect(target.getAttribute("aria-selected")).toBe("true");
   expect(options[1]?.getAttribute("aria-selected")).toBe("false");
+});
+
+test("下载前选择视图，取消不下载且不改变浏览位置", async (): Promise<void> => {
+  seen.hasDirectory = true;
+  await mount("?typeId=4&projectId=2&view=task");
+  const menu = await openMenu();
+  await act(async () => menuItem(menu, "下载").click());
+  const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]');
+  expect(dialog?.textContent).toContain("选择下载视图");
+  expect(dialog?.querySelector('[aria-label="下载视图"]')?.textContent).toContain("任务视图");
+  expect(seen.expand).not.toHaveBeenCalled();
+  const cancel = [...(dialog?.querySelectorAll("button") ?? [])].find(
+    (button) => button.textContent === "取消",
+  );
+  await act(async () => cancel?.click());
+  expect(seen.save).not.toHaveBeenCalled();
+  expect(router.state.location.search).toBe("?typeId=4&projectId=2&view=task");
 });

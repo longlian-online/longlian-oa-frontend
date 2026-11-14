@@ -55,7 +55,7 @@ vi.mock("@/api/auth", () => ({
 }));
 
 vi.mock("@/pages/dashboard/org-admin/downloadDirectory", () => ({
-  loadOrgDownloads: async () => ({ handle: null, name: null, records: [], view: "planning" }),
+  loadOrgDirectory: async () => ({ handle: null, name: null }),
   DirectoryAccessError: class DirectoryAccessError extends Error {},
 }));
 

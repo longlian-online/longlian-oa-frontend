@@ -6,41 +6,33 @@ import {
   finishDownload,
   getDownloadSession,
   noteDownloadProgress,
-  rememberDownloads,
+  rememberDownloadDirectory,
   resetDownloadSession,
 } from "./downloadSession";
-import type { DownloadRecord } from "./fileDownload";
-
-const record: DownloadRecord = {
-  taskInstanceId: "8",
-  fieldKey: "script",
-  fileId: "101",
-  name: "成果.pdf",
-};
 
 beforeEach(() => {
   resetDownloadSession();
 });
 
-test("离开页面再回来时，进行中的下载进度还在", () => {
+test("离页保留进度，下载中不替换目录，完成后可更换", () => {
+  const directory: DownloadDirectoryHandle = {
+    name: "原目录",
+    getFileHandle: async () => ({ createWritable: async () => new WritableStream<Uint8Array>() }),
+    getDirectoryHandle: async () => directory,
+  };
+  const next = { ...directory, name: "新目录" };
+  rememberDownloadDirectory({ handle: directory, name: directory.name });
   beginDownload();
-  noteDownloadProgress([record], 1, 3);
-  rememberDownloads(null);
-  rememberDownloads({
-    handle: { name: "别的文件夹" } as DownloadDirectoryHandle,
-    name: "别的文件夹",
-    records: [],
-  });
-
-  expect(getDownloadSession()).toMatchObject({
+  noteDownloadProgress(1, 3);
+  rememberDownloadDirectory(null);
+  rememberDownloadDirectory({ handle: next, name: next.name });
+  expect(getDownloadSession()).toEqual({
     running: true,
     progress: { done: 1, total: 3 },
-    records: [record],
-    directoryName: null,
+    directory,
   });
-
   finishDownload();
-  expect(getDownloadSession().running).toBe(false);
-  expect(getDownloadSession().progress).toBeNull();
-  expect(getDownloadSession().records).toEqual([record]);
+  expect(getDownloadSession()).toEqual({ running: false, progress: null, directory });
+  rememberDownloadDirectory({ handle: next, name: next.name });
+  expect(getDownloadSession().directory).toBe(next);
 });

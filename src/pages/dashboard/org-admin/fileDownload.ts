@@ -1,14 +1,10 @@
-import type { OrgFileExpansionTarget, OrgFileEntryVO } from "@/types/organizationAdmin";
+import type {
+  OrgFileBatchFileVO,
+  OrgFileExpansionTarget,
+  OrgFileEntryVO,
+} from "@/types/organizationAdmin";
 
-import type { OrgFileLocation } from "./fileLocation";
-
-export interface DownloadRecord {
-  taskInstanceId: string;
-  fieldKey: string;
-  fileId: string;
-  name: string;
-  path?: string;
-}
+import type { OrgFileLeafView, OrgFileLocation } from "./fileLocation";
 
 export function fileKey(file: {
   taskInstanceId: string;
@@ -16,20 +12,6 @@ export function fileKey(file: {
   fileId: string;
 }): string {
   return `${file.taskInstanceId}\u001f${file.fieldKey}\u001f${file.fileId}`;
-}
-
-export function isDownloaded(
-  records: DownloadRecord[],
-  entry: Pick<OrgFileEntryVO, "kind" | "taskInstanceId" | "fieldKey" | "fileId">,
-): boolean {
-  if (entry.kind !== "FILE" || !entry.taskInstanceId || !entry.fieldKey || !entry.fileId)
-    return false;
-  const key = fileKey({
-    taskInstanceId: entry.taskInstanceId,
-    fieldKey: entry.fieldKey,
-    fileId: entry.fileId,
-  });
-  return records.some((record) => fileKey(record) === key);
 }
 
 export function downloadTarget(
@@ -64,15 +46,6 @@ export function downloadTarget(
   return { kind: "ITEM", itemId: entry.id };
 }
 
-export function resourceFileName(fileId: string, originalName: string): string {
-  const base = originalName.replaceAll("\\", "/").split("/").pop() ?? "";
-  const cleaned = stripIllegal(base);
-  const dot = cleaned.lastIndexOf(".");
-  const extension = dot >= 0 ? cleaned.slice(dot + 1) : "";
-  if (/^[A-Za-z0-9]{1,16}$/.test(extension)) return `${fileId}.${extension}`;
-  return fileId;
-}
-
 function stripIllegal(name: string): string {
   let result = "";
   for (const char of name) {
@@ -101,13 +74,10 @@ function withResourceId(name: string, fileId: string): string {
   return `${name}_${fileId}`;
 }
 
-export function archiveEntryPaths(
-  files: { fileId: string; name: string; directories?: string[] }[],
-  reserved: readonly string[] = [],
-): string[] {
-  const taken = new Set(reserved.map((path) => path.toLowerCase()));
+function entryPaths(files: { fileId: string; name: string; directories: string[] }[]): string[] {
+  const taken = new Set<string>();
   return files.map((file) => {
-    const folders = (file.directories ?? []).map(archiveFolderName);
+    const folders = file.directories.map(archiveFolderName);
     const base = archiveBaseName(file.name, file.fileId);
     let entry = WINDOWS_DEVICE.test(base) ? withResourceId(base, file.fileId) : base;
     const pathKey = (): string => [...folders, entry].join("/").toLowerCase();
@@ -124,58 +94,25 @@ export function archiveEntryPaths(
 }
 
 export function downloadRelativePaths(
-  files: {
-    fileId: string;
-    name: string;
-    projectTitle?: string | null;
-    itemTitle?: string | null;
-    taskName?: string | null;
-    fieldLabel?: string | null;
-    versionNo?: number | null;
-  }[],
-  reserved: readonly string[] = [],
+  files: OrgFileBatchFileVO[],
+  location: OrgFileLocation,
+  view: OrgFileLeafView,
 ): string[] {
-  return archiveEntryPaths(
+  const depth =
+    location.itemId || location.taskId ? 3 : location.projectId ? 2 : location.typeId ? 1 : 0;
+  return entryPaths(
     files.map((file) => ({
       fileId: file.fileId,
-      name: storedFileName(file),
+      name: file.fileName,
+      directories: [
+        file.typeName,
+        file.projectTitle,
+        view === "item" ? file.itemTitle : file.taskName,
+      ]
+        .slice(depth)
+        .map((name) => name ?? ""),
     })),
-    reserved,
   );
-}
-
-function storedFileName(file: {
-  name: string;
-  projectTitle?: string | null;
-  itemTitle?: string | null;
-  taskName?: string | null;
-  fieldLabel?: string | null;
-  versionNo?: number | null;
-}): string {
-  const parts = [file.projectTitle, file.itemTitle, file.taskName, file.fieldLabel].map((part) =>
-    archiveFolderName(part ?? ""),
-  );
-  if (file.versionNo != null) parts.push(String(file.versionNo));
-  const base = parts.join("-");
-  const extension = fileExtension(file.name);
-  return extension ? `${base}.${extension}` : base;
-}
-
-function fileExtension(originalName: string): string {
-  const base = originalName.replaceAll("\\", "/").split("/").pop() ?? "";
-  const cleaned = stripIllegal(base);
-  const dot = cleaned.lastIndexOf(".");
-  const extension = dot >= 0 ? cleaned.slice(dot + 1) : "";
-  return /^[A-Za-z0-9]{1,16}$/.test(extension) ? extension : "";
-}
-
-export function storedPath(value: unknown): string | undefined {
-  if (typeof value !== "string" || value === "" || value.startsWith("/") || value.includes("\\")) {
-    return undefined;
-  }
-  const parts = value.split("/");
-  if (parts.some((part) => part === "" || part === "." || part === "..")) return undefined;
-  return value;
 }
 
 function archiveFolderName(name: string): string {
@@ -185,46 +122,4 @@ function archiveFolderName(name: string): string {
   if (cleaned === "" || cleaned === "." || cleaned === "..") return "未命名";
   if (WINDOWS_DEVICE.test(cleaned)) return `${cleaned}_`;
   return cleaned;
-}
-
-export function serializeManifest(records: DownloadRecord[]): string {
-  return JSON.stringify({ version: 1, files: records });
-}
-
-export function parseManifest(text: string): DownloadRecord[] {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    return [];
-  }
-  if (!parsed || typeof parsed !== "object") return [];
-  const body = parsed as { version?: unknown; files?: unknown };
-  if (body.version !== 1 || !Array.isArray(body.files)) return [];
-  const records: DownloadRecord[] = [];
-  for (const item of body.files) {
-    if (!item || typeof item !== "object") continue;
-    const record = item as Record<string, unknown>;
-    if (
-      typeof record.taskInstanceId !== "string" ||
-      typeof record.fieldKey !== "string" ||
-      typeof record.fileId !== "string" ||
-      typeof record.name !== "string" ||
-      !record.taskInstanceId ||
-      !record.fieldKey ||
-      !record.fileId ||
-      !record.name
-    ) {
-      continue;
-    }
-    const path = storedPath(record.path);
-    records.push({
-      taskInstanceId: record.taskInstanceId,
-      fieldKey: record.fieldKey,
-      fileId: record.fileId,
-      name: record.name,
-      ...(path ? { path } : {}),
-    });
-  }
-  return records;
 }

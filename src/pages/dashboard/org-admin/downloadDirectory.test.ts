@@ -1,300 +1,153 @@
 import { afterEach, expect, test, vi } from "vite-plus/test";
 
-import {
-  removeDownloadedFiles,
-  saveDownloadedFiles,
-  type DownloadDirectoryHandle,
-} from "./downloadDirectory";
-import {
-  parseManifest,
-  resourceFileName,
-  serializeManifest,
-  type DownloadRecord,
-} from "./fileDownload";
+import type { OrgFileBatchFileVO } from "@/types/organizationAdmin";
+import { saveDownloadedFiles, type DownloadDirectoryHandle } from "./downloadDirectory";
 
-const KEPT: DownloadRecord = {
-  taskInstanceId: "1",
+const FILE: OrgFileBatchFileVO = {
+  taskInstanceId: "8",
   fieldKey: "script",
   fileId: "101",
-  name: "已有.pdf",
+  fileName: "成果.pdf",
+  fileSize: 3,
+  typeName: "小说",
+  projectTitle: "阿企划",
+  itemTitle: "第一章",
+  taskName: "翻译",
 };
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
-test("并行下载重读清单，不覆盖别人刚记下的记录", async () => {
-  installLocks();
-  const disk = memoryDirectory([KEPT]);
+test("根目录下载小说到时间目录，两种视图保留网页层级和原名", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2026, 10, 14, 12, 34, 56, 789));
+  const disk = memoryDirectory();
   vi.stubGlobal("fetch", async () => new Response(Uint8Array.from([1, 2, 3])));
-  const onUpdate = vi.fn();
-  const sign = async () => "https://example.test/file";
-
-  await Promise.all([
-    saveDownloadedFiles(disk.directory, [], [file("202", "甲.pdf")], sign, onUpdate),
-    saveDownloadedFiles(disk.directory, [], [file("303", "乙.pdf")], sign, onUpdate),
+  const progress = vi.fn();
+  const sign = async (): Promise<string> => "https://example.test/file";
+  await saveDownloadedFiles(disk.directory, [FILE], { view: "item" }, "item", sign, progress);
+  await saveDownloadedFiles(disk.directory, [FILE], { view: "item" }, "task", sign, progress);
+  expect([...disk.files.entries()]).toEqual([
+    ["2026-11-14_12-34-56-789/小说/阿企划/第一章/成果.pdf", [1, 2, 3]],
+    ["2026-11-14_12-34-56-789_2/小说/阿企划/翻译/成果.pdf", [1, 2, 3]],
   ]);
-
-  expect(
-    disk
-      .records()
-      .map((record) => record.fileId)
-      .sort(),
-  ).toEqual(["101", "202", "303"]);
+  expect(progress.mock.calls).toEqual([
+    [0, 1],
+    [1, 1],
+    [0, 1],
+    [1, 1],
+  ]);
 });
 
-test("没有 Web Locks 时同页写入仍然合并", async () => {
+test("同时开始的批次不混写，不读写清单或更改原文件", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2026, 10, 14, 12, 34, 56, 789));
   vi.stubGlobal("navigator", {});
-  const disk = memoryDirectory([KEPT]);
+  const disk = memoryDirectory();
+  disk.files.set(".downloads.json", [9]);
+  disk.files.set("用户文件.txt", [8]);
   vi.stubGlobal("fetch", async () => new Response(Uint8Array.from([1])));
-  const sign = async () => "https://example.test/file";
-
-  await Promise.all([
-    saveDownloadedFiles(
-      disk.directory,
-      [],
-      [file("202", "甲.pdf")],
-
-      sign,
-      () => undefined,
+  await Promise.all(
+    ["甲.pdf", "乙.pdf"].map((fileName) =>
+      saveDownloadedFiles(
+        disk.directory,
+        [{ ...FILE, fileName }],
+        { view: "item", typeId: "4", projectId: "2", itemId: "10" },
+        "item",
+        async () => "https://example.test/file",
+        () => undefined,
+      ),
     ),
-    saveDownloadedFiles(
-      disk.directory,
-      [],
-      [file("303", "乙.pdf")],
-
-      sign,
-      () => undefined,
-    ),
+  );
+  expect([...disk.files.entries()]).toEqual([
+    [".downloads.json", [9]],
+    ["用户文件.txt", [8]],
+    ["2026-11-14_12-34-56-789/甲.pdf", [1]],
+    ["2026-11-14_12-34-56-789_2/乙.pdf", [1]],
   ]);
-
-  expect(
-    disk
-      .records()
-      .map((record) => record.fileId)
-      .sort(),
-  ).toEqual(["101", "202", "303"]);
 });
 
-test("签发失败不改已有下载记录", async () => {
-  installLocks();
-  const disk = memoryDirectory([KEPT]);
+test("签发和写入失败只跳过该文件，进度仍覆盖整个批次", async () => {
+  const disk = memoryDirectory("坏.pdf");
+  const files = [
+    FILE,
+    { ...FILE, fileId: "202", fileName: "签发失败.pdf" },
+    { ...FILE, fileId: "303", fileName: "坏.pdf" },
+  ];
+  const sign = vi.fn(async (file: OrgFileBatchFileVO): Promise<string> => {
+    if (file.fileId === "202") throw new Error("签发失败");
+    return "https://example.test/file";
+  });
+  vi.stubGlobal("fetch", async () => new Response(Uint8Array.from([1, 2, 3])));
+  const progress = vi.fn();
   const failed = await saveDownloadedFiles(
     disk.directory,
-    [KEPT],
-    [file("202", "甲.pdf")],
-    async () => {
-      throw new Error("签不了");
-    },
-    () => undefined,
+    files,
+    { view: "item" },
+    "item",
+    sign,
+    progress,
   );
-
-  expect(failed).toBe(1);
-  expect(disk.writes()).toBe(0);
-  expect(disk.records()).toEqual([KEPT]);
+  expect(failed).toBe(2);
+  expect([...disk.files.values()]).toEqual([[1, 2, 3]]);
+  expect(progress.mock.calls.map(([done]) => done)).toEqual([0, 1, 2, 3]);
+  expect(sign.mock.calls.filter(([file]) => file.fileId === "202")).toHaveLength(2);
 });
 
-test("删除已下载文件时更新清单，缺失文件也去掉记录", async () => {
-  installLocks();
-  const other: DownloadRecord = {
-    taskInstanceId: "8",
-    fieldKey: "script",
-    fileId: "202",
-    name: "另一.pdf",
-  };
-  const kept: DownloadRecord = {
-    taskInstanceId: "3",
-    fieldKey: "extra",
-    fileId: "303",
-    name: "留着.txt",
-  };
-  const disk = memoryDirectory([KEPT, other, kept], {
-    present: [resourceFileName(KEPT.fileId, KEPT.name)],
-  });
-
-  const next = await removeDownloadedFiles(disk.directory, [KEPT, other]);
-
-  expect(next.map((record) => record.fileId)).toEqual(["303"]);
-  expect(disk.records().map((record) => record.fileId)).toEqual(["303"]);
-  expect(disk.has(resourceFileName(KEPT.fileId, KEPT.name))).toBe(false);
-});
-
-test("删除中途失败时保留尚未删除的记录", async () => {
-  installLocks();
-  const other: DownloadRecord = {
-    taskInstanceId: "8",
-    fieldKey: "script",
-    fileId: "202",
-    name: "另一.pdf",
-  };
-  const disk = memoryDirectory([KEPT, other], {
-    present: [resourceFileName(KEPT.fileId, KEPT.name), resourceFileName(other.fileId, other.name)],
-    fail: [resourceFileName(other.fileId, other.name)],
-  });
-
-  await expect(removeDownloadedFiles(disk.directory, [KEPT, other])).rejects.toThrow("磁盘忙");
-  expect(disk.records().map((record) => record.fileId)).toEqual(["202"]);
-  expect(disk.has(resourceFileName(KEPT.fileId, KEPT.name))).toBe(false);
-});
-
-test("下载文件直接写在所选文件夹里，并记下文件名", async (): Promise<void> => {
-  installLocks();
-  const disk = memoryDirectory([]);
-  vi.stubGlobal("fetch", async () => new Response(Uint8Array.from([1])));
-  await saveDownloadedFiles(
+test("空批次不创建时间目录", async () => {
+  const disk = memoryDirectory();
+  const failed = await saveDownloadedFiles(
     disk.directory,
     [],
-    [
-      {
-        taskInstanceId: "8",
-        fieldKey: "script",
-        fileId: "101",
-        fileName: "成果.pdf",
-        projectTitle: "阿企划",
-        itemTitle: "第一话",
-        typeName: "漫画",
-        taskName: "翻译",
-        fieldLabel: "译稿",
-        versionNo: 2,
-      },
-    ],
-    async () => "https://example.test/file",
+    { view: "item" },
+    "item",
+    async () => "",
     () => undefined,
   );
-  expect(disk.records().map((record) => record.path)).toEqual(["阿企划-第一话-翻译-译稿-2.pdf"]);
-  expect(disk.hasPath("阿企划-第一话-翻译-译稿-2.pdf")).toBe(true);
-  await removeDownloadedFiles(disk.directory, [
-    { taskInstanceId: "8", fieldKey: "script", fileId: "101" },
-  ]);
-  expect(disk.records()).toEqual([]);
-  expect(disk.hasPath("阿企划-第一话-翻译-译稿-2.pdf")).toBe(false);
+  expect(failed).toBe(0);
+  expect([...disk.directories]).toEqual([]);
 });
 
-function file(fileId: string, fileName: string) {
-  return { taskInstanceId: "8", fieldKey: "script", fileId, fileName };
-}
-
-function installLocks(): void {
-  let chain = Promise.resolve();
-  vi.stubGlobal("navigator", {
-    locks: {
-      request: (_name: string, callback: () => Promise<unknown>) => {
-        const run = chain.then(callback, callback);
-        chain = run.then(
-          () => undefined,
-          () => undefined,
-        );
-        return run;
-      },
-    },
-  });
-}
-
-function memoryDirectory(
-  initial: DownloadRecord[],
-  files?: { present?: string[]; fail?: string[] },
-): {
+function memoryDirectory(failingName?: string): {
   directory: DownloadDirectoryHandle;
-  records: () => DownloadRecord[];
-  writes: () => number;
-  has: (name: string) => boolean;
-  hasPath: (path: string) => boolean;
+  files: Map<string, number[]>;
+  directories: Set<string>;
 } {
-  let manifest = serializeManifest(initial);
-  let writes = 0;
-  const fail = new Set(files?.fail ?? []);
-  const root: MemDir = { files: new Set(files?.present ?? []), dirs: new Map() };
-
-  function handleFor(dir: MemDir, name: string, isRoot: boolean): DownloadDirectoryHandle {
+  const files = new Map<string, number[]>();
+  const directories = new Set<string>();
+  function handle(path: string, name: string): DownloadDirectoryHandle {
     return {
       name,
-      async getDirectoryHandle(child: string, options?: { create?: boolean }) {
-        let next = dir.dirs.get(child);
-        if (!next) {
+      async getDirectoryHandle(child, options) {
+        const next = path ? `${path}/${child}` : child;
+        if (files.has(next)) throw new DOMException("file", "TypeMismatchError");
+        if (!directories.has(next)) {
           if (!options?.create) throw new DOMException("missing", "NotFoundError");
-          next = { files: new Set(), dirs: new Map() };
-          dir.dirs.set(child, next);
+          directories.add(next);
         }
-        return handleFor(next, child, false);
+        return handle(next, child);
       },
-      async getFileHandle(fileName: string, options?: { create?: boolean }) {
-        if (isRoot && fileName === ".downloads.json") {
-          if (!options?.create && manifest === "")
-            throw new DOMException("missing", "NotFoundError");
-          return {
-            async getFile() {
-              return {
-                async text() {
-                  return manifest;
-                },
-              };
-            },
-            async createWritable() {
-              let next = "";
-              return {
-                async write(data: string) {
-                  next = data;
-                },
-                async close() {
-                  manifest = next;
-                  writes += 1;
-                },
-                async abort() {},
-              };
-            },
-          };
-        }
-        if (!options?.create && !dir.files.has(fileName)) {
-          throw new DOMException("missing", "NotFoundError");
-        }
-        dir.files.add(fileName);
+      async getFileHandle(child, options) {
+        if (!options?.create) throw new Error("不应读取本地下载记录");
+        const next = path ? `${path}/${child}` : child;
         return {
-          async getFile() {
-            throw new Error("不读文件正文");
-          },
           async createWritable() {
-            return new WritableStream<Uint8Array>();
+            const chunks: number[] = [];
+            return new WritableStream<Uint8Array>({
+              write(chunk) {
+                if (child === failingName) throw new Error("磁盘忙");
+                chunks.push(...chunk);
+              },
+              close() {
+                files.set(next, chunks);
+              },
+            });
           },
         };
       },
-      async removeEntry(entry: string) {
-        if (isRoot && fail.has(entry)) throw new Error("磁盘忙");
-        if (dir.files.has(entry)) {
-          dir.files.delete(entry);
-          return;
-        }
-        if (dir.dirs.has(entry)) {
-          dir.dirs.delete(entry);
-          return;
-        }
-        throw new DOMException("missing", "NotFoundError");
-      },
-      async queryPermission() {
-        return "granted" as PermissionState;
-      },
-    } as unknown as DownloadDirectoryHandle;
+    };
   }
-
-  return {
-    directory: handleFor(root, "下载", true),
-    records: () => parseManifest(manifest),
-    writes: () => writes,
-    has: (name: string) => root.files.has(name),
-    hasPath: (path: string) => {
-      const parts = path.split("/");
-      const fileName = parts.pop() ?? "";
-      let dir = root;
-      for (const part of parts) {
-        const next = dir.dirs.get(part);
-        if (!next) return false;
-        dir = next;
-      }
-      return dir.files.has(fileName);
-    },
-  };
-}
-
-interface MemDir {
-  files: Set<string>;
-  dirs: Map<string, MemDir>;
+  return { directory: handle("", "下载"), files, directories };
 }
