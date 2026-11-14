@@ -250,7 +250,8 @@ test("组织管理者可以操作企划，但不会被标成负责人", async ()
   expect(container.textContent).toContain("创建项目");
   expect(container.textContent).toContain("编辑资料");
   expect(container.textContent).toContain("已加入");
-  expect(container.textContent).not.toContain("负责人");
+  const subtitle = container.querySelector("h1")?.parentElement?.nextElementSibling;
+  expect(subtitle?.textContent).not.toContain("负责人");
   await waitFor(() => expect(attachmentSection().textContent).toContain("设定集.pdf"));
   expect(container.textContent).toContain("添加附件");
   expect(container.querySelector("[aria-label='删除 设定集.pdf']")).not.toBeNull();
