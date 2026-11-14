@@ -8,18 +8,11 @@ const STORE = "handles";
 const WRITE_CONCURRENCY = 3;
 const BATCH_LOCK = "longlian-oa-download-batch";
 
-interface BatchLockManager {
-  request<T>(name: string, callback: () => Promise<T>): Promise<T>;
-}
-
 let batchChain = Promise.resolve();
 
-function withBatchLock<T>(task: () => Promise<T>): Promise<T> {
-  const locks =
-    typeof navigator === "undefined"
-      ? undefined
-      : (navigator as Navigator & { locks?: BatchLockManager }).locks;
-  if (locks) return locks.request(BATCH_LOCK, task);
+async function withBatchLock<T>(task: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator === "undefined" ? undefined : navigator.locks;
+  if (locks) return await locks.request(BATCH_LOCK, task);
   const run = batchChain.then(task, task);
   batchChain = run.then(
     () => undefined,
