@@ -50,7 +50,11 @@ export function DocsIntro({ children }: DocsChildrenProps): ReactElement {
 }
 
 export function DocsGuides({ children }: DocsChildrenProps): ReactElement {
-  return <div className="not-prose grid gap-x-6 gap-y-2 md:grid-cols-2">{children}</div>;
+  return (
+    <div className="not-prose grid gap-x-6 gap-y-2 md:grid-cols-2 md:[&>a:last-child:nth-child(odd)]:col-span-2">
+      {children}
+    </div>
+  );
 }
 
 export function DocsGuide({ href, icon, children }: DocsGuideProps): ReactElement {
