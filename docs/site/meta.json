@@ -1,0 +1,16 @@
+{
+  "title": "使用手册",
+  "pages": [
+    "---开始使用---",
+    "index",
+    "getting-started",
+    "---日常协作---",
+    "tasks",
+    "projects",
+    "---组织管理---",
+    "workflows",
+    "organization",
+    "---遇到问题---",
+    "faq"
+  ]
+}
