@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
-import { dismissReleaseNotice, subscribeReleaseNotice } from "@/lib/frontendReleaseWatch";
+import {
+  dismissReleaseNotice,
+  refreshFrontend,
+  subscribeReleaseNotice,
+} from "@/lib/frontendReleaseWatch";
 
 import type { ReactElement, ReactNode } from "react";
 
@@ -20,7 +24,7 @@ export default function FrontendReleaseNotice(): ReactElement | null {
       className="fixed inset-x-0 top-0 z-40 flex h-12 items-center justify-center gap-3 border-b bg-background px-4 text-sm"
     >
       <p>页面已更新，刷新后继续使用</p>
-      <Button type="button" size="sm" onClick={() => window.location.reload()}>
+      <Button type="button" size="sm" onClick={refreshFrontend}>
         刷新
       </Button>
       <Button

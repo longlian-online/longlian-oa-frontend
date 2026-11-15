@@ -5,6 +5,7 @@ import App from "@/App";
 import PageLoading from "@/components/PageLoading";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import { createRoutes } from "@/lib/createRoutes";
+import { restoreFrontendUrl } from "@/lib/frontendReleaseWatch";
 import { routeLoaderModules } from "@/lib/routeLoaderModules";
 
 import type { ComponentType } from "react";
@@ -14,6 +15,8 @@ const pages = import.meta.glob<{ default: ComponentType }>([
   "!/src/pages/**/*.test.*",
 ]);
 const loaders = routeLoaderModules;
+
+restoreFrontendUrl();
 
 export const router = createBrowserRouter([
   {

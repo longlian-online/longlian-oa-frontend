@@ -10,6 +10,8 @@ import {
 
 type ReleaseNoticeListener = (buildTime: string | null) => void;
 
+const REFRESH_URL_KEY = "oa:release-refresh-url";
+
 const listeners = new Set<ReleaseNoticeListener>();
 let noticedBuildTime: string | null = null;
 let started = false;
@@ -27,6 +29,37 @@ export function dismissReleaseNotice(buildTime: string): void {
   const storage = releaseStorage();
   if (storage) dismissReleaseBuildTime(storage, buildTime);
   publishReleaseNotice(null);
+}
+
+export function refreshFrontend(): void {
+  try {
+    const currentUrl = window.location.href;
+    const hashIndex = currentUrl.indexOf("#");
+    const pageUrl = hashIndex < 0 ? currentUrl : currentUrl.slice(0, hashIndex);
+    const hash = hashIndex < 0 ? "" : currentUrl.slice(hashIndex);
+    const separator = pageUrl.includes("?") ? "&" : "?";
+    const nonce = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+    const refreshUrl = `${pageUrl}${separator}__oa_refresh=${nonce}${hash}`;
+    window.sessionStorage.setItem(REFRESH_URL_KEY, JSON.stringify({ currentUrl, refreshUrl }));
+    window.location.replace(refreshUrl);
+  } catch {
+    window.location.reload();
+  }
+}
+
+export function restoreFrontendUrl(): void {
+  try {
+    const saved = window.sessionStorage.getItem(REFRESH_URL_KEY);
+    if (saved === null) return;
+    window.sessionStorage.removeItem(REFRESH_URL_KEY);
+    const parsed: unknown = JSON.parse(saved);
+    if (typeof parsed !== "object" || parsed === null) return;
+    if (!("refreshUrl" in parsed) || !("currentUrl" in parsed)) return;
+    if (parsed.refreshUrl !== window.location.href || typeof parsed.currentUrl !== "string") return;
+    window.history.replaceState(window.history.state, "", parsed.currentUrl);
+  } catch {
+    // 无法恢复时保留当前地址，不影响页面启动。
+  }
 }
 
 export function startFrontendReleaseWatch(): void {
@@ -54,7 +87,7 @@ function onPreloadError(event: Event): void {
   const storage = releaseStorage();
   if (storage === null || !markStaleAssetReload(storage)) return;
   event.preventDefault();
-  window.location.reload();
+  refreshFrontend();
 }
 
 function onVisibilityChange(): void {
