@@ -25,7 +25,7 @@ export default function DocsArticle({ page }: DocsArticleProps): ReactElement {
         )}
         {page.data.title}
       </DocsTitle>
-      <DocsBody className="prose-headings:font-medium">
+      <DocsBody className="prose-headings:font-medium dark:prose-img:brightness-80">
         <Content components={defaultMdxComponents} />
       </DocsBody>
     </DocsPage>

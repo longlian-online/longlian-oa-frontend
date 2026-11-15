@@ -26,7 +26,7 @@ export function DocsIntro({ children }: DocsChildrenProps): ReactElement {
           alt=""
           width={88}
           height={88}
-          className="size-22 -rotate-6 object-contain"
+          className="size-22 -rotate-6 object-contain brightness-95 dark:brightness-80"
         />
         <div className="flex items-center gap-1.5 text-xs">
           <span className="flex items-center gap-1 rounded-md bg-background px-2 py-1.5 ring-1 ring-foreground/10">
