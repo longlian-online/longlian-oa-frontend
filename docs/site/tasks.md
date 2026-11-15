@@ -14,6 +14,8 @@ icon: ClipboardCheck
 
 每个企划的任务可以展开查看。点击任务后，确认所属企划、项目和任务要求。
 
+![任务大厅展开企划后，显示当前阶段、后续阶段和接取入口](/docs/screenshots/task-claim.webp)
+
 也可以从<a href="/dashboard/workshop" target="_self">工坊</a>查看自己已经接取的任务。
 
 ## 接取任务
