@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactElement } from "react";
-import { Check, LogOut, ScrollText, Settings, UserRound } from "lucide-react";
+import { BookOpen, Check, LogOut, ScrollText, Settings, UserRound } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 
 import { isOrganizationManagerRole } from "@/lib/organizationRole";
@@ -170,12 +170,6 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
       </nav>
 
       <div className="flex items-center justify-end gap-1">
-        <Link
-          to="/docs/"
-          className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          使用帮助
-        </Link>
         <ThemeToggle />
         <NotificationCenter />
         <div className="group relative ml-1 border-l border-border pl-3">
@@ -246,6 +240,13 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
               <ScrollText className="h-4 w-4" />
               更新记录
             </Button>
+            <Link
+              to="/docs/"
+              className="flex w-full items-center justify-start gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+            >
+              <BookOpen className="h-4 w-4" />
+              使用帮助
+            </Link>
             <Button
               variant="ghost"
               className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
