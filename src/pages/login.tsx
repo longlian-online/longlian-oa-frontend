@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -263,6 +263,12 @@ export default function LoginPage() {
             </button>
           </div>
         </div>
+        <Link
+          to="/docs/"
+          className="mt-6 block rounded-md text-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          使用帮助
+        </Link>
       </div>
     </div>
   );
