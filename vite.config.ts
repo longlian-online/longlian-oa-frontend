@@ -3,7 +3,7 @@ import { defineConfig } from "vite-plus";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileRoutes } from "./tools/fileRoutes.ts";
-import { userGuide } from "./tools/userGuide.ts";
+import { fumadocsMdx } from "fumadocs-mdx/vite";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import type { Plugin, ProxyOptions } from "vite-plus";
@@ -84,7 +84,7 @@ export default defineConfig({
     ignorePatterns: [".agents/skills/**"],
   },
   plugins: [
-    userGuide(),
+    fumadocsMdx({ macro: { include: ["src/lib/help.ts"] } }),
     frontendReleaseManifest(version, buildTime),
     umamiAnalytics(),
     ignoreUnknownRequests(),
