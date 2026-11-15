@@ -54,7 +54,21 @@ export default function DocsPage(): ReactElement {
     >
       <DocsLayout
         tree={docsSource.getPageTree()}
-        nav={{ title: "白箱使用手册", url: "/docs/" }}
+        nav={{
+          title: (
+            <span className="flex items-center gap-2.5">
+              <img
+                src="/logo-full.webp"
+                alt=""
+                width={28}
+                height={28}
+                className="size-7 object-contain"
+              />
+              白箱使用手册
+            </span>
+          ),
+          url: "/docs/",
+        }}
         links={[{ text: "返回白箱", url: "/dashboard/planning", active: "none" }]}
         slots={{ themeSwitch: ThemeToggle }}
       >
