@@ -84,7 +84,7 @@ export default defineConfig({
     ignorePatterns: [".agents/skills/**"],
   },
   plugins: [
-    fumadocsMdx({ macro: { include: ["src/lib/help.ts"] } }),
+    fumadocsMdx({ macro: { include: ["src/lib/docs.ts"] } }),
     frontendReleaseManifest(version, buildTime),
     umamiAnalytics(),
     ignoreUnknownRequests(),

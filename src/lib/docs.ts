@@ -2,13 +2,13 @@ import { loader, type InferPageType } from "fumadocs-core/source";
 import { defineDocs } from "fumadocs-mdx/macro";
 
 const docs = defineDocs({
-  dir: "help",
+  dir: "docs/guide",
   docs: { async: true },
 });
 
-export const helpSource = loader({
-  baseUrl: "/help",
+export const docsSource = loader({
+  baseUrl: "/docs",
   source: docs.toFumadocsSource(),
 });
 
-export type HelpPage = InferPageType<typeof helpSource>;
+export type DocsPageEntry = InferPageType<typeof docsSource>;

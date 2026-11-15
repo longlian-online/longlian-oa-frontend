@@ -1,14 +1,14 @@
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import { DocsBody, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
+import { DocsBody, DocsPage as FumadocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
 import { RootProvider } from "fumadocs-ui/provider/react-router";
 import { Suspense, useEffect, type ReactElement } from "react";
 import { Link, ScrollRestoration, useParams } from "react-router";
 
-import HelpArticle from "@/components/Help/HelpArticle";
-import HelpSearchDialog from "@/components/Help/HelpSearchDialog";
+import DocsArticle from "@/components/Docs/DocsArticle";
+import DocsSearchDialog from "@/components/Docs/DocsSearchDialog";
 import PageLoading from "@/components/PageLoading";
 import ThemeToggle from "@/components/theme/ThemeToggle";
-import { helpSource } from "@/lib/help";
+import { docsSource } from "@/lib/docs";
 
 const translations = {
   "Search(search trigger)": "搜索手册",
@@ -32,10 +32,10 @@ const translations = {
   "Show Sidebar(sidebar)": "展开目录",
 };
 
-export default function HelpPage(): ReactElement {
+export default function DocsPage(): ReactElement {
   const params = useParams();
   const slugs = params["*"]?.split("/").filter(Boolean) ?? [];
-  const page = helpSource.getPage(slugs);
+  const page = docsSource.getPage(slugs);
   const title = page?.data.title ?? "没有找到这篇说明";
 
   useEffect(() => {
@@ -50,27 +50,27 @@ export default function HelpPage(): ReactElement {
     <RootProvider
       theme={{ enabled: false }}
       i18n={{ locale: "zh-CN", translations }}
-      search={{ SearchDialog: HelpSearchDialog }}
+      search={{ SearchDialog: DocsSearchDialog }}
     >
       <DocsLayout
-        tree={helpSource.getPageTree()}
-        nav={{ title: "白箱使用手册", url: "/help/" }}
+        tree={docsSource.getPageTree()}
+        nav={{ title: "白箱使用手册", url: "/docs/" }}
         links={[{ text: "返回白箱", url: "/dashboard/planning", active: "none" }]}
         slots={{ themeSwitch: ThemeToggle }}
       >
         {page ? (
           <Suspense fallback={<PageLoading message="正在加载手册…" />}>
-            <HelpArticle key={page.url} page={page} />
+            <DocsArticle key={page.url} page={page} />
           </Suspense>
         ) : (
-          <DocsPage footer={{ enabled: false }} breadcrumb={{ enabled: false }}>
+          <FumadocsPage footer={{ enabled: false }} breadcrumb={{ enabled: false }}>
             <ScrollRestoration getKey={(location) => location.pathname + location.hash} />
             <DocsTitle>没有找到这篇说明</DocsTitle>
             <DocsBody>
               <p>可以从左侧目录查找，或搜索你要完成的操作。</p>
-              <Link to="/help/">返回使用手册</Link>
+              <Link to="/docs/">返回使用手册</Link>
             </DocsBody>
-          </DocsPage>
+          </FumadocsPage>
         )}
       </DocsLayout>
     </RootProvider>

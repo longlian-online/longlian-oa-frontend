@@ -264,7 +264,7 @@ export default function LoginPage() {
           </div>
         </div>
         <Link
-          to="/help/"
+          to="/docs/"
           className="mt-6 block rounded-md text-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           使用帮助

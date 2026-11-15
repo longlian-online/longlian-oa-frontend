@@ -12,10 +12,10 @@ import {
 } from "fumadocs-ui/components/dialog/search";
 import type { ReactElement } from "react";
 
-import { searchHelp } from "@/lib/helpSearch";
+import { searchDocs } from "@/lib/docsSearch";
 
-export default function HelpSearchDialog(props: SharedProps): ReactElement {
-  const search = useSearch(searchHelp);
+export default function DocsSearchDialog(props: SharedProps): ReactElement {
+  const search = useSearch(searchDocs);
 
   return (
     <SearchDialog {...search} {...props}>

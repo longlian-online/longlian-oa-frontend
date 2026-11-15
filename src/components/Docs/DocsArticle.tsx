@@ -3,13 +3,13 @@ import defaultMdxComponents from "fumadocs-ui/mdx";
 import { use, type ReactElement } from "react";
 import { ScrollRestoration } from "react-router";
 
-import type { HelpPage } from "@/lib/help";
+import type { DocsPageEntry } from "@/lib/docs";
 
-interface HelpArticleProps {
-  page: HelpPage;
+interface DocsArticleProps {
+  page: DocsPageEntry;
 }
 
-export default function HelpArticle({ page }: HelpArticleProps): ReactElement {
+export default function DocsArticle({ page }: DocsArticleProps): ReactElement {
   const { body: Content, toc } = use(page.data.load());
 
   return (
