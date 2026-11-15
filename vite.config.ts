@@ -3,6 +3,7 @@ import { defineConfig } from "vite-plus";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileRoutes } from "./tools/fileRoutes.ts";
+import { userGuide } from "./tools/userGuide.ts";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import type { Plugin, ProxyOptions } from "vite-plus";
@@ -83,6 +84,7 @@ export default defineConfig({
     ignorePatterns: [".agents/skills/**"],
   },
   plugins: [
+    userGuide(),
     frontendReleaseManifest(version, buildTime),
     umamiAnalytics(),
     ignoreUnknownRequests(),
