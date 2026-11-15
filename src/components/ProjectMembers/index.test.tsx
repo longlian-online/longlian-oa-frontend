@@ -102,7 +102,7 @@ test("使用用户端接口展示当前成员、人数和负责人，不增加�
     expect(container.textContent).not.toContain(label);
 });
 
-test("有效提交显示完成数和上一次提交时间，没有则显示横线", async (): Promise<void> => {
+test("有效提交显示分组统计，没有则显示横线", async (): Promise<void> => {
   const submittedAt = "2026-03-03 10:00:00";
   vi.stubGlobal("fetch", async (input: string, init?: RequestInit): Promise<Response> => {
     const url = new URL(input, "http://localhost");
@@ -115,9 +115,14 @@ test("有效提交显示完成数和上一次提交时间，没有则显示横�
   await mount();
   await waitFor(() => expect(container.textContent).toContain("成员1"));
   const rows = [...container.querySelectorAll("li")];
-  expect(rows[0]?.textContent).toContain(`完成 2 · 上一次提交 ${formatDate(submittedAt)}`);
-  expect(rows[1]?.textContent).toContain("-");
-  expect(rows[1]?.textContent).not.toContain("完成");
+  const submittedStats = rows[0]?.querySelectorAll("dl");
+  expect(submittedStats?.[0]?.querySelector("dt")?.textContent).toBe("完成");
+  expect(submittedStats?.[0]?.querySelector("dd")?.textContent).toBe("2");
+  expect(submittedStats?.[1]?.querySelector("dt")?.textContent).toBe("最近提交");
+  expect(submittedStats?.[1]?.querySelector("dd")?.textContent).toBe(formatDate(submittedAt));
+  const emptyStats = rows[1]?.querySelectorAll("dl");
+  expect(emptyStats?.[0]?.querySelector("dd")?.textContent).toBe("-");
+  expect(emptyStats?.[1]?.querySelector("dd")?.textContent).toBe("-");
 });
 
 test("分页只更新成员区，切换企划或组织回到第一页", async (): Promise<void> => {
