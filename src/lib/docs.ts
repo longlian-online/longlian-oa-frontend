@@ -2,7 +2,7 @@ import { loader, type InferPageType } from "fumadocs-core/source";
 import { defineDocs } from "fumadocs-mdx/macro";
 
 const docs = defineDocs({
-  dir: "docs/guide",
+  dir: "docs/site",
   docs: { async: true },
 });
 
