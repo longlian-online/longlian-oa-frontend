@@ -69,6 +69,7 @@ beforeEach((): void => {
 });
 
 afterEach((): void => {
+  vi.useRealTimers();
   act(() => root.unmount());
   container.remove();
   client.clear();
@@ -467,6 +468,28 @@ test("企划可独立展开收起，任务翻页在卡片网格底部居中", as
   expect(button("收起企划22", section("22"))).toBeDefined();
 });
 
+test("任务卡展示原子任务图标，未配置时按名称兜底", async (): Promise<void> => {
+  const group = makeGroup("60", 3);
+  const names = ["翻译", "整理素材", "发布"];
+  const icons: (string | undefined)[] = [undefined, "BookOpen", undefined];
+  group.tasks = group.tasks.map((task, index) => ({
+    ...task,
+    nodeName: names[index],
+    baseTaskIcon: icons[index],
+  }));
+  groups = [group];
+  await mount();
+  await waitFor((): void => expect(section("60").textContent).toContain("企划60"));
+  await expandGroup("60");
+  const panel = section("60").querySelector(":scope > div[id]");
+  const cards = panel ? Array.from(panel.children) : [];
+  expect(cards).toHaveLength(3);
+  // 翻译无图标配置 → 按名称兜底为 Languages；BookOpen 直接使用；发布兜底为 Megaphone
+  expect(cards[0].querySelector("svg.lucide-languages")).not.toBeNull();
+  expect(cards[1].querySelector("svg.lucide-book-open")).not.toBeNull();
+  expect(cards[2].querySelector("svg.lucide-megaphone")).not.toBeNull();
+});
+
 test("默认全部阶段，说明点击不改变筛选或 URL，切换与历史保持原值", async (): Promise<void> => {
   await mount();
   expect(button("全部阶段").getAttribute("aria-pressed")).toBe("true");
@@ -585,4 +608,85 @@ test("触屏点击说明可开关，外部点击可关闭，不误切筛选", as
   });
   await waitForClosed();
   expect(container.querySelector("output")?.textContent).toBe("?stageScope=CURRENT");
+});
+
+test("缩略图悬停展示完整封面，移出后收起且点击仍展开任务", async (): Promise<void> => {
+  groups = [
+    {
+      ...makeGroup("1", 1),
+      thumbnailUrl: "https://example.test/thumbnail.webp?size=144",
+      coverUrl: "https://example.test/cover.webp",
+    },
+  ];
+  await mount();
+  await waitFor(() => expect(button("展开企划1").getAttribute("aria-expanded")).toBe("false"));
+  const image = section("1").querySelector("img")!;
+  expect(image.getAttribute("src")).toBe(groups[0].thumbnailUrl);
+  expect(document.querySelector('[alt="企划1封面"]')).toBeNull();
+  const trigger = image.closest<HTMLElement>('[data-slot="project-cover-trigger"]')!;
+  await act(async () => {
+    trigger.dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
+    trigger.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
+  });
+  await waitFor(() => {
+    expect(document.querySelector('[alt="企划1封面"]')?.getAttribute("src")).toBe(
+      groups[0].coverUrl,
+    );
+  });
+  expect(button("展开企划1").getAttribute("aria-expanded")).toBe("false");
+  await act(async () => {
+    trigger.dispatchEvent(
+      new MouseEvent("mouseout", { bubbles: true, relatedTarget: document.body }),
+    );
+    trigger.dispatchEvent(
+      new MouseEvent("mouseleave", { bubbles: false, relatedTarget: document.body }),
+    );
+  });
+  await waitFor(() => expect(document.querySelector('[alt="企划1封面"]')).toBeNull());
+  await act(async () => image.click());
+  expect(button("收起企划1").getAttribute("aria-expanded")).toBe("true");
+  expect(visibleTaskNames("1")).toEqual(["1任务0"]);
+});
+
+test("快速经过缩略图不会在离开后弹出封面", async (): Promise<void> => {
+  groups = [{ ...makeGroup("1", 1), coverUrl: "https://example.test/cover.webp" }];
+  await mount();
+  await waitFor(() => expect(button("展开企划1").getAttribute("aria-expanded")).toBe("false"));
+  const trigger = section("1").querySelector<HTMLElement>('[data-slot="project-cover-trigger"]')!;
+  vi.useFakeTimers();
+  await act(async () => {
+    trigger.dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
+    trigger.dispatchEvent(
+      new MouseEvent("mouseout", { bubbles: true, relatedTarget: document.body }),
+    );
+    trigger.dispatchEvent(
+      new MouseEvent("mouseleave", { bubbles: false, relatedTarget: document.body }),
+    );
+    await vi.advanceTimersByTimeAsync(200);
+  });
+  expect(document.querySelector('[alt="企划1封面"]')).toBeNull();
+  expect(button("展开企划1").getAttribute("aria-expanded")).toBe("false");
+});
+
+test("只有缩略图或无图片时不弹出封面且仍可展开", async (): Promise<void> => {
+  groups = [
+    { ...makeGroup("1", 1), thumbnailUrl: "https://example.test/thumbnail.webp" },
+    makeGroup("2", 1),
+  ];
+  await mount();
+  await waitFor(() => expect(button("展开企划2").getAttribute("aria-expanded")).toBe("false"));
+  vi.useFakeTimers();
+  for (const projectId of ["1", "2"]) {
+    const trigger = button(`展开企划${projectId}`).querySelector<HTMLElement>(
+      "[data-slot=remote-image], span.bg-muted",
+    )!;
+    await act(async () => {
+      trigger.dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
+      trigger.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(200);
+    });
+    expect(document.querySelector(`[alt="企划${projectId}封面"]`)).toBeNull();
+    await act(async () => trigger.click());
+    expect(button(`收起企划${projectId}`).getAttribute("aria-expanded")).toBe("true");
+  }
 });

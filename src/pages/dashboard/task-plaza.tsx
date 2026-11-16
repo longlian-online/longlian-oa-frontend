@@ -1,4 +1,5 @@
 import { Popover } from "@base-ui/react/popover";
+import { PreviewCard } from "@base-ui/react/preview-card";
 import { useMutationState } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState, type ReactElement } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
@@ -23,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { projectThumbnailSrc } from "@/lib/projectThumbnail";
 import { formatSlotLabel } from "@/lib/slotLabel";
+import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
@@ -377,6 +379,63 @@ export default function TaskPlaza() {
   );
 }
 
+function ProjectCoverThumbnail({ group }: { group: PlazaProjectGroup }): ReactElement {
+  const [open, setOpen] = useState(false);
+  const imageUrl = projectThumbnailSrc(group.thumbnailUrl, group.coverUrl);
+  const coverUrl = group.coverUrl?.trim();
+  const thumbnail = imageUrl ? (
+    <RemoteImage
+      src={imageUrl}
+      alt={group.title}
+      className="size-10 shrink-0 rounded-md border"
+      fallback={<span className="text-sm font-semibold">{group.title.slice(0, 2)}</span>}
+    />
+  ) : (
+    <span className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-sm font-semibold text-muted-foreground">
+      {group.title.slice(0, 2)}
+    </span>
+  );
+
+  if (!coverUrl) return thumbnail;
+
+  return (
+    <PreviewCard.Root open={open} onOpenChange={setOpen}>
+      <PreviewCard.Trigger
+        render={<span />}
+        data-slot="project-cover-trigger"
+        className="shrink-0"
+        delay={150}
+        closeDelay={0}
+        onMouseLeave={() => setOpen(false)}
+      >
+        {thumbnail}
+      </PreviewCard.Trigger>
+      <PreviewCard.Portal>
+        <PreviewCard.Positioner
+          side="right"
+          align="start"
+          sideOffset={12}
+          collisionPadding={16}
+          className="pointer-events-none z-50"
+        >
+          <PreviewCard.Popup
+            data-slot="project-cover-preview"
+            className="overflow-hidden rounded-xl bg-popover ring-1 ring-foreground/10"
+          >
+            <RemoteImage
+              src={coverUrl}
+              alt={`${group.title}封面`}
+              fit="contain"
+              className="h-[min(27rem,var(--available-height))] w-[min(18rem,var(--available-width))] rounded-xl bg-popover"
+              fallback={<span className="text-sm">封面加载失败</span>}
+            />
+          </PreviewCard.Popup>
+        </PreviewCard.Positioner>
+      </PreviewCard.Portal>
+    </PreviewCard.Root>
+  );
+}
+
 interface ProjectGroupSectionProps {
   group: PlazaProjectGroup;
   claiming: Set<string>;
@@ -394,7 +453,6 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
     (currentPage - 1) * TASK_PAGE_SIZE,
     currentPage * TASK_PAGE_SIZE,
   );
-  const imageUrl = projectThumbnailSrc(group.thumbnailUrl, group.coverUrl);
 
   return (
     <section>
@@ -413,18 +471,7 @@ function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionPr
             <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" />
           )}
           <span className="flex min-w-0 items-center gap-3">
-            {imageUrl ? (
-              <RemoteImage
-                src={imageUrl}
-                alt={group.title}
-                className="size-10 shrink-0 rounded-md border"
-                fallback={<span className="text-sm font-semibold">{group.title.slice(0, 2)}</span>}
-              />
-            ) : (
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-sm font-semibold text-muted-foreground">
-                {group.title.slice(0, 2)}
-              </div>
-            )}
+            <ProjectCoverThumbnail group={group} />
             <span
               title={group.title}
               className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground group-hover:underline"
@@ -550,11 +597,16 @@ function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
     slotTotal: task.slotTotal,
     serialStep: task.serialStep,
   });
+  const TaskIcon = getWorkflowTaskIcon(task.nodeName, task.baseTaskIcon ?? undefined);
 
   return (
     <div className="rounded-lg border bg-card p-3 transition-colors hover:border-foreground/20">
-      <span className="block truncate text-sm font-medium text-foreground" title={slotLabel}>
-        {slotLabel}
+      <span
+        className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-foreground"
+        title={slotLabel}
+      >
+        <TaskIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <span className="truncate">{slotLabel}</span>
       </span>
       <Badge variant="outline" className="mt-1 text-xs font-normal">
         {task.isCurrentStage ? "当前阶段" : "后续阶段"}
