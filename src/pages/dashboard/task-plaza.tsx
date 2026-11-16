@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { projectThumbnailSrc } from "@/lib/projectThumbnail";
 import { formatSlotLabel } from "@/lib/slotLabel";
+import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
@@ -550,11 +551,16 @@ function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
     slotTotal: task.slotTotal,
     serialStep: task.serialStep,
   });
+  const TaskIcon = getWorkflowTaskIcon(task.nodeName, task.baseTaskIcon ?? undefined);
 
   return (
     <div className="rounded-lg border bg-card p-3 transition-colors hover:border-foreground/20">
-      <span className="block truncate text-sm font-medium text-foreground" title={slotLabel}>
-        {slotLabel}
+      <span
+        className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-foreground"
+        title={slotLabel}
+      >
+        <TaskIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <span className="truncate">{slotLabel}</span>
       </span>
       <Badge variant="outline" className="mt-1 text-xs font-normal">
         {task.isCurrentStage ? "当前阶段" : "后续阶段"}
