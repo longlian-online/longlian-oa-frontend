@@ -297,9 +297,9 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               delay={150}
               closeDelay={200}
               aria-label={`负责人信息：${ownerNickname}`}
-              className="size-9 shrink-0 cursor-default rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="group/owner relative size-9 shrink-0 cursor-default rounded-full outline-none data-popup-open:z-60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <Avatar className="size-9">
+              <Avatar className="size-9 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-popup-open/owner:ring-3 group-data-popup-open/owner:ring-popover motion-safe:group-hover/owner:scale-150 motion-safe:group-focus-visible/owner:scale-150 motion-safe:group-data-popup-open/owner:scale-150 motion-reduce:transition-none">
                 <AvatarImage src={project.creatorAvatarUrl} alt="" />
                 <AvatarFallback>
                   <UserRound className="size-4" />
@@ -307,33 +307,33 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               </Avatar>
             </Popover.Trigger>
             <Popover.Portal>
-              <Popover.Positioner side="bottom" align="start" sideOffset={8}>
+              <Popover.Positioner
+                side="bottom"
+                align="start"
+                sideOffset={-18}
+                alignOffset={18}
+                collisionPadding={16}
+                collisionAvoidance={{ side: "flip", align: "flip", fallbackAxisSide: "none" }}
+                className="z-50"
+              >
                 <Popover.Popup
                   initialFocus={false}
-                  className="w-60 max-w-[calc(100vw-2rem)] rounded-xl border bg-popover p-4 text-popover-foreground outline-none duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none"
+                  className="group/owner-panel w-60 max-w-[calc(100vw-2rem)] origin-top-left rounded-xl bg-popover p-5 text-popover-foreground ring-1 ring-foreground/10 outline-none transition-[opacity,scale] duration-250 ease-[cubic-bezier(0.16,1,0.3,1)] data-[align=end]:origin-top-right data-[side=top]:origin-bottom-left data-[side=top]:data-[align=end]:origin-bottom-right data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-150 motion-safe:data-starting-style:scale-90 motion-safe:data-ending-style:scale-95 motion-reduce:transition-none"
                 >
-                  <div className="flex items-start gap-3">
-                    <Avatar className="size-9 shrink-0">
-                      <AvatarImage src={project.creatorAvatarUrl} alt="" />
-                      <AvatarFallback>
-                        <UserRound className="size-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1 space-y-3">
-                      <div>
-                        <p className="text-xs text-muted-foreground">昵称</p>
-                        <Popover.Title className="mt-1 break-all text-sm font-semibold">
-                          {ownerNickname}
-                        </Popover.Title>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">最近提交</p>
-                        <Popover.Description className="mt-1 text-xs leading-5 text-muted-foreground">
-                          {project.creatorLastSubmittedAt
-                            ? formatDate(project.creatorLastSubmittedAt)
-                            : "暂无提交记录"}
-                        </Popover.Description>
-                      </div>
+                  <div className="space-y-3 transition-opacity delay-50 duration-200 group-data-starting-style/owner-panel:opacity-0 group-data-ending-style/owner-panel:opacity-0 group-data-ending-style/owner-panel:delay-0 group-data-ending-style/owner-panel:duration-100 motion-reduce:transition-none">
+                    <div>
+                      <p className="text-xs text-muted-foreground">昵称</p>
+                      <Popover.Title className="mt-1 break-all text-sm font-medium">
+                        {ownerNickname}
+                      </Popover.Title>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">最近提交</p>
+                      <Popover.Description className="mt-1 text-xs leading-5 text-muted-foreground">
+                        {project.creatorLastSubmittedAt
+                          ? formatDate(project.creatorLastSubmittedAt)
+                          : "暂无提交记录"}
+                      </Popover.Description>
                     </div>
                   </div>
                 </Popover.Popup>
