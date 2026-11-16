@@ -1,7 +1,7 @@
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { DocsBody, DocsPage as FumadocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
 import { RootProvider } from "fumadocs-ui/provider/react-router";
-import { Suspense, useEffect, type ReactElement } from "react";
+import { Suspense, useEffect, useLayoutEffect, type ReactElement } from "react";
 import { Link, ScrollRestoration, useParams } from "react-router";
 
 import DocsArticle from "@/components/Docs/DocsArticle";
@@ -38,6 +38,13 @@ export default function DocsPage(): ReactElement {
   const page = docsSource.getPage(slugs);
   const title = page?.data.title ?? "没有找到这篇说明";
 
+  // 阅读配色同时覆盖正文、目录和挂载到 body 的搜索弹层。
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.classList.add("docs-reading");
+    return () => root.classList.remove("docs-reading");
+  }, []);
+
   useEffect(() => {
     const previousTitle = document.title;
     document.title = `${title} | 白箱使用手册`;
@@ -54,7 +61,21 @@ export default function DocsPage(): ReactElement {
     >
       <DocsLayout
         tree={docsSource.getPageTree()}
-        nav={{ title: "白箱使用手册", url: "/docs/" }}
+        nav={{
+          title: (
+            <span className="flex items-center gap-2.5">
+              <img
+                src="/logo-full.webp"
+                alt=""
+                width={28}
+                height={28}
+                className="size-7 object-contain brightness-95 dark:brightness-80"
+              />
+              白箱使用手册
+            </span>
+          ),
+          url: "/docs/",
+        }}
         links={[{ text: "返回白箱", url: "/dashboard/planning", active: "none" }]}
         slots={{ themeSwitch: ThemeToggle }}
       >

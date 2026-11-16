@@ -1,5 +1,6 @@
 ---
 title: 常见问题
+icon: CircleHelp
 ---
 
 ## 申请加入组织后，为什么不能登录？
