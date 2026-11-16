@@ -299,7 +299,7 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               aria-label={`负责人信息：${ownerNickname}`}
               className="group/owner relative size-9 shrink-0 cursor-default rounded-full outline-none data-popup-open:z-60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <Avatar className="size-9 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-popup-open/owner:ring-3 group-data-popup-open/owner:ring-popover motion-safe:group-hover/owner:scale-130 motion-safe:group-focus-visible/owner:scale-130 motion-safe:group-data-popup-open/owner:scale-130 motion-reduce:transition-none">
+              <Avatar className="size-9 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-popup-open/owner:ring-3 group-data-popup-open/owner:ring-popover motion-safe:group-hover/owner:scale-150 motion-safe:group-focus-visible/owner:scale-150 motion-safe:group-data-popup-open/owner:scale-150 motion-reduce:transition-none">
                 <AvatarImage src={project.creatorAvatarUrl} alt="" />
                 <AvatarFallback>
                   <UserRound className="size-4" />
