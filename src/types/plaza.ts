@@ -7,6 +7,8 @@ export interface PlazaTask {
   itemId: string;
   itemTitle: string;
   nodeName: string;
+  /** 原子任务图标（Lucide 组件名），读取当前原子任务；缺失或无效时前端按名称兜底 */
+  baseTaskIcon?: string | null;
   isCurrentStage: boolean;
   /** 任务所属阶段序号（1 开始） */
   stageIndex: number;

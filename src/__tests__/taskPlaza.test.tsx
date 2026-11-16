@@ -467,6 +467,28 @@ test("企划可独立展开收起，任务翻页在卡片网格底部居中", as
   expect(button("收起企划22", section("22"))).toBeDefined();
 });
 
+test("任务卡展示原子任务图标，未配置时按名称兜底", async (): Promise<void> => {
+  const group = makeGroup("60", 3);
+  const names = ["翻译", "整理素材", "发布"];
+  const icons: (string | undefined)[] = [undefined, "BookOpen", undefined];
+  group.tasks = group.tasks.map((task, index) => ({
+    ...task,
+    nodeName: names[index],
+    baseTaskIcon: icons[index],
+  }));
+  groups = [group];
+  await mount();
+  await waitFor((): void => expect(section("60").textContent).toContain("企划60"));
+  await expandGroup("60");
+  const panel = section("60").querySelector(":scope > div[id]");
+  const cards = panel ? Array.from(panel.children) : [];
+  expect(cards).toHaveLength(3);
+  // 翻译无图标配置 → 按名称兜底为 Languages；BookOpen 直接使用；发布兜底为 Megaphone
+  expect(cards[0].querySelector("svg.lucide-languages")).not.toBeNull();
+  expect(cards[1].querySelector("svg.lucide-book-open")).not.toBeNull();
+  expect(cards[2].querySelector("svg.lucide-megaphone")).not.toBeNull();
+});
+
 test("默认全部阶段，说明点击不改变筛选或 URL，切换与历史保持原值", async (): Promise<void> => {
   await mount();
   expect(button("全部阶段").getAttribute("aria-pressed")).toBe("true");
