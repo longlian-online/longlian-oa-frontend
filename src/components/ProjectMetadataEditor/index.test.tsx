@@ -24,7 +24,7 @@ afterEach(() => {
 
 function setNativeValue(input: HTMLInputElement, value: string): void {
   const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
-  Reflect.apply(descriptor!.set as (this: HTMLInputElement, value: string) => void, input, [value]);
+  descriptor!.set?.call(input, value);
 }
 
 function renderEditor(initial: ProjectMetadataTag): { draft: () => ProjectMetadataTag } {
