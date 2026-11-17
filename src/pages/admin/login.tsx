@@ -6,12 +6,14 @@ import * as z from "zod";
 import { Eye, EyeOff } from "lucide-react";
 
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
+import { useCaptcha } from "@/hooks/useCaptcha";
 import { adminLogin } from "@/api/auth";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { saveAdminSession } from "@/lib/session";
+import { readAdminCaptchaConfig } from "@/lib/captchaConfig";
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, "请输入管理员账号").max(32, "账号最多32个字符"),
@@ -23,7 +25,8 @@ type AdminLoginFormData = z.infer<typeof adminLoginSchema>;
 export default function AdminLoginPage() {
   const navigate = useNavigate();
   const loginMutation = useApiMutation({ scope: "public", mutationFn: adminLogin });
-  const isLoading = loginMutation.isPending;
+  const captcha = useCaptcha({ readConfig: readAdminCaptchaConfig, action: "admin_login" });
+  const isLoading = loginMutation.isPending || captcha.running;
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<AdminLoginFormData>({
@@ -36,6 +39,7 @@ export default function AdminLoginPage() {
 
   const handleSubmit = async (data: AdminLoginFormData): Promise<void> => {
     try {
+      await captcha.begin();
       const result = await loginMutation.mutateAsync(data);
       saveAdminSession(result);
       $tip("管理员登录成功", "success");
