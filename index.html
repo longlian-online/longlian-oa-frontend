@@ -6,6 +6,58 @@
     <link rel="icon" type="image/webp" href="/logo.webp" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>白箱</title>
+    <script>
+      // 浏览器会把旧版 index.html 启发式缓存（发版包把文件 mtime 固定在 1970，无
+      // Cache-Control 时浏览器按最后修改时间推断出数年的新鲜度），新版发布后旧
+      // index.html 引用的入口 chunk 已被删除，服务器把缺失资源兜底成 text/html，
+      // 模块脚本因 MIME 不符加载失败，应用起不来就白屏。此时应用代码没有机会运行，
+      // 只能在应用启动前兜底：入口模块脚本加载失败时，带随机参数重新请求 index.html
+      // （绕开浏览器对旧地址的缓存），一次为限，避免服务器同样异常时死循环。
+      // 键名与刷新逻辑见 src/lib/frontendRelease.ts、frontendReleaseWatch.ts，
+      // 双方共用，应用启动成功后会清掉标记。
+      (function () {
+        var RELOAD_KEY = "oa:release-reload";
+        var REFRESH_URL_KEY = "oa:release-refresh-url";
+        window.addEventListener(
+          "error",
+          function (event) {
+            var target = event.target;
+            if (
+              !(target instanceof HTMLScriptElement) ||
+              target.type !== "module" ||
+              target.src.indexOf("/assets/") < 0
+            ) {
+              return;
+            }
+            var storage = null;
+            try {
+              storage = window.sessionStorage;
+            } catch {
+              return;
+            }
+            if (!storage || storage.getItem(RELOAD_KEY) !== null) return;
+            storage.setItem(RELOAD_KEY, "1");
+            var currentUrl = window.location.href;
+            var hashIndex = currentUrl.indexOf("#");
+            var pageUrl = hashIndex < 0 ? currentUrl : currentUrl.slice(0, hashIndex);
+            var hash = hashIndex < 0 ? "" : currentUrl.slice(hashIndex);
+            var separator = pageUrl.indexOf("?") < 0 ? "?" : "&";
+            var nonce = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+            var refreshUrl = pageUrl + separator + "__oa_refresh=" + nonce + hash;
+            try {
+              storage.setItem(
+                REFRESH_URL_KEY,
+                JSON.stringify({ currentUrl: currentUrl, refreshUrl: refreshUrl }),
+              );
+            } catch {
+              // 记不住原始地址时照样刷新，只少一次地址还原。
+            }
+            window.location.replace(refreshUrl);
+          },
+          true,
+        );
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>
