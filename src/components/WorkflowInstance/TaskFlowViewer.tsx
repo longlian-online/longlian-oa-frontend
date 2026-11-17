@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   applyNodeChanges,
   Handle,
@@ -15,9 +15,11 @@ import {
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
-import { Check, Layers2 } from "lucide-react";
+import { Check, CheckCircle2, Circle, Clock, GitBranch, Layers2, Lock } from "lucide-react";
 
 import WorkflowViewportControls from "@/components/WorkflowViewportControls";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { formatSlotLabel, slotPosition } from "@/lib/slotLabel";
 import type { ItemTaskInstanceVO, ItemTaskNodeVO } from "@/types/workflowInstance";
@@ -29,7 +31,6 @@ interface TaskFlowViewerProps {
   currentUserId?: string | null;
   mutatingInstanceId?: string | null;
   selectedNodeId?: string | null;
-  initialNodeId?: string;
   onSelectNode: (nodeId: string) => void;
   onClaim: (instanceId: string) => void;
   onSubmit: (instance: ItemTaskInstanceVO, node: ItemTaskNodeVO) => void;
@@ -193,7 +194,7 @@ function centerStages(nodes: TaskFlowNode[]): TaskFlowNode[] {
   });
 }
 
-function FitInitialLayout({ nodeId }: { nodeId?: string }) {
+function FitInitialLayout() {
   const initialized = useNodesInitialized();
   const { fitView } = useReactFlow();
   const fitted = useRef(false);
@@ -201,14 +202,15 @@ function FitInitialLayout({ nodeId }: { nodeId?: string }) {
     if (!initialized || fitted.current) return;
     const frame = requestAnimationFrame(() => {
       fitted.current = true;
-      void fitView({ nodes: nodeId ? [{ id: nodeId }] : undefined, padding: 0.25, maxZoom: 1 });
+      void fitView({ padding: 0.18, maxZoom: 1 });
     });
     return () => cancelAnimationFrame(frame);
-  }, [initialized, fitView, nodeId]);
+  }, [initialized, fitView]);
   return null;
 }
 
 export default function TaskFlowViewer(props: TaskFlowViewerProps) {
+  const [canvasOpen, setCanvasOpen] = useState(false);
   const groups = useMemo(() => groupNodes(props.nodes), [props.nodes]);
   const currentStageSort = groups.find((group) =>
     group.nodes.some((node) => node.taskStatus !== "COMPLETED"),
@@ -305,40 +307,116 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border bg-card">
-      <div className="border-b px-4 py-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Layers2 className="size-4 text-muted-foreground" />
-          流程进度
-        </div>
-        <StageTimeline groups={groups} currentStageSort={currentStageSort} />
+    <section className="overflow-hidden rounded-xl border bg-card" aria-label="项目任务">
+      <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
+        <h2 className="text-sm font-semibold">项目任务</h2>
+        <span className="text-xs tabular-nums text-muted-foreground">
+          {props.nodes.filter((node) => node.taskStatus === "COMPLETED").length}/
+          {props.nodes.length}
+        </span>
       </div>
-      <div className="h-[420px] bg-muted/20">
-        <ReactFlow<TaskFlowNode, Edge>
-          nodes={flowNodes}
-          edges={edges}
-          nodeTypes={NODE_TYPES}
-          onNodesChange={onNodesChange}
-          nodesDraggable={false}
-          nodesConnectable={false}
-          edgesReconnectable={false}
-          elementsSelectable={false}
-          deleteKeyCode={null}
-          minZoom={0.25}
-          maxZoom={1.5}
-          panOnScroll
-          zoomOnScroll={false}
-          zoomOnPinch
-          panOnDrag
-          preventScrolling
-          fitView
-          fitViewOptions={{ padding: 0.18, maxZoom: 1 }}
-          proOptions={{ hideAttribution: true }}
+      <ol className="max-h-[65vh] space-y-5 overflow-y-auto px-3 py-4">
+        {groups.map((group) => (
+          <li key={group.sort}>
+            <p className="mb-2 px-2 text-xs font-medium text-muted-foreground">阶段 {group.sort}</p>
+            <div className="space-y-1">
+              {group.nodes.map((node) => {
+                const instance = findInstance(node, props.instances);
+                const selected = props.selectedNodeId === node.id;
+                const status =
+                  node.taskStatus === undefined ? (instance?.status ?? null) : node.taskStatus;
+                const StatusIcon =
+                  status === "COMPLETED"
+                    ? CheckCircle2
+                    : status === "CLAIMED"
+                      ? Clock
+                      : status === "PENDING"
+                        ? Circle
+                        : Lock;
+                const label = formatSlotLabel(slotPosition(node, props.nodes));
+                return (
+                  <button
+                    key={node.id}
+                    type="button"
+                    aria-label={`查看${label}任务详情`}
+                    aria-pressed={selected}
+                    onClick={() => props.onSelectNode(node.id)}
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-lg border border-transparent px-3 py-3 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring",
+                      selected && "border-border bg-secondary",
+                    )}
+                  >
+                    <StatusIcon
+                      className={cn(
+                        "mt-0.5 size-4 shrink-0",
+                        status === "COMPLETED"
+                          ? "text-[hsl(var(--shoka-success))]"
+                          : "text-muted-foreground",
+                      )}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block break-words text-sm font-medium">{label}</span>
+                      <span className="mt-1 block truncate text-xs text-muted-foreground">
+                        {instance?.assigneeNickname ||
+                          (status === "PENDING" ? "待接取" : status ? "暂无执行人" : "未解锁")}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </li>
+        ))}
+      </ol>
+      <div className="border-t p-3">
+        <Button
+          variant="outline"
+          className="h-9 w-full text-sm"
+          onClick={() => setCanvasOpen(true)}
         >
-          <FitInitialLayout nodeId={props.initialNodeId} />
-          <WorkflowViewportControls />
-        </ReactFlow>
+          <GitBranch className="size-4" />
+          查看完整流程
+        </Button>
       </div>
+      <Dialog open={canvasOpen} onOpenChange={setCanvasOpen}>
+        <DialogContent className="w-[92vw] max-w-none gap-0 overflow-hidden p-0 sm:max-w-[92vw]">
+          <DialogHeader className="border-b px-6 py-5">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Layers2 className="size-5" />
+              完整流程
+            </DialogTitle>
+            <StageTimeline groups={groups} currentStageSort={currentStageSort} />
+          </DialogHeader>
+          <div className="h-[65vh] bg-muted/20">
+            {canvasOpen && (
+              <ReactFlow<TaskFlowNode, Edge>
+                nodes={flowNodes}
+                edges={edges}
+                nodeTypes={NODE_TYPES}
+                onNodesChange={onNodesChange}
+                nodesDraggable={false}
+                nodesConnectable={false}
+                edgesReconnectable={false}
+                elementsSelectable={false}
+                deleteKeyCode={null}
+                minZoom={0.25}
+                maxZoom={1.5}
+                panOnScroll
+                zoomOnScroll={false}
+                zoomOnPinch
+                panOnDrag
+                preventScrolling
+                fitView
+                fitViewOptions={{ padding: 0.18, maxZoom: 1 }}
+                proOptions={{ hideAttribution: true }}
+              >
+                <FitInitialLayout />
+                <WorkflowViewportControls />
+              </ReactFlow>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

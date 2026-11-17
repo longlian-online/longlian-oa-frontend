@@ -472,6 +472,22 @@ async function mountEntry(taskInstanceId: string): Promise<void> {
   await vi.waitFor(() => expect(document.querySelector("h2")).not.toBeNull());
 }
 
+test("普通入口优先打开本人已接取任务，失效的指定入口不会回退到其他任务", async () => {
+  tasks = [
+    task({ id: "target", name: "翻译", status: "COMPLETED" }),
+    task({ id: "mine", name: "校对", sort: 2, assigneeId: "creator" }),
+  ];
+  await mountEntry("");
+  await vi.waitFor(() => expect(document.querySelector("h2")?.textContent).toBe("第一话 · 校对"));
+  expect(findButton("放弃")).toBeDefined();
+  await render("other-item", false, { taskInstanceId: "missing" });
+  await vi.waitFor(() =>
+    expect(document.querySelector("[role='alert']")?.textContent).toContain("指定任务不存在"),
+  );
+  expect(document.querySelector("h2")).toBeNull();
+  expect(findButton("放弃")).toBeUndefined();
+});
+
 test("entry only selects the exact parallel slot; submission requires a separate user action", async () => {
   tasks = [1, 2, 3].map((index) =>
     task({ id: `slot${index}`, parallelSort: index, assigneeId: "creator" }),
@@ -700,7 +716,8 @@ function named(text: string): HTMLButtonElement | undefined {
 
 test("项目详情只向负责人提供删除项目", async () => {
   await mount(true, "21");
-  expect(named("删除项目")).toBeDefined();
+  await act(async () => named("更多")?.click());
+  await vi.waitFor(() => expect(named("删除项目")).toBeDefined());
   await render("item", false, { projectId: "21" });
   await vi.waitFor(() => expect(named("复制参与名单")).toBeDefined());
   expect(named("删除项目")).toBeUndefined();
@@ -710,6 +727,8 @@ test("任务流存在提交记录时即使任务不是已完成也走删除申�
   submissionRecord = true;
   tasks = [task({ status: "PENDING", assigneeId: undefined })];
   await mount(true, "21");
+  await act(async () => named("更多")?.click());
+  await vi.waitFor(() => expect(named("删除项目")).toBeDefined());
   await act(async () => named("删除项目")?.click());
   expect(document.body.textContent).toContain("由于项目存在提交记录，删除需要管理员审核");
   expect(document.querySelector("textarea")).not.toBeNull();

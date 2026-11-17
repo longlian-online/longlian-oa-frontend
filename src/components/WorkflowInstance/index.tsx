@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy } from "lucide-react";
+import { Copy, Ellipsis } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 
 import {
@@ -16,6 +16,7 @@ import {
 import { completeItem } from "@/api/projectItem";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -169,7 +170,18 @@ function ItemWorkflowInstance({
     () => (taskFlow ? buildParticipantRoster(instances) : ""),
     [instances, taskFlow],
   );
-  const selectedNode = taskFlow?.nodes.find((node) => node.id === selectedNodeId);
+  const defaultInstance =
+    sortedInstances.find(
+      (instance) => instance.status === "CLAIMED" && instance.assigneeId === currentUserId,
+    ) ??
+    sortedInstances.find((instance) => instance.status !== "COMPLETED") ??
+    sortedInstances[0];
+  const defaultNode =
+    defaultInstance && taskFlow
+      ? findNodeByInstance(defaultInstance, taskFlow.nodes)
+      : taskFlow?.nodes[0];
+  const effectiveSelectedNodeId = selectedNodeId ?? (!taskInstanceId ? defaultNode?.id : undefined);
+  const selectedNode = taskFlow?.nodes.find((node) => node.id === effectiveSelectedNodeId);
   const selectedInstance = selectedNode
     ? sortedInstances.find((instance) =>
         selectedNode.taskInstanceId
@@ -466,10 +478,10 @@ function ItemWorkflowInstance({
   }
 
   return (
-    <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-      <header className="flex min-h-12 items-center gap-3 px-1 xl:col-span-2">
-        <div className="min-w-0">
-          <h1 className="break-words text-lg font-semibold text-foreground">
+    <div className="mx-auto grid max-w-[100rem] items-start gap-6 pb-8 xl:grid-cols-[18rem_minmax(0,1fr)]">
+      <header className="flex flex-wrap items-center gap-4 border-b pb-6 xl:col-span-2">
+        <div className="min-w-0 flex-1">
+          <h1 className="break-words text-2xl font-semibold tracking-tight text-foreground">
             {taskFlow.itemTitle}
           </h1>
           <p className="mt-0.5 text-sm text-muted-foreground">流程模板：{taskFlow.name}</p>
@@ -477,10 +489,11 @@ function ItemWorkflowInstance({
             <p className="mt-0.5 truncate text-sm text-muted-foreground">{taskFlow.description}</p>
           )}
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {projectId && canManage && taskFlow.status !== "COMPLETED" && (
             <Button
-              size="sm"
+              variant="outline"
+              className="h-9 text-sm"
               disabled={completeMutation.isPending}
               onClick={() => void completeCurrentItem()}
             >
@@ -488,30 +501,44 @@ function ItemWorkflowInstance({
             </Button>
           )}
           {projectId && canManage && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                void navigate(`/dashboard/planning/${projectId}/items/${itemId}/workflow`, {
-                  state: location.state,
-                })
-              }
-            >
-              编辑工作流
-            </Button>
-          )}
-          {projectId && canManage && (
-            <ItemDeletionRequestButton
-              projectId={projectId}
-              itemId={itemId}
-              itemTitle={taskFlow.itemTitle}
-              hasSubmissionRecord={taskFlow.hasSubmissionRecord}
-            />
+            <Popover>
+              <PopoverTrigger className="inline-flex h-9 items-center gap-2 rounded-lg border bg-card px-3 text-sm outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+                <Ellipsis className="size-4" />
+                更多
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="w-52 [&_button]:w-full [&_button]:justify-start"
+              >
+                <PopoverTitle className="px-2 py-1 text-xs text-muted-foreground">
+                  项目管理
+                </PopoverTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    void navigate(`/dashboard/planning/${projectId}/items/${itemId}/workflow`, {
+                      state: location.state,
+                    })
+                  }
+                >
+                  编辑工作流
+                </Button>
+                <div className="border-t pt-2">
+                  <ItemDeletionRequestButton
+                    projectId={projectId}
+                    itemId={itemId}
+                    itemTitle={taskFlow.itemTitle}
+                    hasSubmissionRecord={taskFlow.hasSubmissionRecord}
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
           <Button
             variant="outline"
             size="sm"
-            className="shrink-0"
+            className="h-9 shrink-0 text-sm"
             disabled={!participantRoster}
             title={participantRoster ? "复制参与名单" : "暂无参与人"}
             onClick={() => void handleCopyParticipantRoster()}
@@ -531,10 +558,9 @@ function ItemWorkflowInstance({
         </p>
       )}
 
-      <div className="min-w-0 xl:row-span-2">
+      <div className="min-w-0 xl:sticky xl:top-0">
         <TaskFlowViewer
-          selectedNodeId={selectedNodeId}
-          initialNodeId={taskFlow.nodes.find((node) => node.taskInstanceId === taskInstanceId)?.id}
+          selectedNodeId={effectiveSelectedNodeId}
           onSelectNode={selectNode}
           nodes={taskFlow.nodes}
           instances={sortedInstances}
@@ -548,7 +574,7 @@ function ItemWorkflowInstance({
         />
       </div>
 
-      <div className="min-w-0 xl:sticky xl:top-0">
+      <div className="min-w-0">
         {selectedNode ? (
           <div>
             <TaskDetailPanel
@@ -611,8 +637,8 @@ function ItemWorkflowInstance({
             />
           </div>
         ) : (
-          <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
-            点击流程节点查看任务详情和操作。
+          <div className="rounded-xl border bg-card p-8 text-sm text-muted-foreground">
+            从左侧选择任务，查看详情和操作。
           </div>
         )}
       </div>

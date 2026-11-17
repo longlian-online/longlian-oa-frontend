@@ -124,12 +124,12 @@ function AttachmentCard({
 }: AttachmentCardProps) {
   const available = attachment.availability === "available";
   return (
-    <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-background p-3">
-      <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+    <div className="flex min-w-0 items-center gap-4 rounded-lg border bg-muted/30 p-4">
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-card text-muted-foreground">
         <FileText className="size-5" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block break-words text-sm font-medium">{attachment.name}</span>
+        <span className="block break-words text-sm font-medium leading-6">{attachment.name}</span>
         <span className="mt-1 block text-xs text-muted-foreground">
           {available ? attachment.sizeText : "附件暂不可用，请联系任务提交人"}
         </span>
@@ -178,8 +178,8 @@ function VersionFields({
   return (
     <dl>
       {fields.map((field) => (
-        <div key={field.key} className="min-w-0 border-b py-3 last:border-b-0">
-          <dt className="break-words text-xs font-medium text-muted-foreground">{field.label}</dt>
+        <div key={field.key} className="min-w-0 border-b py-5 first:pt-1 last:border-b-0">
+          <dt className="break-words text-sm font-medium text-muted-foreground">{field.label}</dt>
           <dd className="mt-2">
             {field.type === "file" ? (
               field.file ? (
@@ -195,7 +195,9 @@ function VersionFields({
                 <p className="text-sm">未填写</p>
               )
             ) : (
-              <p className="whitespace-pre-wrap break-words text-sm leading-6">{field.text}</p>
+              <p className="max-w-[75ch] whitespace-pre-wrap break-words text-[15px] leading-7">
+                {field.text}
+              </p>
             )}
           </dd>
         </div>
@@ -412,18 +414,18 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
   const submissionState = detail?.submission.state ?? "not_submitted";
   const current = currentVersionOf(submissionState, versionsView);
   return (
-    <section className="rounded-xl border bg-card p-4 sm:p-5" aria-live="polite">
+    <section className="overflow-hidden rounded-xl border bg-card p-6 lg:p-8" aria-live="polite">
       {!instanceId ? (
         <>
-          <h2 className="break-words text-base font-semibold">{title}</h2>
+          <h2 className="break-words text-xl font-semibold">{title}</h2>
           <p className="mt-3 text-sm text-muted-foreground">任务尚未解锁，完成前置阶段后可接取。</p>
         </>
       ) : (
         <>
           <header className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h2 className="break-words text-base font-semibold">{title}</h2>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <h2 className="break-words text-xl font-semibold leading-8">{title}</h2>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                 <span>第 {detail?.task.stage ?? node.sort} 阶段</span>
                 <span aria-hidden="true">·</span>
                 {assigneeAvatar && (
@@ -439,11 +441,11 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
             )}
           </header>
           {actions && (
-            <div className="mt-3 flex justify-start">
+            <div className="mt-5 flex justify-start [&_button]:h-9 [&_button]:text-sm">
               <TaskActions actions={actions} instance={instance} />
             </div>
           )}
-          <div className="mt-4 border-t pt-4">
+          <div className="mt-6 border-t pt-6">
             {error ? (
               <div className="flex flex-wrap items-center gap-3">
                 <p role="alert" className="text-sm text-destructive">
@@ -493,7 +495,7 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
                   </section>
                 )}
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold">版本记录</h3>
+                  <h3 className="text-base font-semibold">版本记录</h3>
                   <span className="break-words text-xs text-muted-foreground">
                     {versionsView.length > 0
                       ? `共 ${versionsView.length} 个版本${current ? ` · 当前 v${current.versionNo}` : ""}`
@@ -528,21 +530,21 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
                     </Button>
                   </div>
                 ) : (
-                  <ol className="mt-3 space-y-2">
+                  <ol className="mt-5 space-y-3">
                     {versionsView.map((version) => {
                       const expanded =
                         expandedVersion === null
                           ? version.versionNo === current?.versionNo
                           : expandedVersion === version.versionNo;
                       return (
-                        <li key={version.versionNo} className="border-b py-3 last:border-b-0">
+                        <li key={version.versionNo} className="rounded-lg border last:border-b">
                           <button
                             type="button"
-                            className="flex w-full flex-wrap items-center gap-2 p-3 text-left"
+                            className="flex w-full flex-wrap items-center gap-3 rounded-lg bg-muted/30 px-4 py-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             aria-expanded={expanded}
                             onClick={() => setExpandedVersion(expanded ? null : version.versionNo)}
                           >
-                            <span className="font-mono text-sm font-semibold">
+                            <span className="text-sm font-semibold tabular-nums">
                               v{version.versionNo}
                             </span>
                             <Badge
@@ -557,7 +559,7 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
                             {version.versionNo === current?.versionNo && (
                               <Badge variant="secondary">当前</Badge>
                             )}
-                            <span className="min-w-0 flex-1 text-xs text-muted-foreground">
+                            <span className="min-w-0 flex-1 text-sm text-muted-foreground">
                               {submissionVersionAuthorLine(version)}
                             </span>
                             {expanded ? (
@@ -567,7 +569,7 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
                             )}
                           </button>
                           {expanded && (
-                            <div className="border-t p-3 sm:p-4">
+                            <div className="border-t px-5 py-4">
                               {version.unreadable ? (
                                 <p className="text-sm text-muted-foreground">
                                   该版本内容无法解析展示。
