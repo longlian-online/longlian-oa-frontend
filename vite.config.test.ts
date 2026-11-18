@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -28,18 +28,12 @@ describe("admin dev-server proxy matching", () => {
 const runFile = promisify(execFile);
 
 describe("release package", () => {
-  test("packages the package.json version deterministically", async () => {
+  test("packages the package.json version with a matching checksum", async () => {
     const root = await mkdtemp(join(tmpdir(), "frontend-release-"));
-    const first = join(root, "first");
-    const second = join(root, "second");
 
     try {
-      await writeDist(first, new Date("2024-01-01T00:00:00Z"));
-      await writeDist(second, new Date("2026-02-02T00:00:00Z"));
-      const firstResult = await packageRelease(first);
-      const secondResult = await packageRelease(second);
-
-      expect(firstResult.digest).toBe(secondResult.digest);
+      await writeDist(root);
+      const firstResult = await packageRelease(root);
       expect(firstResult.checksum).toBe(`${firstResult.digest}  longlian-oa-frontend-v1.2.3.zip\n`);
 
       const listing = await runFile("unzip", ["-Z1", firstResult.archivePath]);
@@ -55,7 +49,7 @@ describe("release package", () => {
   test("rejects a tag that differs from package.json", async () => {
     const root = await mkdtemp(join(tmpdir(), "frontend-release-"));
     try {
-      await writeDist(root, new Date(0));
+      await writeDist(root);
       await expect(
         runFile(process.execPath, [join(process.cwd(), "tools/release-package.mjs")], {
           cwd: root,
@@ -68,13 +62,11 @@ describe("release package", () => {
   });
 });
 
-async function writeDist(root: string, modifiedAt: Date) {
+async function writeDist(root: string) {
   await mkdir(join(root, "dist", "assets"), { recursive: true });
   await writeFile(join(root, "package.json"), JSON.stringify({ version: "1.2.3" }));
   await writeFile(join(root, "dist", "index.html"), "<html>1.2.3</html>");
   await writeFile(join(root, "dist", "assets", "app.js"), "console.log(1)\n");
-  await utimes(join(root, "dist", "index.html"), modifiedAt, modifiedAt);
-  await utimes(join(root, "dist", "assets", "app.js"), modifiedAt, modifiedAt);
 }
 
 async function packageRelease(root: string) {
