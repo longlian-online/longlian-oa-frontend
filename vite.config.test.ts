@@ -13,6 +13,7 @@ describe("admin dev-server proxy matching", () => {
     expect(isAdminApiPath("/admin/scheduled-tasks")).toBe(false);
     expect(isAdminApiPath("/admin/organizations")).toBe(false);
     expect(isAdminApiPath("/admin/storage-stats")).toBe(false);
+    expect(isAdminApiPath("/admin/captcha")).toBe(false);
   });
 
   test("proxies admin API URLs", () => {
@@ -20,6 +21,7 @@ describe("admin dev-server proxy matching", () => {
     expect(isAdminApiPath("/admin/scheduled-tasks/cleanup/trigger")).toBe(true);
     expect(isAdminApiPath("/admin/session")).toBe(true);
     expect(isAdminApiPath("/admin/storage-stats/")).toBe(true);
+    expect(isAdminApiPath("/admin/captcha/config")).toBe(true);
   });
 });
 

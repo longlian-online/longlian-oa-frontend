@@ -60,7 +60,7 @@ function ignoreUnknownRequests(): Plugin {
 export function isAdminApiPath(pathname: string): boolean {
   return (
     pathname === "/admin/session" ||
-    /^\/admin\/(?:admins|organizations|scheduled-tasks|storage-stats)\//.test(pathname)
+    /^\/admin\/(?:admins|organizations|scheduled-tasks|storage-stats|captcha)\//.test(pathname)
   );
 }
 
@@ -117,7 +117,8 @@ export default defineConfig({
       "/app": apiProxy,
       "/common": apiProxy,
       "^/admin/session$": apiProxy,
-      "^/admin/(?:admins|organizations|scheduled-tasks|storage-stats|product-releases)/": apiProxy,
+      "^/admin/(?:admins|organizations|scheduled-tasks|storage-stats|product-releases|captcha)/":
+        apiProxy,
       "/orgadmin": apiProxy,
     },
   },

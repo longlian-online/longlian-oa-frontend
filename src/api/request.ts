@@ -12,10 +12,17 @@ import { AUTH_EXPIRED_MESSAGE, AuthExpiredError, redirectExpiredSession } from "
 import { getRequestContext } from "@/api/requestContext";
 import { ApiError, GatewayError, NetworkError } from "@/api/apiError";
 import { GATEWAY_ERROR_MESSAGE, NETWORK_ERROR_MESSAGE } from "@/services/notification";
+import { obtainCaptchaToken } from "@/lib/captchaClient";
 
 import type { ApiResult } from "@/types/planning";
+import type { CaptchaAction, CaptchaConfigVO } from "@/types/captcha";
 
 export { ApiError, GatewayError };
+
+export interface ApiRequestOptions extends RequestInit {
+  /** 人机验证启用时，每次实际发送都获取新票据。 */
+  captcha?: CaptchaAction;
+}
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 const REFRESH_LEAD_SECONDS = 5 * 60;
@@ -36,11 +43,11 @@ export function buildApiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }
 
-export async function request<T>(url: string, options?: RequestInit): Promise<T> {
+export async function request<T>(url: string, options?: ApiRequestOptions): Promise<T> {
   return requestWithBase("/app", url, options);
 }
 
-export async function adminRequest<T>(url: string, options?: RequestInit): Promise<T> {
+export async function adminRequest<T>(url: string, options?: ApiRequestOptions): Promise<T> {
   return requestWithBase(
     "",
     url,
@@ -54,11 +61,11 @@ export async function adminRequest<T>(url: string, options?: RequestInit): Promi
   );
 }
 
-export async function orgAdminRequest<T>(url: string, options?: RequestInit): Promise<T> {
+export async function orgAdminRequest<T>(url: string, options?: ApiRequestOptions): Promise<T> {
   return requestWithBase("", url, options);
 }
 
-export async function commonRequest<T>(url: string, options?: RequestInit): Promise<T> {
+export async function commonRequest<T>(url: string, options?: ApiRequestOptions): Promise<T> {
   return requestWithBase("/common", url, options);
 }
 
@@ -122,7 +129,7 @@ async function runRefresh(): Promise<RefreshOutcome> {
 async function requestWithBase<T>(
   basePath: string,
   url: string,
-  options?: RequestInit,
+  options?: ApiRequestOptions,
   overrideToken?: string | null,
   onUnauthorized: () => void = clearSession,
   includeOrgContext = true,
@@ -131,12 +138,25 @@ async function requestWithBase<T>(
   allowRefresh = true,
   useOverride = false,
 ): Promise<T> {
+  const { captcha, ...sendOptions } = options ?? {};
   const context = getRequestContext();
   const notify = !context?.managed;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options?.headers as Record<string, string>),
+    ...(sendOptions.headers as Record<string, string>),
   };
+  if (captcha) {
+    const configOptions: RequestInit = {
+      cache: "no-store",
+      signal: context?.signal ?? sendOptions.signal,
+    };
+    const config = await (captcha === "admin_login"
+      ? adminRequest<CaptchaConfigVO>("/admin/captcha/config", configOptions)
+      : commonRequest<CaptchaConfigVO>("/captcha/config", configOptions));
+    // 不复用上一次请求的票据；后端验票会消费它。
+    const token = await obtainCaptchaToken(config, captcha);
+    if (token !== null) headers["X-Captcha-Token"] = token;
+  }
 
   let authToken = useOverride
     ? (overrideToken ?? null)
@@ -181,8 +201,8 @@ async function requestWithBase<T>(
   let response: Response;
   try {
     response = await fetch(buildApiUrl(`${basePath}${url}`), {
-      ...options,
-      signal: context?.signal ?? options?.signal,
+      ...sendOptions,
+      signal: context?.signal ?? sendOptions.signal,
       headers,
     });
   } catch (cause) {
