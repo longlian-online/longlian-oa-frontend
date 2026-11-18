@@ -6,7 +6,6 @@ import * as z from "zod";
 import { Eye, EyeOff } from "lucide-react";
 
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
-import { useCaptcha } from "@/hooks/useCaptcha";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +13,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { loginByPassword, loginByCode, sendVerificationCode } from "@/api/auth";
 import { $tip } from "@/components/tip";
 import { saveSession } from "@/lib/session";
-import { readCommonCaptchaConfig } from "@/lib/captchaConfig";
 import { loginResumePath } from "@/lib/externalEntry";
 
 const passwordSchema = z.object({
@@ -36,8 +34,7 @@ export default function LoginPage() {
   const passwordLogin = useApiMutation({ scope: "public", mutationFn: loginByPassword });
   const codeLogin = useApiMutation({ scope: "public", mutationFn: loginByCode });
   const sendCode = useApiMutation({ scope: "public", mutationFn: sendVerificationCode });
-  const captcha = useCaptcha({ readConfig: readCommonCaptchaConfig, action: "app_login_pwd" });
-  const isLoading = passwordLogin.isPending || codeLogin.isPending || captcha.running;
+  const isLoading = passwordLogin.isPending || codeLogin.isPending;
   const [showPassword, setShowPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [activeTab, setActiveTab] = useState<"password" | "code">("password");
@@ -61,7 +58,6 @@ export default function LoginPage() {
 
   const onPasswordSubmit = async (data: PasswordFormData) => {
     try {
-      await captcha.begin();
       const result = await passwordLogin.mutateAsync(data);
       saveSession(result);
       $tip("登录成功", "success");
@@ -75,7 +71,6 @@ export default function LoginPage() {
 
   const onCodeSubmit = async (data: CodeFormData) => {
     try {
-      await captcha.begin();
       const result = await codeLogin.mutateAsync(data);
       saveSession(result);
       $tip("登录成功", "success");

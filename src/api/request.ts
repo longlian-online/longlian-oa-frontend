@@ -12,15 +12,15 @@ import { AUTH_EXPIRED_MESSAGE, AuthExpiredError, redirectExpiredSession } from "
 import { getRequestContext } from "@/api/requestContext";
 import { ApiError, GatewayError, NetworkError } from "@/api/apiError";
 import { GATEWAY_ERROR_MESSAGE, NETWORK_ERROR_MESSAGE } from "@/services/notification";
-import { obtainCaptchaToken } from "@/lib/captchaConfig";
+import { obtainCaptchaToken } from "@/lib/captchaClient";
 
 import type { ApiResult } from "@/types/planning";
-import type { CaptchaAction } from "@/types/captcha";
+import type { CaptchaAction, CaptchaConfigVO } from "@/types/captcha";
 
 export { ApiError, GatewayError };
 
 export interface ApiRequestOptions extends RequestInit {
-  /** 声明本请求需要的人机验证场景；每次实际发送都会换取新票据。 */
+  /** 人机验证启用时，每次实际发送都获取新票据。 */
   captcha?: CaptchaAction;
 }
 
@@ -129,7 +129,7 @@ async function runRefresh(): Promise<RefreshOutcome> {
 async function requestWithBase<T>(
   basePath: string,
   url: string,
-  options?: RequestInit,
+  options?: ApiRequestOptions,
   overrideToken?: string | null,
   onUnauthorized: () => void = clearSession,
   includeOrgContext = true,
@@ -138,21 +138,25 @@ async function requestWithBase<T>(
   allowRefresh = true,
   useOverride = false,
 ): Promise<T> {
-  const { captcha, ...sendOptions } = (options ?? {}) as ApiRequestOptions;
-  if (captcha) {
-    // 每次实际发送（含会话刷新后的重发）都必须换取新票据，防止重放。
-    const token = await obtainCaptchaToken(captcha);
-    sendOptions.headers = {
-      ...(sendOptions.headers as Record<string, string>),
-      "X-Captcha-Token": token,
-    };
-  }
+  const { captcha, ...sendOptions } = options ?? {};
   const context = getRequestContext();
   const notify = !context?.managed;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(sendOptions.headers as Record<string, string>),
   };
+  if (captcha) {
+    const configOptions: RequestInit = {
+      cache: "no-store",
+      signal: context?.signal ?? sendOptions.signal,
+    };
+    const config = await (captcha === "admin_login"
+      ? adminRequest<CaptchaConfigVO>("/admin/captcha/config", configOptions)
+      : commonRequest<CaptchaConfigVO>("/captcha/config", configOptions));
+    // 不复用上一次请求的票据；后端验票会消费它。
+    const token = await obtainCaptchaToken(config, captcha);
+    if (token !== null) headers["X-Captcha-Token"] = token;
+  }
 
   let authToken = useOverride
     ? (overrideToken ?? null)

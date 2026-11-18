@@ -1,22 +1,14 @@
-export interface FCaptchaSession {
-  execute(action?: string): Promise<{ success: boolean; token?: string }>;
-  destroy(): void;
+import type { CaptchaAction, CaptchaConfigVO } from "@/types/captcha";
+
+interface CaptchaChallengeResult {
+  success: boolean;
+  token?: string;
 }
 
-export interface FCaptchaClient {
-  invisible(options: {
-    siteKey: string;
-    serverUrl: string;
-    minCollectionTime?: number;
-    autoScore?: boolean;
-  }): FCaptchaSession;
-  execute(
-    siteKey: string,
-    options: { action: string; minTime?: number },
-  ): Promise<{ success: boolean; token?: string }>;
+interface FCaptchaClient {
+  execute(siteKey: string, options: { action: CaptchaAction }): Promise<CaptchaChallengeResult>;
   configure(options: { serverUrl: string }): void;
   serverUrl: string;
-  languages(): string[];
 }
 
 declare global {
@@ -27,36 +19,50 @@ declare global {
 
 let loader: Promise<FCaptchaClient> | null = null;
 
-/** 后端返回的地址来自自建服务；禁止任何不加载脚本就跳过验证的全局开关。 */
-export function loadCaptchaClient(
-  scriptSrc: string,
-  onFailed?: (error: unknown) => void,
-): Promise<FCaptchaClient> {
+function loadCaptchaClient(scriptSrc: string): Promise<FCaptchaClient> {
   if (window.FCaptcha) return Promise.resolve(window.FCaptcha);
   loader ??= new Promise<FCaptchaClient>((resolve, reject) => {
     const script = document.createElement("script");
     script.src = scriptSrc;
     script.async = true;
     script.onload = () => {
-      if (window.FCaptcha) {
-        resolve(window.FCaptcha);
-      } else {
+      if (window.FCaptcha) resolve(window.FCaptcha);
+      else {
+        script.remove();
         reject(new Error("FCaptcha missing"));
       }
     };
-    script.onerror = (event) => {
-      const detail = typeof event === "string" ? event : "网络或脚本加载失败";
-      reject(new Error(`FCaptcha script failed: ${detail}`));
+    script.onerror = () => {
+      script.remove();
+      reject(new Error("FCaptcha script failed"));
     };
     document.head.appendChild(script);
-  });
-  return loader.catch((error: unknown) => {
+  }).catch((error: unknown) => {
     loader = null;
-    onFailed?.(error);
     throw error;
   });
+  return loader;
 }
 
-export function resetCaptchaClientForTest(): void {
-  loader = null;
+export async function obtainCaptchaToken(
+  config: CaptchaConfigVO,
+  action: CaptchaAction,
+): Promise<string | null> {
+  if (config?.enabled === false) return null;
+  if (config?.enabled !== true || !config.serverUrl || !config.siteKey) {
+    throw new Error("人机验证配置不可用");
+  }
+
+  const serverUrl = config.serverUrl.replace(/\/$/, "");
+  let result: CaptchaChallengeResult;
+  try {
+    const client = await loadCaptchaClient(`${serverUrl}/fcaptcha.js`);
+    // 跨源部署时，SDK 的相对路径必须指向 FCaptcha 而不是 SPA。
+    if (client.serverUrl !== serverUrl) client.configure({ serverUrl });
+    result = await client.execute(config.siteKey, { action });
+  } catch (cause) {
+    throw new Error("人机验证暂时不可用，请稍后重试", { cause });
+  }
+  if (!result.success || !result.token) throw new Error("人机验证未通过，请重试");
+  return result.token;
 }

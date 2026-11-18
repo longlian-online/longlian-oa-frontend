@@ -1,5 +1,3 @@
-import type { FCaptchaSession } from "@/lib/captchaClient";
-
 export type CaptchaAction = "app_login_pwd" | "app_login_email" | "admin_login";
 
 export interface CaptchaConfigVO {
@@ -7,5 +5,3 @@ export interface CaptchaConfigVO {
   serverUrl?: string | null;
   siteKey?: string | null;
 }
-
-export type { FCaptchaSession };
