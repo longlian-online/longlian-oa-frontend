@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
   const isSending = sendCode.isPending;
   const reset = useApiMutation({ scope: "public", mutationFn: resetPassword });
   const isResetting = reset.isPending;
-  const [hasSent, setHasSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState<string | null>(null);
 
   const form = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -44,16 +44,20 @@ export default function ForgotPasswordPage() {
     },
   });
 
+  const email = form.watch("email");
+  const hasSent = sentEmail === email;
+
   const handleSendCode = async (): Promise<void> => {
     const isEmailValid = await form.trigger("email");
     if (!isEmailValid) return;
 
+    setSentEmail(null);
     try {
       await sendCode.mutateAsync({
         email: form.getValues("email"),
         businessType: "FORGOT_PASSWORD",
       });
-      setHasSent(true);
+      setSentEmail(email);
       $tip("验证码已发送", "success");
     } catch {
       /* 共享 Mutation 负责错误提示。 */
@@ -139,10 +143,9 @@ export default function ForgotPasswordPage() {
                 id="password"
                 type="password"
                 autoComplete="new-password"
-                placeholder="6-20位，含大写、小写和数字"
+                placeholder={NEW_PASSWORD_HINT}
                 {...form.register("password")}
               />
-              <p className="text-xs text-muted-foreground">{NEW_PASSWORD_HINT}</p>
               {form.formState.errors.password && (
                 <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
               )}
