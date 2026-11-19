@@ -2,7 +2,12 @@ import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 
 import { adminLogin, loginByCode, loginByPassword, sendVerificationCode } from "@/api/auth";
 
-const config = { enabled: true, serverUrl: "https://captcha.example.test", siteKey: "oa" };
+const config = {
+  enabled: true,
+  serverUrl: "https://captcha.example.test",
+  scriptUrl: "https://cdn.example.test/fcaptcha.js",
+  siteKey: "oa",
+};
 const execute = vi.fn();
 const fetchMock = vi.fn<typeof fetch>();
 

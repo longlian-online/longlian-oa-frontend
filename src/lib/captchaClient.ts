@@ -49,14 +49,14 @@ export async function obtainCaptchaToken(
   action: CaptchaAction,
 ): Promise<string | null> {
   if (config?.enabled === false) return null;
-  if (config?.enabled !== true || !config.serverUrl || !config.siteKey) {
+  if (config?.enabled !== true || !config.serverUrl || !config.scriptUrl || !config.siteKey) {
     throw new Error("人机验证配置不可用");
   }
 
   const serverUrl = config.serverUrl.replace(/\/$/, "");
   let result: CaptchaChallengeResult;
   try {
-    const client = await loadCaptchaClient(`${serverUrl}/fcaptcha.js`);
+    const client = await loadCaptchaClient(config.scriptUrl);
     // 跨源部署时，SDK 的相对路径必须指向 FCaptcha 而不是 SPA。
     if (client.serverUrl !== serverUrl) client.configure({ serverUrl });
     result = await client.execute(config.siteKey, { action });
