@@ -221,7 +221,7 @@ export default function RegisterPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-11 shrink-0 px-3"
+                        className="shrink-0"
                         onClick={handleQueryInviteInfo}
                         disabled={isInviteLoading}
                       >
@@ -320,7 +320,7 @@ export default function RegisterPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-11 px-4 shrink-0"
+                      className="min-w-12.5 shrink-0 tabular-nums"
                       onClick={handleSendCode}
                       disabled={countdown > 0 || sendCode.isPending}
                     >

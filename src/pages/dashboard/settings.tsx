@@ -336,6 +336,7 @@ export default function PersonalSettingsPage(): ReactElement {
                 <Button
                   type="button"
                   variant="outline"
+                  className="min-w-12.5 tabular-nums"
                   onClick={() => void handleSendBindCode()}
                   disabled={!bindEmailReady || bindCountdown > 0 || sendBindCode.isPending}
                 >
