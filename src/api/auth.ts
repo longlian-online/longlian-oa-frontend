@@ -18,6 +18,7 @@ export async function loginByPassword(dto: LoginByPwdDTO): Promise<LoginVO> {
   return request("/session/pwd", {
     method: "POST",
     body: JSON.stringify(dto),
+    captcha: "app_login_pwd",
   });
 }
 
@@ -29,6 +30,7 @@ export async function loginByCode(dto: LoginByCodeDTO): Promise<LoginVO> {
   return request("/session/email", {
     method: "POST",
     body: JSON.stringify(dto),
+    captcha: "app_login_email",
   });
 }
 
@@ -78,6 +80,7 @@ export async function adminLogin(dto: AdminLoginDTO): Promise<AdminLoginVO> {
   return adminRequest("/admin/session", {
     method: "POST",
     body: JSON.stringify(dto),
+    captcha: "admin_login",
   });
 }
 
