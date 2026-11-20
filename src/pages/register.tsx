@@ -18,7 +18,7 @@ import {
 import { getInviteInfo } from "@/api/user";
 import { $tip } from "@/components/tip";
 import { cn } from "@/lib/utils";
-import { NEW_PASSWORD_HINT, newPasswordSchema } from "@/lib/password";
+import { newPasswordSchema } from "@/lib/password";
 
 type RegisterMode = "join" | "create";
 
@@ -353,7 +353,6 @@ export default function RegisterPage() {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">{NEW_PASSWORD_HINT}</p>
                   {form.formState.errors.password && (
                     <p className="text-xs text-destructive">
                       {form.formState.errors.password.message}
