@@ -119,7 +119,7 @@ test.each(["LOGIN", "FORGOT_PASSWORD"])(
   },
 );
 
-test("forgot password clears the previous sent state when sending to another email fails", async () => {
+test("forgot password preserves the previous sent state when the email changes or resending fails", async () => {
   sendVerificationCode.mockResolvedValueOnce(undefined);
   await openPage("FORGOT_PASSWORD");
   await setEmail("existing@example.com");
@@ -129,10 +129,10 @@ test("forgot password clears the previous sent state when sending to another ema
   expect(tip).toHaveBeenCalledWith("验证码已发送", "success");
 
   await setEmail("new@example.com");
-  expect(sendButton().textContent).toBe("发送验证码");
+  expect(sendButton().textContent).toBe("重新发送");
   sendVerificationCode.mockRejectedValueOnce(new ApiError("该邮箱尚未注册，请先注册", false, 7));
   await act(async () => sendButton().click());
   await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
   expect(container.querySelector("[role=alert]")).toBeNull();
-  expect(sendButton().textContent).toBe("发送验证码");
+  expect(sendButton().textContent).toBe("重新发送");
 });
