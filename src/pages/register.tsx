@@ -18,7 +18,7 @@ import {
 import { getInviteInfo } from "@/api/user";
 import { $tip } from "@/components/tip";
 import { cn } from "@/lib/utils";
-import { NEW_PASSWORD_HINT, newPasswordSchema } from "@/lib/password";
+import { newPasswordSchema } from "@/lib/password";
 
 type RegisterMode = "join" | "create";
 
@@ -221,7 +221,7 @@ export default function RegisterPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-11 shrink-0 px-3"
+                        className="shrink-0"
                         onClick={handleQueryInviteInfo}
                         disabled={isInviteLoading}
                       >
@@ -320,7 +320,7 @@ export default function RegisterPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-11 px-4 shrink-0"
+                      className="min-w-12.5 shrink-0 tabular-nums"
                       onClick={handleSendCode}
                       disabled={countdown > 0 || sendCode.isPending}
                     >
@@ -353,7 +353,6 @@ export default function RegisterPage() {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">{NEW_PASSWORD_HINT}</p>
                   {form.formState.errors.password && (
                     <p className="text-xs text-destructive">
                       {form.formState.errors.password.message}

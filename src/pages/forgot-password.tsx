@@ -6,7 +6,7 @@ import * as z from "zod";
 
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { resetPassword, sendVerificationCode } from "@/api/auth";
-import { NEW_PASSWORD_HINT, newPasswordSchema } from "@/lib/password";
+import { newPasswordSchema } from "@/lib/password";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,7 +142,6 @@ export default function ForgotPasswordPage() {
                 placeholder="6-20位，含大写、小写和数字"
                 {...form.register("password")}
               />
-              <p className="text-xs text-muted-foreground">{NEW_PASSWORD_HINT}</p>
               {form.formState.errors.password && (
                 <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
               )}
