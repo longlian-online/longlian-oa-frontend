@@ -65,7 +65,7 @@ export function isAdminApiPath(pathname: string): boolean {
 }
 
 const apiProxy: ProxyOptions = {
-  target: "http://127.0.0.1:10003",
+  target: "https://sit.neo.oa.api.longlian.online",
   changeOrigin: true,
   configure(proxy) {
     proxy.on("proxyReq", (proxyRequest) => {
