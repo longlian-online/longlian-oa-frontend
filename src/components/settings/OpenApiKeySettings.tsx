@@ -40,16 +40,24 @@ function handleFailure(error: unknown, fallback: string): void {
 /** 单条密钥：名称 + 吊销一行，创建时间/最近使用分行展示。 */
 function KeyRow({
   apiKey,
+  revocable,
   onRevoke,
 }: {
   apiKey: OpenApiKeyVO;
+  revocable: boolean;
   onRevoke: () => void;
 }): ReactElement {
   return (
     <li className="rounded-lg border border-border p-3">
       <div className="flex items-center justify-between gap-2">
         <span className="truncate text-sm font-medium">{apiKey.name}</span>
-        <Button variant="outline" size="sm" onClick={onRevoke}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!revocable}
+          title={revocable ? undefined : "先在页头切换到该组织再吊销"}
+          onClick={onRevoke}
+        >
           吊销
         </Button>
       </div>
@@ -69,8 +77,8 @@ function KeyRow({
   );
 }
 
-/** 个人设置的 OpenAPI 密钥卡：展示会话当前组织的密钥，创建走弹窗。 */
-export default function OpenApiKeySettings(): ReactElement {
+/** 组织配置块内「OpenAPI 密钥」一节的内容：跟随页签组织，创建走弹窗。 */
+export default function OpenApiKeySettings({ orgId }: { orgId: string }): ReactElement | null {
   const confirm = useConfirm();
   const sessionOrgId = useSessionSnapshot().orgId;
   const groupsQuery = useApiQuery({
@@ -99,7 +107,9 @@ export default function OpenApiKeySettings(): ReactElement {
   const [created, setCreated] = useState<CreatedKey | null>(null);
   const busy = createMutation.isPending || revokeMutation.isPending;
 
-  const group = groupsQuery.data?.find((entry) => String(entry.orgId) === String(sessionOrgId));
+  // 创建与吊销都按会话当前组织落库，非当前组织的页签只读展示
+  const canManage = sessionOrgId !== null && String(sessionOrgId) === orgId;
+  const group = groupsQuery.data?.find((entry) => String(entry.orgId) === orgId);
   const atLimit = group !== undefined && group.keys.length >= group.maxKeys;
 
   function closeDialog(): void {
@@ -155,66 +165,73 @@ export default function OpenApiKeySettings(): ReactElement {
     }
   }
 
+  if (groupsQuery.isError) {
+    return (
+      <Button
+        variant="outline"
+        className="w-fit"
+        disabled={groupsQuery.isFetching}
+        onClick={() => void groupsQuery.refetch()}
+      >
+        <RotateCw aria-hidden="true" />
+        密钥列表加载失败，重试
+      </Button>
+    );
+  }
+  if (groupsQuery.data === undefined) {
+    return (
+      <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+        <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+        正在读取密钥列表
+      </p>
+    );
+  }
+  if (!group) return null;
+
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+    <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-medium">OpenAPI 密钥</h2>
-        {group ? (
-          <span className="text-xs text-muted-foreground">
-            已用 {group.keys.length}/{group.maxKeys}
-          </span>
-        ) : null}
+        <span className="text-xs text-muted-foreground">
+          已用 {group.keys.length}/{group.maxKeys}
+        </span>
+        {canManage ? null : (
+          <span className="text-xs text-muted-foreground">创建或吊销需先在页头切换到该组织</span>
+        )}
       </div>
-      {groupsQuery.isError ? (
-        <Button
-          variant="outline"
-          className="w-fit"
-          disabled={groupsQuery.isFetching}
-          onClick={() => void groupsQuery.refetch()}
-        >
-          <RotateCw aria-hidden="true" />
-          密钥列表加载失败，重试
-        </Button>
-      ) : groupsQuery.data === undefined ? (
-        <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
-          <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
-          正在读取密钥列表
+      <Button
+        variant="outline"
+        className="w-fit"
+        disabled={busy || atLimit || !canManage}
+        title={
+          !canManage
+            ? "先在页头切换到该组织再新建"
+            : atLimit
+              ? "已达上限，请先吊销不用的密钥"
+              : undefined
+        }
+        onClick={() => {
+          setDialogStage("form");
+          setDialogOpen(true);
+        }}
+      >
+        <Plus aria-hidden="true" />
+        新建密钥
+      </Button>
+      {group.keys.length === 0 ? (
+        <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
+          还没有密钥，点击上方按钮新建
         </p>
       ) : (
-        <>
-          <Button
-            variant="outline"
-            className="w-fit"
-            disabled={busy || atLimit}
-            title={atLimit ? "已达上限，请先吊销不用的密钥" : undefined}
-            onClick={() => {
-              setDialogStage("form");
-              setDialogOpen(true);
-            }}
-          >
-            <Plus aria-hidden="true" />
-            新建密钥
-          </Button>
-          {group === undefined ? (
-            <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
-              组织列表加载中，稍后重试
-            </p>
-          ) : group.keys.length === 0 ? (
-            <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
-              还没有密钥，点击上方按钮新建
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {group.keys.map((apiKey) => (
-                <KeyRow
-                  key={apiKey.id}
-                  apiKey={apiKey}
-                  onRevoke={() => void handleRevoke(apiKey)}
-                />
-              ))}
-            </ul>
-          )}
-        </>
+        <ul className="flex flex-col gap-2">
+          {group.keys.map((apiKey) => (
+            <KeyRow
+              key={apiKey.id}
+              apiKey={apiKey}
+              revocable={canManage && !busy}
+              onRevoke={() => void handleRevoke(apiKey)}
+            />
+          ))}
+        </ul>
       )}
       <Dialog
         open={dialogOpen}
@@ -290,6 +307,6 @@ export default function OpenApiKeySettings(): ReactElement {
           )}
         </DialogContent>
       </Dialog>
-    </section>
+    </div>
   );
 }
