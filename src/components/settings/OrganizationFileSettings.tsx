@@ -1,8 +1,7 @@
 import { useEffect, useState, type ReactElement } from "react";
-import { FolderOpen, KeyRound } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 
 import { $tip } from "@/components/tip";
-import OpenApiKeySettings from "@/components/settings/OpenApiKeySettings";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -64,7 +63,7 @@ export default function OrganizationFileSettings(): ReactElement | null {
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+    <div className="flex flex-col gap-4">
       {failed || orgs.length === 0 ? null : (
         <Tabs value={active} onValueChange={setChosen}>
           <TabsList
@@ -79,43 +78,26 @@ export default function OrganizationFileSettings(): ReactElement | null {
           </TabsList>
         </Tabs>
       )}
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] xl:gap-0">
-        <section className="flex flex-col gap-3 xl:pr-5">
-          <h2 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-            <FolderOpen aria-hidden="true" className="size-4" />
-            存储设置
-          </h2>
-          {failed ? (
-            <p className="text-sm text-muted-foreground">组织列表加载失败</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Label>存放位置</Label>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-fit max-w-full"
-                disabled={busy}
-                onClick={() => void chooseDirectory()}
-              >
-                <FolderOpen />
-                <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
-              </Button>
-              <p className="text-xs text-muted-foreground">下载任务文件时的浏览器存放目录</p>
-            </div>
-          )}
-        </section>
-        <section className="flex flex-col gap-3 border-t border-border pt-5 xl:border-t-0 xl:border-l xl:pl-5 xl:pt-0">
-          <h2 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-            <KeyRound aria-hidden="true" className="size-4" />
-            OpenAPI 密钥
-          </h2>
-          {failed ? (
-            <p className="text-sm text-muted-foreground">组织列表加载失败</p>
-          ) : (
-            <OpenApiKeySettings orgId={active} />
-          )}
-        </section>
-      </div>
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+        <h2 className="text-base font-medium">存储设置</h2>
+        {failed ? (
+          <p className="text-sm text-muted-foreground">组织列表加载失败</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <Label>存放位置</Label>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-fit max-w-full"
+              disabled={busy}
+              onClick={() => void chooseDirectory()}
+            >
+              <FolderOpen />
+              <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
+            </Button>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
