@@ -175,10 +175,10 @@ test("修改昵称时空白和超长停在字段旁", async (): Promise<void> =>
   expect(Array.from(document.querySelectorAll("h1"), (heading) => heading.textContent)).toEqual([
     "个人设置",
   ]);
-  // 组织配置块（存储设置 + OpenAPI 密钥）仅在用户有管理员组织时渲染；本测试组织列表为空
   expect(Array.from(document.querySelectorAll("h2"), (heading) => heading.textContent)).toEqual([
     "修改密码",
     "通知",
+    "OpenAPI 密钥",
   ]);
   expect(document.body.textContent).not.toContain("昵称 遗留用户");
   expect(document.body.textContent).toContain("遗留用户");
