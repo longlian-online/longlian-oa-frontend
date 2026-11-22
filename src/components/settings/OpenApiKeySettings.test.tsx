@@ -85,12 +85,12 @@ function json(data: unknown, code = 0, msg = "成功"): Response {
   });
 }
 
-async function mount(): Promise<void> {
+async function mount(orgId = "1"): Promise<void> {
   await act(async () => {
     root.render(
       <QueryClientProvider client={client}>
         <ConfirmDialogProvider>
-          <OpenApiKeySettings />
+          <OpenApiKeySettings orgId={orgId} />
         </ConfirmDialogProvider>
       </QueryClientProvider>,
     );
@@ -116,8 +116,8 @@ async function typeInto(input: HTMLInputElement, value: string): Promise<void> {
   });
 }
 
-test("展示当前组织密钥，创建入口收敛为按钮", async (): Promise<void> => {
-  await mount();
+test("跟随页签组织渲染密钥，创建入口收敛为按钮", async (): Promise<void> => {
+  await mount("1");
   await vi.waitFor(() => {
     expect(document.body.textContent).toContain("旧密钥");
   });
@@ -137,7 +137,7 @@ test("达到上限时新建按钮禁用并提示先吊销", async (): Promise<vo
     ...groups[0].keys,
     { id: 12, name: "第二个", createdAt: "2026-02-03 04:05:06", lastUsedAt: null },
   ];
-  await mount();
+  await mount("1");
   await vi.waitFor(() => {
     expect(document.body.textContent).toContain("已用 2/2");
   });
@@ -149,16 +149,32 @@ test("达到上限时新建按钮禁用并提示先吊销", async (): Promise<vo
 });
 
 test("空组织显示空态", async (): Promise<void> => {
-  saveSession({ token: "session-token", userId: "1", defaultOrgId: "2" });
-  await mount();
+  await mount("2");
   await vi.waitFor(() => {
     expect(document.body.textContent).toContain("还没有密钥，点击上方按钮新建");
   });
   expect(document.body.textContent).toContain("已用 0/2");
+  expect(document.body.textContent).not.toContain("旧密钥");
+});
+
+test("非当前组织的页签只读：创建吊销禁用并提示", async (): Promise<void> => {
+  // 会话在甲组，页签切到乙组：只读
+  saveSession({ token: "session-token", userId: "1", defaultOrgId: "2" });
+  await mount("1");
+  await vi.waitFor(() => {
+    expect(document.body.textContent).toContain("旧密钥");
+  });
+  expect(document.body.textContent).toContain("创建或吊销需先在页头切换到该组织");
+  const create = buttonsNamed("新建密钥")[0];
+  expect(create?.disabled).toBe(true);
+  const rowButton = buttonsNamed("吊销").find((button) =>
+    button.closest("li")?.textContent?.includes("旧密钥"),
+  );
+  expect(rowButton?.disabled).toBe(true);
 });
 
 test("新建按钮打开弹窗，成功后原位切换为一次性展示", async (): Promise<void> => {
-  await mount();
+  await mount("1");
   await vi.waitFor(() => {
     expect(buttonsNamed("新建密钥").length).toBe(1);
   });
@@ -166,11 +182,8 @@ test("新建按钮打开弹窗，成功后原位切换为一次性展示", async
   await vi.waitFor(() => {
     expect(document.querySelector("[role='dialog']")?.textContent).toContain("新建 OpenAPI 密钥");
   });
-  const input = await (async (): Promise<HTMLInputElement> => {
-    const el = document.querySelector("#openapi-key-name");
-    if (!(el instanceof HTMLInputElement)) throw new Error("缺少名称输入框");
-    return el;
-  })();
+  const input = document.querySelector("#openapi-key-name");
+  if (!(input instanceof HTMLInputElement)) throw new Error("缺少名称输入框");
   await typeInto(input, "翻译机器人");
   await click(buttonsNamed("创建", document.querySelector("[role='dialog']") as ParentNode)[0]);
   await vi.waitFor(() => {
@@ -187,13 +200,11 @@ test("新建按钮打开弹窗，成功后原位切换为一次性展示", async
     expect(document.querySelector("[role='dialog']")).toBeNull();
   });
   expect(document.body.textContent).not.toContain("oa_plain_secret");
-  // 列表回到表单态且刷新
-  expect(document.querySelector("[role='dialog']")).toBeNull();
 });
 
 test("创建失败提示错误且弹窗停在表单态", async (): Promise<void> => {
   createFailed = true;
-  await mount();
+  await mount("1");
   await vi.waitFor(() => {
     expect(buttonsNamed("新建密钥").length).toBe(1);
   });
@@ -212,7 +223,7 @@ test("创建失败提示错误且弹窗停在表单态", async (): Promise<void>
 });
 
 test("弹窗内名称校验：空白和超长停在字段旁且不发请求", async (): Promise<void> => {
-  await mount();
+  await mount("1");
   await vi.waitFor(() => {
     expect(buttonsNamed("新建密钥").length).toBe(1);
   });
@@ -230,7 +241,7 @@ test("弹窗内名称校验：空白和超长停在字段旁且不发请求", as
 });
 
 test("吊销需确认且确认后从列表移除", async (): Promise<void> => {
-  await mount();
+  await mount("1");
   await vi.waitFor(() => {
     expect(document.body.textContent).toContain("旧密钥");
   });
