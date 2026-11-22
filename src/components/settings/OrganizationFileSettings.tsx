@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactElement } from "react";
 import { FolderOpen } from "lucide-react";
 
 import { $tip } from "@/components/tip";
+import OpenApiKeySettings from "@/components/settings/OpenApiKeySettings";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -63,7 +64,7 @@ export default function OrganizationFileSettings(): ReactElement | null {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
       {failed || orgs.length === 0 ? null : (
         <Tabs value={active} onValueChange={setChosen}>
           <TabsList
@@ -78,7 +79,7 @@ export default function OrganizationFileSettings(): ReactElement | null {
           </TabsList>
         </Tabs>
       )}
-      <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+      <section className="flex flex-col gap-2">
         <h2 className="text-base font-medium">存储设置</h2>
         {failed ? (
           <p className="text-sm text-muted-foreground">组织列表加载失败</p>
@@ -96,6 +97,14 @@ export default function OrganizationFileSettings(): ReactElement | null {
               <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
             </Button>
           </div>
+        )}
+      </section>
+      <section className="flex flex-col gap-2">
+        <h2 className="text-base font-medium">OpenAPI 密钥</h2>
+        {failed ? (
+          <p className="text-sm text-muted-foreground">组织列表加载失败</p>
+        ) : (
+          <OpenApiKeySettings orgId={active} />
         )}
       </section>
     </div>
