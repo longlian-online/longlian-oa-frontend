@@ -54,16 +54,6 @@ vi.mock("@/api/auth", () => ({
   sendVerificationCode: vi.fn(async () => undefined),
 }));
 
-vi.mock("@/api/openApiKey", () => ({
-  listOpenApiKeys: vi.fn(async () => []),
-  createOpenApiKey: vi.fn(async () => ({ id: 1, key: "oa_new" })),
-  revokeOpenApiKey: vi.fn(async () => undefined),
-}));
-
-vi.mock("@/hooks/useConfirm", () => ({
-  useConfirm: () => vi.fn(async () => true),
-}));
-
 vi.mock("@/pages/dashboard/org-admin/downloadDirectory", () => ({
   loadOrgDirectory: async () => ({ handle: null, name: null }),
   DirectoryAccessError: class DirectoryAccessError extends Error {},
@@ -178,7 +168,6 @@ test("修改昵称时空白和超长停在字段旁", async (): Promise<void> =>
   expect(Array.from(document.querySelectorAll("h2"), (heading) => heading.textContent)).toEqual([
     "修改密码",
     "通知",
-    "OpenAPI 密钥",
   ]);
   expect(document.body.textContent).not.toContain("昵称 遗留用户");
   expect(document.body.textContent).toContain("遗留用户");
