@@ -16,10 +16,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useConfirm } from "@/hooks/useConfirm";
-import { useApiMutation, useApiQuery } from "@/hooks/queries/useApiQuery";
+import { useApiMutation, useApiQuery, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
 import { formatDate } from "@/lib/format";
 
-import type { OpenApiKeyGroupVO, OpenApiKeyVO } from "@/types/openApiKey";
+import type { OpenApiKeyVO } from "@/types/openApiKey";
 
 const OPEN_API_KEYS_KEY = ["openApiKeys"] as const;
 
@@ -39,9 +39,11 @@ function handleFailure(error: unknown, fallback: string): void {
 
 function KeyRow({
   apiKey,
+  revocable,
   onRevoke,
 }: {
   apiKey: OpenApiKeyVO;
+  revocable: boolean;
   onRevoke: () => void;
 }): ReactElement {
   return (
@@ -53,45 +55,23 @@ function KeyRow({
           {apiKey.lastUsedAt ? ` · 最近使用 ${formatDate(apiKey.lastUsedAt)}` : " · 未使用过"}
         </span>
       </div>
-      <Button variant="outline" size="sm" onClick={onRevoke}>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={!revocable}
+        title={revocable ? undefined : "先在页头切换到该组织再吊销"}
+        onClick={onRevoke}
+      >
         吊销
       </Button>
     </li>
   );
 }
 
-function KeyGroup({
-  group,
-  onRevoke,
-}: {
-  group: OpenApiKeyGroupVO;
-  onRevoke: (key: OpenApiKeyVO) => void;
-}): ReactElement {
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium">{group.orgName}</span>
-        <span className="text-xs text-muted-foreground">
-          已用 {group.keys.length}/{group.maxKeys}
-        </span>
-      </div>
-      {group.keys.length === 0 ? (
-        <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
-          暂无密钥
-        </p>
-      ) : (
-        <ul className="flex flex-col">
-          {group.keys.map((apiKey) => (
-            <KeyRow key={apiKey.id} apiKey={apiKey} onRevoke={() => onRevoke(apiKey)} />
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-export default function OpenApiKeySettings(): ReactElement {
+/** 组织配置块内「OpenAPI 密钥」一节的内容：只展示 orgId 对应组织的密钥。 */
+export default function OpenApiKeySettings({ orgId }: { orgId: string }): ReactElement | null {
   const confirm = useConfirm();
+  const sessionOrgId = useSessionSnapshot().orgId;
   const groupsQuery = useApiQuery({
     key: OPEN_API_KEYS_KEY,
     queryFn: listOpenApiKeys,
@@ -115,6 +95,10 @@ export default function OpenApiKeySettings(): ReactElement {
   const [nameError, setNameError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedKey | null>(null);
   const busy = createMutation.isPending || revokeMutation.isPending;
+
+  // 创建与吊销都按会话当前组织落库，切到其他组织的页签时只读展示
+  const canManage = sessionOrgId !== null && String(sessionOrgId) === orgId;
+  const group = groupsQuery.data?.find((entry) => String(entry.orgId) === orgId);
 
   async function handleCreate(): Promise<void> {
     const trimmed = name.trim();
@@ -161,64 +145,87 @@ export default function OpenApiKeySettings(): ReactElement {
     }
   }
 
+  if (groupsQuery.isError) {
+    return (
+      <Button
+        variant="outline"
+        className="w-fit"
+        disabled={groupsQuery.isFetching}
+        onClick={() => void groupsQuery.refetch()}
+      >
+        <RotateCw aria-hidden="true" />
+        密钥列表加载失败，重试
+      </Button>
+    );
+  }
+  if (groupsQuery.data === undefined) {
+    return (
+      <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+        <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+        正在读取密钥列表
+      </p>
+    );
+  }
+  if (!group) return null;
+
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-      <h2 className="text-base font-medium">OpenAPI 密钥</h2>
-      {groupsQuery.isError ? (
-        <Button
-          variant="outline"
-          className="w-fit"
-          disabled={groupsQuery.isFetching}
-          onClick={() => void groupsQuery.refetch()}
-        >
-          <RotateCw aria-hidden="true" />
-          密钥列表加载失败，重试
-        </Button>
-      ) : groupsQuery.data === undefined ? (
-        <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
-          <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
-          正在读取密钥列表
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs text-muted-foreground">
+          已用 {group.keys.length}/{group.maxKeys}
+        </span>
+        {canManage ? null : (
+          <span className="text-xs text-muted-foreground">创建或吊销需先在页头切换到该组织</span>
+        )}
+      </div>
+      {group.keys.length === 0 ? (
+        <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
+          暂无密钥
         </p>
       ) : (
-        <>
-          <p className="text-sm text-muted-foreground">为其他组织创建请先切换组织</p>
-          <div className="flex flex-col gap-4">
-            {groupsQuery.data.map((group) => (
-              <KeyGroup key={group.orgId} group={group} onRevoke={handleRevoke} />
-            ))}
-          </div>
-          <form
-            className="flex flex-col gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void handleCreate();
-            }}
-          >
-            <div className="flex flex-wrap items-end gap-2">
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="openapi-key-name">名称</Label>
-                <Input
-                  id="openapi-key-name"
-                  className="w-56"
-                  value={name}
-                  onChange={(event) => {
-                    setName(event.target.value);
-                    if (nameError !== null) setNameError(null);
-                  }}
-                />
-              </div>
-              <Button type="submit" disabled={busy}>
-                {createMutation.isPending ? "创建中..." : "创建"}
-              </Button>
-            </div>
-            {nameError !== null ? (
-              <p id="openapi-key-name-error" className="text-sm text-destructive">
-                {nameError}
-              </p>
-            ) : null}
-          </form>
-        </>
+        <ul className="flex flex-col">
+          {group.keys.map((apiKey) => (
+            <KeyRow
+              key={apiKey.id}
+              apiKey={apiKey}
+              revocable={canManage && !busy}
+              onRevoke={() => void handleRevoke(apiKey)}
+            />
+          ))}
+        </ul>
       )}
+      <form
+        className="flex flex-col gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!canManage) return;
+          void handleCreate();
+        }}
+      >
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="openapi-key-name">名称</Label>
+            <Input
+              id="openapi-key-name"
+              className="w-56"
+              value={name}
+              disabled={!canManage}
+              onChange={(event) => {
+                setName(event.target.value);
+                if (nameError !== null) setNameError(null);
+              }}
+            />
+          </div>
+          <Button type="submit" disabled={!canManage || busy}>
+            {createMutation.isPending ? "创建中..." : "创建"}
+          </Button>
+        </div>
+        {nameError !== null ? (
+          <p id="openapi-key-name-error" className="text-sm text-destructive">
+            {nameError}
+          </p>
+        ) : null}
+      </form>
       <Dialog
         open={created !== null}
         onOpenChange={(open) => {
@@ -242,6 +249,6 @@ export default function OpenApiKeySettings(): ReactElement {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </section>
+    </div>
   );
 }

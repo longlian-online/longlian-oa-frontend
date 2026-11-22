@@ -6,7 +6,6 @@ import { UserRound } from "lucide-react";
 import { sendVerificationCode } from "@/api/auth";
 import { bindEmail, changePassword, updateMyInfo } from "@/api/user";
 import NotificationPreferences from "@/components/settings/NotificationPreferences";
-import OpenApiKeySettings from "@/components/settings/OpenApiKeySettings";
 import OrganizationFileSettings from "@/components/settings/OrganizationFileSettings";
 import { $tip } from "@/components/tip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -421,8 +420,6 @@ export default function PersonalSettingsPage(): ReactElement {
         <h2 className="text-base font-medium">通知</h2>
         <NotificationPreferences />
       </section>
-
-      <OpenApiKeySettings />
 
       <OrganizationFileSettings />
     </div>

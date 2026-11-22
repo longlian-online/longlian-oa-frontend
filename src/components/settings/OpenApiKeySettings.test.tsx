@@ -92,12 +92,12 @@ function json(data: unknown, code = 0, msg = "成功"): Response {
   });
 }
 
-async function mount(): Promise<void> {
+async function mount(orgId = "1"): Promise<void> {
   await act(async () => {
     root.render(
       <QueryClientProvider client={client}>
         <ConfirmDialogProvider>
-          <OpenApiKeySettings />
+          <OpenApiKeySettings orgId={orgId} />
         </ConfirmDialogProvider>
       </QueryClientProvider>,
     );
@@ -132,27 +132,45 @@ async function nameInput(): Promise<HTMLInputElement> {
   return document.querySelector("#openapi-key-name") as HTMLInputElement;
 }
 
-test("按组织分组渲染密钥、已用上限与空态", async (): Promise<void> => {
-  await mount();
+test("按传入组织渲染密钥、已用上限与空态", async (): Promise<void> => {
+  await mount("1");
   await vi.waitFor(() => {
-    expect(document.body.textContent).toContain("甲组");
+    expect(document.body.textContent).toContain("旧密钥");
   });
-  const headings = Array.from(document.querySelectorAll("span")).filter((node) =>
+  const counters = Array.from(document.querySelectorAll("span")).filter((node) =>
     node.textContent?.startsWith("已用 "),
   );
-  expect(headings.map((node) => node.textContent)).toEqual(["已用 2/2", "已用 0/2"]);
+  expect(counters.map((node) => node.textContent)).toEqual(["已用 2/2"]);
   expect(document.body.textContent).toContain("旧密钥");
   expect(document.body.textContent).toContain("常用密钥");
   expect(document.body.textContent).toContain("未使用过");
   expect(document.body.textContent).toContain("最近使用");
-  const empty = Array.from(document.querySelectorAll("p")).find((node) =>
-    node.textContent?.includes("暂无密钥"),
-  );
-  expect(empty?.closest("div")?.textContent).toContain("乙组");
+  expect(document.body.textContent).not.toContain("乙组");
+
+  // 空组织（乙组）只显示空态
+  await mount("2");
+  await vi.waitFor(() => {
+    expect(document.body.textContent).toContain("暂无密钥");
+  });
+  expect(document.body.textContent).toContain("已用 0/2");
+  expect(document.body.textContent).not.toContain("旧密钥");
+});
+
+test("非当前组织的页签只读：创建吊销禁用并提示", async (): Promise<void> => {
+  await mount("2");
+  await vi.waitFor(() => {
+    expect(document.body.textContent).toContain("暂无密钥");
+  });
+  expect(document.body.textContent).toContain("创建或吊销需先在页头切换到该组织");
+  const create = buttonsNamed("创建")[0];
+  expect(create?.disabled).toBe(true);
+  const name = document.querySelector("#openapi-key-name");
+  if (!(name instanceof HTMLInputElement)) throw new Error("缺少名称输入框");
+  expect(name.disabled).toBe(true);
 });
 
 test("创建成功后一次性展示密钥并可复制", async (): Promise<void> => {
-  await mount();
+  await mount("1");
   const input = await nameInput();
   await typeInto(input, "新密钥");
   await click(buttonsNamed("创建")[0]);
@@ -174,7 +192,7 @@ test("创建成功后一次性展示密钥并可复制", async (): Promise<void>
 
 test("创建失败提示错误且保留已填名称", async (): Promise<void> => {
   createFailed = true;
-  await mount();
+  await mount("1");
   const input = await nameInput();
   await typeInto(input, "超限密钥");
   await click(buttonsNamed("创建")[0]);
@@ -187,7 +205,7 @@ test("创建失败提示错误且保留已填名称", async (): Promise<void> =>
 });
 
 test("创建时空白和超长停在字段旁且不发请求", async (): Promise<void> => {
-  await mount();
+  await mount("1");
   const input = await nameInput();
   await click(buttonsNamed("创建")[0]);
   expect(document.querySelector("#openapi-key-name-error")?.textContent).toBe("名称不能为空");
@@ -198,7 +216,7 @@ test("创建时空白和超长停在字段旁且不发请求", async (): Promise
 });
 
 test("吊销需确认且确认后从列表移除", async (): Promise<void> => {
-  await mount();
+  await mount("1");
   await vi.waitFor(() => {
     expect(document.body.textContent).toContain("旧密钥");
   });
