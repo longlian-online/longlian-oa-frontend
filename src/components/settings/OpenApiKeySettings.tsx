@@ -165,6 +165,83 @@ export default function OpenApiKeySettings({ orgId }: { orgId: string }): ReactE
     }
   }
 
+  const dialog = (
+    <Dialog
+      open={dialogOpen}
+      onOpenChange={(open) => {
+        if (!open) closeDialog();
+      }}
+    >
+      <DialogContent showCloseButton={false} className="max-w-md">
+        {dialogStage === "form" ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>新建 OpenAPI 密钥</DialogTitle>
+              <DialogDescription>
+                {group ? `每个组织最多 ${group.maxKeys} 个。` : null}
+                创建后完整密钥只展示一次，关闭后无法再查看。
+              </DialogDescription>
+            </DialogHeader>
+            <form
+              className="flex flex-col gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleCreate();
+              }}
+            >
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="openapi-key-name">名称</Label>
+                <Input
+                  id="openapi-key-name"
+                  value={name}
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    if (nameError !== null) setNameError(null);
+                  }}
+                />
+              </div>
+              {nameError !== null ? (
+                <p id="openapi-key-name-error" className="text-sm text-destructive">
+                  {nameError}
+                </p>
+              ) : null}
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={closeDialog}>
+                  取消
+                </Button>
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? "创建中..." : "创建"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>密钥已创建</DialogTitle>
+              <DialogDescription>
+                {created === null
+                  ? null
+                  : `「${created.name}」的完整密钥仅展示这一次，请立即复制保存：`}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center gap-2">
+              <code className="min-w-0 flex-1 break-all rounded-lg bg-muted p-3 text-sm">
+                {created?.key}
+              </code>
+              <Button variant="outline" onClick={() => void handleCopy()}>
+                复制
+              </Button>
+            </div>
+            <DialogFooter>
+              <Button onClick={closeDialog}>完成</Button>
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+
   if (groupsQuery.isError) {
     return (
       <Button
@@ -186,7 +263,30 @@ export default function OpenApiKeySettings({ orgId }: { orgId: string }): ReactE
       </p>
     );
   }
-  if (!group) return null;
+  if (!group) {
+    // 后端按成员资格返回分组；缺组（如列表缓存滞后）按空态展示，不影响创建入口
+    return (
+      <div className="flex flex-col gap-2">
+        <Button
+          variant="outline"
+          className="w-fit"
+          disabled={busy || !canManage}
+          title={!canManage ? "先在页头切换到该组织再新建" : undefined}
+          onClick={() => {
+            setDialogStage("form");
+            setDialogOpen(true);
+          }}
+        >
+          <Plus aria-hidden="true" />
+          新建密钥
+        </Button>
+        <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">
+          还没有密钥，点击上方按钮新建
+        </p>
+        {dialog}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -233,80 +333,7 @@ export default function OpenApiKeySettings({ orgId }: { orgId: string }): ReactE
           ))}
         </ul>
       )}
-      <Dialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          if (!open) closeDialog();
-        }}
-      >
-        <DialogContent showCloseButton={false} className="max-w-md">
-          {dialogStage === "form" ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>新建 OpenAPI 密钥</DialogTitle>
-                <DialogDescription>
-                  {group ? `每个组织最多 ${group.maxKeys} 个。` : null}
-                  创建后完整密钥只展示一次，关闭后无法再查看。
-                </DialogDescription>
-              </DialogHeader>
-              <form
-                className="flex flex-col gap-2"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void handleCreate();
-                }}
-              >
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="openapi-key-name">名称</Label>
-                  <Input
-                    id="openapi-key-name"
-                    value={name}
-                    onChange={(event) => {
-                      setName(event.target.value);
-                      if (nameError !== null) setNameError(null);
-                    }}
-                  />
-                </div>
-                {nameError !== null ? (
-                  <p id="openapi-key-name-error" className="text-sm text-destructive">
-                    {nameError}
-                  </p>
-                ) : null}
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={closeDialog}>
-                    取消
-                  </Button>
-                  <Button type="submit" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "创建中..." : "创建"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </>
-          ) : (
-            <>
-              <DialogHeader>
-                <DialogTitle>密钥已创建</DialogTitle>
-                <DialogDescription>
-                  {created === null
-                    ? null
-                    : `「${created.name}」的完整密钥仅展示这一次，请立即复制保存：`}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex items-center gap-2">
-                <code className="min-w-0 flex-1 break-all rounded-lg bg-muted p-3 text-sm">
-                  {created?.key}
-                </code>
-                <Button variant="outline" onClick={() => void handleCopy()}>
-                  复制
-                </Button>
-              </div>
-              <DialogFooter>
-                <Button onClick={closeDialog}>完成</Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {dialog}
     </div>
   );
 }

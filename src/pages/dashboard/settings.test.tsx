@@ -303,7 +303,7 @@ test("关闭某一类型通知时只提交该类型", async (): Promise<void> =>
   });
 });
 
-test("存储设置按组织分栏，标签在内容块上方", async (): Promise<void> => {
+test("组织配置卡对所有所属组织渲染，存储设置节仅管理员组织显示", async (): Promise<void> => {
   getUserOrganizations.mockResolvedValue([
     { id: "1", name: "甲组", role: "ORG_ADMIN" },
     { id: "2", name: "乙组", role: "ORG_OWNER" },
@@ -313,39 +313,53 @@ test("存储设置按组织分栏，标签在内容块上方", async (): Promise
   await vi.waitFor(() => {
     expect(document.body.textContent).toContain("甲组");
   });
-  const heading = Array.from(document.querySelectorAll("h2")).find(
-    (item) => item.textContent === "存储设置",
-  );
-  const block = heading?.closest("section");
+  // 页签列出全部所属组织
+  const tabs = Array.from(document.querySelectorAll("[role='tab']"), (item) => item.textContent);
+  expect(tabs).toEqual(["甲组", "乙组", "丙组"]);
+  // 默认页签是管理员组织：存储设置与密钥两节都在
+  expect(document.body.textContent).toContain("存放位置");
+  expect(document.body.textContent).toContain("OpenAPI 密钥");
   const notice = Array.from(document.querySelectorAll("h2")).find(
     (item) => item.textContent === "通知",
   );
-  expect(block?.textContent).toContain("存放位置");
-  expect(block?.textContent).not.toContain("存储视图");
-  expect(block?.querySelector("[role='tab']")).toBeNull();
-  const tabs = Array.from(document.querySelectorAll("[role='tab']"), (item) => item.textContent);
-  expect(tabs).toEqual(["甲组", "乙组"]);
+  const storageHeading = Array.from(document.querySelectorAll("h2")).find(
+    (item) => item.textContent === "存储设置",
+  );
   const tab = document.querySelector("[role='tab']");
   expect(
     notice !== undefined &&
       tab !== null &&
-      block !== null &&
-      block !== undefined &&
+      storageHeading !== undefined &&
       (notice.compareDocumentPosition(tab) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0 &&
-      (tab.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
+      (tab.compareDocumentPosition(storageHeading) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
   ).toBe(true);
+
+  // 切到普通成员组织：存储设置节消失，密钥节保留（mock 无丙组分组，按空态展示）
+  const memberTab = document.querySelectorAll("[role='tab']")[2];
+  if (!(memberTab instanceof HTMLElement)) throw new Error("缺少成员组织页签");
+  await act(async () => {
+    memberTab.click();
+  });
+  await vi.waitFor(() => {
+    expect(document.body.textContent).not.toContain("存放位置");
+  });
+  expect(document.body.textContent).toContain("OpenAPI 密钥");
+  expect(document.body.textContent).toContain("还没有密钥，点击上方按钮新建");
 });
 
-test("不是管理员的组织不出现，全都不是时不展示组织设置", async (): Promise<void> => {
+test("全是普通成员组织时仅显示 OpenAPI 密钥节", async (): Promise<void> => {
   getUserOrganizations.mockResolvedValue([
     { id: "1", name: "甲组", role: "ORG_USER" },
     { id: "2", name: "乙组", role: "ORG_USER" },
   ]);
   await mount();
   await vi.waitFor(() => {
-    expect(getUserOrganizations).toHaveBeenCalled();
+    expect(document.body.textContent).toContain("OpenAPI 密钥");
   });
-  expect(document.body.textContent).not.toContain("组织设置");
+  await vi.waitFor(() => {
+    expect(document.body.textContent).toContain("还没有密钥，点击上方按钮新建");
+  });
   expect(document.body.textContent).not.toContain("存储设置");
-  expect(document.body.textContent).not.toContain("甲组");
+  expect(document.body.textContent).not.toContain("存放位置");
+  expect(document.body.textContent).toContain("甲组");
 });
