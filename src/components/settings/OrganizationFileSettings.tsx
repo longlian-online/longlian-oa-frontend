@@ -20,13 +20,17 @@ import { organizationsQuery } from "@/queries/session";
 
 export default function OrganizationFileSettings(): ReactElement | null {
   const orgsQuery = useApiQuery(organizationsQuery);
-  const orgs = (orgsQuery.data ?? []).filter((org) => isOrganizationManagerRole(org.role));
+  // 卡对用户所有所属组织渲染；存储设置节另按管理员角色显示，OpenAPI 密钥节对所有人显示
+  const memberOrgs = orgsQuery.data ?? [];
   const currentOrgId = useSessionSnapshot().orgId;
   const [chosen, setChosen] = useState<string | null>(null);
   const active =
-    chosen && orgs.some((org) => org.id === chosen)
+    chosen && memberOrgs.some((org) => org.id === chosen)
       ? chosen
-      : (orgs.find((org) => org.id === currentOrgId)?.id ?? orgs[0]?.id ?? "");
+      : (memberOrgs.find((org) => org.id === currentOrgId)?.id ?? memberOrgs[0]?.id ?? "");
+  const activeIsManager = memberOrgs.some(
+    (org) => org.id === active && isOrganizationManagerRole(org.role),
+  );
   const [settings, setSettings] = useState<SavedDownloadDirectory | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -42,7 +46,7 @@ export default function OrganizationFileSettings(): ReactElement | null {
   }, [active]);
 
   if (orgsQuery.isLoading && orgsQuery.data === undefined) return null;
-  if (!orgsQuery.isError && orgs.length === 0) return null;
+  if (!orgsQuery.isError && memberOrgs.length === 0) return null;
 
   const failed = orgsQuery.isError;
 
@@ -65,13 +69,13 @@ export default function OrganizationFileSettings(): ReactElement | null {
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-      {failed || orgs.length === 0 ? null : (
+      {failed || memberOrgs.length === 0 ? null : (
         <Tabs value={active} onValueChange={setChosen}>
           <TabsList
             className="h-auto max-w-full justify-start overflow-x-auto overflow-y-hidden"
             aria-label="组织"
           >
-            {orgs.map((org) => (
+            {memberOrgs.map((org) => (
               <TabsTrigger key={org.id} value={org.id}>
                 {org.name}
               </TabsTrigger>
@@ -79,11 +83,9 @@ export default function OrganizationFileSettings(): ReactElement | null {
           </TabsList>
         </Tabs>
       )}
-      <section className="flex flex-col gap-2">
-        <h2 className="text-base font-medium">存储设置</h2>
-        {failed ? (
-          <p className="text-sm text-muted-foreground">组织列表加载失败</p>
-        ) : (
+      {failed || !activeIsManager ? null : (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-base font-medium">存储设置</h2>
           <div className="flex flex-col gap-2">
             <Label>存放位置</Label>
             <Button
@@ -97,9 +99,15 @@ export default function OrganizationFileSettings(): ReactElement | null {
               <span className="truncate">{settings?.name ?? "选择文件夹"}</span>
             </Button>
           </div>
-        )}
-      </section>
-      <section className="flex flex-col gap-2 border-t border-border pt-4">
+        </section>
+      )}
+      <section
+        className={
+          failed || !activeIsManager
+            ? "flex flex-col gap-2"
+            : "flex flex-col gap-2 border-t border-border pt-4"
+        }
+      >
         <h2 className="text-base font-medium">OpenAPI 密钥</h2>
         {failed ? (
           <p className="text-sm text-muted-foreground">组织列表加载失败</p>
