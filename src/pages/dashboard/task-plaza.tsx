@@ -57,7 +57,7 @@ import type { PlazaProjectGroup, PlazaSortBy, PlazaTask } from "@/types/plaza";
 
 const TASK_PAGE_SIZE = 6;
 const typeFilterTriggerClassName =
-  "h-9 w-max max-w-sm shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0 [&_[data-slot=select-value]]:line-clamp-none [&_[data-slot=select-value]]:block [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:truncate";
+  "h-9 w-max max-w-sm shrink-0 rounded-full border-0 bg-transparent px-3 text-sm text-muted-foreground shadow-none transition-colors hover:bg-secondary/70 hover:text-foreground focus:ring-0 focus:ring-offset-0 dark:bg-transparent [&_[data-slot=select-value]]:line-clamp-none [&_[data-slot=select-value]]:block [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:truncate";
 
 const sortOptions = [
   { value: "WAIT", label: "等待最久" },
@@ -188,7 +188,7 @@ export default function TaskPlaza() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {listQuery.isFetching && listQuery.data && (
         <p role="status" className="text-sm text-muted-foreground">
           正在刷新...
@@ -196,25 +196,29 @@ export default function TaskPlaza() {
       )}
 
       <div>
-        <h1 className="text-xl font-semibold text-foreground">任务大厅</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">任务大厅</h1>
         {!loading && total > 0 && (
-          <p className="mt-1 text-sm text-muted-foreground">共 {total} 个企划有待接取任务</p>
+          <p className="mt-1 text-sm tabular-nums text-muted-foreground">
+            共 {total} 个企划有待接取任务
+          </p>
         )}
       </div>
 
-      <div role="group" aria-label="任务阶段范围" className="flex gap-4 border-b pb-2">
+      <div role="group" aria-label="任务阶段范围" className="flex gap-2 border-b pb-3">
         {(["ALL", "CURRENT"] as const).map((scope) => (
           <div
             key={scope}
             className={cn(
-              "flex items-center rounded-lg pr-0.5",
-              stageScope === scope && "bg-secondary",
+              "flex items-center rounded-full pr-0.5 transition-colors",
+              stageScope === scope
+                ? "bg-accent-soft text-accent-soft-foreground"
+                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
             )}
           >
             <Button
               aria-pressed={stageScope === scope}
               variant="ghost"
-              className="pr-0"
+              className="rounded-full pr-0 hover:bg-transparent"
               onClick={() => {
                 if (scope === stageScope) return;
                 updateQuery({ stageScope: scope });
@@ -248,7 +252,7 @@ export default function TaskPlaza() {
             >
               <SelectTrigger
                 aria-label="排序"
-                className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0"
+                className="h-9 w-36 shrink-0 rounded-full border-0 bg-transparent px-3 text-sm text-muted-foreground shadow-none transition-colors hover:bg-secondary/70 hover:text-foreground focus:ring-0 focus:ring-offset-0 dark:bg-transparent"
               >
                 <ArrowUpDown className="mr-1.5 h-3.5 w-3.5" />
                 <SelectValue>
@@ -387,11 +391,15 @@ function ProjectCoverThumbnail({ group }: { group: PlazaProjectGroup }): ReactEl
     <RemoteImage
       src={imageUrl}
       alt={group.title}
-      className="size-10 shrink-0 rounded-md border"
-      fallback={<span className="text-sm font-semibold">{group.title.slice(0, 2)}</span>}
+      className="size-10 shrink-0 rounded-xl border border-border/80"
+      fallback={
+        <span className="flex size-full items-center justify-center bg-gradient-to-br from-muted via-muted/80 to-secondary text-sm font-semibold text-muted-foreground/80">
+          {group.title.slice(0, 2)}
+        </span>
+      }
     />
   ) : (
-    <span className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-sm font-semibold text-muted-foreground">
+    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-gradient-to-br from-muted via-muted/80 to-secondary text-sm font-semibold text-muted-foreground/80">
       {group.title.slice(0, 2)}
     </span>
   );

@@ -33,7 +33,7 @@ export default function FilterToolbar({
       <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center">
         {onSearchChange && (
           <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}
               value={searchValue ?? ""}
@@ -43,7 +43,7 @@ export default function FilterToolbar({
               onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) =>
                 event.key === "Enter" && onSearchSubmit?.()
               }
-              className="h-9 rounded-md border-input bg-background pl-10"
+              className="h-10 rounded-full border-border/75 bg-card/70 pl-10 pr-4 transition-colors hover:border-border focus-visible:bg-card dark:bg-card/60"
             />
           </div>
         )}

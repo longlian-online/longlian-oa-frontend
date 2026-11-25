@@ -91,26 +91,23 @@ function getDiagramStages(nodes: WorkshopTaskTemplateNodeVO[]): {
 
 function WorkflowParallelBadge({ count }: { count: number }) {
   if (count <= 1) {
-    return <div className="mt-1 h-4" />;
+    return null;
   }
 
   return (
-    <div className="mt-1 flex h-4 items-center justify-center">
-      <span className="flex size-5 items-center justify-center rounded-full bg-foreground text-[11px] font-bold leading-4 text-background">
-        +{count - 1}
-      </span>
-    </div>
+    <span className="absolute -right-1.5 -bottom-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none tabular-nums text-primary-foreground ring-2 ring-card">
+      +{count - 1}
+    </span>
   );
 }
 
 function WorkflowStageOverflowSummary({ totalSteps }: { totalSteps: number }) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col items-center" title={`共 ${totalSteps} 步`}>
-      <div className="flex size-8 items-center justify-center rounded-full border border-dashed border-foreground/30 bg-muted text-[11px] font-bold text-muted-foreground">
+    <div className="flex w-14 shrink-0 flex-col items-center" title={`共 ${totalSteps} 步`}>
+      <div className="flex size-9 items-center justify-center rounded-full border border-dashed border-foreground/25 bg-muted/80 text-xs font-semibold text-muted-foreground">
         …
       </div>
-      <div className="mt-1 h-4" />
-      <div className="mt-1 max-w-14 truncate text-[11px] font-bold leading-4 text-muted-foreground">
+      <div className="mt-2 max-w-14 truncate text-[11px] font-medium leading-4 tabular-nums text-muted-foreground">
         共 {totalSteps} 步
       </div>
     </div>
@@ -122,7 +119,7 @@ function WorkflowDiagram({ nodes }: { nodes: WorkshopTaskTemplateNodeVO[] }) {
 
   if (totalSteps === 0) {
     return (
-      <div className="flex h-20 items-center justify-center text-sm text-muted-foreground">
+      <div className="flex h-16 items-center justify-center text-sm text-muted-foreground">
         暂无节点
       </div>
     );
@@ -132,32 +129,33 @@ function WorkflowDiagram({ nodes }: { nodes: WorkshopTaskTemplateNodeVO[] }) {
 
   return (
     <div className="flex w-full min-w-0 items-start justify-center overflow-hidden px-1">
-      {visible.map((stage, index) => {
-        const Icon = stage.icon;
-        const showConnector = index < itemCount - 1;
+      <div className="inline-flex max-w-full items-start justify-center">
+        {visible.map((stage, index) => {
+          const Icon = stage.icon;
+          const showConnector = index < itemCount - 1;
 
-        return (
-          <div key={`${stage.label}-${index}`} className="flex min-w-0 flex-1 items-start">
-            <div className="flex min-w-0 flex-1 flex-col items-center">
-              <div className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-foreground text-background">
-                <Icon className="size-3.5" />
+          return (
+            <div key={`${stage.label}-${index}`} className="flex shrink-0 items-start">
+              <div className="flex w-14 flex-col items-center">
+                <div className="relative flex size-9 items-center justify-center rounded-full bg-foreground text-background shadow-2xs">
+                  <Icon className="size-4" />
+                  <WorkflowParallelBadge count={stage.parallelCount} />
+                </div>
+                <div className="mt-2 max-w-14 truncate text-[11px] font-medium leading-4 text-muted-foreground">
+                  {stage.label}
+                </div>
               </div>
-              <WorkflowParallelBadge count={stage.parallelCount} />
-              <div className="mt-1 max-w-12 truncate text-[11px] font-bold leading-4 text-muted-foreground">
-                {stage.label}
-              </div>
+              {showConnector && (
+                <div
+                  className="mt-[17px] h-[1.5px] w-6 shrink-0 rounded-full bg-foreground/20"
+                  aria-hidden="true"
+                />
+              )}
             </div>
-            {showConnector && (
-              <div className="mt-4 h-0.5 w-5 shrink-0 bg-foreground" aria-hidden="true" />
-            )}
-          </div>
-        );
-      })}
-      {hasOverflow && (
-        <div className="flex min-w-0 flex-1 items-start">
-          <WorkflowStageOverflowSummary totalSteps={totalSteps} />
-        </div>
-      )}
+          );
+        })}
+        {hasOverflow && <WorkflowStageOverflowSummary totalSteps={totalSteps} />}
+      </div>
     </div>
   );
 }
@@ -175,19 +173,22 @@ export function WorkflowTemplateCard({
   const handleStatusChange = onStatusChange ?? onDisable;
 
   return (
-    <article className="flex min-h-[190px] min-w-0 flex-col rounded-xl border bg-card px-4 py-4 transition-colors hover:border-foreground/20">
+    <article className="flex min-h-[188px] min-w-0 flex-col rounded-2xl border border-border bg-card px-5 py-4 shadow-[0_1px_3px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-200 hover:border-foreground/15 hover:shadow-[0_6px_20px_rgb(0_0_0/0.06)] dark:shadow-none dark:hover:border-foreground/20">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="truncate text-base font-medium leading-6 text-foreground">
+          <h2 className="truncate text-[15px] font-semibold leading-6 text-foreground">
             {template.name}
           </h2>
           {template.description && (
-            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
               {template.description}
             </p>
           )}
         </div>
-        <Badge variant={template.scope === "PERSONAL" ? "secondary" : "outline"}>
+        <Badge
+          variant={template.scope === "PERSONAL" ? "secondary" : "outline"}
+          className="h-5.5 shrink-0 rounded-full px-2.5 text-[11px] font-normal"
+        >
           {SCOPE_LABELS[template.scope]}
         </Badge>
       </div>
@@ -197,14 +198,14 @@ export function WorkflowTemplateCard({
       </div>
 
       <div className="flex items-center justify-between text-xs leading-[18px]">
-        <div className="text-foreground">任务数：{taskCount}</div>
+        <div className="tabular-nums text-muted-foreground">任务数：{taskCount}</div>
         <div className="flex items-center gap-1">
           {handleStatusChange && (
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "h-7 gap-1 px-1.5 text-xs",
+                "h-7 gap-1 rounded-full px-2.5 text-xs",
                 isDisabled
                   ? "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   : "text-destructive hover:bg-destructive/10 hover:text-destructive",
@@ -220,7 +221,7 @@ export function WorkflowTemplateCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1 px-2 text-xs"
+              className="h-7 gap-1 rounded-full px-2.5 text-xs"
               onClick={() => onEdit(template)}
             >
               编辑
@@ -241,14 +242,16 @@ export function CreateWorkflowTemplateCard({ onClick }: CreateWorkflowTemplateCa
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-h-[190px] min-w-0 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed bg-card text-center transition-colors",
-        "hover:border-foreground/30 hover:bg-secondary/40",
+        "group flex min-h-[188px] min-w-0 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 text-center transition-colors duration-200",
+        "hover:border-foreground/25 hover:bg-card",
       )}
     >
-      <div className="flex size-10 items-center justify-center rounded-full border-2 border-muted-foreground text-muted-foreground">
+      <div className="flex size-11 items-center justify-center rounded-full bg-secondary/80 text-muted-foreground transition-colors duration-200 group-hover:bg-accent-soft group-hover:text-accent-soft-foreground">
         <Plus className="size-5" />
       </div>
-      <div className="mt-3 text-sm font-medium leading-5 text-foreground">创建新流程</div>
+      <div className="mt-3 text-sm font-medium leading-5 text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
+        创建新流程
+      </div>
     </button>
   );
 }

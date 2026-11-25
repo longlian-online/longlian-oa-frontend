@@ -44,11 +44,15 @@ export function MyTaskColumn({
   const submittable = bucket === "SUBMITTABLE";
 
   return (
-    <section className="flex min-w-0 flex-col rounded-xl bg-card p-3 ring-1 ring-foreground/10">
-      <h3 className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-foreground">
-        <span className={cn("size-1.5 rounded-full", dotClassName)} aria-hidden />
+    <section className="flex min-w-0 flex-col rounded-2xl border border-border/80 bg-card p-4 shadow-[0_1px_3px_rgb(0_0_0/0.04)] dark:shadow-none">
+      <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+        <span className={cn("size-2 rounded-full", dotClassName)} aria-hidden />
         {title}
-        {!loading && <span className="font-normal text-muted-foreground">{total}</span>}
+        {!loading && (
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-normal tabular-nums text-muted-foreground">
+            {total}
+          </span>
+        )}
       </h3>
 
       <div className="flex flex-1 flex-col">
@@ -92,7 +96,7 @@ export function MyTaskColumn({
               <button
                 key={task.instanceId}
                 type="button"
-                className="group grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-b border-border/80 px-1.5 py-2.5 text-left last:border-b-0 hover:bg-muted/70"
+                className="group grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-xl border-b border-border/50 px-2.5 py-2.5 text-left transition-colors last:border-b-0 hover:bg-muted/70"
                 aria-label={`${titleText}，${task.projectName}，${action}`}
                 onClick={() => {
                   const params = new URLSearchParams({
@@ -115,7 +119,7 @@ export function MyTaskColumn({
                 </span>
                 <span className="col-span-2 flex h-5 min-w-0 items-center gap-2 text-xs text-muted-foreground">
                   {!submittable && (
-                    <span className="inline-flex h-5 max-w-[45%] shrink items-center truncate font-medium leading-none text-amber-700 dark:text-amber-300">
+                    <span className="inline-flex h-5 max-w-[45%] shrink items-center truncate font-medium leading-none text-status-warning">
                       {waitingText}
                     </span>
                   )}
@@ -140,7 +144,7 @@ export function MyTaskColumn({
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 px-2 text-xs"
+            className="h-7 rounded-full px-2.5 text-xs"
             disabled={loading || page <= 1}
             onClick={() => onPageChange(page - 1)}
           >
@@ -149,7 +153,7 @@ export function MyTaskColumn({
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 px-2 text-xs"
+            className="h-7 rounded-full px-2.5 text-xs"
             disabled={loading || page >= totalPages}
             onClick={() => onPageChange(page + 1)}
           >
