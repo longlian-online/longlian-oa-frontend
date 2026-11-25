@@ -30,24 +30,24 @@
   --theme-accent-solid-a3: rgba(170, 170, 170, 0.3);
 }
 
-/* ── 粉色主题 ── */
+/* ── 粉色主题（柔和樱花粉，与 shadcn.css 语义变量对齐） ── */
 [data-color-theme="pink"] {
-  --theme-accent-start: #f96676;
-  --theme-accent-end: #e91e63;
+  --theme-accent-start: #e37b98;
+  --theme-accent-end: #c85278;
   --theme-accent-gradient: linear-gradient(
     279deg,
     var(--theme-accent-start) 0%,
     var(--theme-accent-end) 100%
   );
-  --theme-accent-solid: #e91e63;
-  --theme-accent-solid-a3: rgba(233, 30, 99, 0.3);
+  --theme-accent-solid: #c85278;
+  --theme-accent-solid-a3: rgba(200, 82, 120, 0.24);
 }
 
 [data-color-theme="pink"].dark {
-  --theme-accent-start: #f96676;
-  --theme-accent-end: #e91e63;
-  --theme-accent-solid: #f472b6;
-  --theme-accent-solid-a3: rgba(244, 114, 182, 0.3);
+  --theme-accent-start: #ec92ac;
+  --theme-accent-end: #d6688d;
+  --theme-accent-solid: #e88ca8;
+  --theme-accent-solid-a3: rgba(232, 140, 168, 0.26);
 }
 
 /* ============================================================

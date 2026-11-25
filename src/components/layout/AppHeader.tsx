@@ -158,10 +158,10 @@ export default function AppHeader({ switcher, onMore }: AppHeaderProps): ReactEl
               to={to}
               aria-current={isSubMenuActive(pathname, to) ? "page" : undefined}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm transition-colors",
+                "rounded-full px-3.5 py-1.5 text-sm transition-colors duration-150",
                 isSubMenuActive(pathname, to)
-                  ? "bg-secondary text-foreground font-medium"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? "bg-accent-soft font-medium text-accent-soft-foreground"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
               )}
             >
               {label}
