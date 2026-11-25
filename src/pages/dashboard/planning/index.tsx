@@ -31,9 +31,9 @@ const timeSortOptions = [
   { value: "UPDATE-ASC", label: "最早更新" },
 ] as const;
 
-// 配合 1680px 宽容器：半屏 2 列、常规大屏 3 列、超宽大屏 4 列，保持舒展展柜比例。
+// 单卡至少 20rem（min-h-52 × 5/3），浏览器足够宽时最多 4 列。
 const PROJECT_CARD_GRID_CLASS =
-  "grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 min-[1720px]:grid-cols-4";
+  "grid min-w-0 grid-cols-[repeat(auto-fill,minmax(min(100%,max(20rem,calc((100%_-_3rem)_/_4))),1fr))] gap-4";
 
 export default function Planning() {
   const navigate = useNavigate();

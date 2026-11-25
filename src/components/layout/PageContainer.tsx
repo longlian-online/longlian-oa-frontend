@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 export type PageContainerSize = "wide" | "content" | "fluid";
 
 const SIZE_CLASSES: Record<PageContainerSize, string> = {
-  wide: "mx-auto w-full max-w-[1680px]",
+  wide: "w-full",
   content: "mx-auto w-full max-w-[1200px]",
   fluid: "w-full",
 };
