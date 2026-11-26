@@ -139,7 +139,7 @@ export default function ForgotPasswordPage() {
                 id="password"
                 type="password"
                 autoComplete="new-password"
-                placeholder="6-20位，含大写、小写和数字"
+                placeholder={NEW_PASSWORD_HINT}
                 {...form.register("password")}
               />
               {form.formState.errors.password && (
