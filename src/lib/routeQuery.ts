@@ -6,3 +6,9 @@ export async function fetchApiQuery<T>(options: ApiQueryOptions<T>): Promise<T |
   if (!query.enabled) return undefined;
   return queryClient.fetchQuery(query);
 }
+
+export function prefetchApiQuery<T>(options: ApiQueryOptions<T>): void {
+  const query = apiQueryOptions(options);
+  if (!query.enabled) return;
+  void queryClient.prefetchQuery(query);
+}

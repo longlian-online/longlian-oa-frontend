@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { useApiQuery, useApiMutation } from "@/hooks/queries/useApiQuery";
+import { loadLucideIconCatalog } from "@/lib/lucideIconCatalog";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import {
@@ -175,7 +176,7 @@ function BaseTaskManagementContent() {
 
     try {
       setLoadingIcons(true);
-      const { icons } = await import("lucide-react");
+      const icons = await loadLucideIconCatalog();
       setIconEntries(
         (Object.entries(icons) as LucideIconEntry[]).sort(([prevName], [nextName]) =>
           prevName.localeCompare(nextName),

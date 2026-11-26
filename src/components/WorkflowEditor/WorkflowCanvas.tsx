@@ -11,6 +11,7 @@ import {
   type ReactFlowInstance,
 } from "@xyflow/react";
 import { Layers2 } from "lucide-react";
+import "@xyflow/react/dist/style.css";
 
 import { Badge } from "@/components/ui/badge";
 import type { BaseTaskVO } from "@/types/workflowTemplate";

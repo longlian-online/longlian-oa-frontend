@@ -104,6 +104,21 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              // 将 Vite 动态加载辅助函数独立成极小分包，避免被合并进按需渲染器大包并被 index.html 预加载。
+              name: "vite-preload",
+              test: /vite\/preload-helper/,
+            },
+          ],
+        },
+      },
+    },
+  },
   // 路由是动态 import。只扫 index.html 会在首次进入页面时再优化依赖，
   // 浏览器拿到 504 Outdated Optimize Dep，动态模块失败后页面空白。
   optimizeDeps: {

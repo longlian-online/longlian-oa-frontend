@@ -1,11 +1,25 @@
 import { Popover } from "@base-ui/react/popover";
-import { useEffect, useId, useState, type ReactElement } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { ArrowRight, Clock, Filter, FolderOpen, Plus, UserRound } from "lucide-react";
 
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
 import { usePageQuery } from "@/hooks/usePageQuery";
-import { PLANNING_PAGE_SIZE as PAGE_SIZE, projectListQuery } from "@/queries/planning";
+import {
+  PLANNING_PAGE_SIZE as PAGE_SIZE,
+  projectDetailQuery,
+  projectListQuery,
+} from "@/queries/planning";
+import { prefetchApiQuery } from "@/lib/routeQuery";
 import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import FilterToolbar from "@/components/FilterToolbar";
@@ -21,8 +35,9 @@ import { useProjectTypes } from "@/hooks/useProjectTypes";
 import { formatDate } from "@/lib/format";
 import { parseProjectMetadataTags } from "@/lib/projectMetadata";
 import { readPlanningListView, withPlanningListFilters } from "@/lib/planningListView";
+import { cn } from "@/lib/utils";
 
-import type { ProjectInfoVO } from "@/types/planning";
+import type { ProjectInfoVO, ProjectListDTO, ProjectTypeInfoVO } from "@/types/planning";
 
 const timeSortOptions = [
   { value: "CREATE-DESC", label: "最新创建" },
@@ -31,9 +46,113 @@ const timeSortOptions = [
   { value: "UPDATE-ASC", label: "最早更新" },
 ] as const;
 
+type ProjectTimeSort = Required<Pick<ProjectListDTO, "sortByTime" | "orderDir">>;
+
+// 首屏前 4 张封面高优先级加载，折下卡片懒加载避免与首屏抢带宽。
+const PRIORITY_COVER_COUNT = 4;
+// 悬停卡片意图防抖，避免鼠标划过卡片前往侧栏时触发无效详情预取。
+const DETAIL_PREFETCH_HOVER_DELAY_MS = 100;
+
 // 单卡至少 20rem（min-h-52 × 5/3），浏览器足够宽时最多 4 列。
 const PROJECT_CARD_GRID_CLASS =
   "grid min-w-0 grid-cols-[repeat(auto-fill,minmax(min(100%,max(20rem,calc((100%_-_3rem)_/_4))),1fr))] gap-4";
+
+function withPlanningReturnState(
+  locationState: unknown,
+  planningListReturnTo: string,
+): Record<string, unknown> {
+  if (locationState && typeof locationState === "object") {
+    return { ...(locationState as Record<string, unknown>), planningListReturnTo };
+  }
+  return { planningListReturnTo };
+}
+
+interface PlanningFilterBarProps {
+  submittedKeyword: string;
+  selectedType: string;
+  timeSort: ProjectTimeSort;
+  projectTypes: readonly ProjectTypeInfoVO[];
+  onSearchSubmit: (keyword: string) => void;
+  onTimeSortChange: (timeSort: ProjectTimeSort) => void;
+  onTypeChange: (selectedType: string) => void;
+}
+
+const PlanningFilterBar = memo(function PlanningFilterBar({
+  submittedKeyword,
+  selectedType,
+  timeSort,
+  projectTypes,
+  onSearchSubmit,
+  onTimeSortChange,
+  onTypeChange,
+}: PlanningFilterBarProps): ReactElement {
+  const [keyword, setKeyword] = useState(submittedKeyword);
+  useEffect(() => setKeyword(submittedKeyword), [submittedKeyword]);
+
+  return (
+    <FilterToolbar
+      searchValue={keyword}
+      searchPlaceholder="搜索企划..."
+      onSearchChange={setKeyword}
+      onSearchSubmit={() => onSearchSubmit(keyword)}
+      actions={
+        <>
+          <Select
+            value={`${timeSort.sortByTime}-${timeSort.orderDir}`}
+            onValueChange={(value: string | null) => {
+              const [sortByTime, orderDir] = value?.split("-") ?? [];
+              if (
+                (sortByTime === "CREATE" || sortByTime === "UPDATE") &&
+                (orderDir === "DESC" || orderDir === "ASC")
+              ) {
+                onTimeSortChange({ sortByTime, orderDir });
+              }
+            }}
+          >
+            <SelectTrigger className="h-9 w-36 shrink-0 rounded-full border-0 bg-transparent px-3 text-sm text-muted-foreground shadow-none transition-colors hover:bg-secondary/70 hover:text-foreground focus:ring-0 focus:ring-offset-0 dark:bg-transparent">
+              <Clock className="mr-1.5 h-3.5 w-3.5" />
+              <SelectValue>
+                {timeSortOptions.find(
+                  (option) => option.value === `${timeSort.sortByTime}-${timeSort.orderDir}`,
+                )?.label ?? "时间"}
+              </SelectValue>
+            </SelectTrigger>
+            <FilterSelectContent>
+              {timeSortOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </FilterSelectContent>
+          </Select>
+          <Select
+            value={selectedType}
+            onValueChange={(value: string | null) => {
+              if (value) onTypeChange(value);
+            }}
+          >
+            <SelectTrigger className="h-9 w-36 shrink-0 rounded-full border-0 bg-transparent px-3 text-sm text-muted-foreground shadow-none transition-colors hover:bg-secondary/70 hover:text-foreground focus:ring-0 focus:ring-offset-0 dark:bg-transparent">
+              <Filter className="mr-1.5 h-3.5 w-3.5" />
+              <SelectValue>
+                {selectedType === "all"
+                  ? "所有类型"
+                  : (projectTypes.find((type) => type.name === selectedType)?.name ?? selectedType)}
+              </SelectValue>
+            </SelectTrigger>
+            <FilterSelectContent>
+              <SelectItem value="all">所有类型</SelectItem>
+              {projectTypes.map((type) => (
+                <SelectItem key={type.id} value={type.name}>
+                  {type.name}
+                </SelectItem>
+              ))}
+            </FilterSelectContent>
+          </Select>
+        </>
+      }
+    />
+  );
+});
 
 export default function Planning() {
   const navigate = useNavigate();
@@ -46,9 +165,7 @@ export default function Planning() {
     selectedType,
     timeSort,
   } = readPlanningListView(searchParams);
-  const [keyword, setKeyword] = useState(submittedKeyword);
   const [, setPageNum] = usePageQuery();
-  useEffect(() => setKeyword(submittedKeyword), [submittedKeyword]);
 
   const listQuery = useApiQuery(
     projectListQuery(pageNum, submittedKeyword, selectedType, timeSort),
@@ -58,91 +175,63 @@ export default function Planning() {
   const loading = listQuery.isLoading;
   const totalPages =
     total <= PAGE_SIZE - 1 ? 1 : 1 + Math.ceil((total - (PAGE_SIZE - 1)) / PAGE_SIZE);
-  function handleSearch(): void {
-    setSearchParams(withPlanningListFilters(searchParams, { keyword }), {
-      preventScrollReset: true,
-      state: location.state,
-    });
-    if (submittedKeyword === keyword.trim() && pageNum === 1) void listQuery.refetch();
-  }
+  const returnTo = `/dashboard/planning${location.search}`;
+
+  const handleSearch = useCallback(
+    (nextKeyword: string): void => {
+      setSearchParams(withPlanningListFilters(searchParams, { keyword: nextKeyword }), {
+        preventScrollReset: true,
+        state: location.state,
+      });
+      if (submittedKeyword === nextKeyword.trim() && pageNum === 1) void listQuery.refetch();
+    },
+    [listQuery, location.state, pageNum, searchParams, setSearchParams, submittedKeyword],
+  );
+
+  const handleTimeSortChange = useCallback(
+    (nextTimeSort: ProjectTimeSort): void => {
+      setSearchParams(withPlanningListFilters(searchParams, { timeSort: nextTimeSort }), {
+        preventScrollReset: true,
+        state: location.state,
+      });
+    },
+    [location.state, searchParams, setSearchParams],
+  );
+
+  const handleTypeChange = useCallback(
+    (nextType: string): void => {
+      setSearchParams(withPlanningListFilters(searchParams, { selectedType: nextType }), {
+        preventScrollReset: true,
+        state: location.state,
+      });
+    },
+    [location.state, searchParams, setSearchParams],
+  );
+
+  const stableTimeSort = useMemo(
+    () => ({ sortByTime: timeSort.sortByTime, orderDir: timeSort.orderDir }),
+    [timeSort.orderDir, timeSort.sortByTime],
+  );
+
+  const handlePagePrefetch = useCallback(
+    (targetPage: number): void => {
+      prefetchApiQuery(
+        projectListQuery(targetPage, submittedKeyword, selectedType, stableTimeSort),
+      );
+    },
+    [selectedType, stableTimeSort, submittedKeyword],
+  );
 
   return (
-    <div className="space-y-6">
-      {listQuery.isFetching && listQuery.data && (
-        <p role="status" className="text-sm text-muted-foreground">
-          正在刷新...
-        </p>
-      )}
-
-      <FilterToolbar
-        searchValue={keyword}
-        searchPlaceholder="搜索企划..."
-        onSearchChange={setKeyword}
+    <div className="space-y-6" aria-busy={listQuery.isFetching || undefined}>
+      <PlanningFilterBar
+        submittedKeyword={submittedKeyword}
+        selectedType={selectedType}
+        timeSort={stableTimeSort}
+        projectTypes={projectTypes}
         onSearchSubmit={handleSearch}
-        actions={
-          <>
-            <Select
-              value={`${timeSort.sortByTime}-${timeSort.orderDir}`}
-              onValueChange={(value: string | null) => {
-                const [sortByTime, orderDir] = value?.split("-") ?? [];
-                if (
-                  (sortByTime === "CREATE" || sortByTime === "UPDATE") &&
-                  (orderDir === "DESC" || orderDir === "ASC")
-                ) {
-                  setSearchParams(
-                    withPlanningListFilters(searchParams, { timeSort: { sortByTime, orderDir } }),
-                    { preventScrollReset: true, state: location.state },
-                  );
-                }
-              }}
-            >
-              <SelectTrigger className="h-9 w-36 shrink-0 rounded-full border-0 bg-transparent px-3 text-sm text-muted-foreground shadow-none transition-colors hover:bg-secondary/70 hover:text-foreground focus:ring-0 focus:ring-offset-0 dark:bg-transparent">
-                <Clock className="mr-1.5 h-3.5 w-3.5" />
-                <SelectValue>
-                  {timeSortOptions.find(
-                    (option) => option.value === `${timeSort.sortByTime}-${timeSort.orderDir}`,
-                  )?.label ?? "时间"}
-                </SelectValue>
-              </SelectTrigger>
-              <FilterSelectContent>
-                {timeSortOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </FilterSelectContent>
-            </Select>
-            <Select
-              value={selectedType}
-              onValueChange={(value: string | null) => {
-                if (value) {
-                  setSearchParams(withPlanningListFilters(searchParams, { selectedType: value }), {
-                    preventScrollReset: true,
-                    state: location.state,
-                  });
-                }
-              }}
-            >
-              <SelectTrigger className="h-9 w-36 shrink-0 rounded-full border-0 bg-transparent px-3 text-sm text-muted-foreground shadow-none transition-colors hover:bg-secondary/70 hover:text-foreground focus:ring-0 focus:ring-offset-0 dark:bg-transparent">
-                <Filter className="mr-1.5 h-3.5 w-3.5" />
-                <SelectValue>
-                  {selectedType === "all"
-                    ? "所有类型"
-                    : (projectTypes.find((type) => type.name === selectedType)?.name ??
-                      selectedType)}
-                </SelectValue>
-              </SelectTrigger>
-              <FilterSelectContent>
-                <SelectItem value="all">所有类型</SelectItem>
-                {projectTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.name}>
-                    {type.name}
-                  </SelectItem>
-                ))}
-              </FilterSelectContent>
-            </Select>
-          </>
-        }
+        onTimeSortChange={handleTimeSortChange}
+        onTypeChange={handleTypeChange}
       />
 
       {listQuery.isError && !listQuery.data ? (
@@ -157,7 +246,10 @@ export default function Planning() {
           {projects.length === 0 ? (
             <div className="@container">
               <div className="grid min-w-0 gap-4 @min-[41rem]:grid-cols-[20rem_minmax(0,1fr)]">
-                <CreateProjectCard />
+                <CreateProjectCard
+                  returnTo={`${location.pathname}${location.search}`}
+                  locationState={location.state}
+                />
                 <EmptyState
                   icon={<FolderOpen className="h-5 w-5 text-muted-foreground" />}
                   title="还没有企划"
@@ -166,10 +258,10 @@ export default function Planning() {
                     <Button
                       onClick={() =>
                         navigate("/dashboard/planning/create", {
-                          state: {
-                            ...location.state,
-                            planningListReturnTo: `${location.pathname}${location.search}`,
-                          },
+                          state: withPlanningReturnState(
+                            location.state,
+                            `${location.pathname}${location.search}`,
+                          ),
                         })
                       }
                     >
@@ -182,10 +274,27 @@ export default function Planning() {
               </div>
             </div>
           ) : (
-            <div className={PROJECT_CARD_GRID_CLASS}>
-              {pageNum === 1 && <CreateProjectCard />}
-              {projects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
+            <div
+              className={cn(
+                PROJECT_CARD_GRID_CLASS,
+                "transition-opacity duration-150",
+                listQuery.isPlaceholderData && "opacity-70",
+              )}
+            >
+              {pageNum === 1 && (
+                <CreateProjectCard
+                  returnTo={`${location.pathname}${location.search}`}
+                  locationState={location.state}
+                />
+              )}
+              {projects.map((project, index) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  priority={index < PRIORITY_COVER_COUNT}
+                  returnTo={returnTo}
+                  locationState={location.state}
+                />
               ))}
             </div>
           )}
@@ -197,6 +306,7 @@ export default function Planning() {
             totalPages={totalPages}
             disabled={loading}
             onPageChange={setPageNum}
+            onPagePrefetch={handlePagePrefetch}
           />
         </>
       )}
@@ -204,12 +314,24 @@ export default function Planning() {
   );
 }
 
-function CreateProjectCard() {
-  const location = useLocation();
+interface CreateProjectCardProps {
+  returnTo: string;
+  locationState: unknown;
+}
+
+const CreateProjectCard = memo(function CreateProjectCard({
+  returnTo,
+  locationState,
+}: CreateProjectCardProps): ReactElement {
+  const createState = useMemo(
+    () => withPlanningReturnState(locationState, returnTo),
+    [locationState, returnTo],
+  );
+
   return (
     <Link
       to="/dashboard/planning/create"
-      state={{ ...location.state, planningListReturnTo: `${location.pathname}${location.search}` }}
+      state={createState}
       className="group flex aspect-[5/3] min-h-52 cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card/60 p-4 transition-all duration-200 hover:border-foreground/25 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="flex size-11 items-center justify-center rounded-full bg-secondary/80 text-muted-foreground transition-colors duration-200 group-hover:bg-accent-soft group-hover:text-accent-soft-foreground">
@@ -222,33 +344,69 @@ function CreateProjectCard() {
       </div>
     </Link>
   );
-}
+});
 
 interface ProjectCardProps {
   project: ProjectInfoVO;
+  priority: boolean;
+  returnTo: string;
+  locationState: unknown;
 }
 
-function ProjectCard({ project }: ProjectCardProps): ReactElement {
-  const location = useLocation();
+const ProjectCard = memo(function ProjectCard({
+  project,
+  priority,
+  returnTo,
+  locationState,
+}: ProjectCardProps): ReactElement {
   const [ownerOpen, setOwnerOpen] = useState(false);
   const ownerTriggerId = useId();
-  const metadataTags = parseProjectMetadataTags(project.metadata);
+  const metadataTags = useMemo(
+    () => parseProjectMetadataTags(project.metadata),
+    [project.metadata],
+  );
   const detailTo = `/dashboard/planning/${project.id}?view=about`;
-  const detailState = {
-    ...location.state,
-    planningListReturnTo: `/dashboard/planning${location.search}`,
-  };
+  const detailState = useMemo(
+    () => withPlanningReturnState(locationState, returnTo),
+    [locationState, returnTo],
+  );
   const ownerNickname = project.creatorNickname?.trim() || "未设置昵称";
   const ownerInitial = project.creatorNickname?.trim().slice(0, 1);
+  const prefetchTimerRef = useRef<number | null>(null);
+
+  const cancelPrefetchDetail = useCallback((): void => {
+    if (prefetchTimerRef.current !== null) {
+      window.clearTimeout(prefetchTimerRef.current);
+      prefetchTimerRef.current = null;
+    }
+  }, []);
+
+  const prefetchDetailNow = useCallback((): void => {
+    cancelPrefetchDetail();
+    prefetchApiQuery(projectDetailQuery(String(project.id)));
+  }, [cancelPrefetchDetail, project.id]);
+
+  const schedulePrefetchDetail = useCallback((): void => {
+    cancelPrefetchDetail();
+    prefetchTimerRef.current = window.setTimeout(() => {
+      prefetchTimerRef.current = null;
+      prefetchApiQuery(projectDetailQuery(String(project.id)));
+    }, DETAIL_PREFETCH_HOVER_DELAY_MS);
+  }, [cancelPrefetchDetail, project.id]);
+
+  useEffect(() => cancelPrefetchDetail, [cancelPrefetchDetail]);
 
   return (
     <article
       aria-label={project.title}
-      className="group/card flex aspect-[5/3] min-h-52 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-200 hover:border-foreground/18 hover:shadow-[0_6px_20px_rgb(0_0_0/0.06)] dark:shadow-none dark:hover:border-foreground/22"
+      className="group/card contain-[layout_style] flex aspect-[5/3] min-h-52 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-200 hover:border-foreground/18 hover:shadow-[0_6px_20px_rgb(0_0_0/0.06)] dark:shadow-none dark:hover:border-foreground/22"
     >
       <Link
         to={detailTo}
         state={detailState}
+        onMouseEnter={schedulePrefetchDetail}
+        onMouseLeave={cancelPrefetchDetail}
+        onFocus={prefetchDetailNow}
         aria-label={`查看企划：${project.title}（封面）`}
         className="relative h-full w-[40%] shrink-0 overflow-hidden bg-muted outline-none after:pointer-events-none after:absolute after:inset-0 after:ring-1 after:ring-inset after:ring-foreground/8 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
@@ -256,7 +414,10 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
           <RemoteImage
             src={project.coverUrl}
             alt={project.title}
-            className="size-full transition-transform duration-300 ease-out motion-safe:group-hover/card:scale-[1.03]"
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "low"}
+            className="size-full"
+            imgClassName="ease-out motion-safe:group-hover/card:scale-[1.03]"
             fallback={
               <div className="flex size-full items-center justify-center bg-gradient-to-br from-muted via-muted/80 to-secondary text-2xl font-semibold tracking-tight text-muted-foreground/75">
                 {project.title.slice(0, 2)}
@@ -310,7 +471,12 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               className="group/owner relative size-9 shrink-0 cursor-default rounded-full outline-none data-popup-open:z-60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <Avatar className="size-9 ring-1 ring-border/60 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-popup-open/owner:ring-3 group-data-popup-open/owner:ring-popover motion-safe:group-hover/owner:scale-135 motion-safe:group-focus-visible/owner:scale-135 motion-safe:group-data-popup-open/owner:scale-135 motion-reduce:transition-none">
-                <AvatarImage src={project.creatorAvatarUrl} alt="" />
+                <AvatarImage
+                  src={project.creatorAvatarUrl}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
                 <AvatarFallback className="bg-secondary text-xs font-medium text-secondary-foreground">
                   {ownerInitial || <UserRound className="size-4" />}
                 </AvatarFallback>
@@ -353,6 +519,9 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
           <Link
             to={detailTo}
             state={detailState}
+            onMouseEnter={schedulePrefetchDetail}
+            onMouseLeave={cancelPrefetchDetail}
+            onFocus={prefetchDetailNow}
             aria-label={`查看企划：${project.title}`}
             className="group/cta ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-full border border-accent-soft-border bg-accent-soft py-1 pl-3 pr-1.5 text-xs font-medium text-accent-soft-foreground outline-none transition-colors duration-150 hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
@@ -368,4 +537,4 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
       </div>
     </article>
   );
-}
+});

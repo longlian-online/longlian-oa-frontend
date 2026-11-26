@@ -1,5 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -18,7 +19,10 @@ export function useSessionSnapshot(): SessionSnapshot {
 
 export function useApiQuery<T>(options: ApiQueryOptions<T>): UseQueryResult<T, Error> {
   const session = useSessionSnapshot();
-  return useQuery(apiQueryOptions(options, session));
+  return useQuery({
+    ...apiQueryOptions(options, session),
+    placeholderData: options.keepPreviousData ? keepPreviousData : undefined,
+  });
 }
 
 interface ApiMutationOptions<T, V> {

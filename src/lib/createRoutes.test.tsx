@@ -296,3 +296,36 @@ test("普通页面渲染异常由静态边界捕获", async (): Promise<void> =>
   await mount(routes, "/dashboard/working");
   expect(container.querySelector("main [role=alert]")?.textContent).toContain("页面暂时无法显示");
 });
+
+test("懒加载 loader 仅在鉴权通过后按需加载，且 dashboard 内部导航不重复执行父级 loader", async (): Promise<void> => {
+  const dashboardLoader = vi.fn(() => null);
+  const workingLoader = vi.fn(() => null);
+  const membersLoader = vi.fn(() => null);
+  const loadMembersModule = vi.fn(async () => ({ loader: membersLoader }));
+  const routes = createRoutes(
+    fileRoutes,
+    {
+      "/src/pages/dashboard.tsx": async () => ({ default: Shell }),
+      "/src/pages/dashboard/working.tsx": async () => ({ default: Working }),
+      "/src/pages/dashboard/org-admin/members.tsx": async () => ({
+        default: () => <h2>成员页</h2>,
+      }),
+    },
+    {
+      "/src/routeLoaders/dashboard.ts": async () => ({ loader: dashboardLoader }),
+      "/src/routeLoaders/dashboard/working.ts": async () => ({ loader: workingLoader }),
+      "/src/routeLoaders/dashboard/org-admin/members.ts": loadMembersModule,
+    },
+  );
+  await mount(routes, "/dashboard/working");
+  expect(dashboardLoader).toHaveBeenCalledTimes(1);
+  expect(workingLoader).toHaveBeenCalledTimes(1);
+  expect(loadMembersModule).not.toHaveBeenCalled();
+
+  await act(async () => {
+    await router.navigate("/dashboard/org-admin/members");
+  });
+  expect(loadMembersModule).toHaveBeenCalledTimes(1);
+  expect(membersLoader).toHaveBeenCalledTimes(1);
+  expect(dashboardLoader).toHaveBeenCalledTimes(1);
+});

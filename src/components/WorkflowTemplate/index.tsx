@@ -1,10 +1,9 @@
-import type { LucideIcon } from "lucide-react";
 import { Ban, CheckCircle2, ChevronRight, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
+import WorkflowTaskIcon from "@/components/WorkflowTaskIcon";
 import type {
   WorkflowTemplateScope,
   WorkshopTaskTemplateNodeVO,
@@ -27,7 +26,8 @@ interface CreateWorkflowTemplateCardProps {
 interface WorkflowStage {
   label: string;
   parallelCount: number;
-  icon: LucideIcon;
+  taskName: string;
+  iconName?: string;
 }
 
 /** Max stage chips shown on a card before collapsing the rest into「共 N 步」. */
@@ -62,10 +62,8 @@ function getStages(nodes: WorkshopTaskTemplateNodeVO[]): WorkflowStage[] {
       return {
         label,
         parallelCount: sortedGroup.length,
-        icon: getWorkflowTaskIcon(
-          sortedGroup[0].baseTaskName || label,
-          sortedGroup[0].baseTaskIcon,
-        ),
+        taskName: sortedGroup[0].baseTaskName || label,
+        iconName: sortedGroup[0].baseTaskIcon,
       };
     });
 }
@@ -131,14 +129,17 @@ function WorkflowDiagram({ nodes }: { nodes: WorkshopTaskTemplateNodeVO[] }) {
     <div className="flex w-full min-w-0 items-start justify-center overflow-hidden px-1">
       <div className="inline-flex max-w-full items-start justify-center">
         {visible.map((stage, index) => {
-          const Icon = stage.icon;
           const showConnector = index < itemCount - 1;
 
           return (
             <div key={`${stage.label}-${index}`} className="flex shrink-0 items-start">
               <div className="flex w-14 flex-col items-center">
                 <div className="relative flex size-9 items-center justify-center rounded-full bg-foreground text-background shadow-2xs">
-                  <Icon className="size-4" />
+                  <WorkflowTaskIcon
+                    taskName={stage.taskName}
+                    iconName={stage.iconName}
+                    className="size-4"
+                  />
                   <WorkflowParallelBadge count={stage.parallelCount} />
                 </div>
                 <div className="mt-2 max-w-14 truncate text-[11px] font-medium leading-4 text-muted-foreground">

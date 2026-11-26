@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
+import WorkflowTaskIcon from "@/components/WorkflowTaskIcon";
 import type {
   ItemTaskInstanceVO,
   ItemTaskNodeVO,
@@ -69,7 +69,6 @@ export default function TaskNodeCard({
   const status = node.taskStatus === undefined ? (instance?.status ?? null) : node.taskStatus;
   const style = getNodeStyle(status);
   const StatusIcon = style.icon;
-  const TaskIcon = getWorkflowTaskIcon(node.name, node.baseTaskIcon);
   const isAssignedToMe = Boolean(instance?.assigneeId && instance.assigneeId === currentUserId);
   const initials = instance?.assigneeNickname?.slice(0, 1) || "?";
 
@@ -98,7 +97,11 @@ export default function TaskNodeCard({
 
       <div className="mt-3 flex min-w-0 items-center gap-2">
         <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
-          <TaskIcon className="size-3.5" />
+          <WorkflowTaskIcon
+            taskName={node.name}
+            iconName={node.baseTaskIcon}
+            className="size-3.5"
+          />
         </div>
         <h3 className="min-w-0 break-words text-sm font-medium text-foreground">{label}</h3>
       </div>

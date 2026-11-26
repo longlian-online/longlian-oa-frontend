@@ -41,15 +41,30 @@ export const DEFAULT_PROJECT_TIME_SORT: Required<Pick<ProjectListDTO, "sortByTim
 export const DEFAULT_PLAZA_SORT: PlazaSortBy = "WAIT";
 
 export function projectTypesQuery(): ApiQueryOptions<ProjectTypeInfoVO[]> {
-  return { key: ["projectTypes"], queryFn: getProjectTypes, staleTime: 300_000 };
+  return {
+    key: ["projectTypes"],
+    queryFn: getProjectTypes,
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
+  };
 }
 
 export function presetTagsQuery(): ApiQueryOptions<PresetTagVO[]> {
-  return { key: ["presetTags"], queryFn: getPresetTags, staleTime: 300_000 };
+  return {
+    key: ["presetTags"],
+    queryFn: getPresetTags,
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
+  };
 }
 
 export function presetFieldsQuery(): ApiQueryOptions<PresetFieldVO[]> {
-  return { key: ["presetFields"], queryFn: getPresetFields, staleTime: 300_000 };
+  return {
+    key: ["presetFields"],
+    queryFn: getPresetFields,
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
+  };
 }
 
 export function projectListQuery(
@@ -66,7 +81,13 @@ export function projectListQuery(
     projectType: selectedType === "all" ? undefined : selectedType,
     ...timeSort,
   };
-  return { key: ["projects", "list", params], queryFn: () => getProjectList(params) };
+  return {
+    key: ["projects", "list", params],
+    queryFn: () => getProjectList(params),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    keepPreviousData: true,
+  };
 }
 
 export function taskTemplateOptionsQuery(): ApiQueryOptions<TaskTemplateOptionVO[]> {
@@ -150,11 +171,19 @@ export function plazaListQuery(
     sortBy,
     stageScope,
   };
-  return { key: ["plaza", "list", params], queryFn: () => getTaskPlaza(params) };
+  return {
+    key: ["plaza", "list", params],
+    queryFn: () => getTaskPlaza(params),
+  };
 }
 
 export function plazaTaskTypesQuery(): ApiQueryOptions<PlazaTaskTypeOption[]> {
-  return { key: ["plaza", "taskTypes"], queryFn: getPlazaTaskTypes };
+  return {
+    key: ["plaza", "taskTypes"],
+    queryFn: getPlazaTaskTypes,
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
+  };
 }
 
 export function itemFlowQuery(itemId: string): ApiQueryOptions<ItemTaskFlowVO> {
