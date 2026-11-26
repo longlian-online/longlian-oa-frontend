@@ -466,21 +466,27 @@ function ItemWorkflowInstance({
   }
 
   return (
-    <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-      <header className="flex min-h-12 items-center gap-3 px-1 xl:col-span-2">
+    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_24rem] 2xl:grid-cols-[minmax(0,1fr)_26rem]">
+      <header className="flex flex-wrap items-start justify-between gap-4 xl:col-span-2">
         <div className="min-w-0">
-          <h1 className="break-words text-lg font-semibold text-foreground">
+          <h1 className="break-words text-xl font-semibold tracking-tight text-foreground">
             {taskFlow.itemTitle}
           </h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">流程模板：{taskFlow.name}</p>
-          {taskFlow.description && (
-            <p className="mt-0.5 truncate text-sm text-muted-foreground">{taskFlow.description}</p>
-          )}
+          <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-muted-foreground">
+            <span>流程模板：{taskFlow.name}</span>
+            {taskFlow.description && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="truncate">{taskFlow.description}</span>
+              </>
+            )}
+          </div>
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">
           {projectId && canManage && taskFlow.status !== "COMPLETED" && (
             <Button
               size="sm"
+              className="h-8 rounded-full px-3.5"
               disabled={completeMutation.isPending}
               onClick={() => void completeCurrentItem()}
             >
@@ -491,6 +497,7 @@ function ItemWorkflowInstance({
             <Button
               variant="outline"
               size="sm"
+              className="h-8 rounded-full px-3.5"
               onClick={() =>
                 void navigate(`/dashboard/planning/${projectId}/items/${itemId}/workflow`, {
                   state: location.state,
@@ -511,7 +518,7 @@ function ItemWorkflowInstance({
           <Button
             variant="outline"
             size="sm"
-            className="shrink-0"
+            className="h-8 shrink-0 rounded-full px-3.5"
             disabled={!participantRoster}
             title={participantRoster ? "复制参与名单" : "暂无参与人"}
             onClick={() => void handleCopyParticipantRoster()}
@@ -611,7 +618,7 @@ function ItemWorkflowInstance({
             />
           </div>
         ) : (
-          <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground shadow-[0_1px_3px_rgb(0_0_0/0.04)] dark:shadow-none">
             点击流程节点查看任务详情和操作。
           </div>
         )}

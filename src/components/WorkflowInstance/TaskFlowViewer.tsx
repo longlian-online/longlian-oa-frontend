@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   applyNodeChanges,
+  Background,
+  BackgroundVariant,
   Handle,
   MarkerType,
   Position,
@@ -304,16 +306,25 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
     );
   }
 
+  const completedStageCount = groups.filter((group) =>
+    group.nodes.every((node) => node.taskStatus === "COMPLETED"),
+  ).length;
+
   return (
-    <section className="overflow-hidden rounded-2xl border bg-card">
-      <div className="border-b px-4 py-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Layers2 className="size-4 text-muted-foreground" />
-          流程进度
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)] dark:shadow-none">
+      <div className="border-b border-border px-5 py-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Layers2 className="size-4 text-muted-foreground" />
+            流程进度
+          </div>
+          <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs tabular-nums text-muted-foreground">
+            已完成 {completedStageCount} / {groups.length} 阶段
+          </span>
         </div>
         <StageTimeline groups={groups} currentStageSort={currentStageSort} />
       </div>
-      <div className="h-[420px] bg-muted/20">
+      <div className="h-[clamp(480px,calc(100svh-21rem),760px)] bg-muted/20">
         <ReactFlow<TaskFlowNode, Edge>
           nodes={flowNodes}
           edges={edges}
@@ -335,6 +346,7 @@ export default function TaskFlowViewer(props: TaskFlowViewerProps) {
           fitViewOptions={{ padding: 0.18, maxZoom: 1 }}
           proOptions={{ hideAttribution: true }}
         >
+          <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="var(--border)" />
           <FitInitialLayout nodeId={props.initialNodeId} />
           <WorkflowViewportControls />
         </ReactFlow>

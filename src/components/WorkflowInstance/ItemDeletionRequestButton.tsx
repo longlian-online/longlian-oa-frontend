@@ -94,7 +94,7 @@ export default function ItemDeletionRequestButton({
       <Button
         variant="destructive"
         size="sm"
-        className="shrink-0"
+        className="h-8 shrink-0 rounded-full px-3.5"
         disabled={pending}
         onClick={() => void handleDelete()}
       >
