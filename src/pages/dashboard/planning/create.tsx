@@ -27,7 +27,12 @@ import { getStatusLabel } from "@/lib/projectStatus";
 import { planningListReturnTo } from "@/lib/pageQuery";
 import { cn } from "@/lib/utils";
 import { getCurrentOrgId } from "@/lib/session";
-import { centerCropSquare, PROJECT_IMAGE_MAX_BYTES } from "@/lib/imageCrop";
+import {
+  centerCropSquare,
+  PROJECT_IMAGE_MAX_BYTES,
+  STATIC_IMAGE_ACCEPT,
+  STATIC_IMAGE_ACCEPT_ATTR,
+} from "@/lib/imageCrop";
 import { requestImageCrop, UploadCancelledError } from "@/lib/imageCropRequest";
 import { fileFromPreview } from "@/lib/projectThumbnail";
 import { presetFieldsQuery, presetTagsQuery } from "@/queries/planning";
@@ -139,7 +144,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
     const uploaded = await uploadFile(file, {
       bizType: "thumbnail",
       bizId: coverBizId,
-      accept: ["jpg", "jpeg", "png", "gif", "webp", "avif"],
+      accept: [...STATIC_IMAGE_ACCEPT],
       maxSize: PROJECT_IMAGE_MAX_BYTES,
       skipCrop: true,
     });
@@ -182,7 +187,11 @@ export default function CreateProject({ project }: CreateProjectProps) {
     setThumbnailBusy(true);
     try {
       const source = await fileFromPreview(coverFile.previewUrl, coverFile.fileName);
-      const cropped = await requestImageCrop(source, 1, { shape: "rect", allowOriginal: false });
+      const cropped = await requestImageCrop(source, 1, {
+        shape: "rect",
+        allowOriginal: false,
+        bizType: "thumbnail",
+      });
       if (token !== thumbnailToken.current) return;
       await uploadPreparedThumbnail(cropped, "cover", token);
     } catch (error) {
@@ -199,7 +208,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
       const uploaded = await uploadFile(file, {
         bizType: "thumbnail",
         bizId: coverBizId,
-        accept: ["jpg", "jpeg", "png", "gif", "webp", "avif"],
+        accept: [...STATIC_IMAGE_ACCEPT],
         maxSize: PROJECT_IMAGE_MAX_BYTES,
       });
       if (token !== thumbnailToken.current) return;
@@ -356,7 +365,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
               title={isEditing ? "更换企划封面" : "上传企划封面"}
               description={`${isEditing ? "不上传则保留原封面；" : "推荐 2:3 竖版图片；"}最大 10MB`}
               imagePreview
-              accept={["jpg", "jpeg", "png", "gif", "webp", "avif"]}
+              accept={[...STATIC_IMAGE_ACCEPT]}
               maxSize={PROJECT_IMAGE_MAX_BYTES}
               invalid={showInvalid && coverMissing}
               onChange={(file) => void handleCoverChange(file)}
@@ -414,7 +423,7 @@ export default function CreateProject({ project }: CreateProjectProps) {
               <input
                 ref={thumbnailInputRef}
                 type="file"
-                accept=".jpg,.jpeg,.png,.gif,.webp,.avif"
+                accept={STATIC_IMAGE_ACCEPT_ATTR}
                 className="hidden"
                 onChange={(event) => {
                   const file = event.target.files?.[0];

@@ -30,12 +30,17 @@ test("取消裁剪结束请求，且不会返回原图供上传", async () => {
   expect(getImageCropRequest()).toBeNull();
 });
 
-test("缩略图裁剪锁定方形且不允许上传原图", async () => {
+test("缩略图裁剪锁定方形且不允许上传原图，并透传业务类型", async () => {
   const file = new File([], "thumb.png");
-  const pending = requestImageCrop(file, 1, { shape: "rect", allowOriginal: false });
+  const pending = requestImageCrop(file, 1, {
+    shape: "rect",
+    allowOriginal: false,
+    bizType: "thumbnail",
+  });
   const request = getImageCropRequest()!;
   expect(request.shape).toBe("rect");
   expect(request.allowOriginal).toBe(false);
+  expect(request.bizType).toBe("thumbnail");
   completeImageCrop(request.id, file);
   await pending;
 });

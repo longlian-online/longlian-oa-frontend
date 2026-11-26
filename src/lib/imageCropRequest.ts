@@ -1,8 +1,11 @@
+import type { ImageOptimizeBizType } from "@/lib/imageCrop";
+
 export type ImageCropShape = "rect" | "round";
 
 export interface ImageCropOptions {
   shape?: ImageCropShape;
   allowOriginal?: boolean;
+  bizType?: ImageOptimizeBizType;
 }
 
 interface ImageCropRequest {
@@ -11,6 +14,7 @@ interface ImageCropRequest {
   aspect?: number;
   shape?: ImageCropShape;
   allowOriginal: boolean;
+  bizType?: ImageOptimizeBizType;
   resolve: (file: File) => void;
   reject: (error: Error) => void;
 }
@@ -53,6 +57,7 @@ export function requestImageCrop(
       aspect,
       shape: options?.shape,
       allowOriginal: options?.allowOriginal !== false,
+      bizType: options?.bizType,
       resolve,
       reject,
     });
