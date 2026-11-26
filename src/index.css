@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import "fumadocs-ui/css/shadcn.css";
-@import "fumadocs-ui/css/preset.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
@@ -115,7 +113,6 @@
   }
   html {
     @apply font-sans antialiased;
-    text-rendering: optimizeLegibility;
   }
 }
 

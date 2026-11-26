@@ -1,11 +1,12 @@
 import { ArrowDown, ArrowUp, Layers2, PanelRight, Split, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 
+import WorkflowTaskIcon from "@/components/WorkflowTaskIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { getWorkflowTaskDescription, getWorkflowTaskIcon } from "@/lib/workflowVisuals";
+import { getWorkflowTaskDescription } from "@/lib/workflowVisuals";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
 import type { WorkflowEditorNode } from "./utils";
 
@@ -50,7 +51,6 @@ export default function NodeInspector({
   const description = baseTask
     ? getWorkflowTaskDescription(baseTask.name, baseTask.description)
     : undefined;
-  const Icon = getWorkflowTaskIcon(baseTask?.name || "", baseTask?.icon);
 
   return (
     <aside className="flex w-full flex-col rounded-xl border bg-card xl:w-72">
@@ -76,7 +76,11 @@ export default function NodeInspector({
           <p className="text-sm font-medium text-foreground">基础任务</p>
           <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
             <div className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md text-foreground">
-              <Icon className="size-3.5" />
+              <WorkflowTaskIcon
+                taskName={baseTask?.name || ""}
+                iconName={baseTask?.icon}
+                className="size-3.5"
+              />
             </div>
             <span className="truncate">{baseTask?.name || "未知任务"}</span>
           </div>

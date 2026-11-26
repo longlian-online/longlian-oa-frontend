@@ -14,7 +14,7 @@ export default function PageTransition({ children, className }: PageTransitionPr
     <div
       key={location.pathname}
       className={cn(
-        "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-150 motion-safe:ease-out motion-reduce:animate-none",
+        "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-100 motion-safe:ease-out motion-reduce:animate-none",
         className,
       )}
     >

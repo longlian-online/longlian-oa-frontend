@@ -3,7 +3,8 @@ import { Loader2, Plus, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { getWorkflowTaskDescription, getWorkflowTaskIcon } from "@/lib/workflowVisuals";
+import WorkflowTaskIcon from "@/components/WorkflowTaskIcon";
+import { getWorkflowTaskDescription } from "@/lib/workflowVisuals";
 import type { BaseTaskVO } from "@/types/workflowTemplate";
 import { createTaskDragImage } from "./taskDragImage";
 import { WORKFLOW_TASK_DRAG_TYPE } from "./utils";
@@ -91,7 +92,6 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
           </div>
         ) : (
           filteredTasks.map((task) => {
-            const Icon = getWorkflowTaskIcon(task.name, task.icon);
             const description = getWorkflowTaskDescription(task.name, task.description);
 
             return (
@@ -111,7 +111,11 @@ export default function NodePanel({ baseTasks, loadingBaseTasks, onAddNode }: No
                 onDragStart={(event) => handleDragStart(event, String(task.id))}
               >
                 <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full text-foreground">
-                  <Icon className="size-3.5" />
+                  <WorkflowTaskIcon
+                    taskName={task.name}
+                    iconName={task.icon}
+                    className="size-3.5"
+                  />
                 </div>
                 <span className="truncate text-sm font-medium text-foreground">{task.name}</span>
                 <Plus className="size-4 shrink-0 text-muted-foreground" />

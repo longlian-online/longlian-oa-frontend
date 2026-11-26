@@ -1,6 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
-import "@xyflow/react/dist/style.css";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router/dom";
 

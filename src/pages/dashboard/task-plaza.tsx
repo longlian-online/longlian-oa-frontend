@@ -24,7 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { projectThumbnailSrc } from "@/lib/projectThumbnail";
 import { formatSlotLabel } from "@/lib/slotLabel";
-import { getWorkflowTaskIcon } from "@/lib/workflowVisuals";
+import WorkflowTaskIcon from "@/components/WorkflowTaskIcon";
 import { usePageQuery } from "@/hooks/usePageQuery";
 import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState";
 import { useApiQuery, useApiMutation, useSessionSnapshot } from "@/hooks/queries/useApiQuery";
@@ -605,7 +605,6 @@ function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
     slotTotal: task.slotTotal,
     serialStep: task.serialStep,
   });
-  const TaskIcon = getWorkflowTaskIcon(task.nodeName, task.baseTaskIcon ?? undefined);
 
   return (
     <div className="rounded-lg border bg-card p-3 transition-colors hover:border-foreground/20">
@@ -613,7 +612,12 @@ function PlazaTaskCard({ group, task, claiming, onClaim }: PlazaTaskCardProps) {
         className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-foreground"
         title={slotLabel}
       >
-        <TaskIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <WorkflowTaskIcon
+          taskName={task.nodeName}
+          iconName={task.baseTaskIcon ?? undefined}
+          className="size-4 shrink-0 text-muted-foreground"
+          aria-hidden="true"
+        />
         <span className="truncate">{slotLabel}</span>
       </span>
       <Badge variant="outline" className="mt-1 text-xs font-normal">

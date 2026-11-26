@@ -1,4 +1,9 @@
-import { redirect, type LoaderFunction, type RouteObject } from "react-router";
+import {
+  redirect,
+  type LoaderFunction,
+  type RouteObject,
+  type ShouldRevalidateFunctionArgs,
+} from "react-router";
 
 import RouteErrorBoundary, { RouteModuleFailure } from "@/components/RouteErrorBoundary";
 import { getSessionSnapshot } from "@/lib/session";
@@ -6,7 +11,32 @@ import { getSessionSnapshot } from "@/lib/session";
 import type { ComponentType } from "react";
 
 type PageModules = Record<string, () => Promise<{ default: ComponentType }>>;
-type LoaderModules = Record<string, { loader: LoaderFunction }>;
+type LoaderEntry = { loader: LoaderFunction } | (() => Promise<{ loader: LoaderFunction }>);
+type LoaderModules = Record<string, LoaderEntry>;
+
+function resolveLoader(entry: LoaderEntry | undefined): (() => Promise<LoaderFunction>) | null {
+  if (!entry) return null;
+  if (typeof entry !== "function") {
+    return () => Promise.resolve(entry.loader);
+  }
+  let cached: Promise<LoaderFunction> | null = null;
+  return () => {
+    cached ??= entry().then((module) => module.loader);
+    return cached;
+  };
+}
+
+function shouldRevalidateDashboard({
+  currentUrl,
+  nextUrl,
+  formMethod,
+}: ShouldRevalidateFunctionArgs): boolean {
+  if (formMethod) return true;
+  // 在 dashboard 内部切换子路由或筛选/分页参数时不重跑顶层用户与组织 loader，避免阻塞导航。
+  return !(
+    currentUrl.pathname.startsWith("/dashboard") && nextUrl.pathname.startsWith("/dashboard")
+  );
+}
 
 export function createRoutes(
   fileRoutes: RouteObject[],
@@ -16,13 +46,16 @@ export function createRoutes(
   return fileRoutes.map((route): RouteObject => {
     const page = (route.handle as { page?: string } | undefined)?.page;
     const loadPage = page ? pages[page] : undefined;
-    const loader = page
-      ? loaders[page.replace("/pages/", "/routeLoaders/").replace(/\.tsx$/, ".ts")]?.loader
+    const loaderEntry = page
+      ? loaders[page.replace("/pages/", "/routeLoaders/").replace(/\.tsx$/, ".ts")]
       : undefined;
+    const getLoader = resolveLoader(loaderEntry);
     return {
       ...route,
       children: route.children ? createRoutes(route.children, pages, loaders) : undefined,
       ErrorBoundary: RouteErrorBoundary,
+      shouldRevalidate:
+        page === "/src/pages/dashboard.tsx" ? shouldRevalidateDashboard : route.shouldRevalidate,
       lazy: loadPage
         ? async () => {
             try {
@@ -48,7 +81,9 @@ export function createRoutes(
               !session.adminToken
             )
               throw redirect("/admin/login");
-            return loader ? await loader(args) : null;
+            if (!getLoader) return null;
+            const loader = await getLoader();
+            return await loader(args);
           }
         : undefined,
     } as RouteObject;

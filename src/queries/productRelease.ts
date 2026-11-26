@@ -23,6 +23,8 @@ export function currentProductReleaseQuery(): ApiQueryOptions<ProductReleaseCurr
   return {
     key: ["productReleases", "current"],
     scope: "account",
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       try {
         return await getCurrentProductRelease();

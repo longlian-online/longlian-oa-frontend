@@ -2,9 +2,16 @@ import { BookOpen, type LucideIcon, Magnet } from "lucide-react";
 import { Link } from "react-router";
 
 import { isOrganizationManagerRole } from "@/lib/organizationRole";
+import { prefetchApiQuery } from "@/lib/routeQuery";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { usePendingPathname } from "@/hooks/usePendingPathname";
 import { cn } from "@/lib/utils";
+import {
+  plazaListQuery,
+  plazaTaskTypesQuery,
+  projectListQuery,
+  projectTypesQuery,
+} from "@/queries/planning";
 
 interface SidebarItem {
   to: string;
@@ -108,6 +115,17 @@ function sidebarItems(pathname: string, isOrgAdmin: boolean): readonly SidebarIt
   return planningItems;
 }
 
+function prefetchSidebarTarget(target: string): void {
+  if (target === "/dashboard/planning") {
+    prefetchApiQuery(projectListQuery());
+    prefetchApiQuery(projectTypesQuery());
+  } else if (target === "/dashboard/task-plaza") {
+    prefetchApiQuery(plazaListQuery("ALL"));
+    prefetchApiQuery(projectTypesQuery());
+    prefetchApiQuery(plazaTaskTypesQuery());
+  }
+}
+
 export default function AppSidebar() {
   const pathname = usePendingPathname();
   const { role } = useCurrentUser();
@@ -127,6 +145,12 @@ export default function AppSidebar() {
               key={item.to}
               to={item.to}
               aria-current={isActive ? "page" : undefined}
+              onMouseEnter={() => {
+                if (!isActive) prefetchSidebarTarget(item.to);
+              }}
+              onFocus={() => {
+                if (!isActive) prefetchSidebarTarget(item.to);
+              }}
               className={cn(
                 "flex min-w-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
                 isActive

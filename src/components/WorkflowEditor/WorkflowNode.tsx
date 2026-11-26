@@ -2,9 +2,10 @@ import { memo } from "react";
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { Layers2, Trash2 } from "lucide-react";
 
+import WorkflowTaskIcon from "@/components/WorkflowTaskIcon";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { getWorkflowTaskDescription, getWorkflowTaskIcon } from "@/lib/workflowVisuals";
+import { getWorkflowTaskDescription } from "@/lib/workflowVisuals";
 
 export interface WorkflowNodeData extends Record<string, unknown> {
   label: string;
@@ -25,7 +26,6 @@ export interface WorkflowNodeData extends Record<string, unknown> {
 export type WorkflowFlowNode = Node<WorkflowNodeData, "workflow">;
 
 function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
-  const Icon = getWorkflowTaskIcon(data.taskName, data.icon);
   const description = getWorkflowTaskDescription(data.taskName, data.description);
 
   return (
@@ -50,7 +50,7 @@ function WorkflowNode({ id, data }: NodeProps<WorkflowFlowNode>) {
       >
         <div className="flex items-start gap-3 pr-6">
           <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg text-foreground">
-            <Icon className="size-4" />
+            <WorkflowTaskIcon taskName={data.taskName} iconName={data.icon} className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-foreground">{data.label}</div>

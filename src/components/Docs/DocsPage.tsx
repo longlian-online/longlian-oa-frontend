@@ -10,6 +10,8 @@ import PageLoading from "@/components/PageLoading";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { docsSource } from "@/lib/docs";
 
+import "./docs.css";
+
 const translations = {
   "Search(search trigger)": "搜索手册",
   "Open Search(search trigger)(aria-label)": "搜索使用手册",

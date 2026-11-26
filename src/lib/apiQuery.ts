@@ -11,6 +11,8 @@ export interface ApiQueryOptions<T> {
   enabled?: boolean;
   staleTime?: number;
   refetchOnMount?: boolean;
+  refetchOnWindowFocus?: boolean;
+  keepPreviousData?: boolean;
   throwOnError?: (error: Error) => boolean;
 }
 
@@ -22,6 +24,7 @@ export function apiQueryOptions<T>(
     enabled = true,
     staleTime = 30_000,
     refetchOnMount,
+    refetchOnWindowFocus,
     throwOnError,
   }: ApiQueryOptions<T>,
   session: SessionSnapshot = getSessionSnapshot(),
@@ -33,6 +36,7 @@ export function apiQueryOptions<T>(
     enabled: enabled && authenticated && (scope !== "org" || Boolean(session.orgId)),
     staleTime,
     refetchOnMount,
+    refetchOnWindowFocus,
     throwOnError,
     queryFn: ({ signal }): Promise<T> => executeScopedApi(scope, session, queryFn, signal),
   });

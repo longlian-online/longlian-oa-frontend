@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
-import FileViewer from "@file-viewer/react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactElement } from "react";
 import { Loader2 } from "lucide-react";
 
 import {
@@ -18,7 +17,8 @@ import {
   rejectPreview,
 } from "./previewable";
 import { registerAttachmentPreview, type AttachmentPreviewRequest } from "./previewSession";
-import { createPreviewOptions } from "./viewerOptions";
+
+const AttachmentFileViewer = lazy(() => import("./AttachmentFileViewer"));
 
 interface PreviewSession {
   owner: symbol;
@@ -28,13 +28,23 @@ interface PreviewSession {
   file?: File;
 }
 
+function PreviewLoadingState(): ReactElement {
+  return (
+    <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+      <span className="inline-flex items-center gap-2">
+        <Loader2 className="size-4 animate-spin motion-reduce:animate-none" />
+        正在读取…
+      </span>
+    </div>
+  );
+}
+
 export default function AttachmentPreviewHost(): ReactElement {
   const { theme } = useTheme();
   const [session, setSession] = useState<PreviewSession | null>(null);
   const tokenRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
   const viewerTheme = theme === "dark" ? "dark" : "light";
-  const options = useMemo(() => createPreviewOptions(viewerTheme), [viewerTheme]);
 
   useEffect(() => {
     return registerAttachmentPreview(
@@ -112,23 +122,14 @@ export default function AttachmentPreviewHost(): ReactElement {
         </DialogHeader>
         <div className="min-h-0 flex-1">
           {session?.phase === "ready" && session.file ? (
-            <FileViewer
-              key={`${session.file.name}:${session.file.size}:${viewerTheme}`}
-              className="h-full"
-              file={session.file}
-              name={session.file.name}
-              options={options}
-            />
+            <Suspense fallback={<PreviewLoadingState />}>
+              <AttachmentFileViewer file={session.file} viewerTheme={viewerTheme} />
+            </Suspense>
+          ) : session?.phase === "loading" ? (
+            <PreviewLoadingState />
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
-              {session?.phase === "loading" ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="size-4 animate-spin motion-reduce:animate-none" />
-                  正在读取…
-                </span>
-              ) : (
-                session?.message
-              )}
+              {session?.message}
             </div>
           )}
         </div>

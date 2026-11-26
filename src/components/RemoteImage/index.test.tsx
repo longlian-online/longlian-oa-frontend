@@ -3,7 +3,7 @@ import { act, useState, type ReactElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vite-plus/test";
 
-import RemoteImage from "./index";
+import RemoteImage, { clearRemoteImageCache, normalizeImageResourceKey } from "./index";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -15,6 +15,7 @@ afterEach(() => {
   container?.remove();
   root = undefined;
   container = undefined;
+  clearRemoteImageCache();
   if (naturalWidth) Object.defineProperty(HTMLImageElement.prototype, "naturalWidth", naturalWidth);
   if (complete) Object.defineProperty(HTMLImageElement.prototype, "complete", complete);
   vi.restoreAllMocks();
@@ -137,4 +138,80 @@ test("更换地址后回到占位，不沿用上一张图", async () => {
   expect(image().getAttribute("src")).toBe("/second.png");
   expect(image().className).toContain("opacity-0");
   expect(frame().querySelector("[data-slot='remote-image-placeholder']")).not.toBeNull();
+});
+
+test("规范化图片键会剥离临时签名但保留尺寸参数", () => {
+  const first =
+    "https://sit.neo.oa.storage.longlian.online/cover/1.png?token=aaa&t=100&eo-img.resize=w/400/h/600";
+  const second =
+    "https://sit.neo.oa.storage.longlian.online/cover/1.png?eo-img.resize=w/400/h/600&t=200&token=bbb";
+  const resized =
+    "https://sit.neo.oa.storage.longlian.online/cover/1.png?token=aaa&t=100&eo-img.resize=w/64/h/64";
+
+  expect(normalizeImageResourceKey(first)).toBe(normalizeImageResourceKey(second));
+  expect(normalizeImageResourceKey(first)).not.toBe(normalizeImageResourceKey(resized));
+});
+
+test("同资源仅签名刷新时保持已渲染画面且不重复切换 src", async () => {
+  paintSize(32);
+  vi.spyOn(HTMLImageElement.prototype, "decode").mockResolvedValue(undefined);
+  const firstSrc =
+    "https://sit.neo.oa.storage.longlian.online/cover/1.png?token=aaa&t=100&eo-img.resize=w/400/h/600";
+  const nextSrc =
+    "https://sit.neo.oa.storage.longlian.online/cover/1.png?token=bbb&t=200&eo-img.resize=w/400/h/600";
+
+  function Harness(): ReactElement {
+    const [src, setSrc] = useState(firstSrc);
+    return (
+      <>
+        <button type="button" onClick={() => setSrc(nextSrc)}>
+          刷新签名
+        </button>
+        <RemoteImage src={src} alt="封面" />
+      </>
+    );
+  }
+  mount(<Harness />);
+  await act(async () => {
+    image().dispatchEvent(new Event("load"));
+  });
+  expect(frame().dataset.state).toBe("ready");
+
+  await act(async () => {
+    container?.querySelector("button")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+
+  expect(frame().dataset.state).toBe("ready");
+  expect(frame().querySelector("[data-slot='remote-image-placeholder']")).toBeNull();
+  expect(image().getAttribute("src")).toBe(firstSrc);
+});
+
+test("重挂载复用缓存旧签名失败时自动回退到最新签名", async () => {
+  paintSize(32);
+  vi.spyOn(HTMLImageElement.prototype, "decode").mockResolvedValue(undefined);
+  const oldSrc = "https://sit.neo.oa.storage.longlian.online/cover/2.png?token=old&t=100";
+  const freshSrc = "https://sit.neo.oa.storage.longlian.online/cover/2.png?token=fresh&t=200";
+
+  mount(<RemoteImage src={oldSrc} alt="封面" />);
+  await act(async () => {
+    image().dispatchEvent(new Event("load"));
+  });
+  expect(frame().dataset.state).toBe("ready");
+
+  act(() => root?.unmount());
+  container?.remove();
+  Object.defineProperty(HTMLImageElement.prototype, "complete", {
+    configurable: true,
+    get: () => false,
+  });
+
+  mount(<RemoteImage src={freshSrc} alt="封面" fallback="失败" />);
+  expect(image().getAttribute("src")).toBe(oldSrc);
+
+  await act(async () => {
+    image().dispatchEvent(new Event("error"));
+  });
+
+  expect(frame().dataset.state).toBe("loading");
+  expect(image().getAttribute("src")).toBe(freshSrc);
 });
