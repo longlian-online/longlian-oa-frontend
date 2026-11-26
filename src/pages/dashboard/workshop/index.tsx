@@ -84,8 +84,8 @@ export default function WorkshopPage() {
   }
 
   return (
-    <div ref={rootRef} className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
-      <h1 className="text-xl font-semibold text-foreground">工坊</h1>
+    <div ref={rootRef} className="flex min-w-0 flex-col gap-6 overflow-x-hidden">
+      <h1 className="text-xl font-semibold tracking-tight text-foreground">工坊</h1>
 
       <section className="flex min-w-0 flex-col gap-3">
         <div className="flex min-w-0 items-center justify-between gap-2">
@@ -97,7 +97,10 @@ export default function WorkshopPage() {
               updateView({ taskSort: value, submitPage: 1, waitingPage: 1 });
             }}
           >
-            <SelectTrigger aria-label="待办排序" className="h-8 w-36 shrink-0">
+            <SelectTrigger
+              aria-label="待办排序"
+              className="h-9 w-36 shrink-0 rounded-full border-0 bg-transparent px-3 text-sm text-muted-foreground shadow-none transition-colors hover:bg-secondary/70 hover:text-foreground focus:ring-0 focus:ring-offset-0 dark:bg-transparent"
+            >
               <ArrowDownUp className="mr-1.5 h-3.5 w-3.5" />
               <SelectValue>{TASK_SORT_LABELS[taskSort]}</SelectValue>
             </SelectTrigger>
@@ -110,11 +113,11 @@ export default function WorkshopPage() {
             </FilterSelectContent>
           </Select>
         </div>
-        <div className="grid min-w-0 grid-cols-1 items-start gap-3 md:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 items-start gap-4 md:grid-cols-2">
           <MyTaskColumn
             bucket="SUBMITTABLE"
             title="可提交"
-            dotClassName="bg-emerald-600"
+            dotClassName="bg-status-success"
             sortDirection={taskSort}
             page={submitPage}
             onPageChange={(next) => updateView({ submitPage: next })}
@@ -122,7 +125,7 @@ export default function WorkshopPage() {
           <MyTaskColumn
             bucket="WAITING"
             title="等待中"
-            dotClassName="bg-amber-600"
+            dotClassName="bg-status-warning"
             sortDirection={taskSort}
             page={waitingPage}
             onPageChange={(next) => updateView({ waitingPage: next })}
@@ -130,7 +133,7 @@ export default function WorkshopPage() {
         </div>
       </section>
 
-      <section className="flex min-w-0 flex-col gap-3">
+      <section className="flex min-w-0 flex-col gap-3.5">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-foreground">企划</h2>
           <Select
@@ -145,7 +148,10 @@ export default function WorkshopPage() {
               updateView({ sort: value, page: 1 });
             }}
           >
-            <SelectTrigger aria-label="企划排序" className="h-8 w-36 shrink-0">
+            <SelectTrigger
+              aria-label="企划排序"
+              className="h-9 w-36 shrink-0 rounded-full border-0 bg-transparent px-3 text-sm text-muted-foreground shadow-none transition-colors hover:bg-secondary/70 hover:text-foreground focus:ring-0 focus:ring-offset-0 dark:bg-transparent"
+            >
               <ArrowDownUp className="mr-1.5 h-3.5 w-3.5" />
               <SelectValue>{SORT_LABELS[sortBy]}</SelectValue>
             </SelectTrigger>
@@ -163,13 +169,17 @@ export default function WorkshopPage() {
             <div
               role="group"
               aria-label="企划类型筛选"
-              className="flex min-w-0 items-center gap-2 overflow-x-auto py-1"
+              className="flex min-w-0 items-center gap-1.5 overflow-x-auto py-1"
             >
               <Button
                 type="button"
-                variant={selectedType === "all" ? "secondary" : "ghost"}
+                variant="ghost"
                 size="sm"
-                className="shrink-0 whitespace-nowrap"
+                className={
+                  selectedType === "all"
+                    ? "h-8 shrink-0 rounded-full bg-accent-soft px-3.5 font-medium whitespace-nowrap text-accent-soft-foreground hover:bg-accent-soft"
+                    : "h-8 shrink-0 rounded-full px-3.5 whitespace-nowrap text-muted-foreground hover:text-foreground"
+                }
                 aria-pressed={selectedType === "all"}
                 onClick={() => {
                   updateView({ type: null, page: 1 });
@@ -181,9 +191,13 @@ export default function WorkshopPage() {
                 <Button
                   key={type.id}
                   type="button"
-                  variant={selectedType === type.name ? "secondary" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className="shrink-0 whitespace-nowrap"
+                  className={
+                    selectedType === type.name
+                      ? "h-8 shrink-0 rounded-full bg-accent-soft px-3.5 font-medium whitespace-nowrap text-accent-soft-foreground hover:bg-accent-soft"
+                      : "h-8 shrink-0 rounded-full px-3.5 whitespace-nowrap text-muted-foreground hover:text-foreground"
+                  }
                   aria-pressed={selectedType === type.name}
                   onClick={() => {
                     updateView({ type: type.name, page: 1 });
@@ -196,9 +210,13 @@ export default function WorkshopPage() {
           </div>
           <Button
             type="button"
-            variant={isMyCreated ? "secondary" : "ghost"}
+            variant="ghost"
             size="sm"
-            className="shrink-0 whitespace-nowrap"
+            className={
+              isMyCreated
+                ? "h-8 shrink-0 rounded-full bg-accent-soft px-3.5 font-medium whitespace-nowrap text-accent-soft-foreground hover:bg-accent-soft"
+                : "h-8 shrink-0 rounded-full px-3.5 whitespace-nowrap text-muted-foreground hover:text-foreground"
+            }
             aria-pressed={isMyCreated}
             onClick={() => {
               updateView({ mine: isMyCreated ? null : "1", page: 1 });
@@ -207,8 +225,8 @@ export default function WorkshopPage() {
             我创建的
           </Button>
 
-          <div className="relative w-28 shrink-0 sm:w-48 lg:w-64">
-            <Search className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative w-32 shrink-0 sm:w-52 lg:w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
@@ -217,14 +235,14 @@ export default function WorkshopPage() {
               }}
               placeholder="搜索企划"
               aria-label="搜索企划"
-              className="h-8 rounded-lg bg-secondary pl-9 text-sm"
+              className="h-9 rounded-full border-border/75 bg-card/70 pl-9 pr-3.5 text-sm transition-colors hover:border-border focus-visible:bg-card dark:bg-card/60"
             />
           </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="shrink-0"
+            className="h-9 shrink-0 rounded-full border-border/80 px-4"
             onClick={handleSearch}
           >
             搜索
@@ -252,7 +270,7 @@ export default function WorkshopPage() {
           />
         ) : (
           <>
-            <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {projects.map((project) => (
                 <WorkshopProjectCard
                   key={project.id}

@@ -128,10 +128,10 @@ export default function AppSidebar() {
               to={item.to}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+                "flex min-w-0 items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
                 isActive
-                  ? "bg-secondary font-medium text-foreground"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                  ? "bg-accent-soft font-medium text-accent-soft-foreground"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
               )}
             >
               {Icon && <Icon className="h-4 w-4 shrink-0" />}

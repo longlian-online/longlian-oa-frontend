@@ -63,24 +63,24 @@ export default function PaginationBar({
 
   return (
     <div className={cn("flex justify-center pt-2", className)}>
-      <nav aria-label="分页" className="flex h-[38px] items-center gap-2">
+      <nav aria-label="分页" className="flex h-9 items-center gap-1.5 tabular-nums">
         <Button
           type="button"
           variant="ghost"
           disabled={normalizedPage <= 1 || disabled}
           onClick={() => onPageChange(normalizedPage - 1)}
-          className="h-8 w-24 gap-2 rounded-lg px-3 py-2 text-base font-normal text-muted-foreground disabled:opacity-100"
+          className="h-9 gap-1.5 rounded-full px-3 text-sm font-normal text-muted-foreground hover:text-foreground disabled:opacity-40"
         >
           <ChevronLeft data-icon="inline-start" />
           上一页
         </Button>
 
-        <div className="flex h-[38px] items-center gap-2">
+        <div className="flex h-9 items-center gap-1">
           {getPaginationItems(normalizedPage, totalPages).map((item, index) =>
             item === "gap" ? (
               <span
                 key={`gap-${index}`}
-                className="flex h-[38px] min-w-[47px] items-center justify-center rounded-lg px-4 py-2 text-base text-foreground"
+                className="flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-sm text-muted-foreground"
               >
                 ...
               </span>
@@ -93,8 +93,8 @@ export default function PaginationBar({
                 onClick={() => onPageChange(item)}
                 className={
                   item === normalizedPage
-                    ? "h-8 min-w-8 rounded-lg bg-primary px-3 py-2 text-base font-normal text-primary-foreground hover:bg-primary hover:text-primary-foreground"
-                    : "h-8 min-w-8 rounded-lg px-3 py-2 text-base font-normal text-foreground hover:bg-secondary"
+                    ? "h-9 min-w-9 rounded-full bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                    : "h-9 min-w-9 rounded-full px-3 text-sm font-normal text-muted-foreground hover:bg-muted hover:text-foreground"
                 }
               >
                 {item}
@@ -108,7 +108,7 @@ export default function PaginationBar({
           variant="ghost"
           disabled={normalizedPage >= totalPages || disabled}
           onClick={() => onPageChange(normalizedPage + 1)}
-          className="h-8 w-24 gap-2 rounded-lg px-3 py-2 text-base font-normal text-foreground disabled:text-muted-foreground disabled:opacity-100"
+          className="h-9 gap-1.5 rounded-full px-3 text-sm font-normal text-muted-foreground hover:text-foreground disabled:opacity-40"
         >
           下一页
           <ChevronRight data-icon="inline-end" />

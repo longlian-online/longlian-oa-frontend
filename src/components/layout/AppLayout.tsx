@@ -3,6 +3,7 @@ import { Outlet } from "react-router";
 import AppBreadcrumb from "./AppBreadcrumb";
 import AppHeader from "./AppHeader";
 import AppSidebar from "./AppSidebar";
+import PageContainer from "./PageContainer";
 import PageTransition from "./PageTransition";
 import OrganizationSidebar from "@/components/layout/OrganizationSidebar";
 import PageLoading from "@/components/PageLoading";
@@ -18,6 +19,8 @@ export default function AppLayout(): ReactElement {
   const showPageLoading = usePageLoadingVisible();
   const mainRef = useRef<HTMLElement>(null);
   const isWorkshop = pathname.startsWith("/dashboard/workshop");
+  const isFluidLayout =
+    pathname === "/dashboard/org-admin/create" || pathname === "/dashboard/workshop/create";
   const switcher = useOrganizationSwitcher();
   const [isOrganizationListOpen, setIsOrganizationListOpen] = useState(false);
   const isSidebarHidden = isWorkshop && !isOrganizationListOpen;
@@ -55,16 +58,16 @@ export default function AppLayout(): ReactElement {
               <AppSidebar />
             )}
           </div>
-          <main ref={mainRef} className="min-w-0 flex-1 overflow-y-auto px-6 py-6">
+          <main ref={mainRef} className="min-w-0 flex-1 overflow-y-auto px-6 py-6 lg:px-8 lg:py-7">
             {showPageLoading ? (
               <PageLoading message="页面加载中..." className="h-full" />
             ) : (
-              <>
+              <PageContainer size={isFluidLayout ? "fluid" : "wide"}>
                 <AppBreadcrumb />
                 <PageTransition>
                   <Outlet />
                 </PageTransition>
-              </>
+              </PageContainer>
             )}
           </main>
         </div>

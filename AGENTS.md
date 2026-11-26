@@ -180,9 +180,9 @@ vp dlx shadcn@latest add <component>
 npx skills install
 ```
 
-### 样式
+### 样式与设计系统
 
-只用 Tailwind CSS utility class + `cn()` 合并，不写 CSS 文件，不用内联 style。
+只用 Tailwind CSS utility class + `cn()` 合并，不写 CSS 文件，不用内联 style。涉及页面布局、配色、圆角、边框、卡片与筛选栏样式时，必须遵循 [docs/design-system.md](docs/design-system.md)。
 
 ### 界面文案
 

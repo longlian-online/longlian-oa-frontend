@@ -31,7 +31,7 @@ const timeSortOptions = [
   { value: "UPDATE-ASC", label: "最早更新" },
 ] as const;
 
-// 单卡至少 20rem（min-h-48 × 5/3），最多 4 列。更宽时拉高卡片，而不是继续加列。
+// 单卡至少 20rem（min-h-52 × 5/3），浏览器足够宽时最多 4 列。
 const PROJECT_CARD_GRID_CLASS =
   "grid min-w-0 grid-cols-[repeat(auto-fill,minmax(min(100%,max(20rem,calc((100%_-_3rem)_/_4))),1fr))] gap-4";
 
@@ -96,7 +96,7 @@ export default function Planning() {
                 }
               }}
             >
-              <SelectTrigger className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0">
+              <SelectTrigger className="h-9 w-36 shrink-0 rounded-full border-0 bg-transparent px-3 text-sm text-muted-foreground shadow-none transition-colors hover:bg-secondary/70 hover:text-foreground focus:ring-0 focus:ring-offset-0 dark:bg-transparent">
                 <Clock className="mr-1.5 h-3.5 w-3.5" />
                 <SelectValue>
                   {timeSortOptions.find(
@@ -123,7 +123,7 @@ export default function Planning() {
                 }
               }}
             >
-              <SelectTrigger className="h-9 w-36 shrink-0 border-0 bg-transparent text-sm text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0">
+              <SelectTrigger className="h-9 w-36 shrink-0 rounded-full border-0 bg-transparent px-3 text-sm text-muted-foreground shadow-none transition-colors hover:bg-secondary/70 hover:text-foreground focus:ring-0 focus:ring-offset-0 dark:bg-transparent">
                 <Filter className="mr-1.5 h-3.5 w-3.5" />
                 <SelectValue>
                   {selectedType === "all"
@@ -210,13 +210,15 @@ function CreateProjectCard() {
     <Link
       to="/dashboard/planning/create"
       state={{ ...location.state, planningListReturnTo: `${location.pathname}${location.search}` }}
-      className="border-input group flex aspect-[5/3] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card p-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group flex aspect-[5/3] min-h-52 cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card/60 p-4 transition-all duration-200 hover:border-foreground/25 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <div className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/40">
-        <Plus className="text-muted-foreground" />
+      <div className="flex size-11 items-center justify-center rounded-full bg-secondary/80 text-muted-foreground transition-colors duration-200 group-hover:bg-accent-soft group-hover:text-accent-soft-foreground">
+        <Plus className="size-5" />
       </div>
       <div className="text-center">
-        <p className="text-muted-foreground text-sm font-medium">创建新企划</p>
+        <p className="text-sm font-medium text-muted-foreground transition-colors duration-200 group-hover:text-foreground">
+          创建新企划
+        </p>
       </div>
     </Link>
   );
@@ -237,27 +239,32 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
     planningListReturnTo: `/dashboard/planning${location.search}`,
   };
   const ownerNickname = project.creatorNickname?.trim() || "未设置昵称";
+  const ownerInitial = project.creatorNickname?.trim().slice(0, 1);
 
   return (
     <article
       aria-label={project.title}
-      className="flex aspect-[5/3] min-h-48 overflow-hidden rounded-lg border bg-card"
+      className="group/card flex aspect-[5/3] min-h-52 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_1px_3px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-200 hover:border-foreground/18 hover:shadow-[0_6px_20px_rgb(0_0_0/0.06)] dark:shadow-none dark:hover:border-foreground/22"
     >
       <Link
         to={detailTo}
         state={detailState}
         aria-label={`查看企划：${project.title}（封面）`}
-        className="relative h-full w-[40%] shrink-0 overflow-hidden bg-muted outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        className="relative h-full w-[40%] shrink-0 overflow-hidden bg-muted outline-none after:pointer-events-none after:absolute after:inset-0 after:ring-1 after:ring-inset after:ring-foreground/8 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
         {project.coverUrl ? (
           <RemoteImage
             src={project.coverUrl}
             alt={project.title}
-            className="size-full"
-            fallback={<span className="text-2xl font-semibold">{project.title.slice(0, 2)}</span>}
+            className="size-full transition-transform duration-300 ease-out motion-safe:group-hover/card:scale-[1.03]"
+            fallback={
+              <div className="flex size-full items-center justify-center bg-gradient-to-br from-muted via-muted/80 to-secondary text-2xl font-semibold tracking-tight text-muted-foreground/75">
+                {project.title.slice(0, 2)}
+              </div>
+            }
           />
         ) : (
-          <div className="flex size-full items-center justify-center text-2xl font-semibold text-muted-foreground">
+          <div className="flex size-full items-center justify-center bg-gradient-to-br from-muted via-muted/80 to-secondary text-2xl font-semibold tracking-tight text-muted-foreground/75">
             {project.title.slice(0, 2)}
           </div>
         )}
@@ -267,22 +274,25 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
         <div className="flex shrink-0 items-start justify-between gap-2">
           <h3
             title={project.title}
-            className="min-w-0 flex-1 truncate text-base font-semibold leading-6 text-foreground"
+            className="min-w-0 flex-1 truncate text-base font-semibold leading-6 tracking-[-0.01em] text-foreground"
           >
             {project.title}
           </h3>
-          <Badge variant="outline" className="shrink-0 font-normal">
+          <Badge
+            variant="outline"
+            className="h-5.5 shrink-0 rounded-full border-border/80 bg-secondary/60 px-2 text-[11px] font-normal text-muted-foreground"
+          >
             {project.projectType}
           </Badge>
         </div>
 
-        <p className="mt-2 line-clamp-2 min-h-9 shrink-0 text-xs leading-[18px] text-muted-foreground">
+        <p className="mt-2 line-clamp-2 min-h-10 shrink-0 text-[13px] leading-5 text-muted-foreground">
           {project.description || "暂无简介"}
         </p>
 
         <ProjectCardTags tags={metadataTags} />
 
-        <div className="mt-auto flex shrink-0 items-center gap-2 pt-3">
+        <div className="mt-auto flex shrink-0 items-center gap-2.5 pt-3">
           <Popover.Root
             open={ownerOpen}
             onOpenChange={setOwnerOpen}
@@ -299,10 +309,10 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               aria-label={`负责人信息：${ownerNickname}`}
               className="group/owner relative size-9 shrink-0 cursor-default rounded-full outline-none data-popup-open:z-60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <Avatar className="size-9 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-popup-open/owner:ring-3 group-data-popup-open/owner:ring-popover motion-safe:group-hover/owner:scale-150 motion-safe:group-focus-visible/owner:scale-150 motion-safe:group-data-popup-open/owner:scale-150 motion-reduce:transition-none">
+              <Avatar className="size-9 ring-1 ring-border/60 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-popup-open/owner:ring-3 group-data-popup-open/owner:ring-popover motion-safe:group-hover/owner:scale-135 motion-safe:group-focus-visible/owner:scale-135 motion-safe:group-data-popup-open/owner:scale-135 motion-reduce:transition-none">
                 <AvatarImage src={project.creatorAvatarUrl} alt="" />
-                <AvatarFallback>
-                  <UserRound className="size-4" />
+                <AvatarFallback className="bg-secondary text-xs font-medium text-secondary-foreground">
+                  {ownerInitial || <UserRound className="size-4" />}
                 </AvatarFallback>
               </Avatar>
             </Popover.Trigger>
@@ -318,18 +328,18 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
               >
                 <Popover.Popup
                   initialFocus={false}
-                  className="group/owner-panel w-60 max-w-[calc(100vw-2rem)] origin-top-left rounded-xl bg-popover p-5 text-popover-foreground ring-1 ring-foreground/10 outline-none transition-[opacity,scale] duration-250 ease-[cubic-bezier(0.16,1,0.3,1)] data-[align=end]:origin-top-right data-[side=top]:origin-bottom-left data-[side=top]:data-[align=end]:origin-bottom-right data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-150 motion-safe:data-starting-style:scale-90 motion-safe:data-ending-style:scale-95 motion-reduce:transition-none"
+                  className="group/owner-panel w-60 max-w-[calc(100vw-2rem)] origin-top-left rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-lg outline-none transition-[opacity,scale] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] data-[align=end]:origin-top-right data-[side=top]:origin-bottom-left data-[side=top]:data-[align=end]:origin-bottom-right data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-150 motion-safe:data-starting-style:scale-95 motion-safe:data-ending-style:scale-95 motion-reduce:transition-none"
                 >
-                  <div className="space-y-3 transition-opacity delay-50 duration-200 group-data-starting-style/owner-panel:opacity-0 group-data-ending-style/owner-panel:opacity-0 group-data-ending-style/owner-panel:delay-0 group-data-ending-style/owner-panel:duration-100 motion-reduce:transition-none">
+                  <div className="space-y-2.5 transition-opacity delay-50 duration-150 group-data-starting-style/owner-panel:opacity-0 group-data-ending-style/owner-panel:opacity-0 group-data-ending-style/owner-panel:delay-0 group-data-ending-style/owner-panel:duration-100 motion-reduce:transition-none">
                     <div>
                       <p className="text-xs text-muted-foreground">昵称</p>
-                      <Popover.Title className="mt-1 break-all text-sm font-medium">
+                      <Popover.Title className="mt-0.5 break-all text-sm font-medium">
                         {ownerNickname}
                       </Popover.Title>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">最近提交</p>
-                      <Popover.Description className="mt-1 text-xs leading-5 text-muted-foreground">
+                      <Popover.Description className="mt-0.5 text-xs leading-5 tabular-nums text-muted-foreground">
                         {project.creatorLastSubmittedAt
                           ? formatDate(project.creatorLastSubmittedAt)
                           : "暂无提交记录"}
@@ -344,10 +354,10 @@ function ProjectCard({ project }: ProjectCardProps): ReactElement {
             to={detailTo}
             state={detailState}
             aria-label={`查看企划：${project.title}`}
-            className="group/cta ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-full border border-primary bg-primary py-1 pl-2.5 pr-1 text-xs font-medium text-primary-foreground outline-none transition-opacity duration-150 hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-primary/30 dark:bg-primary/12 dark:text-primary dark:hover:border-primary/50 dark:hover:bg-primary/20 dark:hover:opacity-100 in-[[data-color-theme=pink]]:border-rose-300/45 in-[[data-color-theme=pink]]:bg-rose-100/70 in-[[data-color-theme=pink]]:text-rose-950 in-[[data-color-theme=pink]]:hover:border-rose-300/70 in-[[data-color-theme=pink]]:hover:bg-rose-100 in-[[data-color-theme=pink]]:hover:opacity-100 dark:in-[[data-color-theme=pink]]:border-rose-300/25 dark:in-[[data-color-theme=pink]]:bg-rose-300/10 dark:in-[[data-color-theme=pink]]:text-rose-100 dark:in-[[data-color-theme=pink]]:hover:border-rose-300/45 dark:in-[[data-color-theme=pink]]:hover:bg-rose-300/16"
+            className="group/cta ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-full border border-accent-soft-border bg-accent-soft py-1 pl-3 pr-1.5 text-xs font-medium text-accent-soft-foreground outline-none transition-colors duration-150 hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             查看企划
-            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15 dark:bg-primary/18 in-[[data-color-theme=pink]]:bg-rose-950/8 dark:in-[[data-color-theme=pink]]:bg-rose-100/12">
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-current/12">
               <ArrowRight
                 aria-hidden="true"
                 className="size-3.5 motion-safe:transition-transform motion-safe:duration-150 motion-safe:group-hover/cta:translate-x-0.5"
