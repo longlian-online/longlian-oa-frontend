@@ -37,11 +37,15 @@ vi.mock("@/api/file", () => ({ createFileUpload: create }));
 vi.mock("@/components/tip", () => ({ $tip: vi.fn() }));
 vi.mock("@/lib/imageCrop", async (importOriginal) => {
   const original = await importOriginal<typeof imageCrop>();
-  return { ...original, convertImageToWebp: vi.fn(original.convertImageToWebp) };
+  return {
+    ...original,
+    optimizeImageForUpload: vi.fn(async (file: File) => file),
+  };
 });
 
-test("底层上传自动裁剪图片，并仅上传裁剪结果", async () => {
-  const selected = new File(["selected"], "photo.png", { type: "image/png" });
+test("底层上传自动裁剪图片，裁剪产出不再重复执行整图优化", async () => {
+  vi.mocked(imageCrop.optimizeImageForUpload).mockClear();
+  const selected = new File(["selected"], "photo.webp", { type: "image/webp" });
   crop.mockResolvedValue(selected);
   create.mockResolvedValue({ fileId: "id", uploadUrl: "" });
   let upload: ReturnType<typeof useUploadFile>["uploadFile"] | undefined;
@@ -58,8 +62,15 @@ test("底层上传自动裁剪图片，并仅上传裁剪结果", async () => {
     bizType: "avatar",
     bizId: "user",
   });
-  expect(crop).toHaveBeenCalledWith(expect.any(File), 1);
-  expect(create).toHaveBeenCalledWith(expect.objectContaining({ fileSize: selected.size }));
+  expect(crop).toHaveBeenCalledWith(expect.any(File), 1, { bizType: "avatar" });
+  expect(imageCrop.optimizeImageForUpload).not.toHaveBeenCalled();
+  expect(create).toHaveBeenCalledWith(
+    expect.objectContaining({
+      fileSize: selected.size,
+      fileExt: "webp",
+      fileMime: "image/webp",
+    }),
+  );
   expect(result.fileSize).toBe(selected.size);
   if (result.previewUrl) URL.revokeObjectURL(result.previewUrl);
 });
@@ -251,8 +262,9 @@ test("直传期间账号切换后不把旧文件回填到新会话", async () =>
   expect($tip).not.toHaveBeenCalled();
 });
 
-test("缩略图裁剪为方形且不提供上传原图，已裁好的文件不再打开裁剪窗", async () => {
-  const cropped = new File(["square"], "thumb.png", { type: "image/png" });
+test("缩略图裁剪为方形且不提供上传原图，已裁好的文件跳过裁剪窗但仍走优化兜底", async () => {
+  vi.mocked(imageCrop.optimizeImageForUpload).mockClear();
+  const cropped = new File(["square"], "thumb.webp", { type: "image/webp" });
   crop.mockResolvedValue(cropped);
   create.mockResolvedValue({ fileId: "thumb-id", uploadUrl: "" });
   let upload: UseUploadFileResult["uploadFile"] | undefined;
@@ -271,17 +283,23 @@ test("缩略图裁剪为方形且不提供上传原图，已裁好的文件不�
     accept: ["png"],
     maxSize: 10 * 1024 * 1024,
   });
-  expect(crop).toHaveBeenCalledWith(expect.any(File), 1, { shape: "rect", allowOriginal: false });
+  expect(crop).toHaveBeenCalledWith(expect.any(File), 1, {
+    shape: "rect",
+    allowOriginal: false,
+    bizType: "thumbnail",
+  });
+  expect(imageCrop.optimizeImageForUpload).not.toHaveBeenCalled();
 
   crop.mockClear();
   await upload!(cropped, {
     bizType: "thumbnail",
     bizId: "project",
-    accept: ["png"],
+    accept: ["png", "webp"],
     maxSize: 10 * 1024 * 1024,
     skipCrop: true,
   });
   expect(crop).not.toHaveBeenCalled();
+  expect(imageCrop.optimizeImageForUpload).toHaveBeenCalledWith(cropped, "thumbnail");
 });
 
 test.each(["cover", "thumbnail"] as const)(
@@ -334,46 +352,48 @@ test.each(["cover", "thumbnail"] as const)(
   },
 );
 
-test.each(["cover", "thumbnail"] as const)(
-  "%s 按转换前后大小选择上传文件，保留对应名称、类型和正文",
+test.each(["avatar", "cover", "thumbnail"] as const)("%s 拒绝上传 GIF 文件", async (bizType) => {
+  create.mockClear();
+  crop.mockClear();
+  const upload = mountUpload();
+  const gif = new File(["gif"], "anim.gif", { type: "image/gif" });
+  await expect(
+    upload(gif, { bizType, bizId: "target", accept: ["jpg", "png", "gif"] }),
+  ).rejects.toThrow("仅支持");
+  expect(crop).not.toHaveBeenCalled();
+  expect(create).not.toHaveBeenCalled();
+});
+
+test.each(["avatar", "cover", "thumbnail"] as const)(
+  "%s 上传原图或跳过裁剪时按业务类型执行缩放与 WebP 优化，不依赖 1MB 门槛",
   async (bizType) => {
-    let upload: UseUploadFileResult["uploadFile"] | undefined;
-    function Probe(): null {
-      upload = useUploadFile().uploadFile;
-      return null;
-    }
-    renderToString(
-      <QueryClientProvider client={createQueryClient()}>
-        <Probe />
-      </QueryClientProvider>,
-    );
-    const source = new File([new Uint8Array(1024 * 1024 + 1)], "cover.avif", {
-      type: "image/avif",
-    });
+    vi.mocked(imageCrop.optimizeImageForUpload).mockClear();
+    const upload = mountUpload();
+    const source = new File([new Uint8Array(512)], "small.png", { type: "image/png" });
+    const optimized = new File([new Uint8Array(128)], "small.webp", { type: "image/webp" });
     const transfer = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal("fetch", transfer);
     create.mockResolvedValue({ fileId: "image-id", uploadUrl: "https://storage.example/upload" });
-    for (const size of [source.size + 1, source.size - 1, source.size]) {
-      const converted = new File([new Uint8Array(size)], "cover.webp", { type: "image/webp" });
-      vi.mocked(imageCrop.convertImageToWebp).mockResolvedValueOnce(converted);
-      const expected = size > source.size ? source : converted;
-      const result = await upload!(source, { bizType, bizId: "project", skipCrop: true });
-      expect(create).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          fileName: expected.name,
-          fileExt: expected === source ? "avif" : "webp",
-          fileSize: expected.size,
-          fileMime: expected.type,
-        }),
-      );
-      expect(transfer).toHaveBeenLastCalledWith("https://storage.example/upload", {
-        method: "PUT",
-        headers: { "Content-Type": expected.type },
-        body: expected,
-      });
-      expect(result.fileMime).toBe(expected.type);
-      if (result.previewUrl) URL.revokeObjectURL(result.previewUrl);
-    }
+    crop.mockResolvedValueOnce(source);
+    vi.mocked(imageCrop.optimizeImageForUpload).mockResolvedValueOnce(optimized);
+
+    const result = await upload(source, { bizType, bizId: "target" });
+    expect(imageCrop.optimizeImageForUpload).toHaveBeenCalledWith(source, bizType);
+    expect(create).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        fileName: "small.webp",
+        fileExt: "webp",
+        fileSize: optimized.size,
+        fileMime: "image/webp",
+      }),
+    );
+    expect(transfer).toHaveBeenLastCalledWith("https://storage.example/upload", {
+      method: "PUT",
+      headers: { "Content-Type": "image/webp" },
+      body: optimized,
+    });
+    expect(result.fileMime).toBe("image/webp");
+    if (result.previewUrl) URL.revokeObjectURL(result.previewUrl);
   },
 );
 
