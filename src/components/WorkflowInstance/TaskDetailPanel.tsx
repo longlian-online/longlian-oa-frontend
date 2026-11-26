@@ -66,6 +66,12 @@ const STATUS_LABELS: Record<TaskInstanceStatus, string> = {
   COMPLETED: "已完成",
 };
 
+const STATUS_BADGE_CLASSES: Record<TaskInstanceStatus, string> = {
+  PENDING: "bg-secondary text-muted-foreground",
+  CLAIMED: "bg-status-info-soft text-status-info",
+  COMPLETED: "bg-status-success-soft text-status-success",
+};
+
 const VERSION_STATUS_LABELS: Record<TaskSubmissionStatus, string> = {
   SUBMITTED: "已提交",
   REJECTED: "已打回",
@@ -412,7 +418,10 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
   const submissionState = detail?.submission.state ?? "not_submitted";
   const current = currentVersionOf(submissionState, versionsView);
   return (
-    <section className="rounded-xl border bg-card p-4 sm:p-5" aria-live="polite">
+    <section
+      className="rounded-2xl border border-border bg-card p-5 shadow-[0_1px_3px_rgb(0_0_0/0.04)] dark:shadow-none"
+      aria-live="polite"
+    >
       {!instanceId ? (
         <>
           <h2 className="break-words text-base font-semibold">{title}</h2>
@@ -433,7 +442,9 @@ export default function TaskDetailPanel({ title, node, instance, actions }: Task
               </div>
             </div>
             {status && (
-              <span className="shrink-0 rounded-full bg-secondary px-3 py-1 text-xs font-medium">
+              <span
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${STATUS_BADGE_CLASSES[status]}`}
+              >
                 {STATUS_LABELS[status]}
               </span>
             )}

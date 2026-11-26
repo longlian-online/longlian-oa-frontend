@@ -20,7 +20,7 @@ export default function ProjectItemTaskPage() {
   }
 
   return (
-    <div ref={rootRef} className="mx-auto w-full max-w-6xl">
+    <div ref={rootRef} className="w-full">
       <WorkflowInstance
         projectId={projectId}
         itemId={itemId}
