@@ -7,6 +7,7 @@ import { organizationInfoQuery } from "@/queries/organizationAdmin";
 import CenteredLoading from "@/components/CenteredLoading";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import FileUpload from "@/components/FileUpload";
+import { STATIC_IMAGE_ACCEPT } from "@/lib/imageCrop";
 import { $tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -108,7 +109,7 @@ function OrganizationSettingsContent() {
               title="上传组织头像"
               description="最大 5MB"
               imagePreview
-              accept={["jpg", "jpeg", "png", "gif", "avif"]}
+              accept={[...STATIC_IMAGE_ACCEPT]}
               maxSize={5 * 1024 * 1024}
               className="[&>button]:aspect-square [&>button]:h-auto [&>button]:min-h-0"
               onChange={setAvatarFile}

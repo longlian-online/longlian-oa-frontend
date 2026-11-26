@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useUploadFile } from "@/hooks/useUploadFile";
+import { STATIC_IMAGE_ACCEPT, STATIC_IMAGE_ACCEPT_ATTR } from "@/lib/imageCrop";
 import { nicknameFieldError, normalizeNickname } from "@/lib/nickname";
 import { NEW_PASSWORD_HINT, newPasswordError } from "@/lib/password";
 import { clearSession, getSessionSnapshot } from "@/lib/session";
@@ -104,7 +105,7 @@ export default function PersonalSettingsPage(): ReactElement {
       const uploadedFile = await uploadFile(file, {
         bizType: "avatar",
         bizId: user.id,
-        accept: ["jpg", "jpeg", "png", "gif", "avif"],
+        accept: [...STATIC_IMAGE_ACCEPT],
         maxSize: 5 * 1024 * 1024,
       });
       await updateProfile.mutateAsync({
@@ -217,7 +218,7 @@ export default function PersonalSettingsPage(): ReactElement {
             ref={avatarInputRef}
             type="file"
             className="hidden"
-            accept=".jpg,.jpeg,.png,.gif,.avif"
+            accept={STATIC_IMAGE_ACCEPT_ATTR}
             onChange={handleAvatarChange}
           />
           <Avatar size="lg" className="size-14">

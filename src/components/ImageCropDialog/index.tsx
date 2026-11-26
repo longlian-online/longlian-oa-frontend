@@ -14,13 +14,10 @@ import {
 import { $tip } from "@/components/tip";
 import { cn } from "@/lib/utils";
 import { cropImageFile } from "@/lib/imageCrop";
+import type { ImageOptimizeBizType } from "@/lib/imageCrop";
 
-function describeCrop(file: File, allowOriginal: boolean): string {
-  const gif = file.name.toLowerCase().endsWith(".gif");
-  if (!allowOriginal) {
-    return gif ? "GIF 裁剪后将保存为静态图片。请截取方形区域。" : "请截取方形区域后再上传。";
-  }
-  return gif ? "GIF 裁剪后为静态图片。也可以直接上传原图。" : "也可以直接上传原图。";
+function describeCrop(allowOriginal: boolean): string {
+  return allowOriginal ? "也可以直接上传原图。" : "请截取方形区域后再上传。";
 }
 
 interface ImageCropDialogProps {
@@ -28,6 +25,7 @@ interface ImageCropDialogProps {
   aspect?: number;
   shape?: "rect" | "round";
   allowOriginal?: boolean;
+  bizType?: ImageOptimizeBizType;
   onComplete: (file: File | null) => void;
 }
 
@@ -36,6 +34,7 @@ export default function ImageCropDialog({
   aspect,
   shape,
   allowOriginal = true,
+  bizType,
   onComplete,
 }: ImageCropDialogProps): React.JSX.Element {
   const [url, setUrl] = useState("");
@@ -66,7 +65,7 @@ export default function ImageCropDialog({
     if (!area || !cropSize || !imageRef.current?.width || processing) return;
     setProcessing(true);
     try {
-      onComplete(await cropImageFile(file, imageRef.current, area));
+      onComplete(await cropImageFile(file, imageRef.current, area, bizType));
     } catch (error) {
       $tip(error instanceof Error ? error.message : "图片裁剪失败", "error");
       setProcessing(false);
@@ -86,7 +85,7 @@ export default function ImageCropDialog({
       >
         <DialogHeader>
           <DialogTitle>裁剪图片</DialogTitle>
-          <DialogDescription>{describeCrop(file, allowOriginal)}</DialogDescription>
+          <DialogDescription>{describeCrop(allowOriginal)}</DialogDescription>
         </DialogHeader>
         <div
           className={cn(

@@ -5,7 +5,12 @@ import { createFileUpload } from "@/api/file";
 import { useApiMutation } from "@/hooks/queries/useApiQuery";
 import { $tip } from "@/components/tip";
 import { requestImageCrop, UploadCancelledError } from "@/lib/imageCropRequest";
-import { convertImageToWebp, PROJECT_IMAGE_MAX_BYTES, WEBP_THRESHOLD_BYTES } from "@/lib/imageCrop";
+import {
+  isOptimizableImageBizType,
+  optimizeImageForUpload,
+  PROJECT_IMAGE_MAX_BYTES,
+  STATIC_IMAGE_ACCEPT,
+} from "@/lib/imageCrop";
 import { getSessionSnapshot } from "@/lib/session";
 import { isScopeCurrent } from "@/lib/queryKeys";
 import { AuthExpiredError } from "@/lib/authError";
@@ -176,14 +181,24 @@ export function useUploadFile(): UseUploadFileResult {
   });
 
   const uploadFile = async (file: File, options: UploadFileOptions): Promise<UploadedFileInfo> => {
+    const optimizableImage = isOptimizableImageBizType(options.bizType);
     const isProjectImage = options.bizType === "cover" || options.bizType === "thumbnail";
-    const validationOptions = {
+    const resolvedAccept = optimizableImage
+      ? (options.accept ?? [...STATIC_IMAGE_ACCEPT]).filter((ext) => ext.toLowerCase() !== "gif")
+      : options.accept;
+    const validationOptions: FileValidationOptions = {
       ...options,
+      accept: resolvedAccept,
       maxSize: isProjectImage
         ? Math.min(options.maxSize ?? PROJECT_IMAGE_MAX_BYTES, PROJECT_IMAGE_MAX_BYTES)
         : options.maxSize,
     };
-    const convertToWebp = isProjectImage && file.size > WEBP_THRESHOLD_BYTES;
+    const processedValidationOptions: FileValidationOptions = optimizableImage
+      ? {
+          ...validationOptions,
+          accept: Array.from(new Set([...(resolvedAccept ?? []), "webp"])),
+        }
+      : validationOptions;
     const sourceError = validateFile(file, validationOptions);
     if (sourceError) {
       $tip(sourceError, "error");
@@ -198,30 +213,36 @@ export function useUploadFile(): UseUploadFileResult {
     activeUploads.current += 1;
     setUploading(true);
     try {
+      const originalFile = file;
+      let cropped = false;
       if (
         !options.skipCrop &&
         normalizeMimeType(file, getFileExt(file.name)).startsWith("image/")
       ) {
-        file =
+        const result =
           options.bizType === "thumbnail"
-            ? await requestImageCrop(file, 1, { shape: "rect", allowOriginal: false })
+            ? await requestImageCrop(file, 1, {
+                shape: "rect",
+                allowOriginal: false,
+                bizType: "thumbnail",
+              })
             : await requestImageCrop(
                 file,
                 options.bizType === "avatar" ? 1 : options.bizType === "cover" ? 2 / 3 : undefined,
+                isOptimizableImageBizType(options.bizType)
+                  ? { bizType: options.bizType }
+                  : undefined,
               );
-        const croppedValidationError = validateFile(file, validationOptions);
+        cropped = result !== originalFile;
+        file = result;
+        const croppedValidationError = validateFile(file, processedValidationOptions);
         if (croppedValidationError) throw new Error(croppedValidationError);
       }
-      if (isProjectImage && (convertToWebp || file.size > WEBP_THRESHOLD_BYTES)) {
-        const converted = await convertImageToWebp(file);
-        if (converted.size <= file.size) {
-          const convertedError = validateFile(converted, {
-            maxSize: validationOptions.maxSize,
-            accept: ["webp"],
-          });
-          if (convertedError) throw new Error(convertedError);
-          file = converted;
-        }
+      if (isOptimizableImageBizType(options.bizType) && !cropped) {
+        const optimized = await optimizeImageForUpload(file, options.bizType);
+        const optimizedError = validateFile(optimized, processedValidationOptions);
+        if (optimizedError) throw new Error(optimizedError);
+        file = optimized;
       }
       ensureCurrent();
       const fileExt = getFileExt(file.name);

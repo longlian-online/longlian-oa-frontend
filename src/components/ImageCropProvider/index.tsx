@@ -14,6 +14,7 @@ export default function ImageCropProvider(): React.JSX.Element | null {
         aspect={request.aspect}
         shape={request.shape}
         allowOriginal={request.allowOriginal}
+        bizType={request.bizType}
         onComplete={(file) => completeImageCrop(request.id, file)}
       />
     </Suspense>
