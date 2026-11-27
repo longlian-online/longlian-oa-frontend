@@ -7,11 +7,13 @@ import { DocsGuide, DocsGuides, DocsIntro } from "../../src/components/Docs/Docs
 
 <DocsIntro>
 
-白箱帮助组织把企划、项目和协作任务放在一起。组织配置工作流，组员接取、提交任务，按阶段推进项目。
+白箱是面向创作与汉化团队的协作工作台：组织配置工作流，成员接取并提交任务，按阶段推进每一部作品。
 
 </DocsIntro>
 
-## 第一次使用
+![白箱企划广场全景：浏览作品、搜索筛选与快速创建企划](/docs/screenshots/planning-plaza.webp)
+
+## 快速上手
 
 <DocsGuides>
 
@@ -19,7 +21,7 @@ import { DocsGuide, DocsGuides, DocsIntro } from "../../src/components/Docs/Docs
 
 **注册与加入组织**
 
-注册账号、加入或切换组织。
+用邀请码入组、登录与切换组织。
 
 </DocsGuide>
 
@@ -27,13 +29,13 @@ import { DocsGuide, DocsGuides, DocsIntro } from "../../src/components/Docs/Docs
 
 **接取与提交任务**
 
-找到任务、接取并提交成果。
+在大厅认领任务，在工坊提交成果。
 
 </DocsGuide>
 
 </DocsGuides>
 
-## 继续了解
+## 全部模块
 
 <DocsGuides>
 
@@ -41,7 +43,7 @@ import { DocsGuide, DocsGuides, DocsIntro } from "../../src/components/Docs/Docs
 
 **企划与项目**
 
-查看作品、创建项目、确认完成。
+管理作品资料、创建项目与标记完成。
 
 </DocsGuide>
 
@@ -49,7 +51,7 @@ import { DocsGuide, DocsGuides, DocsIntro } from "../../src/components/Docs/Docs
 
 **工作流与模板**
 
-配置翻译、校对等协作步骤。
+配置原子任务与可视化协作流程。
 
 </DocsGuide>
 
@@ -57,7 +59,7 @@ import { DocsGuide, DocsGuides, DocsIntro } from "../../src/components/Docs/Docs
 
 **管理组织**
 
-邀请成员、审核申请、维护组织。
+邀请成员、审核申请与批量下载文件。
 
 </DocsGuide>
 
@@ -65,7 +67,15 @@ import { DocsGuide, DocsGuides, DocsIntro } from "../../src/components/Docs/Docs
 
 **个人设置**
 
-了解账号资料、邮件通知与存储设置。
+资料、邮件通知、下载目录与密钥。
+
+</DocsGuide>
+
+<DocsGuide href="/docs/openapi" icon="KeyRound">
+
+**接入开放接口**
+
+用 OpenAPI 密钥对接外部脚本与工具。
 
 </DocsGuide>
 
@@ -73,24 +83,24 @@ import { DocsGuide, DocsGuides, DocsIntro } from "../../src/components/Docs/Docs
 
 **常见问题**
 
-操作受限、任务等待或上传失败。
+权限、任务等待与上传失败排查。
 
 </DocsGuide>
 
 </DocsGuides>
 
-## 先认识三个概念
+## 30 秒认识三个概念
 
-**企划**是一个作品或协作主题的容器，例如某部漫画。**项目**是企划下的一次具体工作，例如第一话。**工作流**规定这个项目要经过哪些任务，例如翻译、校对、嵌字。
+| 概念       | 是什么                   | 举例                      |
+| :--------- | :----------------------- | :------------------------ |
+| **企划**   | 一部作品或协作主题的容器 | 《银色的结晶》            |
+| **项目**   | 企划下的一次具体交付     | 第一章 / 第一话           |
+| **工作流** | 项目要经过的协作步骤     | 翻译 → 校对 → 嵌字 → 发布 |
 
-一个企划可以有多个项目，每个项目都有自己的任务流和进度。完成一个任务后，流程按组织配置的阶段继续推进。
+## 按角色阅读
 
-## 按你的角色阅读
-
-- **组员**：先学会[查找和处理任务](/docs/tasks)，再了解[企划与项目](/docs/projects)。
-- **组织管理员、组织所有者**：先[配置工作流](/docs/workflows)，再[邀请成员并管理组织](/docs/organization)。
-
-手册可以直接阅读，无需登录。实际业务操作需要登录，并具备当前组织中的相应权限。
+- **组员**：先看[接取与提交任务](/docs/tasks)，再看[企划与项目](/docs/projects)。
+- **组织管理员 / 所有者**：先看[工作流与模板](/docs/workflows)，再看[管理组织](/docs/organization)。
 
 <a href="/dashboard/planning" target="_self">
   返回白箱，开始协作 →
