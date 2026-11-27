@@ -1,3 +1,7 @@
-@import "tailwindcss" reference;
+@import "tailwindcss/theme" reference;
+@import "tailwindcss/utilities" source(none);
 @import "fumadocs-ui/css/shadcn.css";
 @import "fumadocs-ui/css/preset.css";
+@source ".";
+
+@custom-variant dark (&:where(.dark, .dark *));
