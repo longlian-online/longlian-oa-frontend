@@ -69,7 +69,7 @@
 @layer base {
   :root {
     color-scheme: light;
-    --placeholder: oklch(58% 0 0);
+    --placeholder: oklch(48% 0 0);
     --scrollbar-track: oklch(97% 0 0);
     --scrollbar-thumb: oklch(82% 0 0);
     --scrollbar-thumb-hover: oklch(68% 0 0);
@@ -112,7 +112,10 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans antialiased;
+    @apply font-sans;
+  }
+  html.dark {
+    @apply antialiased;
   }
 }
 
