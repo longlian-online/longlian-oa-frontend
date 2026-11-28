@@ -37,6 +37,7 @@ import {
 import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import FilterToolbar from "@/components/FilterToolbar";
+import ListPageLayout from "@/components/ListPageLayout";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
 import RemoteImage from "@/components/RemoteImage";
@@ -188,7 +189,7 @@ export default function TaskPlaza() {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <ListPageLayout>
       {listQuery.isFetching && listQuery.data && (
         <p role="status" className="text-sm text-muted-foreground">
           正在刷新...
@@ -335,18 +336,19 @@ export default function TaskPlaza() {
       )}
 
       {listQuery.isError && !listQuery.data ? (
-        <div role="alert">
+        <div role="alert" className="my-auto flex flex-col items-center gap-3 text-sm">
           {listQuery.error.message}
           <Button onClick={() => void listQuery.refetch()}>重试</Button>
         </div>
       ) : loading ? (
-        <PageLoading message="正在加载任务大厅..." />
+        <PageLoading message="正在加载任务大厅..." className="flex-1" />
       ) : groups.length === 0 ? (
         <EmptyState
           icon={<Sparkles className="h-5 w-5 text-muted-foreground" />}
           title="当前没有待接取任务"
           description="此视图下没有匹配的待接取任务，可以切换视图或调整筛选。"
           action={<Button onClick={() => navigate("/dashboard/planning")}>去广场看看企划</Button>}
+          className="my-auto"
         />
       ) : (
         <>
@@ -360,10 +362,11 @@ export default function TaskPlaza() {
               </div>
               <span className="w-28 shrink-0 text-center">操作</span>
             </div>
-            {groups.map((group) => (
+            {groups.map((group, index) => (
               <ProjectGroupSection
                 key={`${stageScope}-${selectedTaskType}-${group.projectId}`}
                 group={group}
+                defaultExpanded={index === 0}
                 claiming={claiming}
                 onClaim={handleClaim}
               />
@@ -371,6 +374,8 @@ export default function TaskPlaza() {
           </div>
 
           <PaginationBar
+            variant="page"
+            unit="个企划"
             page={pageNum}
             pageSize={PAGE_SIZE}
             total={total}
@@ -379,7 +384,7 @@ export default function TaskPlaza() {
           />
         </>
       )}
-    </div>
+    </ListPageLayout>
   );
 }
 
@@ -446,14 +451,20 @@ function ProjectCoverThumbnail({ group }: { group: PlazaProjectGroup }): ReactEl
 
 interface ProjectGroupSectionProps {
   group: PlazaProjectGroup;
+  defaultExpanded?: boolean;
   claiming: Set<string>;
   onClaim: (instanceId: string, isCurrentStage: boolean) => void;
 }
 
-function ProjectGroupSection({ group, claiming, onClaim }: ProjectGroupSectionProps): ReactElement {
+function ProjectGroupSection({
+  group,
+  defaultExpanded = false,
+  claiming,
+  onClaim,
+}: ProjectGroupSectionProps): ReactElement {
   const location = useLocation();
   const panelId = useId();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [page, setPage] = usePageQuery(plazaTaskPageKey(group.projectId));
   const totalPages = Math.max(1, Math.ceil(group.tasks.length / TASK_PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);

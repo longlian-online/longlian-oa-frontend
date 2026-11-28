@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
-import { Outlet } from "react-router";
+import { Outlet, useLocation } from "react-router";
 import AppBreadcrumb from "./AppBreadcrumb";
 import AppHeader from "./AppHeader";
 import AppSidebar from "./AppSidebar";
@@ -10,12 +10,12 @@ import PageLoading from "@/components/PageLoading";
 import AttachmentPreviewHost from "@/components/AttachmentPreview";
 import ProductReleaseNotice from "@/components/ProductReleaseNotice";
 import { useOrganizationSwitcher } from "@/hooks/useOrganizationSwitcher";
-import { usePageLoadingVisible, usePendingPathname } from "@/hooks/usePendingPathname";
+import { usePageLoadingVisible } from "@/hooks/usePendingPathname";
 import { cn } from "@/lib/utils";
 import { CurrentUserProvider } from "@/hooks/useCurrentUser";
 
 export default function AppLayout(): ReactElement {
-  const pathname = usePendingPathname();
+  const { pathname } = useLocation();
   const showPageLoading = usePageLoadingVisible();
   const mainRef = useRef<HTMLElement>(null);
   const isWorkshop = pathname.startsWith("/dashboard/workshop");

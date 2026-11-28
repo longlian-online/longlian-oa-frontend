@@ -1,4 +1,4 @@
-import { memo, useLayoutEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 import ProjectMetadataTag from "@/components/ProjectMetadataTag";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,40 @@ import type { ProjectMetadataTag as ProjectMetadataTagData } from "@/lib/project
 
 interface ProjectCardTagsProps {
   tags: readonly ProjectMetadataTagData[];
+}
+
+type MeasureTask = () => (() => void) | null;
+
+const pendingMeasures = new Set<MeasureTask>();
+let sharedFrameId: number | null = null;
+
+function flushMeasures(): void {
+  sharedFrameId = null;
+  const tasks = Array.from(pendingMeasures);
+  pendingMeasures.clear();
+  const writes: Array<() => void> = [];
+  for (const task of tasks) {
+    const write = task();
+    if (write) writes.push(write);
+  }
+  for (const write of writes) {
+    write();
+  }
+}
+
+function enqueueMeasure(task: MeasureTask): void {
+  pendingMeasures.add(task);
+  if (sharedFrameId === null) {
+    sharedFrameId = window.requestAnimationFrame(flushMeasures);
+  }
+}
+
+function cancelMeasure(task: MeasureTask): void {
+  pendingMeasures.delete(task);
+  if (pendingMeasures.size === 0 && sharedFrameId !== null) {
+    window.cancelAnimationFrame(sharedFrameId);
+    sharedFrameId = null;
+  }
 }
 
 const TAG_ROW_CLASS = "flex flex-wrap content-start items-start gap-1.5 [&>*]:h-6";
@@ -20,20 +54,17 @@ const ProjectCardTags = memo(function ProjectCardTags({ tags }: ProjectCardTagsP
   const clampedVisibleCount = Math.min(visibleCount, tags.length);
   const hiddenCount = tags.length - clampedVisibleCount;
 
-  useLayoutEffect((): (() => void) | undefined => {
+  useEffect((): (() => void) | undefined => {
     if (tags.length === 0) return;
     const container = containerRef.current;
     const measurement = measurementRef.current;
     const counter = counterRef.current;
     if (!container || !measurement || !counter) return;
 
-    let frameId: number | null = null;
-
-    function measure(): void {
-      if (!container || !measurement || !counter) return;
-      // 单阶段读取全部几何信息，不在测量循环内写 DOM，避免强制同步回流。
+    const readLayout: MeasureTask = () => {
+      // 全页所有卡片在同一 rAF 内先集中读几何信息，再集中写入状态，避免交错读写触发多次同步回流。
       const bounds = container.getBoundingClientRect();
-      if (bounds.width <= 0 || bounds.height <= 0) return;
+      if (bounds.width <= 0 || bounds.height <= 0) return null;
       const tagBounds = Array.from(measurement.children)
         .slice(0, tags.length)
         .map((element) => element.getBoundingClientRect());
@@ -44,8 +75,8 @@ const ProjectCardTags = memo(function ProjectCardTags({ tags }: ProjectCardTagsP
 
       let count = tagBounds.findIndex((tag) => tag.bottom > bounds.bottom + 0.5);
       if (count === -1) {
-        setVisibleCount((current) => (current === tags.length ? current : tags.length));
-        return;
+        return () =>
+          setVisibleCount((current) => (current === tags.length ? current : tags.length));
       }
 
       for (; count >= 0; count--) {
@@ -58,23 +89,18 @@ const ProjectCardTags = memo(function ProjectCardTags({ tags }: ProjectCardTagsP
         if (fitsOnLastRow || fitsOnNextRow) break;
       }
 
-      setVisibleCount((current) => (current === count ? current : count));
-    }
+      const nextCount = count;
+      return () => setVisibleCount((current) => (current === nextCount ? current : nextCount));
+    };
 
-    function scheduleMeasure(): void {
-      if (frameId !== null) return;
-      frameId = window.requestAnimationFrame(() => {
-        frameId = null;
-        measure();
-      });
-    }
+    const scheduleMeasure = (): void => enqueueMeasure(readLayout);
 
-    measure();
+    scheduleMeasure();
     const observer = new ResizeObserver(scheduleMeasure);
     observer.observe(container);
     return (): void => {
       observer.disconnect();
-      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      cancelMeasure(readLayout);
     };
   }, [tags]);
 

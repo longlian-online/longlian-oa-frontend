@@ -38,8 +38,8 @@ import type {
   ProjectTypeVO,
 } from "@/types/organizationAdmin";
 
-export const ORGANIZATION_ADMIN_PAGE_SIZE = 10;
-export const ORGANIZATION_ADMIN_CARD_PAGE_SIZE = 8;
+export const ORGANIZATION_ADMIN_PAGE_SIZE = 20;
+export const ORGANIZATION_ADMIN_CARD_PAGE_SIZE = 12;
 
 export function organizationMembersQuery(
   appliedFilters: MemberListFilters = MEMBER_LIST_DEFAULTS,
@@ -167,7 +167,7 @@ export function organizationProjectsQuery(
       getOrganizationProjects({
         keyword: keyword || undefined,
         pageNum: page,
-        pageSize: ORGANIZATION_ADMIN_CARD_PAGE_SIZE,
+        pageSize: ORGANIZATION_ADMIN_PAGE_SIZE,
       }),
   };
 }

@@ -29,10 +29,10 @@ import type { PlazaProjectGroup, PlazaSortBy, PlazaTaskTypeOption } from "@/type
 import type { ProjectItemListFilter, ProjectItemListVO } from "@/types/projectItem";
 import type { ItemTaskFlowVO, ItemTaskInstanceVO } from "@/types/workflowInstance";
 
-export const PLANNING_PAGE_SIZE = 12;
+export const PLANNING_PAGE_SIZE = 16;
 export const PROJECT_ITEMS_PAGE_SIZE = 4;
 export const PROJECT_MEMBERS_PAGE_SIZE = 12;
-export const PLAZA_PAGE_SIZE = 8;
+export const PLAZA_PAGE_SIZE = 15;
 export const DEFAULT_PROJECT_TIME_SORT: Required<Pick<ProjectListDTO, "sortByTime" | "orderDir">> =
   {
     sortByTime: "CREATE",

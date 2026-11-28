@@ -15,7 +15,7 @@ import type {
 } from "@/types/admin";
 import type { SystemInfoVO } from "@/types/system";
 
-export const ADMIN_PAGE_SIZE = 10;
+export const ADMIN_PAGE_SIZE = 20;
 
 export function adminListQuery(page = 1): ApiQueryOptions<AdminPageResult<AdminVO>> {
   return {

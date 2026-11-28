@@ -11,10 +11,10 @@ import type { PageResult } from "@/types/planning";
 import type { BaseTaskOption, BaseTaskVO, WorkshopTaskTemplateVO } from "@/types/workflowTemplate";
 import type { WorkshopProjectInfoVO, WorkshopSortBy } from "@/types/workshop";
 
-export const WORKSHOP_PAGE_SIZE = 6;
+export const WORKSHOP_PAGE_SIZE = 12;
 export const MY_TASK_PAGE_SIZE = 5;
 export const BASE_TASK_PAGE_SIZE = 12;
-export const WORKFLOW_PAGE_SIZE = 8;
+export const WORKFLOW_PAGE_SIZE = 12;
 export const DEFAULT_TASK_SORT: MyTaskSortDirection = "ASC";
 export const DEFAULT_WORKSHOP_SORT: WorkshopSortBy = "RECENT_SUBMISSION";
 

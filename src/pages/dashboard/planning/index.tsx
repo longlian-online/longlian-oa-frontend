@@ -23,6 +23,7 @@ import { prefetchApiQuery } from "@/lib/routeQuery";
 import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import FilterToolbar from "@/components/FilterToolbar";
+import ListPageLayout from "@/components/ListPageLayout";
 import PageLoading from "@/components/PageLoading";
 import PaginationBar from "@/components/PaginationBar";
 import ProjectCardTags from "@/components/ProjectCardTags";
@@ -223,7 +224,7 @@ export default function Planning() {
   );
 
   return (
-    <div className="space-y-6" aria-busy={listQuery.isFetching || undefined}>
+    <ListPageLayout className="gap-6" aria-busy={listQuery.isFetching || undefined}>
       <PlanningFilterBar
         submittedKeyword={submittedKeyword}
         selectedType={selectedType}
@@ -235,12 +236,12 @@ export default function Planning() {
       />
 
       {listQuery.isError && !listQuery.data ? (
-        <div role="alert">
+        <div role="alert" className="my-auto flex flex-col items-center gap-3 text-sm">
           {listQuery.error.message}
           <Button onClick={() => void listQuery.refetch()}>重试</Button>
         </div>
       ) : loading ? (
-        <PageLoading message="正在加载企划..." />
+        <PageLoading message="正在加载企划..." className="flex-1" />
       ) : (
         <>
           {projects.length === 0 ? (
@@ -300,6 +301,8 @@ export default function Planning() {
           )}
 
           <PaginationBar
+            variant="page"
+            unit="个企划"
             page={pageNum}
             pageSize={PAGE_SIZE}
             total={total}
@@ -310,7 +313,7 @@ export default function Planning() {
           />
         </>
       )}
-    </div>
+    </ListPageLayout>
   );
 }
 

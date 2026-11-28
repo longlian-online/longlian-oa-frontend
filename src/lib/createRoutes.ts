@@ -83,7 +83,16 @@ export function createRoutes(
               throw redirect("/admin/login");
             if (!getLoader) return null;
             const loader = await getLoader();
-            return await loader(args);
+            if (page === "/src/pages/dashboard.tsx") {
+              return await loader(args);
+            }
+            // 子路由异步预取不阻塞导航：同步抛错（如 404/鉴权）仍交由错误边界处理。
+            const result = loader(args);
+            if (result instanceof Promise) {
+              void result.catch(() => undefined);
+              return null;
+            }
+            return result;
           }
         : undefined,
     } as RouteObject;

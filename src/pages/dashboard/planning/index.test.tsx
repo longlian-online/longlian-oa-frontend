@@ -64,7 +64,7 @@ beforeEach((): void => {
         });
       }
       if (url.pathname.endsWith("/projects")) {
-        return json({ list: [project], total: 12, pageNum: 1, pageSize: 11, hasNext: true });
+        return json({ list: [project], total: 16, pageNum: 1, pageSize: 15, hasNext: true });
       }
       throw new Error(`未预期请求：${url.pathname}`);
     }),

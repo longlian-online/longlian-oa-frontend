@@ -90,7 +90,7 @@ async function renderPage(entry = "/admin/storage-stats"): Promise<void> {
 describe("storage stats panel", () => {
   test("restores keyword and page from a direct list URL", async () => {
     await renderPage("/admin/storage-stats?keyword=%20team%20&page=3");
-    expect(getStorageStats).toHaveBeenCalledWith({ orgName: "team", pageNum: 3, pageSize: 10 });
+    expect(getStorageStats).toHaveBeenCalledWith({ orgName: "team", pageNum: 3, pageSize: 20 });
     expect(container?.querySelector("input")?.value).toBe("team");
   });
 
@@ -107,7 +107,7 @@ describe("storage stats panel", () => {
     expect(getStorageStats).toHaveBeenCalledWith({
       orgName: "",
       pageNum: 1,
-      pageSize: 10,
+      pageSize: 20,
     });
   });
 
@@ -130,7 +130,7 @@ describe("storage stats panel", () => {
       expect(getStorageStats).toHaveBeenLastCalledWith({
         orgName: "甲组",
         pageNum: 1,
-        pageSize: 10,
+        pageSize: 20,
       }),
     );
   });

@@ -4,6 +4,7 @@ import { Check, Clock3, ExternalLink, X } from "lucide-react";
 import { reviewDeletionRequest } from "@/api/organizationAdmin";
 import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
+import ListPageLayout from "@/components/ListPageLayout";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
@@ -59,7 +60,7 @@ function DeletionRequestsContent() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <ListPageLayout className="gap-4">
       <div>
         <h1 className="text-xl font-semibold text-foreground">删除请求</h1>
       </div>
@@ -149,10 +150,17 @@ function DeletionRequestsContent() {
               </TableBody>
             </Table>
           </div>
-          <PaginationBar page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+          <PaginationBar
+            variant="page"
+            unit="条申请"
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={total}
+            onPageChange={setPage}
+          />
         </>
       )}
-    </div>
+    </ListPageLayout>
   );
 }
 

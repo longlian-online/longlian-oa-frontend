@@ -7,6 +7,7 @@ import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
 import InviteExpiryField from "@/components/InviteExpiryField";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
+import ListPageLayout from "@/components/ListPageLayout";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
@@ -142,7 +143,7 @@ function OrganizationInvitesContent(): React.JSX.Element {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <ListPageLayout className="gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-foreground">邀请码</h1>
         <div className="flex flex-wrap items-center gap-2">
@@ -307,6 +308,8 @@ function OrganizationInvitesContent(): React.JSX.Element {
             </Table>
           </div>
           <PaginationBar
+            variant="page"
+            unit="个邀请码"
             page={page}
             pageSize={PAGE_SIZE}
             total={total}
@@ -315,7 +318,7 @@ function OrganizationInvitesContent(): React.JSX.Element {
           />
         </>
       )}
-    </div>
+    </ListPageLayout>
   );
 }
 

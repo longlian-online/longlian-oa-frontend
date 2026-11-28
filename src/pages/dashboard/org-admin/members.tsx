@@ -31,6 +31,7 @@ import DateTimeField from "@/components/DateTimeField";
 import KeywordSearch from "@/components/KeywordSearch";
 import EmptyState from "@/components/EmptyState";
 import FilterSelectContent from "@/components/FilterSelectContent";
+import ListPageLayout from "@/components/ListPageLayout";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import RemoteImage from "@/components/RemoteImage";
@@ -213,7 +214,7 @@ function OrganizationMembersContent() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <ListPageLayout className="gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-foreground">成员管理</h1>
         <div className="flex flex-wrap items-center gap-2">
@@ -407,6 +408,8 @@ function OrganizationMembersContent() {
             </Table>
           </div>
           <PaginationBar
+            variant="page"
+            unit="位成员"
             page={page}
             pageSize={PAGE_SIZE}
             total={total}
@@ -579,7 +582,7 @@ function OrganizationMembersContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </ListPageLayout>
   );
 }
 

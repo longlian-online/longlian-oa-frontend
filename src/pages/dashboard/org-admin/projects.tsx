@@ -8,6 +8,7 @@ import { changeProjectStatus } from "@/api/organizationAdmin";
 import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
 import KeywordSearch from "@/components/KeywordSearch";
+import ListPageLayout from "@/components/ListPageLayout";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
@@ -25,7 +26,7 @@ import {
 import { useConfirm } from "@/hooks/useConfirm";
 
 import {
-  ORGANIZATION_ADMIN_CARD_PAGE_SIZE as PAGE_SIZE,
+  ORGANIZATION_ADMIN_PAGE_SIZE as PAGE_SIZE,
   organizationProjectsQuery,
 } from "@/queries/organizationAdmin";
 import type { OrganizationProjectStatus, OrganizationProjectVO } from "@/types/organizationAdmin";
@@ -87,7 +88,7 @@ function OrganizationAdminProjectsContent() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <ListPageLayout className="gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">企划管理</h1>
@@ -192,6 +193,8 @@ function OrganizationAdminProjectsContent() {
             </Table>
           </div>
           <PaginationBar
+            variant="page"
+            unit="个企划"
             page={page}
             pageSize={PAGE_SIZE}
             total={total}
@@ -200,7 +203,7 @@ function OrganizationAdminProjectsContent() {
           />
         </>
       )}
-    </div>
+    </ListPageLayout>
   );
 }
 

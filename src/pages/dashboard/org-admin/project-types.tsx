@@ -14,6 +14,7 @@ import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
 import KeywordSearch from "@/components/KeywordSearch";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
+import ListPageLayout from "@/components/ListPageLayout";
 import PaginationBar from "@/components/PaginationBar";
 import ProjectTypeCustomFormEditor from "@/components/ProjectTypeCustomFormEditor";
 import { $tip } from "@/components/tip";
@@ -208,7 +209,7 @@ function OrganizationProjectTypesContent() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <ListPageLayout className="gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">企划类型</h1>
@@ -345,6 +346,8 @@ function OrganizationProjectTypesContent() {
             </Table>
           </div>
           <PaginationBar
+            variant="page"
+            unit="个类型"
             page={page}
             pageSize={PAGE_SIZE}
             total={total}
@@ -416,7 +419,7 @@ function OrganizationProjectTypesContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </ListPageLayout>
   );
 }
 

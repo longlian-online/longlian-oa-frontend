@@ -27,6 +27,7 @@ import EmptyState from "@/components/EmptyState";
 import KeywordSearch from "@/components/KeywordSearch";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PageLoading from "@/components/PageLoading";
+import ListPageLayout from "@/components/ListPageLayout";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
@@ -283,7 +284,7 @@ function BaseTaskManagementContent() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <ListPageLayout className="gap-4">
       {listQuery.isFetching && listQuery.data && (
         <p role="status" className="text-sm text-muted-foreground">
           正在刷新...
@@ -406,6 +407,8 @@ function BaseTaskManagementContent() {
             })}
           </div>
           <PaginationBar
+            variant="page"
+            unit="个任务"
             page={page}
             pageSize={PAGE_SIZE}
             total={total}
@@ -580,7 +583,7 @@ function BaseTaskManagementContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </ListPageLayout>
   );
 }
 

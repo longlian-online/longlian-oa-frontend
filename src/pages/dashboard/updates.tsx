@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 
 import { ApiError } from "@/api/apiError";
 import { markProductReleaseSeen } from "@/api/productRelease";
+import ListPageLayout from "@/components/ListPageLayout";
 import PaginationBar from "@/components/PaginationBar";
 import { Button } from "@/components/ui/button";
 import { useApiQuery } from "@/hooks/queries/useApiQuery";
@@ -30,19 +31,19 @@ export default function ProductReleaseHistoryPage(): ReactElement {
   }, [latestId]);
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+    <ListPageLayout className="mx-auto w-full max-w-2xl gap-4">
       <h1 className="text-xl font-semibold">更新记录</h1>
       {query.isError && !query.data ? (
         <Button variant="outline" className="self-start" onClick={() => void query.refetch()}>
           加载失败，重试
         </Button>
       ) : query.isLoading ? (
-        <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
+        <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
           <Loader2 className="mr-2 size-4 animate-spin" />
           加载中…
         </div>
       ) : (query.data?.list.length ?? 0) === 0 ? (
-        <p className="text-sm text-muted-foreground">还没有更新说明</p>
+        <p className="my-auto text-center text-sm text-muted-foreground">还没有更新说明</p>
       ) : (
         <>
           <div className="flex flex-col gap-3">
@@ -51,6 +52,8 @@ export default function ProductReleaseHistoryPage(): ReactElement {
             ))}
           </div>
           <PaginationBar
+            variant="page"
+            unit="条记录"
             page={page}
             pageSize={ADMIN_PRODUCT_RELEASE_PAGE_SIZE}
             total={query.data?.total ?? 0}
@@ -58,7 +61,7 @@ export default function ProductReleaseHistoryPage(): ReactElement {
           />
         </>
       )}
-    </div>
+    </ListPageLayout>
   );
 }
 

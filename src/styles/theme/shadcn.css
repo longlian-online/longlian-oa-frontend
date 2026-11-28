@@ -3,35 +3,35 @@
 @layer base {
   :root {
     /* 纯净画廊浅色：零杂色偏，依靠极细腻阴影与清晰明度建立高级感 */
-    --background: oklch(98.2% 0 0);
-    --foreground: oklch(14% 0 0);
+    --background: oklch(98.5% 0 0);
+    --foreground: oklch(12% 0 0);
     --sidebar: oklch(100% 0 0);
 
     --card: oklch(100% 0 0);
-    --card-foreground: oklch(14% 0 0);
+    --card-foreground: oklch(12% 0 0);
     --surface-elevated: oklch(100% 0 0);
 
     --popover: oklch(100% 0 0);
-    --popover-foreground: oklch(14% 0 0);
+    --popover-foreground: oklch(12% 0 0);
 
     --primary: oklch(15% 0 0);
     --primary-foreground: oklch(99% 0 0);
 
     --secondary: oklch(95.5% 0 0);
-    --secondary-foreground: oklch(16% 0 0);
+    --secondary-foreground: oklch(14% 0 0);
 
     --muted: oklch(96% 0 0);
-    --muted-foreground: oklch(44% 0 0);
+    --muted-foreground: oklch(35% 0 0);
 
     --accent: oklch(95.5% 0 0);
-    --accent-foreground: oklch(14% 0 0);
+    --accent-foreground: oklch(12% 0 0);
 
     --accent-soft: oklch(95.5% 0 0);
-    --accent-soft-foreground: oklch(18% 0 0);
-    --accent-soft-border: oklch(0% 0 0 / 0.08);
+    --accent-soft-foreground: oklch(16% 0 0);
+    --accent-soft-border: oklch(0% 0 0 / 0.1);
 
-    --border: oklch(0% 0 0 / 0.07);
-    --input: oklch(0% 0 0 / 0.11);
+    --border: oklch(0% 0 0 / 0.1);
+    --input: oklch(0% 0 0 / 0.15);
     --ring: oklch(18% 0 0);
 
     /* 统一语义状态色 */
@@ -100,38 +100,38 @@
 
   /* ── Pink 主题：通透花瓣白底 + 清亮樱花玫瑰强调 ── */
   [data-color-theme="pink"] {
-    --background: oklch(98.6% 0.006 352);
-    --foreground: oklch(19% 0.015 352);
+    --background: oklch(98.8% 0.005 352);
+    --foreground: oklch(14% 0.015 352);
     --sidebar: oklch(100% 0 0);
 
     --card: oklch(100% 0 0);
-    --card-foreground: oklch(19% 0.015 352);
+    --card-foreground: oklch(14% 0.015 352);
     --surface-elevated: oklch(100% 0 0);
 
     --popover: oklch(100% 0 0);
-    --popover-foreground: oklch(19% 0.015 352);
+    --popover-foreground: oklch(14% 0.015 352);
 
     --primary: oklch(62% 0.2 352);
     --primary-foreground: oklch(99.5% 0 0);
 
     --secondary: oklch(95.5% 0.02 352);
-    --secondary-foreground: oklch(34% 0.07 352);
+    --secondary-foreground: oklch(30% 0.07 352);
 
     --muted: oklch(96.2% 0.014 352);
-    --muted-foreground: oklch(48% 0.02 352);
+    --muted-foreground: oklch(38% 0.022 352);
 
     --accent: oklch(94.5% 0.028 352);
-    --accent-foreground: oklch(34% 0.08 352);
+    --accent-foreground: oklch(30% 0.08 352);
 
     --accent-soft: oklch(95.2% 0.032 352);
-    --accent-soft-foreground: oklch(46% 0.15 352);
-    --accent-soft-border: oklch(55% 0.12 352 / 0.14);
+    --accent-soft-foreground: oklch(42% 0.16 352);
+    --accent-soft-border: oklch(55% 0.12 352 / 0.15);
 
-    --border: oklch(45% 0.07 352 / 0.085);
-    --input: oklch(45% 0.08 352 / 0.13);
+    --border: oklch(45% 0.07 352 / 0.11);
+    --input: oklch(45% 0.08 352 / 0.16);
     --ring: oklch(62% 0.18 352);
 
-    --placeholder: oklch(58% 0.018 352);
+    --placeholder: oklch(48% 0.018 352);
     --scrollbar-track: oklch(97.5% 0.006 352);
     --scrollbar-thumb: oklch(85% 0.028 352);
     --scrollbar-thumb-hover: oklch(72% 0.05 352);

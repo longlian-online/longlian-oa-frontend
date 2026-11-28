@@ -21,5 +21,9 @@ export default function PageContainer({
   className,
   children,
 }: PageContainerProps): ReactElement {
-  return <div className={cn("min-w-0", SIZE_CLASSES[size], className)}>{children}</div>;
+  return (
+    <div className={cn("flex min-h-full min-w-0 flex-col", SIZE_CLASSES[size], className)}>
+      {children}
+    </div>
+  );
 }

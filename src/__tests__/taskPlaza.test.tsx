@@ -57,7 +57,7 @@ beforeEach((): void => {
         return new Response(JSON.stringify({ code: 0, data: [{ id: "1", name: "漫画" }] }));
       }
       const data = url.pathname.endsWith("/plaza")
-        ? { list: groups, total: groups.length ? 9 : 0 }
+        ? { list: groups, total: groups.length ? 16 : 0 }
         : [];
       return new Response(JSON.stringify({ code: 0, data }));
     }),
@@ -207,9 +207,9 @@ test("URL 直达恢复所有筛选及独立任务页码，不发送默认列表�
   );
   await waitFor((): void => {
     expect(button("任务类型").textContent).toContain("校对");
-    expect(button("展开企划21", section("21"))).toBeDefined();
+    expect(button("收起企划21", section("21"))).toBeDefined();
+    expect(button("展开企划22", section("22"))).toBeDefined();
   });
-  await expandGroup("21");
   await expandGroup("22");
   expect(visibleTaskNames("21")).toEqual(["21任务12"]);
   expect(visibleTaskNames("22")).toEqual(["22任务6"]);
@@ -231,7 +231,6 @@ test("任务类型按 ID 查询，切换重置两层页码，清除恢复全部"
   await mount("?keep=1&page=2");
   await waitFor((): void => expect(button("任务类型").disabled).toBe(false));
   expect(lastPlazaRequest()?.searchParams.has("baseTaskId")).toBe(false);
-  await expandGroup("21");
   await chooseTaskPage("21", 2);
   expect(visibleTaskNames("21")[0]).toBe("21任务6");
   await chooseFilter("任务类型", "翻译");
@@ -239,10 +238,8 @@ test("任务类型按 ID 查询，切换重置两层页码，清除恢复全部"
     expect(lastPlazaRequest()?.searchParams.get("baseTaskId")).toBe("101");
     expect(lastPlazaRequest()?.searchParams.get("pageNum")).toBe("1");
     expect(container.querySelector("output")?.textContent).toBe("?keep=1&taskType=101");
-    expect(visibleTaskNames("21")).toEqual([]);
+    expect(visibleTaskNames("21")[0]).toBe("21任务0");
   });
-  await expandGroup("21");
-  expect(visibleTaskNames("21")[0]).toBe("21任务0");
   await click("下一页");
   await waitFor((): void => {
     expect(lastPlazaRequest()?.searchParams.get("pageNum")).toBe("2");
@@ -281,7 +278,6 @@ test("任务类型与关键词、企划类型、排序和阶段组合并在接�
     expect(lastPlazaRequest()?.searchParams.get("sortBy")).toBe("MOST");
     expect(lastPlazaRequest()?.searchParams.get("stageScope")).toBe("CURRENT");
   });
-  await expandGroup("21");
   groups = [];
   await click("接取");
   await waitFor((): void => expect(container.textContent).toContain("当前没有待接取任务"));
@@ -295,8 +291,6 @@ test("任务类型选项失败可重试，不影响大厅列表", async (): Prom
   await mount();
   await waitFor((): void => expect(container.textContent).toContain("任务类型加载失败"));
   expect(button("任务类型").disabled).toBe(true);
-  expect(visibleTaskNames("21")).toEqual([]);
-  await expandGroup("21");
   expect(visibleTaskNames("21")).toEqual(["21任务0"]);
   taskTypesFail = false;
   await click("重试任务类型");
@@ -311,8 +305,6 @@ test("切换阶段重置企划和任务页码，说明操作保留任务页码",
   await waitFor((): void =>
     expect(section("21").querySelector('[aria-label="待接取任务数 7"]')).not.toBeNull(),
   );
-  expect(visibleTaskNames("21")).toEqual([]);
-  await expandGroup("21");
   expect(visibleTaskNames("21")).toEqual(
     groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
   );
@@ -321,7 +313,6 @@ test("切换阶段重置企划和任务页码，说明操作保留任务页码",
     expect(requests.at(-1)?.searchParams.get("pageNum")).toBe("2");
     expect(container.querySelector("output")?.textContent).toBe("?keep=1&page=2");
   });
-  await expandGroup("21");
   await click("下一页任务");
   expect(visibleTaskNames("21")).toEqual(["21任务6"]);
   await click("当前阶段说明");
@@ -334,22 +325,18 @@ test("切换阶段重置企划和任务页码，说明操作保留任务页码",
     expect(requests.at(-1)?.searchParams.get("stageScope")).toBe("CURRENT");
     expect(requests.at(-1)?.searchParams.get("sortBy")).toBe("WAIT");
     expect(container.querySelector("output")?.textContent).toBe("?keep=1&stageScope=CURRENT");
-    expect(visibleTaskNames("21")).toEqual([]);
-    expect(button("展开企划21", section("21"))).toBeDefined();
+    expect(visibleTaskNames("21")).toEqual(
+      groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
+    );
+    expect(button("收起企划21", section("21"))).toBeDefined();
   });
-  await expandGroup("21");
-  expect(visibleTaskNames("21")).toEqual(
-    groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
-  );
   await click("后退");
   await waitFor((): void => {
     expect(container.querySelector("output")?.textContent).toBe("?keep=1&page=2&taskPage_21=2");
-    expect(visibleTaskNames("21")).toEqual([]);
+    expect(visibleTaskNames("21")).toEqual(["21任务6"]);
     expect(button("全部阶段").getAttribute("aria-pressed")).toBe("true");
     expect(button("当前阶段").getAttribute("aria-pressed")).toBe("false");
   });
-  await expandGroup("21");
-  expect(visibleTaskNames("21")).toEqual(["21任务6"]);
 });
 
 test("企划独立翻页，末页只展示剩余任务，单页不显示分页", async (): Promise<void> => {
@@ -358,7 +345,6 @@ test("企划独立翻页，末页只展示剩余任务，单页不显示分页",
   await waitFor((): void =>
     expect(section("23").querySelector('[aria-label="待接取任务数 6"]')).not.toBeNull(),
   );
-  await expandGroup("21");
   await expandGroup("22");
   await expandGroup("23");
   expect(visibleTaskNames("21")).toEqual(
@@ -389,7 +375,6 @@ test("选择页码直接跳转，其他企划和企划列表页码保持不变",
   await waitFor((): void =>
     expect(section("22").querySelector('[aria-label="待接取任务数 7"]')).not.toBeNull(),
   );
-  await expandGroup("21");
   await expandGroup("22");
   expect(visibleTaskNames("21")).toEqual(
     groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
@@ -414,7 +399,6 @@ test("刷新后末页任务减少时回退到有效页，任务恢复后不跳�
   await waitFor((): void =>
     expect(section("21").querySelector('[aria-label="待接取任务数 13"]')).not.toBeNull(),
   );
-  await expandGroup("21");
   expect(visibleTaskNames("21")).toEqual(
     groups[0]!.tasks.slice(0, 6).map((task): string => task.nodeName),
   );
@@ -439,20 +423,16 @@ test("刷新后末页任务减少时回退到有效页，任务恢复后不跳�
   });
 });
 
-test("企划可独立展开收起，任务翻页在卡片网格底部居中", async (): Promise<void> => {
+test("企划可独立展开收起，默认展开首项，任务翻页在卡片网格底部居中", async (): Promise<void> => {
   groups = [makeGroup("21", 7), makeGroup("22", 1)];
   await mount();
   await waitFor((): void => expect(section("22").textContent).not.toContain("组缺"));
-  expect(visibleTaskNames("21")).toEqual([]);
+  expect(button("收起企划21", section("21")).getAttribute("aria-expanded")).toBe("true");
+  expect(visibleTaskNames("21")).toHaveLength(6);
   expect(visibleTaskNames("22")).toEqual([]);
   const detailsLink = section("21").querySelector("a");
   expect(detailsLink?.textContent?.trim()).toBe("作品详细");
   expect(detailsLink?.getAttribute("href")).toBe("/dashboard/planning/21");
-  const title = section("21").querySelector<HTMLElement>('button span[title="企划21"]');
-  await act(async (): Promise<void> => title!.click());
-  expect(button("收起企划21", section("21")).getAttribute("aria-expanded")).toBe("true");
-  expect(visibleTaskNames("21")).toHaveLength(6);
-  expect(visibleTaskNames("22")).toEqual([]);
   const nav = section("21").querySelector("nav");
   const header = section("21").firstElementChild;
   expect(nav?.className).toContain("justify-center");
@@ -461,7 +441,9 @@ test("企划可独立展开收起，任务翻页在卡片网格底部居中", as
   await expandGroup("22");
   expect(visibleTaskNames("22")).toEqual(["22任务0"]);
   expect(section("22").querySelector("nav")).toBeNull();
-  await click("收起企划21", section("21"));
+  const title = section("21").querySelector<HTMLElement>('button span[title="企划21"]');
+  await act(async (): Promise<void> => title!.click());
+  expect(button("展开企划21", section("21")).getAttribute("aria-expanded")).toBe("false");
   expect(visibleTaskNames("21")).toEqual([]);
   expect(section("21").querySelector("nav")).toBeNull();
   expect(visibleTaskNames("22")).toEqual(["22任务0"]);
@@ -480,7 +462,6 @@ test("任务卡展示原子任务图标，未配置时按名称兜底", async ()
   groups = [group];
   await mount();
   await waitFor((): void => expect(section("60").textContent).toContain("企划60"));
-  await expandGroup("60");
   const panel = section("60").querySelector(":scope > div[id]");
   const cards = panel ? Array.from(panel.children) : [];
   expect(cards).toHaveLength(3);
@@ -610,7 +591,7 @@ test("触屏点击说明可开关，外部点击可关闭，不误切筛选", as
   expect(container.querySelector("output")?.textContent).toBe("?stageScope=CURRENT");
 });
 
-test("缩略图悬停展示完整封面，移出后收起且点击仍展开任务", async (): Promise<void> => {
+test("缩略图悬停展示完整封面，移出后收起且点击仍可切换展开", async (): Promise<void> => {
   groups = [
     {
       ...makeGroup("1", 1),
@@ -619,7 +600,7 @@ test("缩略图悬停展示完整封面，移出后收起且点击仍展开任�
     },
   ];
   await mount();
-  await waitFor(() => expect(button("展开企划1").getAttribute("aria-expanded")).toBe("false"));
+  await waitFor(() => expect(button("收起企划1").getAttribute("aria-expanded")).toBe("true"));
   const image = section("1").querySelector("img")!;
   expect(image.getAttribute("src")).toBe(groups[0].thumbnailUrl);
   expect(document.querySelector('[alt="企划1封面"]')).toBeNull();
@@ -633,7 +614,7 @@ test("缩略图悬停展示完整封面，移出后收起且点击仍展开任�
       groups[0].coverUrl,
     );
   });
-  expect(button("展开企划1").getAttribute("aria-expanded")).toBe("false");
+  expect(button("收起企划1").getAttribute("aria-expanded")).toBe("true");
   await act(async () => {
     trigger.dispatchEvent(
       new MouseEvent("mouseout", { bubbles: true, relatedTarget: document.body }),
@@ -644,6 +625,9 @@ test("缩略图悬停展示完整封面，移出后收起且点击仍展开任�
   });
   await waitFor(() => expect(document.querySelector('[alt="企划1封面"]')).toBeNull());
   await act(async () => image.click());
+  expect(button("展开企划1").getAttribute("aria-expanded")).toBe("false");
+  expect(visibleTaskNames("1")).toEqual([]);
+  await act(async () => image.click());
   expect(button("收起企划1").getAttribute("aria-expanded")).toBe("true");
   expect(visibleTaskNames("1")).toEqual(["1任务0"]);
 });
@@ -651,7 +635,7 @@ test("缩略图悬停展示完整封面，移出后收起且点击仍展开任�
 test("快速经过缩略图不会在离开后弹出封面", async (): Promise<void> => {
   groups = [{ ...makeGroup("1", 1), coverUrl: "https://example.test/cover.webp" }];
   await mount();
-  await waitFor(() => expect(button("展开企划1").getAttribute("aria-expanded")).toBe("false"));
+  await waitFor(() => expect(button("收起企划1").getAttribute("aria-expanded")).toBe("true"));
   const trigger = section("1").querySelector<HTMLElement>('[data-slot="project-cover-trigger"]')!;
   vi.useFakeTimers();
   await act(async () => {
@@ -665,10 +649,10 @@ test("快速经过缩略图不会在离开后弹出封面", async (): Promise<vo
     await vi.advanceTimersByTimeAsync(200);
   });
   expect(document.querySelector('[alt="企划1封面"]')).toBeNull();
-  expect(button("展开企划1").getAttribute("aria-expanded")).toBe("false");
+  expect(button("收起企划1").getAttribute("aria-expanded")).toBe("true");
 });
 
-test("只有缩略图或无图片时不弹出封面且仍可展开", async (): Promise<void> => {
+test("只有缩略图或无图片时不弹出封面且仍可切换展开", async (): Promise<void> => {
   groups = [
     { ...makeGroup("1", 1), thumbnailUrl: "https://example.test/thumbnail.webp" },
     makeGroup("2", 1),
@@ -676,10 +660,13 @@ test("只有缩略图或无图片时不弹出封面且仍可展开", async (): P
   await mount();
   await waitFor(() => expect(button("展开企划2").getAttribute("aria-expanded")).toBe("false"));
   vi.useFakeTimers();
-  for (const projectId of ["1", "2"]) {
-    const trigger = button(`展开企划${projectId}`).querySelector<HTMLElement>(
-      "[data-slot=remote-image], span.bg-muted",
-    )!;
+  for (const [projectId, initialExpanded] of [
+    ["1", true],
+    ["2", false],
+  ] as const) {
+    const trigger = button(
+      `${initialExpanded ? "收起" : "展开"}企划${projectId}`,
+    ).querySelector<HTMLElement>("[data-slot=remote-image], span.size-10")!;
     await act(async () => {
       trigger.dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
       trigger.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
@@ -687,6 +674,8 @@ test("只有缩略图或无图片时不弹出封面且仍可展开", async (): P
     });
     expect(document.querySelector(`[alt="企划${projectId}封面"]`)).toBeNull();
     await act(async () => trigger.click());
-    expect(button(`收起企划${projectId}`).getAttribute("aria-expanded")).toBe("true");
+    expect(
+      button(`${initialExpanded ? "展开" : "收起"}企划${projectId}`).getAttribute("aria-expanded"),
+    ).toBe(String(!initialExpanded));
   }
 });
