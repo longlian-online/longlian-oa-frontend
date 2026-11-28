@@ -122,8 +122,8 @@ export default function StorageStatsPage() {
 
   return (
     <AdminLayout title="存储占用">
-      <Card>
-        <CardContent className="p-4 sm:p-6">
+      <Card className="flex flex-1 flex-col">
+        <CardContent className="flex flex-1 flex-col p-4 sm:p-6">
           <div className="mb-2 flex gap-2">
             <Input
               value={searchText}
@@ -141,11 +141,15 @@ export default function StorageStatsPage() {
             </Button>
           </div>
           {listQuery.isError && !listQuery.data ? (
-            <Button variant="outline" onClick={() => void listQuery.refetch()}>
+            <Button
+              variant="outline"
+              className="self-start"
+              onClick={() => void listQuery.refetch()}
+            >
               加载失败，重试
             </Button>
           ) : listQuery.isLoading ? (
-            <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
+            <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
               <Loader2 className="mr-2 size-4 animate-spin" />
               加载中...
             </div>
@@ -154,6 +158,7 @@ export default function StorageStatsPage() {
               icon={<HardDrive className="size-5 text-muted-foreground" />}
               title="暂无组织"
               description="当前没有符合条件的组织。"
+              className="my-auto"
             />
           ) : (
             <>
@@ -161,12 +166,14 @@ export default function StorageStatsPage() {
                 <OrganizationStorage key={organization.id} organization={organization} />
               ))}
               <PaginationBar
+                variant="page"
+                unit="个组织"
                 page={page}
                 pageSize={PAGE_SIZE}
                 total={total}
                 disabled={listQuery.isLoading}
                 onPageChange={setPage}
-                className="mt-4"
+                className="pt-4"
               />
             </>
           )}

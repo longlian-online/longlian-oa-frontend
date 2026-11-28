@@ -9,6 +9,10 @@ interface PaginationBarProps {
   total: number;
   /** 显式传入总页数；不传时按 ceil(total/pageSize) 估算（适用于每页条数恒定的列表）。 */
   totalPages?: number;
+  /** 整页列表底栏模式：贴底展示并保留单页总数收尾；默认 inline 仅在多页时渲染页码。 */
+  variant?: "inline" | "page";
+  /** 汇总单位文案，默认 "条"。 */
+  unit?: string;
   disabled?: boolean;
   className?: string;
   onPageChange: (page: number) => void;
@@ -51,6 +55,8 @@ export default function PaginationBar({
   pageSize,
   total,
   totalPages: totalPagesProp,
+  variant = "inline",
+  unit = "条",
   disabled = false,
   className,
   onPageChange,
@@ -58,8 +64,13 @@ export default function PaginationBar({
 }: PaginationBarProps) {
   const totalPages = totalPagesProp ?? Math.max(1, Math.ceil(total / pageSize));
   const normalizedPage = Math.min(Math.max(page, 1), totalPages);
+  const isPageFooter = variant === "page";
 
-  if (totalPages <= 1) {
+  if (isPageFooter) {
+    if (total <= 0) {
+      return null;
+    }
+  } else if (totalPages <= 1) {
     return null;
   }
 
@@ -70,8 +81,8 @@ export default function PaginationBar({
     onPagePrefetch?.(targetPage);
   }
 
-  return (
-    <div className={cn("flex justify-center pt-2", className)}>
+  const nav =
+    totalPages > 1 ? (
       <nav aria-label="分页" className="flex h-9 items-center gap-1.5 tabular-nums">
         <Button
           type="button"
@@ -129,6 +140,25 @@ export default function PaginationBar({
           <ChevronRight data-icon="inline-end" />
         </Button>
       </nav>
-    </div>
-  );
+    ) : null;
+
+  if (isPageFooter) {
+    return (
+      <div
+        className={cn(
+          "mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4",
+          className,
+        )}
+      >
+        <p className="text-xs tabular-nums text-muted-foreground">
+          {totalPages <= 1
+            ? `共 ${total} ${unit} · 已显示全部`
+            : `共 ${total} ${unit} · 第 ${normalizedPage} / ${totalPages} 页`}
+        </p>
+        {nav}
+      </div>
+    );
+  }
+
+  return <div className={cn("flex justify-center pt-2", className)}>{nav}</div>;
 }

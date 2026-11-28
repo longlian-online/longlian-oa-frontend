@@ -84,7 +84,7 @@ export default function WorkshopPage() {
   }
 
   return (
-    <div ref={rootRef} className="flex min-w-0 flex-col gap-6 overflow-x-hidden">
+    <div ref={rootRef} className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-x-hidden">
       <h1 className="text-xl font-semibold tracking-tight text-foreground">工坊</h1>
 
       <section className="flex min-w-0 flex-col gap-3">
@@ -133,7 +133,7 @@ export default function WorkshopPage() {
         </div>
       </section>
 
-      <section className="flex min-w-0 flex-col gap-3.5">
+      <section className="flex min-w-0 flex-1 flex-col gap-3.5">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-foreground">企划</h2>
           <Select
@@ -281,15 +281,15 @@ export default function WorkshopPage() {
               ))}
             </div>
 
-            {total > PAGE_SIZE && (
-              <PaginationBar
-                page={page}
-                pageSize={PAGE_SIZE}
-                total={total}
-                disabled={loading}
-                onPageChange={(next) => updateView({ page: next })}
-              />
-            )}
+            <PaginationBar
+              variant="page"
+              unit="个企划"
+              page={page}
+              pageSize={PAGE_SIZE}
+              total={total}
+              disabled={loading}
+              onPageChange={(next) => updateView({ page: next })}
+            />
           </>
         )}
       </section>

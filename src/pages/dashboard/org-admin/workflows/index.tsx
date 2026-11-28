@@ -8,6 +8,7 @@ import { changeTaskTemplateStatus } from "@/api/organizationAdmin";
 import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
 import KeywordSearch from "@/components/KeywordSearch";
+import ListPageLayout from "@/components/ListPageLayout";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import { WorkflowTemplateCard } from "@/components/WorkflowTemplate";
@@ -77,7 +78,7 @@ function OrganizationAdminWorkflowsContent() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
+    <ListPageLayout className="gap-4 overflow-x-hidden">
       <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">工作流</h1>
@@ -131,6 +132,8 @@ function OrganizationAdminWorkflowsContent() {
           </div>
 
           <PaginationBar
+            variant="page"
+            unit="个模板"
             page={page}
             pageSize={PAGE_SIZE}
             total={total}
@@ -139,7 +142,7 @@ function OrganizationAdminWorkflowsContent() {
           />
         </>
       )}
-    </div>
+    </ListPageLayout>
   );
 }
 

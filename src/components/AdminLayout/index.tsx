@@ -134,8 +134,8 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           </div>
         </header>
         <main className="flex-1 overflow-y-auto px-6 py-6">
-          <PageTransition>
-            <div className="mb-5">
+          <PageTransition className="min-h-full">
+            <div className="mb-5 shrink-0">
               <h1 className="text-xl font-semibold">{title}</h1>
             </div>
             {children}

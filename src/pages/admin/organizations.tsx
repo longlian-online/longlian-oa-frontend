@@ -8,6 +8,7 @@ import { changeAdminOrganizationStatus, createOrganizationInviteCode } from "@/a
 import AdminLayout from "@/components/AdminLayout";
 import InviteExpiryField from "@/components/InviteExpiryField";
 import EmptyState from "@/components/EmptyState";
+import ListPageLayout from "@/components/ListPageLayout";
 import PaginationBar from "@/components/PaginationBar";
 import { $tip } from "@/components/tip";
 import { formatDate } from "@/lib/format";
@@ -120,107 +121,113 @@ export default function AdminOrganizationsPage() {
 
   return (
     <AdminLayout title="组织管理">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex gap-2">
-          <Input
-            value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") void handleSearch();
-            }}
-            placeholder="搜索组织名称"
-            className="w-56"
-          />
-          <Button type="button" variant="outline" onClick={() => void handleSearch()}>
-            搜索
+      <ListPageLayout className="gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex gap-2">
+            <Input
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void handleSearch();
+              }}
+              placeholder="搜索组织名称"
+              className="w-56"
+            />
+            <Button type="button" variant="outline" onClick={() => void handleSearch()}>
+              搜索
+            </Button>
+          </div>
+          <Button
+            type="button"
+            disabled={createOrganizationInviteCodeMutation.isPending}
+            onClick={() => setInviteOpen(true)}
+          >
+            <KeyRound className="size-4" />
+            生成创建邀请码
           </Button>
         </div>
-        <Button
-          type="button"
-          disabled={createOrganizationInviteCodeMutation.isPending}
-          onClick={() => setInviteOpen(true)}
-        >
-          <KeyRound className="size-4" />
-          生成创建邀请码
-        </Button>
-      </div>
-      {listQuery.isError && !listQuery.data ? (
-        <Button variant="outline" onClick={() => void listQuery.refetch()}>
-          加载失败，重试
-        </Button>
-      ) : loading ? (
-        <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 size-4 animate-spin" />
-          加载中...
-        </div>
-      ) : organizations.length === 0 ? (
-        <EmptyState
-          icon={<Building2 className="size-5 text-muted-foreground" />}
-          title="暂无组织"
-          description="当前没有符合条件的组织。"
-        />
-      ) : (
-        <>
-          <div className="overflow-x-auto rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>组织</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead>创建时间</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {organizations.map((organization) => (
-                  <TableRow key={organization.id}>
-                    <TableCell className="font-medium">{organization.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={organization.status === "ENABLED" ? "default" : "secondary"}>
-                        {organization.status === "ENABLED" ? "启用" : "禁用"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatDate(organization.createdAt)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        aria-label={organization.status === "DISABLED" ? "启用组织" : "禁用组织"}
-                        title={organization.status === "DISABLED" ? "启用组织" : "禁用组织"}
-                        disabled={workingId === organization.id}
-                        className={
-                          organization.status === "DISABLED"
-                            ? "text-muted-foreground"
-                            : "text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        }
-                        onClick={() => void handleStatusChange(organization)}
-                      >
-                        {workingId === organization.id ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : organization.status === "DISABLED" ? (
-                          <CheckCircle2 className="size-4" />
-                        ) : (
-                          <Ban className="size-4" />
-                        )}
-                        {organization.status === "ENABLED" ? "禁用" : "启用"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        {listQuery.isError && !listQuery.data ? (
+          <Button variant="outline" className="self-start" onClick={() => void listQuery.refetch()}>
+            加载失败，重试
+          </Button>
+        ) : loading ? (
+          <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+            <Loader2 className="mr-2 size-4 animate-spin" />
+            加载中...
           </div>
-          <PaginationBar
-            page={page}
-            pageSize={PAGE_SIZE}
-            total={total}
-            disabled={loading}
-            onPageChange={setPage}
-            className="mt-4"
+        ) : organizations.length === 0 ? (
+          <EmptyState
+            icon={<Building2 className="size-5 text-muted-foreground" />}
+            title="暂无组织"
+            description="当前没有符合条件的组织。"
+            className="my-auto"
           />
-        </>
-      )}
+        ) : (
+          <>
+            <div className="overflow-x-auto rounded-xl border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>组织</TableHead>
+                    <TableHead>状态</TableHead>
+                    <TableHead>创建时间</TableHead>
+                    <TableHead className="text-right">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {organizations.map((organization) => (
+                    <TableRow key={organization.id}>
+                      <TableCell className="font-medium">{organization.name}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={organization.status === "ENABLED" ? "default" : "secondary"}
+                        >
+                          {organization.status === "ENABLED" ? "启用" : "禁用"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{formatDate(organization.createdAt)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          aria-label={organization.status === "DISABLED" ? "启用组织" : "禁用组织"}
+                          title={organization.status === "DISABLED" ? "启用组织" : "禁用组织"}
+                          disabled={workingId === organization.id}
+                          className={
+                            organization.status === "DISABLED"
+                              ? "text-muted-foreground"
+                              : "text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          }
+                          onClick={() => void handleStatusChange(organization)}
+                        >
+                          {workingId === organization.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : organization.status === "DISABLED" ? (
+                            <CheckCircle2 className="size-4" />
+                          ) : (
+                            <Ban className="size-4" />
+                          )}
+                          {organization.status === "ENABLED" ? "禁用" : "启用"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <PaginationBar
+              variant="page"
+              unit="个组织"
+              page={page}
+              pageSize={PAGE_SIZE}
+              total={total}
+              disabled={loading}
+              onPageChange={setPage}
+            />
+          </>
+        )}
+      </ListPageLayout>
       <Dialog open={inviteOpen} onOpenChange={handleInviteOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

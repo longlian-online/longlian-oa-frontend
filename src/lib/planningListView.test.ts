@@ -36,8 +36,8 @@ test("解析中文筛选并使请求条件和分页偏移一致", (): void => {
     "list",
     {
       pageNum: 3,
-      pageSize: 12,
-      offset: 23,
+      pageSize: 16,
+      offset: 31,
       keyword: "百合",
       projectType: "漫画",
       sortByTime: "UPDATE",

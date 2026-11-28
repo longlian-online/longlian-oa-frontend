@@ -49,7 +49,7 @@ describe("组织管理列表预取", () => {
     expect(vi.mocked(fetchApiQuery).mock.calls[0][0].key).toEqual([
       "templates",
       "management",
-      { keyword: "hello", pageNum: 4, pageSize: 8 },
+      { keyword: "hello", pageNum: 4, pageSize: 12 },
     ]);
   });
 

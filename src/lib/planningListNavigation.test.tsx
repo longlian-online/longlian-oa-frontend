@@ -111,8 +111,8 @@ function expectFilteredRequests(): void {
   for (const params of requests) {
     expect(Object.fromEntries(params)).toMatchObject({
       pageNum: "3",
-      pageSize: "12",
-      offset: "23",
+      pageSize: "16",
+      offset: "31",
       keyword: "百合",
       projectType: "漫画",
       sortByTime: "CREATE",

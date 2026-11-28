@@ -5,6 +5,7 @@ import { Loader2, ScrollText } from "lucide-react";
 
 import AdminLayout from "@/components/AdminLayout";
 import EmptyState from "@/components/EmptyState";
+import ListPageLayout from "@/components/ListPageLayout";
 import PaginationBar from "@/components/PaginationBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export default function ProductReleaseListPage(): ReactElement {
 
   return (
     <AdminLayout title="产品版本">
-      <div className="flex flex-col gap-4">
+      <ListPageLayout className="gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-1">
             {FILTERS.map((filter) => {
@@ -71,7 +72,7 @@ export default function ProductReleaseListPage(): ReactElement {
             加载失败，重试
           </Button>
         ) : query.isLoading ? (
-          <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
+          <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
             <Loader2 className="mr-2 size-4 animate-spin" />
             加载中…
           </div>
@@ -80,40 +81,45 @@ export default function ProductReleaseListPage(): ReactElement {
             icon={<ScrollText className="size-5 text-muted-foreground" />}
             title="还没有产品版本"
             description="新建一条草稿，发布后用户才会看到更新说明。"
+            className="my-auto"
           />
         ) : (
-          <div className="flex flex-col gap-3">
-            {query.data?.list.map((release) => (
-              <Link
-                key={release.id}
-                to={`/admin/product-releases/${release.id}`}
-                state={returnState}
-                className="flex flex-col gap-1 rounded-xl border p-4 transition-colors hover:bg-muted"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">{formatProductVersion(release.version)}</span>
-                  <Badge variant={release.status === "PUBLISHED" ? "outline" : "secondary"}>
-                    {statusLabel(release.status)}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  前端 {release.frontendVersion} · 后端 {release.backendVersion}
-                </p>
-                {release.title ? <p className="text-sm">{release.title}</p> : null}
-                <p className="text-xs text-muted-foreground">
-                  {formatReleaseTime(release.publishedAt || release.updatedAt)}
-                </p>
-              </Link>
-            ))}
+          <>
+            <div className="flex flex-col gap-3">
+              {query.data?.list.map((release) => (
+                <Link
+                  key={release.id}
+                  to={`/admin/product-releases/${release.id}`}
+                  state={returnState}
+                  className="flex flex-col gap-1 rounded-xl border p-4 transition-colors hover:bg-muted"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold">{formatProductVersion(release.version)}</span>
+                    <Badge variant={release.status === "PUBLISHED" ? "outline" : "secondary"}>
+                      {statusLabel(release.status)}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    前端 {release.frontendVersion} · 后端 {release.backendVersion}
+                  </p>
+                  {release.title ? <p className="text-sm">{release.title}</p> : null}
+                  <p className="text-xs text-muted-foreground">
+                    {formatReleaseTime(release.publishedAt || release.updatedAt)}
+                  </p>
+                </Link>
+              ))}
+            </div>
             <PaginationBar
+              variant="page"
+              unit="个版本"
               page={page}
               pageSize={ADMIN_PRODUCT_RELEASE_PAGE_SIZE}
               total={query.data?.total ?? 0}
               onPageChange={setPage}
             />
-          </div>
+          </>
         )}
-      </div>
+      </ListPageLayout>
     </AdminLayout>
   );
 }

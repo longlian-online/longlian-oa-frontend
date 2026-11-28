@@ -7,6 +7,7 @@ import { useListQueryState, useListSearchDraft } from "@/hooks/useListQueryState
 import { WORKFLOW_PAGE_SIZE as PAGE_SIZE, workflowListQuery } from "@/queries/workshop";
 import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
+import ListPageLayout from "@/components/ListPageLayout";
 import PaginationBar from "@/components/PaginationBar";
 import { CreateWorkflowTemplateCard, WorkflowTemplateCard } from "@/components/WorkflowTemplate";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,7 @@ function WorkshopWorkflowsPageContent() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
+    <ListPageLayout className="gap-4 overflow-x-hidden">
       {listQuery.isFetching && listQuery.data && (
         <p role="status" className="text-sm text-muted-foreground">
           正在刷新...
@@ -98,6 +99,8 @@ function WorkshopWorkflowsPageContent() {
           </div>
 
           <PaginationBar
+            variant="page"
+            unit="个模板"
             page={page}
             pageSize={PAGE_SIZE}
             total={total}
@@ -106,7 +109,7 @@ function WorkshopWorkflowsPageContent() {
           />
         </>
       )}
-    </div>
+    </ListPageLayout>
   );
 }
 

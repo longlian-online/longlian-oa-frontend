@@ -8,6 +8,7 @@ import { reviewJoinApplication } from "@/api/organizationAdmin";
 import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
 import KeywordSearch from "@/components/KeywordSearch";
+import ListPageLayout from "@/components/ListPageLayout";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
 import PaginationBar from "@/components/PaginationBar";
 import RemoteImage from "@/components/RemoteImage";
@@ -93,7 +94,7 @@ function OrganizationApplicationsContent() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <ListPageLayout className="gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">入组申请</h1>
@@ -194,6 +195,8 @@ function OrganizationApplicationsContent() {
             </Table>
           </div>
           <PaginationBar
+            variant="page"
+            unit="条申请"
             page={page}
             pageSize={PAGE_SIZE}
             total={total}
@@ -233,7 +236,7 @@ function OrganizationApplicationsContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </ListPageLayout>
   );
 }
 

@@ -10,6 +10,7 @@ import CenteredLoading from "@/components/CenteredLoading";
 import EmptyState from "@/components/EmptyState";
 import KeywordSearch from "@/components/KeywordSearch";
 import OrganizationAdminGuard from "@/components/OrganizationAdminGuard";
+import ListPageLayout from "@/components/ListPageLayout";
 import PaginationBar from "@/components/PaginationBar";
 import ProjectMetadataTag, {
   PROJECT_METADATA_TAG_COLOR_LABELS,
@@ -160,7 +161,7 @@ function OrganizationPresetTagsContent() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <ListPageLayout className="gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-semibold text-foreground">标签</h1>
         <div className="flex flex-wrap gap-2">
@@ -262,6 +263,8 @@ function OrganizationPresetTagsContent() {
             </Table>
           </div>
           <PaginationBar
+            variant="page"
+            unit="个标签"
             page={page}
             pageSize={PAGE_SIZE}
             total={total}
@@ -350,7 +353,7 @@ function OrganizationPresetTagsContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </ListPageLayout>
   );
 }
 
