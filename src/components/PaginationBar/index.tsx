@@ -150,11 +150,24 @@ export default function PaginationBar({
           className,
         )}
       >
-        <p className="text-xs tabular-nums text-muted-foreground">
-          {totalPages <= 1
-            ? `共 ${total} ${unit} · 已显示全部`
-            : `共 ${total} ${unit} · 第 ${normalizedPage} / ${totalPages} 页`}
-        </p>
+        <div className="flex items-center gap-2.5 text-[13px] tabular-nums text-muted-foreground">
+          <span>
+            共 <span className="font-medium text-foreground">{total}</span> {unit}
+          </span>
+          <span aria-hidden="true" className="h-3 w-px bg-border" />
+          {totalPages <= 1 ? (
+            <span className="rounded-full bg-secondary/80 px-2.5 py-0.5 text-xs text-muted-foreground">
+              已显示全部
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-secondary/80 px-2.5 py-0.5 text-xs text-muted-foreground">
+              <span>第</span>
+              <span className="font-medium text-foreground">{normalizedPage}</span>
+              <span>/</span>
+              <span>{totalPages} 页</span>
+            </span>
+          )}
+        </div>
         {nav}
       </div>
     );

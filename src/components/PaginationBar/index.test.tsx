@@ -16,6 +16,13 @@ test.each([3, 5])("第 %i 页保留前后相邻页码", (page: number) => {
   expect(pages).toContain(page + 1);
 });
 
+function plainText(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 test("整页底栏模式在单页时保留总数收尾，多页时展示当前页汇总", () => {
   const singlePageHtml = renderToStaticMarkup(
     <PaginationBar
@@ -27,7 +34,7 @@ test("整页底栏模式在单页时保留总数收尾，多页时展示当前�
       onPageChange={() => {}}
     />,
   );
-  expect(singlePageHtml).toContain("共 6 个企划 · 已显示全部");
+  expect(plainText(singlePageHtml)).toBe("共 6 个企划 已显示全部");
   expect(singlePageHtml).not.toContain('aria-label="分页"');
 
   const multiPageHtml = renderToStaticMarkup(
@@ -40,7 +47,7 @@ test("整页底栏模式在单页时保留总数收尾，多页时展示当前�
       onPageChange={() => {}}
     />,
   );
-  expect(multiPageHtml).toContain("共 40 个企划 · 第 2 / 3 页");
+  expect(plainText(multiPageHtml)).toContain("共 40 个企划 第 2 / 3 页");
   expect(multiPageHtml).toContain('aria-label="分页"');
 
   const emptyHtml = renderToStaticMarkup(
